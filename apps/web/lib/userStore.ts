@@ -185,7 +185,7 @@ export function calculateTribeStanding(outingsAttended: number = 0, outingsHoste
 }
 
 export const DEFAULT_USER_PROFILE: UserProfileData = {
-  version: 4,
+  version: 5,
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Singapore',
@@ -271,8 +271,11 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.version !== 4) {
-        parsed.version = 4;
+      if (parsed.version !== 5) {
+        parsed.version = 5;
+        if (!parsed.homeArea || ['Tiong Bahru', 'Katong', 'Bishan'].includes(parsed.homeArea)) {
+          parsed.homeArea = 'Singapore';
+        }
         parsed.deepProfile = {
           ...DEFAULT_USER_PROFILE.deepProfile,
           ...(parsed.deepProfile || {}),
@@ -288,7 +291,8 @@ export function getUserProfile(): UserProfileData {
       const result: UserProfileData = {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
-        version: 4,
+        version: 5,
+        homeArea: parsed.homeArea && !['Tiong Bahru', 'Katong', 'Bishan'].includes(parsed.homeArea) ? parsed.homeArea : 'Singapore',
         passCompletionPct: calculatedPct,
         completedCategoryNums: completedCats,
         hasCompletedOnboarding: hasOnboarded,
