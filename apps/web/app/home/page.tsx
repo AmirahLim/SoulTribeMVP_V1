@@ -9,19 +9,12 @@ import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
 import { generateMatchExplanation } from '../../../../packages/core/explain/generator';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles } from 'lucide-react';
-import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting } from '../../lib/userStore';
+import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
 
 export default function HomeDashboardPage() {
   const [activeTab, setActiveTab] = useState<'fit' | 'outings' | 'pitches' | 'tribe'>('fit');
-  const [profile, setProfileState] = useState<UserProfileData>({
-    displayName: 'You',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    homeArea: 'Tiong Bahru',
-    bio: '',
-    passCompletionPct: 85,
-  });
-
-  const [pitches, setPitchesState] = useState<PitchedOuting[]>([]);
+  const [profile, setProfileState] = useState<UserProfileData>(DEFAULT_USER_PROFILE);
+  const [pitches, setPitchesState] = useState<PitchedOuting[]>(DEFAULT_PITCHES);
 
   useEffect(() => {
     setProfileState(getUserProfile());

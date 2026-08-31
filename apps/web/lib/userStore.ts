@@ -90,7 +90,7 @@ export interface PitchedOuting {
   createdAt: string;
 }
 
-const DEFAULT_USER_PROFILE: UserProfileData = {
+export const DEFAULT_USER_PROFILE: UserProfileData = {
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Tiong Bahru',
@@ -134,7 +134,7 @@ const DEFAULT_USER_PROFILE: UserProfileData = {
   },
 };
 
-const DEFAULT_PITCHES: PitchedOuting[] = [
+export const DEFAULT_PITCHES: PitchedOuting[] = [
   {
     id: 'pitch-101',
     title: 'Saturday Pottery & Filter Coffee',
