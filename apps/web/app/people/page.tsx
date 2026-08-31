@@ -16,18 +16,26 @@ export default function PeopleListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const user = getUserProfile();
-      if (user.homeArea) setCity(user.homeArea);
-      const ranked = getRankedMatches(user, { limit: 6 });
-      setMatches(ranked);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to calculate matches:', err);
-      setError('Unable to load matches right now. Please try refreshing.');
-    } finally {
-      setLoading(false);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = getUserProfile();
+        if (user.homeArea) setCity(user.homeArea);
+        const ranked = await getRankedMatches(user, { limit: 6 });
+        if (cancelled) return;
+        setMatches(ranked);
+        setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Failed to calculate matches:', err);
+        setError('Unable to load matches right now. Please try refreshing.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
