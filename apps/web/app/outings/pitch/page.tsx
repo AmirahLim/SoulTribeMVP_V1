@@ -9,6 +9,7 @@ import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
 import { calculateGroupCohesion } from '../../../../../packages/core/matching/cohesion';
 import { ProfileVector } from '../../../../../packages/core/domain/types';
 import { Check, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
+import { addUserPitch, PitchedOuting, JoinedGuest } from '../../../lib/userStore';
 
 function PitchComposerContent() {
   const router = useRouter();
@@ -53,6 +54,31 @@ function PitchComposerContent() {
 
   const handleCreateOuting = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const joinedGuestsList: JoinedGuest[] = selectedGuests.map((g) => ({
+      id: g.profile.id,
+      name: g.profile.display_name,
+      avatarUrl: g.profile.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+      homeArea: g.profile.home_area,
+      status: 'Confirmed',
+    }));
+
+    const newPitchObj: PitchedOuting = {
+      id: `pitch-${Date.now()}`,
+      title: title.trim() || 'Custom Outing Pitch',
+      pitch: pitch.trim(),
+      area: area.trim() || 'Tiong Bahru',
+      dateTime: dateTime.trim() || 'This Saturday',
+      hostName: hostUser.profile.display_name || 'Priya Sharma',
+      hostAvatar: hostUser.profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      seatsTotal: totalSeats,
+      seatsFilled: joinedGuestsList.length + 1,
+      cohesionScore: Math.round(cohesionResult.cohesion * 100),
+      joinedGuests: joinedGuestsList,
+      createdAt: new Date().toISOString(),
+    };
+
+    addUserPitch(newPitchObj);
     setCreated(true);
   };
 
@@ -258,7 +284,7 @@ function PitchComposerContent() {
               Outing Proposed!
             </h2>
             <p className="mt-2 text-[14px] text-white/80 leading-relaxed">
-              Your outing proposal <strong className="text-white">"{title}"</strong> has been saved. Your selected guests will receive an invitation.
+              Your outing proposal <strong className="text-white">"{title}"</strong> has been saved and connected to your Home Pitches tab!
             </p>
 
             <Button
@@ -267,7 +293,7 @@ function PitchComposerContent() {
               onClick={() => router.push('/home')}
               className="mt-6 w-full"
             >
-              Return to Home Dashboard
+              View My Pitches on Home Dashboard →
             </Button>
           </div>
         )}
