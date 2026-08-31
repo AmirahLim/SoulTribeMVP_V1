@@ -184,61 +184,80 @@ export default function PersonDetailPage() {
 
       {/* MAIN CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-6 flex flex-col gap-6">
-        {/* HERO CARD (ORIGINAL DETAILS + BIO + INTEREST CHIPS + GALLERY THUMBNAILS + STANDING) */}
-        <div className="rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl p-5 shadow-2xl">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Singapore Member Profile
-              </span>
-              <h1 className="mt-0.5 text-[28px] font-extrabold text-white tracking-tight drop-shadow-md">
-                {foundPerson.name}
-              </h1>
-              <span className="flex items-center text-[13px] font-semibold text-white/80 mt-0.5">
-                <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea} · Singapore
-              </span>
+        {/* HERO CARD (HERO PORTRAIT + DETAILS + BIO + INTEREST CHIPS + GALLERY THUMBNAILS + STANDING) */}
+        <div className="overflow-hidden rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl shadow-2xl">
+          {/* Candidate Portrait Image Banner */}
+          <div className="relative h-64 w-full overflow-hidden bg-black/40">
+            <img
+              src={foundPerson.avatarUrl}
+              alt={foundPerson.name}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+
+            <div className="absolute top-3.5 left-3.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
+              Strong Fit · 90% Rhythm Overlap
             </div>
 
-            {/* Standing Level Badge */}
-            <div className="flex flex-col items-end">
-              <span className="text-[20px] leading-none">{botStanding.icon}</span>
-              <span className={`mt-1 rounded-full border px-2.5 py-0.5 text-[10.5px] font-extrabold uppercase ${botStanding.badgeColor}`}>
-                {botStanding.label}
-              </span>
-            </div>
-          </div>
-
-          <p className="mt-3.5 text-[14px] leading-relaxed text-white/90">
-            {foundPerson.bio}
-          </p>
-
-          {/* INTERESTS CHIPS */}
-          <div className="mt-4 pt-3 border-t border-white/15">
-            <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {foundPerson.interests.map((interest, idx) => (
-                <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                  <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
+            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+              <div>
+                <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                  Singapore Member Profile
                 </span>
-              ))}
+                <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
+                  {foundPerson.name}
+                </h1>
+                <span className="flex items-center text-[12.5px] font-semibold text-white/90">
+                  <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea} · Singapore
+                </span>
+              </div>
+
+              {/* Standing Level Badge */}
+              <div className="flex flex-col items-end pb-1">
+                <span className="text-[20px] leading-none">{botStanding.icon}</span>
+                <span className={`mt-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${botStanding.badgeColor}`}>
+                  {botStanding.label}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* GALLERY THUMBNAILS */}
-          <div className="mt-4 flex items-center gap-3 pt-3 border-t border-white/15">
-            {galleryPhotos.map((photo, idx) => (
-              <div
-                key={idx}
-                className="relative h-14 w-18 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-lg"
-              >
-                <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
-                {idx === 2 && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[12px] font-bold text-white backdrop-blur-xs">
-                    10+
-                  </div>
-                )}
+          <div className="p-5 pt-3">
+            <p className="text-[14px] leading-relaxed text-white/90">
+              {foundPerson.bio}
+            </p>
+
+            {/* INTERESTS CHIPS */}
+            <div className="mt-4 pt-3 border-t border-white/15">
+              <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {foundPerson.interests.map((interest, idx) => (
+                  <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                    <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
+                  </span>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* GALLERY THUMBNAILS (FIXED DIMENSIONS & CONTAINMENT) */}
+            <div className="mt-4 border-t border-white/15 pt-3">
+              <span className="text-[11px] font-bold text-white/70 uppercase">Photo Moments</span>
+              <div className="mt-2 flex items-center gap-2.5 overflow-hidden">
+                {galleryPhotos.map((photo, idx) => (
+                  <div
+                    key={idx}
+                    className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-md"
+                  >
+                    <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
+                    {idx === 2 && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[12px] font-bold text-white backdrop-blur-xs">
+                        10+
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
