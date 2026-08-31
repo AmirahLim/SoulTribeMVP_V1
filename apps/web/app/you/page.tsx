@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
-import { Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile } from 'lucide-react';
+import { Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio, Share2, Quote } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
 export default function ProfilePage() {
@@ -78,12 +78,12 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
       {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTISTIC PAINTER EASEL PHOTO */}
       <img
         src="/user-you-bg.jpg"
         alt="You Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Readability */}
@@ -160,7 +160,7 @@ export default function ProfilePage() {
             A dynamic visual representation of your social energy, rhythm, and values.
           </p>
 
-          <div className="mt-6 flex justify-center rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="mt-6 flex justify-center rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <Bloom dimensions={bloomDimensions} size={280} interactive />
           </div>
         </section>
@@ -174,140 +174,169 @@ export default function ProfilePage() {
             Trait vectors calculated from your questionnaire responses.
           </p>
 
-          <div className="mt-4 rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="mt-4 rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <SocialDnaBars categories={socialDnaCategories} />
           </div>
         </section>
 
-        {/* SECTION C: PUBLIC PROFILE ANSWERS & VERBATIM QUOTES */}
+        {/* SECTION C: VISUAL SIGNALS DIAGRAM MAP (REPLACES BOXES) */}
         <section className="py-6 flex flex-col gap-6">
           <div>
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Public Profile Voice
+              Public Signals
             </span>
             <h2 className="mt-1 text-[20px] font-bold text-white">
-              What People See About You
+              Visual Profile Map
             </h2>
             <p className="mt-1 text-[13.5px] text-white/80">
-              Structured descriptors and your verbatim words rendered for matches.
+              Diagrammatic overview of your social rhythm, energy, and communication style.
             </p>
           </div>
 
-          {/* 1. SOCIAL ENERGY */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Smile className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">Social Energy</h3>
-            </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.groupSize || 'Small groups (3–4)'}
+          {/* DIAGRAM 1: SOCIAL ENERGY SPECTRUM GAUGE */}
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase flex items-center gap-1.5">
+                <Smile className="h-4 w-4 text-white" /> 01 / Social Energy Spectrum
               </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.socialVibe || 'Playful-chaotic & Calm'}
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
+                {deep.groupSize || '3–4 people'}
               </span>
             </div>
+
+            {/* Visual Gauge Scale Bar */}
+            <div className="mt-4 relative pt-2">
+              <div className="flex justify-between text-[11.5px] font-semibold text-white/70">
+                <span>Quiet & Intimate</span>
+                <span>High Energy & Lively</span>
+              </div>
+              <div className="mt-2 h-2.5 w-full rounded-full bg-white/10 relative overflow-hidden border border-white/20">
+                <div className="h-full bg-gradient-to-r from-white/40 via-white to-white/70 w-[35%] rounded-full" />
+              </div>
+              <div className="mt-1.5 flex justify-between text-[10.5px] text-white/60">
+                <span>One-on-one</span>
+                <span className="text-white font-bold">▲ Ideal (3–4)</span>
+                <span>Big Parties</span>
+              </div>
+            </div>
+
             {deep.socialAtmosphereOpen && (
-              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+              <div className="mt-4 rounded-[16px] border border-white/15 bg-white/10 p-3 text-[13px] italic text-white/90">
                 “{deep.socialAtmosphereOpen}”
-              </p>
+              </div>
             )}
           </div>
 
-          {/* 2. HOW I CONNECT */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">How I Connect</h3>
+          {/* DIAGRAM 2: COMMUNICATION RHYTHM NODE GRAPH */}
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase flex items-center gap-1.5">
+              <Radio className="h-4 w-4 text-white" /> 02 / Communication Rhythm Nodes
+            </span>
+
+            {/* Visual Connected Nodes Diagram */}
+            <div className="mt-4 flex items-center justify-around py-3 border-y border-white/15">
+              <div className="flex flex-col items-center gap-1 text-center">
+                <div className="h-10 w-10 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
+                  🎙️
+                </div>
+                <span className="text-[11.5px] font-semibold text-white">Voice Notes</span>
+              </div>
+
+              <div className="h-0.5 w-8 bg-gradient-to-r from-white/30 via-white to-white/30" />
+
+              <div className="flex flex-col items-center gap-1 text-center">
+                <div className="h-10 w-10 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
+                  💬
+                </div>
+                <span className="text-[11.5px] font-semibold text-white">Memes & Check-ins</span>
+              </div>
+
+              <div className="h-0.5 w-8 bg-gradient-to-r from-white/30 via-white to-white/30" />
+
+              <div className="flex flex-col items-center gap-1 text-center">
+                <div className="h-10 w-10 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
+                  ☕
+                </div>
+                <span className="text-[11.5px] font-semibold text-white">Mostly IRL</span>
+              </div>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.messagingStyle || 'Voice notes & Memes'}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.supportStyle || 'Listen first'}
-              </span>
-            </div>
+
             {deep.messagingStyleOpen && (
-              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+              <div className="mt-4 rounded-[16px] border border-white/15 bg-white/10 p-3 text-[13px] italic text-white/90">
                 “{deep.messagingStyleOpen}”
-              </p>
+              </div>
             )}
           </div>
 
-          {/* 3. FRIENDSHIP STYLE */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Heart className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">Friendship Style</h3>
+          {/* DIAGRAM 3: FRIENDSHIP DUAL-AXIS BALANCE SCALE */}
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase flex items-center gap-1.5">
+              <Heart className="h-4 w-4 text-white" /> 03 / Friendship Balance Scale
+            </span>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-[18px] border border-white/15 bg-white/10 p-3 text-center">
+                <span className="text-[10px] font-bold text-white/70 uppercase">Pillar A</span>
+                <p className="mt-1 text-[13px] font-bold text-white">Comfortable Silence</p>
+              </div>
+
+              <div className="rounded-[18px] border border-white/15 bg-white/10 p-3 text-center">
+                <span className="text-[10px] font-bold text-white/70 uppercase">Pillar B</span>
+                <p className="mt-1 text-[13px] font-bold text-white">Reliability & Trust</p>
+              </div>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.friendshipPillars || 'Comfortable silence & Reliability'}
-              </span>
-            </div>
+
             {deep.realFriendOpen && (
-              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.realFriendOpen}”
-              </p>
+              <div className="mt-4 rounded-[16px] border border-white/15 bg-black/40 p-3 text-[13px] text-white/90">
+                <span className="font-semibold text-white/80">I know we're actually friends when:</span> “{deep.realFriendOpen}”
+              </div>
             )}
           </div>
 
-          {/* 4. MY RHYTHM */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Compass className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">My Rhythm</h3>
-            </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.idealSaturday || 'Slow coffee & Hobbies'}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.spontaneousTrip || 'Convince me'}
-              </span>
-            </div>
-            {deep.idealSaturdayOpen && (
-              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.idealSaturdayOpen}”
-              </p>
-            )}
-          </div>
+          {/* DIAGRAM 4: VALUES CONSTELLATION GRAPH */}
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-white" /> 04 / Core Values Constellation
+            </span>
 
-          {/* 5. WHAT MATTERS */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Sparkles className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">What Matters</h3>
+            {/* Glowing Value Cloud */}
+            <div className="mt-4 flex flex-wrap justify-center gap-2.5 py-2">
+              {['Curiosity', 'Freedom', 'Growth', 'Community', 'Authenticity'].map((val, idx) => (
+                <span
+                  key={val}
+                  className="rounded-full border border-white/30 bg-gradient-to-r from-white/20 to-white/10 px-4 py-1.5 text-[13px] font-bold text-white backdrop-blur-md shadow-md"
+                >
+                  ✨ {val}
+                </span>
+              ))}
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
-                {deep.coreValues || 'Curiosity · Growth · Freedom'}
-              </span>
-            </div>
+
             {deep.respectPeopleOpen && (
-              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+              <div className="mt-4 rounded-[16px] border border-white/15 bg-white/10 p-3 text-[13px] italic text-white/90">
                 “I really respect people who {deep.respectPeopleOpen}”
-              </p>
+              </div>
             )}
           </div>
 
-          {/* 6. YOU SHOULD KNOW */}
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <User className="h-4 w-4" />
-              <h3 className="text-[15px] font-bold">You Should Know</h3>
+          {/* DIAGRAM 5: VERBATIM VOICE & CONVERSATION HOOKS */}
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl relative overflow-hidden">
+            <Quote className="absolute right-3 top-3 h-16 w-16 opacity-10 text-white pointer-events-none" />
+
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase flex items-center gap-1.5">
+              <User className="h-4 w-4 text-white" /> 05 / Conversation Starters
+            </span>
+
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
+                <span className="text-[11px] font-bold text-white/70 uppercase">I'll probably like you if...</span>
+                <p className="mt-1 text-[13px] text-white">“{deep.likeMeIfPrompt || 'You can switch from silly memes to deep topics in 5 mins.'}”</p>
+              </div>
+
+              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
+                <span className="text-[11px] font-bold text-white/70 uppercase">Quickest way to get me out...</span>
+                <p className="mt-1 text-[13px] text-white">“{deep.quickestWayPrompt || 'Mention a quiet coffee walk or an invitation to a bookstore.'}”</p>
+              </div>
             </div>
-            {deep.likeMeIfPrompt && (
-              <p className="mt-2.5 text-[13.5px] text-white">
-                <span className="font-semibold text-white/80">I'll probably like you if:</span> “{deep.likeMeIfPrompt}”
-              </p>
-            )}
-            {deep.quickestWayPrompt && (
-              <p className="mt-2 text-[13.5px] text-white">
-                <span className="font-semibold text-white/80">Quickest way to get me out:</span> “{deep.quickestWayPrompt}”
-              </p>
-            )}
           </div>
         </section>
 
