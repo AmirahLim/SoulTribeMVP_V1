@@ -37,14 +37,14 @@ export default function LandingPage() {
         transition={{ duration: 0.4 }}
         className="mt-8 flex flex-col text-left"
       >
-        <span className="text-[11px] font-bold tracking-widest text-[#D49B4B] uppercase">
+        <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
           Friendship-First Social Coordination · Singapore
         </span>
 
         <h1 className="mt-4 text-[38px] font-extrabold tracking-tight text-[#F3F0E9] leading-[44px]">
           Six people.<br />
           One good Saturday.<br />
-          <span className="text-[#D49B4B]">Start there.</span>
+          <span className="text-[#654422]">Start there.</span>
         </h1>
 
         <p className="mt-4 max-w-[340px] text-[15px] font-medium leading-relaxed text-[#A6AAA4]">
@@ -66,18 +66,18 @@ export default function LandingPage() {
           <span className="text-[11px] font-bold tracking-widest text-[#A6AAA4] uppercase">
             Sample Tribal Pass Resonance Read
           </span>
-          <span className="text-[12px] font-bold text-[#D49B4B]">
+          <span className="text-[12px] font-bold text-[#F3F0E9]">
             Strong Fit
           </span>
         </div>
 
         {/* CANDIDATE OBJECT */}
-        <div className="mt-4 rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
+        <div className="mt-4 rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
           <div className="flex items-center gap-3">
             <img
               src={p2.profile.avatar_url || ''}
               alt={p2.profile.display_name}
-              className="h-12 w-12 rounded-full object-cover ring-1 ring-[#D49B4B]/40"
+              className="h-12 w-12 rounded-full object-cover ring-1 ring-[#F3F0E9]/20"
             />
             <div>
               <h3 className="text-[18px] font-bold text-[#F3F0E9]">
@@ -91,7 +91,7 @@ export default function LandingPage() {
 
           <div className="mt-4 flex flex-col gap-3 text-[13.5px] leading-relaxed border-t border-[#F3F0E9]/10 pt-3.5">
             <div>
-              <span className="text-[10px] font-bold tracking-widest text-[#D49B4B] uppercase">
+              <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
                 Why you might click
               </span>
               <p className="mt-1 text-[#F3F0E9]">{sampleExplanation.click_text}</p>

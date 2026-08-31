@@ -1,32 +1,33 @@
 {
   "ground": {
-    "paper": "#0D1D15",
-    "card": "#15261C",
-    "wood": "#2A1E17",
-    "sand": "#1C3325"
+    "paper": "#2B1A17",
+    "card": "#4A2C2A",
+    "forest": "#074710",
+    "emerald": "#016401",
+    "wood": "#654422"
   },
   "ink": {
     "primary": "#F3F0E9",
     "secondary": "#A6AAA4",
-    "forest": "#0D1D15",
-    "chalk": "#FFFDF9"
+    "wood": "#654422",
+    "emerald": "#016401"
   },
   "accent": {
-    "emerald": "#2D523E",
-    "moss": "#386653",
-    "wood": "#3D2B1F",
-    "sage": "#8F998D"
+    "emerald": "#016401",
+    "forest": "#074710",
+    "wood": "#654422",
+    "cocoa": "#4A2C2A"
   },
   "semantic": {
-    "danger": "#AC3D32",
-    "success": "#2D523E",
-    "warn": "#8F998D"
+    "danger": "#4A2C2A",
+    "success": "#016401",
+    "warn": "#654422"
   },
   "structure": {
-    "divider": "rgba(243, 240, 233, 0.12)"
+    "divider": "rgba(243, 240, 233, 0.15)"
   },
   "shadows": {
-    "subtle": "0 4px 20px rgba(0, 0, 0, 0.25)"
+    "subtle": "0 4px 20px rgba(0, 0, 0, 0.35)"
   },
-  "border": "rgba(243, 240, 233, 0.12)"
+  "border": "rgba(243, 240, 233, 0.15)"
 }

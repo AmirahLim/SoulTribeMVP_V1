@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { IllustratedGround, Button, Chip } from '@soul-tribe/ui';
-import { ArrowLeft, Sparkles, Check, Heart, Compass, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowLeft, Check } from 'lucide-react';
 
 export default function DeeperTribalPassPage() {
   const [activeCategory, setActiveCategory] = useState<string>('A');
@@ -40,201 +40,189 @@ export default function DeeperTribalPassPage() {
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
       {/* Header */}
-      <header className="py-2">
-        <Link href="/you" className="flex items-center text-[13px] font-medium text-[#7A6B5F] hover:text-[#3D2E24]">
+      <header className="py-2 border-b border-[#F3F0E9]/12 pb-4">
+        <Link href="/you" className="flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]">
           <ArrowLeft className="mr-1 h-4 w-4" /> Back to Profile
         </Link>
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between">
           <div>
-            <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
+            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
               Part II — Progressive Profiling
             </span>
-            <h1 className="text-[24px] font-extrabold tracking-tight text-[#3D2E24]">
+            <h1 className="text-[24px] font-bold tracking-tight text-[#F3F0E9]">
               Deeper Tribal Pass
             </h1>
           </div>
-          <span className="rounded-full bg-[#2E5345]/10 px-3 py-1 text-[11px] font-bold text-[#2E5345]">
+          <span className="rounded-full bg-[#074710] px-3 py-1 text-[11px] font-bold text-[#F3F0E9]">
             User Editable
           </span>
         </div>
-
-        <p className="mt-1 text-[13px] text-[#4A3B30]">
-          Complete high-value questions progressively at your own pace to continuously refine your matches.
-        </p>
       </header>
 
-      {/* Category Pills Switcher */}
-      <section className="mt-4 flex gap-2 overflow-x-auto pb-2 pt-1">
+      {/* Category Pills */}
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {categories.map((cat) => (
           <button
             key={cat.id}
             type="button"
             onClick={() => setActiveCategory(cat.id)}
-            className={`flex-shrink-0 rounded-full px-4 py-2 text-[12.5px] font-bold transition-all ${
+            className={`flex-shrink-0 rounded-[12px] px-3.5 py-2 text-[12.5px] font-bold transition-all ${
               activeCategory === cat.id
-                ? 'bg-[#3D2E24] text-[#FFFDF9] shadow-sm'
-                : 'border border-[#3D2E24]/10 bg-[#FFFDF9] text-[#7A6B5F] hover:bg-[#EFE5D8]'
+                ? 'bg-[#F3F0E9] text-[#0D1D15]'
+                : 'border border-[#F3F0E9]/15 bg-[#15261C] text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
-            {cat.title.split('.')[0]}. {cat.title.split('—')[0].split('.')[1]}
+            Category {cat.id}
           </button>
         ))}
-      </section>
+      </div>
 
       {/* Progressive Form Section */}
-      <form onSubmit={handleSave} className="mt-4 flex flex-col gap-4">
-        {/* A. FRIENDSHIP INTENT & DEPTH */}
-        {activeCategory === 'A' && (
-          <div className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-sm">
-            <h3 className="text-[17px] font-bold text-[#3D2E24]">
-              A. Friendship Intent & Depth
-            </h3>
-            <p className="mt-0.5 text-[12px] text-[#7A6B5F]">
-              How many genuinely close friendships would you ideally like in your life?
-            </p>
+      <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Section {activeCategory}
+          </span>
+          <h3 className="mt-1 text-[18px] font-bold text-[#F3F0E9]">
+            {categories.find((c) => c.id === activeCategory)?.title}
+          </h3>
+          <p className="mt-0.5 text-[12.5px] text-[#A6AAA4]">
+            {categories.find((c) => c.id === activeCategory)?.subtitle}
+          </p>
 
-            <div className="mt-4 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-4">
+            {activeCategory === 'A' && (
+              <>
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">
+                    How many close friends are you hoping to cultivate?
+                  </label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['1-2 close friends', '3-5 inner circle', '6-10 solid friends', 'Open'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={closeFriendsTarget === opt}
+                        onClick={() => setCloseFriendsTarget(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">
+                    Ideal meeting frequency once connected:
+                  </label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['Weekly', 'Every 2 weeks', 'Monthly', 'A few times a year'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={seeFrequency === opt}
+                        onClick={() => setSeeFrequency(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeCategory === 'B' && (
+              <>
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">Social restoration mode:</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['Time alone', 'Quiet 1-on-1', 'Active group', 'Nature'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={restorationMode === opt}
+                        onClick={() => setRestorationMode(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">Room entry style:</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['Warm up gradually', 'Jump straight in', 'Observe first'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={roomEntryStyle === opt}
+                        onClick={() => setRoomEntryStyle(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeCategory === 'C' && (
+              <>
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">Default text reply rhythm:</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['Immediate', 'Same day', 'Within 2-3 days', 'Slow replier'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={replyRhythm === opt}
+                        onClick={() => setReplyRhythm(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-semibold text-[#F3F0E9]">Preferred contact medium:</label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {['Text', 'Voice notes', 'In person only', 'Calls'].map((opt) => (
+                      <Chip
+                        key={opt}
+                        label={opt}
+                        selected={preferredMedium === opt}
+                        onClick={() => setPreferredMedium(opt)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {['D', 'E', 'F', 'G', 'H', 'I', 'J'].includes(activeCategory) && (
               <div>
-                <label className="text-[13px] font-bold text-[#3D2E24]">Close Friendships Target:</label>
+                <label className="text-[13px] font-semibold text-[#F3F0E9]">
+                  Importance of shared alignment in Section {activeCategory}:
+                </label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {['1-2', '3-5', '6-10', 'Broad circle', 'No target'].map((opt) => (
+                  {['Essential', 'Important', 'Nice to have', 'Not important'].map((opt) => (
                     <Chip
                       key={opt}
                       label={opt}
-                      selected={closeFriendsTarget === opt}
-                      onClick={() => setCloseFriendsTarget(opt)}
+                      selected={valuesShareImportance === opt}
+                      onClick={() => setValuesShareImportance(opt)}
                     />
                   ))}
                 </div>
               </div>
-
-              <div className="mt-2">
-                <label className="text-[13px] font-bold text-[#3D2E24]">Ideal Meeting Frequency:</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['Several times a week', 'Weekly', 'Every 2 weeks', 'Monthly', 'Quality over frequency'].map((opt) => (
-                    <Chip
-                      key={opt}
-                      label={opt}
-                      selected={seeFrequency === opt}
-                      onClick={() => setSeeFrequency(opt)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
-        {/* B. PERSONALITY & SOCIAL ENERGY */}
-        {activeCategory === 'B' && (
-          <div className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-sm">
-            <h3 className="text-[17px] font-bold text-[#3D2E24]">
-              B. Personality & Social Energy
-            </h3>
-            <p className="mt-0.5 text-[12px] text-[#7A6B5F]">
-              After a busy week, what restores you most?
-            </p>
+        <div className="flex items-center justify-between">
+          {savedMessage && (
+            <span className="flex items-center text-[13px] font-bold text-[#016401]">
+              <Check className="mr-1 h-4 w-4" /> Section {activeCategory} Saved!
+            </span>
+          )}
 
-            <div className="mt-4 flex flex-col gap-3">
-              <div>
-                <label className="text-[13px] font-bold text-[#3D2E24]">Restoration Mode:</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['Time alone', 'One close friend', 'Small group', 'Lively social setting', 'Depends'].map((opt) => (
-                    <Chip
-                      key={opt}
-                      label={opt}
-                      selected={restorationMode === opt}
-                      onClick={() => setRestorationMode(opt)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <label className="text-[13px] font-bold text-[#3D2E24]">Entering a Room of Strangers:</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['I initiate', 'Warm up gradually', 'Wait for approach', 'Find one person', 'Depends'].map((opt) => (
-                    <Chip
-                      key={opt}
-                      label={opt}
-                      selected={roomEntryStyle === opt}
-                      onClick={() => setRoomEntryStyle(opt)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* C. COMMUNICATION STYLE */}
-        {activeCategory === 'C' && (
-          <div className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-sm">
-            <h3 className="text-[17px] font-bold text-[#3D2E24]">
-              C. Communication Style
-            </h3>
-            <p className="mt-0.5 text-[12px] text-[#7A6B5F]">
-              What is your natural reply rhythm & preferred medium?
-            </p>
-
-            <div className="mt-4 flex flex-col gap-3">
-              <div>
-                <label className="text-[13px] font-bold text-[#3D2E24]">Natural Reply Rhythm:</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['Minutes', 'Hours', 'Same day', '1-2 days', 'Whenever bandwidth'].map((opt) => (
-                    <Chip
-                      key={opt}
-                      label={opt}
-                      selected={replyRhythm === opt}
-                      onClick={() => setReplyRhythm(opt)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <label className="text-[13px] font-bold text-[#3D2E24]">Preferred Communication Medium:</label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['Text', 'Voice note', 'Call', 'Video', 'Mostly in person'].map((opt) => (
-                    <Chip
-                      key={opt}
-                      label={opt}
-                      selected={preferredMedium === opt}
-                      onClick={() => setPreferredMedium(opt)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* OTHER CATEGORIES FALLBACK */}
-        {!['A', 'B', 'C'].includes(activeCategory) && (
-          <div className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-sm">
-            <h3 className="text-[17px] font-bold text-[#3D2E24]">
-              {categories.find((c) => c.id === activeCategory)?.title}
-            </h3>
-            <p className="mt-1 text-[13px] text-[#7A6B5F]">
-              {categories.find((c) => c.id === activeCategory)?.subtitle}
-            </p>
-
-            <div className="mt-4 text-[13px] text-[#4A3B30]">
-              💡 Questions for this category are progressively surfaced after outings and between browsing sessions to continuously enrich your Tribal Pass.
-            </div>
-          </div>
-        )}
-
-        {savedMessage && (
-          <div className="flex items-center gap-2 text-[13px] font-bold text-[#2E5345]">
-            <Check className="h-4 w-4" /> Tribal Pass updated successfully!
-          </div>
-        )}
-
-        <Button type="submit" variant="primary" size="md" className="w-full">
-          Save Section to Tribal Pass
-        </Button>
+          <Button type="submit" variant="primary" size="md" className="ml-auto">
+            Save Section {activeCategory}
+          </Button>
+        </div>
       </form>
     </IllustratedGround>
   );

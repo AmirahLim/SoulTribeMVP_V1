@@ -29,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="bg-[#E5D7C7] text-[#3D2E24] antialiased selection:bg-[#C85A32]/20 selection:text-[#C85A32]">
+      <body className="bg-[#0D1D15] text-[#F3F0E9] antialiased selection:bg-[#016401]/30 selection:text-[#F3F0E9]">
         <main className="min-h-screen pb-20">{children}</main>
         <Nav />
       </body>

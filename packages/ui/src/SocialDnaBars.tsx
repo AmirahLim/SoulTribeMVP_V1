@@ -1,64 +1,43 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 
 export interface SocialDnaCategory {
   key: string;
   name: string;
   score: number; // 0..100
-  filledBlocks?: number;
 }
 
 export interface SocialDnaBarsProps {
-  categories?: SocialDnaCategory[];
+  categories: SocialDnaCategory[];
   className?: string;
 }
 
-export const DEFAULT_SOCIAL_DNA_CATEGORIES: SocialDnaCategory[] = [
-  { key: 'personality', name: 'Personality', score: 80 },
-  { key: 'communication', name: 'Communication', score: 90 },
-  { key: 'rhythm', name: 'Social Rhythm', score: 70 },
-  { key: 'intent', name: 'Friendship Intent', score: 100 },
-  { key: 'emotional', name: 'Emotional Style', score: 80 },
-  { key: 'interests', name: 'Interests', score: 65 },
-  { key: 'values', name: 'Values', score: 90 },
-  { key: 'lifestyle', name: 'Lifestyle', score: 75 },
-];
-
-export function SocialDnaBars({
-  categories = DEFAULT_SOCIAL_DNA_CATEGORIES,
-  className = '',
-}: SocialDnaBarsProps) {
+export function SocialDnaBars({ categories, className = '' }: SocialDnaBarsProps) {
   return (
-    <div className={`w-full rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(61,46,36,0.06)] backdrop-blur-md ${className}`}>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-[16px] font-bold tracking-tight text-[#3D2E24]">
-          Social DNA Index
-        </h3>
-        <span className="rounded-full bg-[#2E5345]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#2E5345]">
+    <div className={`flex flex-col gap-4 rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg ${className}`}>
+      <div className="flex items-center justify-between border-b border-[#F3F0E9]/10 pb-3">
+        <h3 className="text-[17px] font-bold text-[#F3F0E9]">Social DNA Index</h3>
+        <span className="rounded-full bg-[#074710] px-3 py-1 text-[11px] font-bold text-[#F3F0E9]">
           Active Vector
         </span>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {categories.map((cat, idx) => {
-          const pct = typeof cat.score === 'number' && cat.score <= 1 ? Math.round(cat.score * 100) : cat.score;
-          
+      <div className="flex flex-col gap-3.5 mt-1">
+        {categories.map((cat) => {
+          const pct = Math.round(cat.score);
           return (
-            <div key={cat.key || idx} className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-[13px] font-semibold text-[#3D2E24]">
-                <span className="tracking-tight">{cat.name}</span>
-                <span className="text-[12px] font-bold text-[#C85A32]">{pct}%</span>
+            <div key={cat.key} className="flex flex-col gap-1">
+              <div className="flex items-center justify-between text-[13px] font-medium">
+                <span className="text-[#F3F0E9] font-semibold">{cat.name}</span>
+                <span className="text-[12px] font-bold text-[#F3F0E9]">{pct}%</span>
               </div>
 
-              {/* Sleek Opal-Style Progress Track */}
-              <div className="h-2 w-full overflow-hidden rounded-full bg-[#EFE5D8]/80 p-0.5">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-[#C85A32] via-[#D69336] to-[#2E5345]"
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.5, delay: idx * 0.05 }}
+              {/* Progress Bar in Emerald Green to Dark Wood */}
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[#4A2C2A]/60">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#016401] via-[#074710] to-[#654422]"
+                  style={{ width: `${pct}%` }}
                 />
               </div>
             </div>

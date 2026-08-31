@@ -2,94 +2,85 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { IllustratedGround, SocialDnaBars, Button } from '@soul-tribe/ui';
-import { ShieldCheck, RefreshCw, ArrowLeft, Heart, Sparkles, CheckCircle2, Award } from 'lucide-react';
+import { IllustratedGround } from '@soul-tribe/ui';
+import { ArrowLeft, Award, CheckCircle2 } from 'lucide-react';
 
 export default function MirrorProfilePage() {
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
-      <header className="py-4">
-        <Link href="/you" className="flex items-center text-[13px] font-medium text-[#7A6B5F] hover:text-[#3D2E24]">
+      <header className="py-2 border-b border-[#F3F0E9]/12 pb-4">
+        <Link href="/you" className="flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]">
           <ArrowLeft className="mr-1 h-4 w-4" /> Back to Profile
         </Link>
 
-        <span className="mt-2 block text-[11px] font-bold tracking-wider text-[#2E5345] uppercase">
+        <span className="mt-3 block text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
           Layer 2 Mirror-Profile Artifact
         </span>
 
-        <h1 className="text-[28px] font-extrabold tracking-tight text-[#3D2E24]">
+        <h1 className="text-[26px] font-bold tracking-tight text-[#F3F0E9]">
           Your Mirror-Profile
         </h1>
-        <p className="mt-1 text-[14px] text-[#4A3B30]">
+        <p className="mt-1 text-[14px] text-[#A6AAA4]">
           Your friendship patterns & standing rendered back to you from real behavior over time.
         </p>
       </header>
 
-      <div className="mt-6 flex flex-col gap-5">
+      <div className="mt-6 flex flex-col gap-6">
         {/* REPUTATION & STANDING METRIC CARD */}
-        <div className="rounded-[28px] border border-[#2E5345]/20 bg-[#E1E8E3] p-5 shadow-sm">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#2E5345]">
-              <Award className="h-5 w-5" />
-              <span className="text-[12px] font-bold tracking-wider uppercase">
+            <div className="flex items-center gap-2 text-[#F3F0E9]">
+              <Award className="h-5 w-5 text-[#016401]" />
+              <span className="text-[12px] font-bold tracking-widest uppercase text-[#8F998D]">
                 Reputation & Standing
               </span>
             </div>
-            <span className="rounded-full bg-[#2E5345] px-3 py-0.5 text-[11px] font-bold text-[#FFFDF9]">
+            <span className="rounded-full bg-[#074710] px-3 py-0.5 text-[11px] font-bold text-[#F3F0E9]">
               High Standing
             </span>
           </div>
 
-          <h2 className="mt-2 text-[20px] font-extrabold text-[#3D2E24]">
+          <h2 className="mt-2 text-[20px] font-bold text-[#F3F0E9]">
             6 Kept RSVPs & Vouches · 0 Flakes
           </h2>
 
-          <p className="mt-1 text-[13.5px] font-medium leading-[20px] text-[#4A3B30]">
+          <p className="mt-1 text-[13.5px] leading-relaxed text-[#A6AAA4]">
             Every RSVP kept, outing hosted, and vouch received feeds your standing in the tribe.
           </p>
 
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[12px]">
-            <div className="rounded-[14px] bg-[#FFFDF9] p-2.5">
-              <span className="font-extrabold text-[#C85A32]">6</span>
-              <p className="text-[11px] font-bold text-[#7A6B5F]">Vouches / RSVPs</p>
+            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
+              <span className="font-bold text-[#F3F0E9] text-[16px]">6</span>
+              <p className="text-[11px] text-[#A6AAA4]">Vouches / RSVPs</p>
             </div>
-            <div className="rounded-[14px] bg-[#FFFDF9] p-2.5">
-              <span className="font-extrabold text-[#2E5345]">4</span>
-              <p className="text-[11px] font-bold text-[#7A6B5F]">New Bonds</p>
+            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
+              <span className="font-bold text-[#F3F0E9] text-[16px]">4</span>
+              <p className="text-[11px] text-[#A6AAA4]">New Bonds</p>
             </div>
-            <div className="rounded-[14px] bg-[#FFFDF9] p-2.5">
-              <span className="font-extrabold text-[#D69336]">3</span>
-              <p className="text-[11px] font-bold text-[#7A6B5F]">Outings Done</p>
+            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
+              <span className="font-bold text-[#016401] text-[16px]">0</span>
+              <p className="text-[11px] text-[#A6AAA4]">Flakes</p>
             </div>
           </div>
         </div>
 
-        {/* OBSERVED FRIENDSHIP PATTERNS */}
-        <div className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5 shadow-sm">
-          <h3 className="text-[18px] font-bold text-[#3D2E24]">
-            Observed Behavioral Patterns
-          </h3>
+        {/* BEHAVIORAL PATTERNS */}
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Observed Friendship Rhythms
+          </span>
 
-          <div className="mt-4 flex flex-col gap-3">
-            <div className="flex items-start gap-3 rounded-[18px] bg-[#F8F3ED] p-3.5">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#C85A32]" />
-              <div>
-                <h4 className="text-[14px] font-bold text-[#3D2E24]">Group Size Preference</h4>
-                <p className="text-[13px] text-[#4A3B30]">
-                  You consistently rate 4-person Sunday catch-ups highest in post-outing Rhythm Checks.
-                </p>
+          <div className="mt-3 flex flex-col gap-3">
+            {[
+              'You keep RSVPs 100% of the time (High Reliability)',
+              'You prefer 3-4 person quiet coffee and craft outings',
+              'You check in every 2 weeks with established bonds',
+            ].map((pattern) => (
+              <div key={pattern} className="flex items-start gap-2.5 text-[13.5px] text-[#F3F0E9]">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#016401]" />
+                <span>{pattern}</span>
               </div>
-            </div>
-
-            <div className="flex items-start gap-3 rounded-[18px] bg-[#F8F3ED] p-3.5">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#2E5345]" />
-              <div>
-                <h4 className="text-[14px] font-bold text-[#3D2E24]">Opening Pace Shift</h4>
-                <p className="text-[13px] text-[#4A3B30]">
-                  Your opening pace has recalibrated +0.12 based on positive feedback from your Katong & Tiong Bahru meetups.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

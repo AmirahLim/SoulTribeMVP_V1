@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { IllustratedGround, Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
-import { Settings, Clock, ShieldCheck, ArrowRight, Award, X } from 'lucide-react';
+import { Settings, X } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
 export default function ProfilePage() {
@@ -83,10 +83,10 @@ export default function ProfilePage() {
           <img
             src={profile.avatarUrl}
             alt={profile.displayName}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-[#D49B4B]/50"
+            className="h-12 w-12 rounded-full object-cover ring-2 ring-[#F3F0E9]/30"
           />
           <div>
-            <span className="text-[11px] font-bold tracking-widest text-[#D49B4B] uppercase">
+            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
               Tribal Pass · {profile.passCompletionPct}% Complete
             </span>
             <h1 className="text-[22px] font-bold text-[#F3F0E9] tracking-tight">
@@ -111,12 +111,12 @@ export default function ProfilePage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[13.5px] font-bold text-[#F3F0E9]">Standing & Vouches</span>
-              <span className="text-[11px] font-bold text-[#D49B4B]">High Standing</span>
+              <span className="text-[11px] font-bold text-[#016401]">High Standing</span>
             </div>
             <p className="mt-0.5 text-[12.5px] text-[#A6AAA4]">6 Vouches & Kept RSVPs · 4 Bonds</p>
           </div>
 
-          <Link href="/mirror" className="text-[12.5px] font-semibold text-[#D49B4B] hover:underline">
+          <Link href="/mirror" className="text-[12.5px] font-semibold text-[#F3F0E9] hover:underline">
             View Standing →
           </Link>
         </div>
@@ -125,7 +125,7 @@ export default function ProfilePage() {
       {/* PART II — DEEPER TRIBAL PASS */}
       <section className="py-5 border-b border-[#F3F0E9]/12">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold tracking-widest text-[#D49B4B] uppercase">
+          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
             Part II — Deeper Tribal Pass
           </span>
           <Link href="/you/deeper">
@@ -152,16 +152,16 @@ export default function ProfilePage() {
 
       {/* LAYER 2 PROFILE ARTIFACT NAVIGATION */}
       <section className="py-6 border-b border-[#F3F0E9]/12 grid grid-cols-2 gap-4">
-        <Link href="/timeline" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#D49B4B] uppercase">Timeline</span>
+        <Link href="/timeline" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-4">
+          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">Timeline</span>
           <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
             Tribe's Timeline
           </h3>
           <p className="mt-0.5 text-[12px] text-[#A6AAA4]">Holds your history</p>
         </Link>
 
-        <Link href="/mirror" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#9DAA96] uppercase">Mirror</span>
+        <Link href="/mirror" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-4">
+          <span className="text-[11px] font-bold tracking-widest text-[#016401] uppercase">Mirror</span>
           <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
             Mirror-Profile
           </h3>
@@ -177,7 +177,7 @@ export default function ProfilePage() {
       {/* EDIT PROFILE / SETTINGS MODAL */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-[380px] border border-[#F3F0E9]/15 bg-[#15261C] p-6 rounded-[24px] shadow-2xl">
+          <div className="relative w-full max-w-[380px] border border-[#F3F0E9]/15 bg-[#2B1A17] p-6 rounded-[24px] shadow-2xl">
             <button
               type="button"
               onClick={() => setIsSettingsOpen(false)}
@@ -197,14 +197,14 @@ export default function ProfilePage() {
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none focus:border-[#D49B4B]"
+                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
                 />
               </div>
 
               <div>
                 <label className="text-[13px] font-semibold text-[#F3F0E9]">Profile Photo</label>
                 <div className="mt-2 flex items-center gap-3">
-                  <img src={editPhoto} alt="Preview" className="h-12 w-12 rounded-full object-cover ring-1 ring-[#D49B4B]" />
+                  <img src={editPhoto} alt="Preview" className="h-12 w-12 rounded-full object-cover ring-1 ring-[#F3F0E9]" />
                   <label className="cursor-pointer rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-3.5 py-1.5 text-[12px] font-semibold text-[#F3F0E9]">
                     <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                     Change Image
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                   type="text"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none focus:border-[#D49B4B]"
+                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
                 />
               </div>
 
@@ -228,7 +228,7 @@ export default function ProfilePage() {
                   rows={2}
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="mt-1 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none focus:border-[#D49B4B]"
+                  className="mt-1 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
                 />
               </div>
 

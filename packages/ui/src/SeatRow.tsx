@@ -3,42 +3,30 @@
 import React from 'react';
 
 export interface SeatRowProps {
-  totalSeats?: number; // max 6
-  filledSeats?: number;
+  seatsTotal?: number; // Cap enforced max 6
+  seatsFilled: number;
   className?: string;
 }
 
-export function SeatRow({
-  totalSeats = 6,
-  filledSeats = 1,
-  className = '',
-}: SeatRowProps) {
-  const seats = Array.from({ length: totalSeats });
+export function SeatRow({ seatsTotal = 6, seatsFilled, className = '' }: SeatRowProps) {
+  // Cap at 6 total
+  const capTotal = Math.min(seatsTotal, 6);
+  const seats = Array.from({ length: capTotal }, (_, i) => i < seatsFilled);
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {seats.map((_, i) => {
-        const isFilled = i < filledSeats;
-        return (
-          <div
-            key={i}
-            className={`flex h-8 w-8 items-center justify-center rounded-[10px] transition-all ${
-              isFilled
-                ? 'bg-[#C85A32] text-[#FFFDF9] shadow-sm'
-                : 'border border-[#7A6B5F]/30 bg-[#EFE5D8]/70 text-[#7A6B5F]'
-            }`}
-            title={isFilled ? `Seat ${i + 1} taken` : `Seat ${i + 1} open`}
-          >
-            {/* Chair glyph */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3" />
-              <path d="M3 11v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2Z" />
-              <path d="M5 18v3" />
-              <path d="M19 18v3" />
-            </svg>
-          </div>
-        );
-      })}
+      {seats.map((isFilled, idx) => (
+        <div
+          key={idx}
+          className={`flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold transition-all ${
+            isFilled
+              ? 'bg-[#016401] text-[#F3F0E9] shadow-sm'
+              : 'border border-[#F3F0E9]/20 bg-[#0D1D15] text-[#A6AAA4]'
+          }`}
+        >
+          {idx + 1}
+        </div>
+      ))}
     </div>
   );
 }
