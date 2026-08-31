@@ -228,7 +228,7 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Public Signals Map
+                Social Signature
               </span>
 
               <Link href="/you/deeper">
@@ -242,7 +242,7 @@ export default function ProfilePage() {
             </div>
 
             <h2 className="text-[20px] font-bold text-white">
-              What People See About You
+              Your Social Signature
             </h2>
             <p className="text-[13.5px] text-white/80">
               Visual radar map representing all 10 categories of your Deeper Tribal Pass.

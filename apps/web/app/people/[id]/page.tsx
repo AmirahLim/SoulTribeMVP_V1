@@ -18,6 +18,9 @@ export default function PersonDetailPage() {
   const personId = (params?.id as string) || '';
 
   const foundPerson = CANDIDATE_PEOPLE.find((p) => p.id === personId || p.id.includes(personId)) || CANDIDATE_PEOPLE[0];
+  const firstName = foundPerson.name.split(' ')[0];
+  const possessiveFirstName = firstName.endsWith('s') ? `${firstName}'` : `${firstName}'s`;
+
   const [connected, setConnected] = useState(false);
   const [starred, setStarred] = useState(false);
 
@@ -265,17 +268,17 @@ export default function PersonDetailPage() {
           </div>
         </section>
 
-        {/* SECTION B: YOUR TRIBAL PRINT */}
+        {/* SECTION B: TRIBAL PRINT */}
         <section className="py-2 border-b border-white/15">
           <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            Your Tribal Print
+            {possessiveFirstName} Tribal Print
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">
             Dynamic trait vectors from {foundPerson.name}'s completed Tribal Pass.
           </p>
 
           <div className="mt-4">
-            <SocialDnaBars categories={candidateSocialDna} />
+            <SocialDnaBars categories={candidateSocialDna} title={`${possessiveFirstName} Tribal Print`} />
           </div>
         </section>
 
@@ -283,10 +286,10 @@ export default function PersonDetailPage() {
         <section className="py-2 flex flex-col gap-6">
           <div>
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Public Signals Map
+              Social Signature
             </span>
             <h2 className="mt-1 text-[20px] font-bold text-white">
-              What You See About {foundPerson.name}
+              {possessiveFirstName} Social Signature
             </h2>
             <p className="mt-1 text-[13.5px] text-white/80">
               Complete 10-category visual breakdown from {foundPerson.name}'s Deeper Pass.
