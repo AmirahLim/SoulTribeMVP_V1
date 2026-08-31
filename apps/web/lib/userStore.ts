@@ -92,7 +92,7 @@ export function calculatePassCompletion(hasOnboarded: boolean = true, completedC
 }
 
 export const DEFAULT_USER_PROFILE: UserProfileData = {
-  version: 2,
+  version: 3,
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Tiong Bahru',
@@ -175,9 +175,12 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.version !== 2) {
-        parsed.version = 2;
-        parsed.completedCategoryNums = [];
+      if (parsed.version !== 3) {
+        parsed.version = 3;
+        parsed.deepProfile = {
+          ...DEFAULT_USER_PROFILE.deepProfile,
+          ...(parsed.deepProfile || {}),
+        };
       }
 
       const completedCats = parsed.completedCategoryNums !== undefined
@@ -189,7 +192,7 @@ export function getUserProfile(): UserProfileData {
       const result: UserProfileData = {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
-        version: 2,
+        version: 3,
         passCompletionPct: calculatedPct,
         completedCategoryNums: completedCats,
         hasCompletedOnboarding: hasOnboarded,
@@ -222,7 +225,7 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
   const updated: UserProfileData = {
     ...current,
     ...data,
-    version: 2,
+    version: 3,
     passCompletionPct: calculatedPct,
     completedCategoryNums: completedCats,
     hasCompletedOnboarding: hasOnboarded,
