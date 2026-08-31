@@ -1,7 +1,7 @@
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
-import type { UserProfileData } from '../userStore.ts';
-import { getRankedMatches, setCandidateSource, demoCandidateSource } from '../matching.ts';
+import type { UserProfileData } from '../userStore';
+import { getRankedMatches, setCandidateSource, demoCandidateSource } from '../matching';
 import { DEMO_PROFILES } from '@soul-tribe/core';
 
 describe('Part 5 — Matching Service Tests', () => {
