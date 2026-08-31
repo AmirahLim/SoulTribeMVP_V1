@@ -10,6 +10,7 @@ import { generateMatchExplanation } from '../../../../packages/core/explain/gene
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles } from 'lucide-react';
 import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
+import { CANDIDATE_PEOPLE } from '../../lib/peopleStore';
 
 export default function HomeDashboardPage() {
   const [activeTab, setActiveTab] = useState<'fit' | 'outings' | 'pitches' | 'tribe'>('fit');
@@ -23,6 +24,7 @@ export default function HomeDashboardPage() {
 
   const currentUser = SYNTHETIC_PROFILES[0]; // Priya Sharma
   const marcus = SYNTHETIC_PROFILES[1]; // Marcus Tan (1 real match profile)
+  const marcusCandidate = CANDIDATE_PEOPLE[0]; // Marcus Tan candidate profile
   const explanation = generateMatchExplanation(currentUser, marcus);
 
   return (
@@ -154,16 +156,16 @@ export default function HomeDashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
-                    src={marcus.profile.avatar_url || ''}
-                    alt={marcus.profile.display_name}
+                    src={marcusCandidate.avatarUrl}
+                    alt={marcusCandidate.name}
                     className="h-12 w-12 rounded-full object-cover ring-1 ring-white/30"
                   />
                   <div>
                     <h3 className="text-[18px] font-bold text-white">
-                      {marcus.profile.display_name}
+                      {marcusCandidate.name}
                     </h3>
                     <p className="text-[12.5px] text-white/80">
-                      {marcus.profile.home_area} · Singapore
+                      {marcusCandidate.homeArea} · Singapore
                     </p>
                   </div>
                 </div>
@@ -186,7 +188,7 @@ export default function HomeDashboardPage() {
                   Specialty Coffee · Pottery · Books
                 </span>
 
-                <Link href={`/people/${marcus.profile.id}`}>
+                <Link href={`/people/${marcusCandidate.id}`}>
                   <Button variant="secondary" size="sm">
                     View Full Profile →
                   </Button>

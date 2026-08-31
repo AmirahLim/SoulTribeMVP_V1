@@ -41,12 +41,27 @@ export const SYNTHETIC_PROFILES: ProfileVector[] = Array.from({ length: 40 }, (_
   const name = names[idx % names.length];
   const handle = name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 18) + `_${num}`;
 
+  const sampleAvatars: Record<string, string> = {
+    'Priya Sharma': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&auto=format&fit=crop&q=80',
+    'Marcus Tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
+    'Maya Lin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+    'Chen Wei': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80',
+    'Aisha Khan': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80',
+    'Julian Koh': 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=800&auto=format&fit=crop&q=80',
+  };
+
+  const defaultAvatar = idx % 2 === 0
+    ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80'
+    : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80';
+
+  const avatar = sampleAvatars[name] || defaultAvatar;
+
   return {
     profile: {
       id,
       handle,
       display_name: name,
-      avatar_url: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`,
+      avatar_url: avatar,
       bio: `Singapore-based, interested in intentional friendships and weekend coffee.`,
       home_area: area,
       birth_year: 1990 + (idx % 12),
