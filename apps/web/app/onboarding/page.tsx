@@ -63,9 +63,20 @@ export default function OnboardingPage() {
     { key: 'pacing', label: 'Emotional', strength: 0.7, confidence, sentence: `Prefers to ${q7EmotionalPacing.toLowerCase()}.` },
   ];
 
+  const MAX_MB = 4;
+  const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!OK_TYPES.includes(file.type)) {
+        alert('Please use a JPG, PNG, or WebP image.');
+        return;
+      }
+      if (file.size > MAX_MB * 1024 * 1024) {
+        alert(`Image must be under ${MAX_MB} MB.`);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setUserPhoto(reader.result as string);
