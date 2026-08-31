@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { IllustratedGround, Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
 export default function ProfilePage() {
@@ -12,7 +12,7 @@ export default function ProfilePage() {
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     homeArea: 'Tiong Bahru',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 72,
+    passCompletionPct: 85,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -53,15 +53,17 @@ export default function ProfilePage() {
     }
   };
 
+  const deep = profile.deepProfile || {};
+
   const bloomDimensions = [
-    { key: 'p', label: 'Personality', strength: 0.8, confidence: 0.9, sentence: 'You recharge in quiet spaces and go deep quickly.' },
-    { key: 'c', label: 'Communication', strength: 0.7, confidence: 0.85, sentence: 'You reply within a day and prefer intentional messages.' },
-    { key: 'r', label: 'Rhythm', strength: 0.6, confidence: 0.8, sentence: 'You prefer plans made a few days ahead on weekends.' },
-    { key: 'i', label: 'Intent', strength: 0.9, confidence: 0.95, sentence: 'You are looking for a small, regular circle of close friends.' },
-    { key: 'e', label: 'Emotional', strength: 0.75, confidence: 0.9, sentence: 'You open up gradually and stay loyal once comfortable.' },
-    { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: 'You love pottery, specialty coffee, and analog film.' },
-    { key: 'v', label: 'Values', strength: 0.7, confidence: 0.8, sentence: 'Personal growth and creativity matter deeply to you.' },
-    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: 'You enjoy quiet dining and $20–50 low-key meetups.' },
+    { key: 'p', label: 'Personality', strength: 0.8, confidence: 0.9, sentence: deep.selfDescriptionOpen || 'Curious, reflective, and independent.' },
+    { key: 'c', label: 'Communication', strength: 0.7, confidence: 0.85, sentence: deep.messagingStyleOpen || 'Prefers intentional messages & voice notes.' },
+    { key: 'r', label: 'Rhythm', strength: 0.6, confidence: 0.8, sentence: deep.idealSaturdayOpen || 'Slow mornings, afternoons for exploring.' },
+    { key: 'i', label: 'Intent', strength: 0.9, confidence: 0.95, sentence: deep.realFriendOpen || 'Looking for a small, regular inner circle.' },
+    { key: 'e', label: 'Emotional', strength: 0.75, confidence: 0.9, sentence: deep.supportOpen || 'Listen first. Advice once understood.' },
+    { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: deep.talkForHoursOpen || 'Art, ceramics, psychology, travel.' },
+    { key: 'v', label: 'Values', strength: 0.7, confidence: 0.8, sentence: deep.respectPeopleOpen || 'Respects people who change their mind.' },
+    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: deep.instantYesOutingOpen || 'Enjoys $20–50 low-key coffee and craft meetups.' },
   ];
 
   const socialDnaCategories = [
@@ -122,11 +124,11 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* PART II — DEEPER TRIBAL PASS */}
+      {/* PART II — DEEPER TRIBAL PASS NAVIGATION */}
       <section className="py-5 border-b border-[#F3F0E9]/12">
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Part II — Deeper Tribal Pass
+            Part II — Deeper Profile & Matching
           </span>
           <Link href="/you/deeper">
             <Button variant="secondary" size="sm">
@@ -135,8 +137,104 @@ export default function ProfilePage() {
           </Link>
         </div>
         <p className="mt-2 text-[13.5px] leading-relaxed text-[#A6AAA4]">
-          Enrich your profile across 10 progressive categories (A through J) to continuously refine recommendations.
+          10-Category Deep Profile active. Open-ended answers feed your public voice & private matching weights.
         </p>
+      </section>
+
+      {/* PUBLIC DEEP PROFILE SECTIONS (PDF SPECIFICATION: HOW ANSWERS APPEAR ON THE PROFILE) */}
+      <section className="py-6 border-b border-[#F3F0E9]/12 flex flex-col gap-5">
+        <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+          Public Deep Profile Sections
+        </span>
+
+        {/* 1. SOCIAL ENERGY */}
+        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Social Energy
+          </span>
+          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
+            {deep.socialSetting || '3–4 people'} · {deep.groupEnergy || 'Listener · Connector'}
+          </p>
+          {deep.socialEnergyOpen && (
+            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
+              "{deep.socialEnergyOpen}"
+            </p>
+          )}
+        </div>
+
+        {/* 2. HOW I CONNECT */}
+        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+            How I Connect
+          </span>
+          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
+            {deep.connectionMode || 'Voice notes · Memes · Mostly IRL'} · {deep.replyRhythm || 'Same day'}
+          </p>
+          {deep.messagingStyleOpen && (
+            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
+              "{deep.messagingStyleOpen}"
+            </p>
+          )}
+        </div>
+
+        {/* 3. FRIENDSHIP STYLE */}
+        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Friendship Style
+          </span>
+          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
+            {deep.bringsToFriendship || 'Reliability · Adventures · Emotional support'}
+          </p>
+          {deep.realFriendOpen && (
+            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
+              "{deep.realFriendOpen}"
+            </p>
+          )}
+        </div>
+
+        {/* 4. MY RHYTHM */}
+        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+            My Rhythm
+          </span>
+          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
+            {deep.timeAlive || 'Weekend afternoons'} · {deep.plansAheadHorizon || '2–3 days ahead'}
+          </p>
+          {deep.idealSaturdayOpen && (
+            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
+              "{deep.idealSaturdayOpen}"
+            </p>
+          )}
+        </div>
+
+        {/* 5. WHAT MATTERS */}
+        {deep.mattersMost && (
+          <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+            <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+              What Matters
+            </span>
+            <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
+              {deep.mattersMost}
+            </p>
+            {deep.respectPeopleOpen && (
+              <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
+                "{deep.respectPeopleOpen}"
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* 6. YOU SHOULD KNOW */}
+        {deep.likeYouIfOpen && (
+          <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+            <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+              You Should Know
+            </span>
+            <p className="mt-1.5 text-[13.5px] italic text-[#F3F0E9]">
+              "{deep.likeYouIfOpen}"
+            </p>
+          </div>
+        )}
       </section>
 
       {/* FRIENDSHIP DNA BLOOM */}
