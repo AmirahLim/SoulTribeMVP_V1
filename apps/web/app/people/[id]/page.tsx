@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
+import { getCandidatePeopleForCity } from '../../../lib/peopleStore';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
