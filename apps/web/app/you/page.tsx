@@ -6,7 +6,7 @@ import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint
 } from 'lucide-react';
 import {
   getUserProfile, setUserProfile, UserProfileData,
@@ -211,7 +211,8 @@ export default function ProfilePage() {
 
         {/* SECTION B: SOCIAL DNA METRIC BARS */}
         <section className="py-6 border-b border-white/15">
-          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+          <span className="text-[11px] font-bold tracking-widest text-emerald-400 uppercase flex items-center gap-1.5">
+            <PawPrint className="h-3.5 w-3.5 text-emerald-400 fill-emerald-400/20" />
             Your Tribal Print
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">

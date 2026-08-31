@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { PawPrint } from 'lucide-react';
 
 export interface SocialDnaCategory {
   key: string;
@@ -20,11 +21,14 @@ export function SocialDnaBars({ categories, title = 'Your Tribal Print', classNa
     <div className={`flex flex-col gap-4 rounded-[28px] border border-emerald-500/30 bg-[#112519]/90 p-5 shadow-2xl backdrop-blur-xl ${className}`}>
       <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
         <div>
-          <h3 className="text-[18px] font-extrabold text-[#FFFDF9] tracking-tight">{title}</h3>
-          <p className="text-[11.5px] text-emerald-200/80">Calculated live from completed Deeper Tribal Pass sections</p>
+          <h3 className="text-[18px] font-extrabold text-[#FFFDF9] tracking-tight flex items-center gap-2">
+            <PawPrint className="h-5 w-5 text-emerald-400 fill-emerald-400/20 shrink-0" />
+            <span>{title}</span>
+          </h3>
+          <p className="text-[11.5px] text-emerald-200/80 mt-0.5">Calculated live from completed Deeper Tribal Pass sections</p>
         </div>
-        <span className="rounded-full bg-emerald-900/60 border border-emerald-400/40 px-3 py-1 text-[11px] font-bold text-emerald-100">
-          Live Vectors
+        <span className="rounded-full bg-emerald-900/60 border border-emerald-400/40 px-3 py-1 text-[11px] font-bold text-emerald-100 flex items-center gap-1">
+          <PawPrint className="h-3 w-3 text-emerald-300" /> Live Vectors
         </span>
       </div>
 
