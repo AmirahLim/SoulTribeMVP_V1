@@ -25,17 +25,19 @@ export default function DeeperTribalPassPage() {
   };
 
   const categories = [
-    { id: 'A', title: 'A. Friendship Intent & Depth', subtitle: 'How many close friends, meeting frequency & closeness' },
-    { id: 'B', title: 'B. Personality & Social Energy', subtitle: 'Restoration mode, novelty & room entry style' },
-    { id: 'C', title: 'C. Communication Style', subtitle: 'Reply rhythm, messaging medium & directness' },
-    { id: 'D', title: 'D. Social Rhythm & Availability', subtitle: 'Outing length, group size & spontaneous plans' },
-    { id: 'E', title: 'E. Emotional & Relational Style', subtitle: 'Opening pace, conflict repair & boundaries' },
-    { id: 'F', title: 'F. Values & Worldview', subtitle: 'Core values & disagreement comfort' },
-    { id: 'G', title: 'G. Lifestyle Compatibility', subtitle: 'Weekend rhythm, activity level & budget' },
-    { id: 'H', title: 'H. Interests & Curiosity Graph', subtitle: 'What you talk about & want to learn' },
-    { id: 'I', title: 'I. Outing DNA', subtitle: 'Conversation-first vs activity-first & environment' },
-    { id: 'J', title: 'J. Matching Boundaries', subtitle: 'Priority factors & non-negotiables' },
+    { id: 'A', name: 'Friendship Intent', title: 'Friendship Intent & Depth', subtitle: 'How many close friends, meeting frequency & closeness' },
+    { id: 'B', name: 'Personality & Social Energy', title: 'Personality & Social Energy', subtitle: 'Restoration mode, novelty & room entry style' },
+    { id: 'C', name: 'Communication Style', title: 'Communication Style', subtitle: 'Reply rhythm, messaging medium & directness' },
+    { id: 'D', name: 'Social Rhythm & Availability', title: 'Social Rhythm & Availability', subtitle: 'Outing length, group size & spontaneous plans' },
+    { id: 'E', name: 'Emotional Style', title: 'Emotional & Relational Style', subtitle: 'Opening pace, conflict repair & boundaries' },
+    { id: 'F', name: 'Values & Worldview', title: 'Values & Worldview', subtitle: 'Core values & disagreement comfort' },
+    { id: 'G', name: 'Lifestyle', title: 'Lifestyle Compatibility', subtitle: 'Weekend rhythm, activity level & budget' },
+    { id: 'H', name: 'Interests Graph', title: 'Interests & Curiosity Graph', subtitle: 'What you talk about & want to learn' },
+    { id: 'I', name: 'Outing DNA', title: 'Outing DNA', subtitle: 'Conversation-first vs activity-first & environment' },
+    { id: 'J', name: 'Matching Boundaries', title: 'Matching Boundaries', subtitle: 'Priority factors & non-negotiables' },
   ];
+
+  const activeCategoryItem = categories.find((c) => c.id === activeCategory) || categories[0];
 
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
@@ -60,20 +62,20 @@ export default function DeeperTribalPassPage() {
         </div>
       </header>
 
-      {/* Category Pills */}
+      {/* Category Titles Selector Pills */}
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
         {categories.map((cat) => (
           <button
             key={cat.id}
             type="button"
             onClick={() => setActiveCategory(cat.id)}
-            className={`flex-shrink-0 rounded-[12px] px-3.5 py-2 text-[12.5px] font-bold transition-all ${
+            className={`flex-shrink-0 rounded-[12px] px-4 py-2 text-[13px] font-bold transition-all ${
               activeCategory === cat.id
-                ? 'bg-[#F3F0E9] text-[#0D1D15]'
+                ? 'bg-[#F3F0E9] text-[#0D1D15] shadow-sm'
                 : 'border border-[#F3F0E9]/15 bg-[#15261C] text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
-            Category {cat.id}
+            {cat.name}
           </button>
         ))}
       </div>
@@ -82,13 +84,13 @@ export default function DeeperTribalPassPage() {
       <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
         <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Section {activeCategory}
+            {activeCategoryItem.name}
           </span>
-          <h3 className="mt-1 text-[18px] font-bold text-[#F3F0E9]">
-            {categories.find((c) => c.id === activeCategory)?.title}
+          <h3 className="mt-1 text-[20px] font-bold text-[#F3F0E9]">
+            {activeCategoryItem.title}
           </h3>
-          <p className="mt-0.5 text-[12.5px] text-[#A6AAA4]">
-            {categories.find((c) => c.id === activeCategory)?.subtitle}
+          <p className="mt-0.5 text-[13px] text-[#A6AAA4]">
+            {activeCategoryItem.subtitle}
           </p>
 
           <div className="mt-5 flex flex-col gap-4">
@@ -195,7 +197,7 @@ export default function DeeperTribalPassPage() {
             {['D', 'E', 'F', 'G', 'H', 'I', 'J'].includes(activeCategory) && (
               <div>
                 <label className="text-[13px] font-semibold text-[#F3F0E9]">
-                  Importance of shared alignment in Section {activeCategory}:
+                  Importance of shared alignment in {activeCategoryItem.name}:
                 </label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {['Essential', 'Important', 'Nice to have', 'Not important'].map((opt) => (
@@ -215,12 +217,12 @@ export default function DeeperTribalPassPage() {
         <div className="flex items-center justify-between">
           {savedMessage && (
             <span className="flex items-center text-[13px] font-bold text-[#F3F0E9]">
-              <Check className="mr-1 h-4 w-4" /> Section {activeCategory} Saved!
+              <Check className="mr-1 h-4 w-4" /> {activeCategoryItem.name} Saved!
             </span>
           )}
 
           <Button type="submit" variant="primary" size="md" className="ml-auto">
-            Save Section {activeCategory}
+            Save {activeCategoryItem.name}
           </Button>
         </div>
       </form>
