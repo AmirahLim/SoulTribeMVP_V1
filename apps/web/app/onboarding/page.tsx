@@ -4,21 +4,25 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IllustratedGround, Bloom, RhythmStrip, Button, Chip } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Sparkles, ArrowRight, Compass, Shield, Users, Heart } from 'lucide-react';
+import { Check, Sparkles, ArrowRight, Camera, Upload, User } from 'lucide-react';
+import { getUserProfile, setUserProfile } from '../../lib/userStore';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
-  // EXACT PART I ONBOARDING QUESTIONS FROM SPECIFICATION PDF
+  // USER CUSTOM NAME & PHOTO STATE
+  const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState<string>('');
+
   // Q1: What are you hoping to find here? (Up to 3)
   const [q1Finding, setQ1Finding] = useState<string[]>(['A close inner circle', 'People who share my interests']);
 
   // Q2: What does a great friendship feel like to you? (Up to 4)
   const [q2Feelings, setQ2Feelings] = useState<string[]>(['We can talk about anything', 'We can be ourselves without performing']);
 
-  // Q3: Social Energy (Quiet & intimate <-> Big & energetic + Preferred group size)
-  const [q3Energy, setQ3Energy] = useState<number>(0.3); // Quiet spectrum
+  // Q3: Social Energy (Quiet & intimate <-> Big & energetic spectrum + Preferred group size)
+  const [q3Energy, setQ3Energy] = useState<number>(0.3);
   const [q3GroupSize, setQ3GroupSize] = useState<string>('3-4 people');
 
   // Q4: How do you naturally stay connected with friends? (All that apply)
@@ -60,10 +64,32 @@ export default function OnboardingPage() {
     { key: 'qualities', label: 'Desired Traits', strength: q8Qualities.length / 5, confidence, sentence: `Drawn to ${q8Qualities.slice(0, 3).join(', ')} people.` },
   ];
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUserPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleNext = () => {
+    if (step === 1 && !userName.trim()) {
+      alert('Please enter your name to personalize your Tribal Pass.');
+      return;
+    }
+
     if (step < 8) {
       setStep(step + 1);
     } else {
+      // Save Custom User Profile
+      setUserProfile({
+        displayName: userName.trim() || 'You',
+        avatarUrl: userPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        passCompletionPct: 100,
+      });
       setIsRevealing(true);
     }
   };
@@ -93,28 +119,24 @@ export default function OnboardingPage() {
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center px-4"
         >
-          <div className="mb-3 rounded-full bg-[#2E5345]/15 p-3 text-[#2E5345]">
+          <div className="mb-3 rounded-full bg-[#1C3A27]/15 p-3 text-[#1C3A27]">
             <Sparkles className="h-7 w-7" />
           </div>
 
           <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-            Tribal Pass Onboarding Complete · 100% Baseline Active
+            Tribal Pass Active · 100% Complete
           </span>
 
-          <h2 className="mt-1 text-[28px] font-extrabold tracking-tight text-[#3D2E24]">
-            Your Tribal Pass Baseline is Live
+          <h2 className="mt-1 text-[28px] font-extrabold tracking-tight text-[#1C2B22]">
+            Welcome, {userName || 'Friend'}
           </h2>
 
-          <p className="mt-2 max-w-[340px] text-[14px] font-medium leading-[21px] text-[#4A3B30]">
-            We've learned your baseline rhythm, outings, and relational style. 6 people look like a strong fit!
+          <p className="mt-2 max-w-[340px] text-[14px] font-medium leading-[21px] text-[#3A4D42]">
+            Your custom Tribal Pass is live. We've learned your baseline rhythm, outings, and relational style. 6 people look like a strong fit!
           </p>
 
           <div className="my-5">
             <Bloom dimensions={bloomDimensions} size={210} interactive={true} />
-          </div>
-
-          <div className="mb-4 rounded-[20px] border border-[#2E5345]/20 bg-[#E1E8E3] p-3 text-[12px] font-medium text-[#2E5345]">
-            💡 You can deepen your profile progressively anytime from your profile screen to refine recommendations.
           </div>
 
           <Button
@@ -123,7 +145,7 @@ export default function OnboardingPage() {
             onClick={() => router.push('/home')}
             className="w-full max-w-[280px]"
           >
-            See My Matches & Outings <ArrowRight className="ml-2 h-4 w-4" />
+            Explore My Matches & Outings <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </motion.div>
       </IllustratedGround>
@@ -134,13 +156,13 @@ export default function OnboardingPage() {
     <IllustratedGround variant="paper" className="min-h-screen pb-16">
       {/* Header with Tribal Pass Completion Status */}
       <header className="flex flex-col items-center pt-2">
-        <div className="flex w-full items-center justify-between text-[12px] font-bold text-[#7A6B5F]">
+        <div className="flex w-full items-center justify-between text-[12px] font-bold text-[#6E7F75]">
           <span>Part I: Quick Onboarding</span>
           <span className="text-[#C85A32]">{passCompletionPct}% Complete</span>
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EFE5D8]">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#EBDDD0]">
           <div
             className="h-full rounded-full bg-[#C85A32] transition-all duration-300"
             style={{ width: `${passCompletionPct}%` }}
@@ -162,39 +184,81 @@ export default function OnboardingPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="rounded-[28px] border border-[#3D2E24]/08 bg-[#FFFDF9] p-5.5 shadow-[0_8px_24px_-6px_rgba(61,46,36,0.06)]"
+            className="rounded-[28px] border border-[#1C3A27]/08 bg-[#FFFDF9] p-5.5 shadow-[0_8px_24px_-6px_rgba(28,58,39,0.06)]"
           >
-            {/* Q1: WHAT ARE YOU HOPING TO FIND HERE? */}
+            {/* STEP 1: NAME, PHOTO & FRIENDSHIP INTENT */}
             {step === 1 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 1 of 8 — Friendship Intent
+                  Step 1 of 8 — Profile & Intent
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
-                  What are you hoping to find here?
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
+                  Who are you & what are you hoping to find?
                 </h3>
-                <p className="mt-1 text-[12px] font-medium text-[#7A6B5F]">Choose up to 3.</p>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {[
-                    'A close inner circle',
-                    'New people to hang out with',
-                    'Activity buddies',
-                    'Deep, meaningful friendships',
-                    'People who share my interests',
-                    'Adventure / travel friends',
-                    'Creative or intellectual friends',
-                    'Professional / founder friends',
-                    'A sense of community',
-                    "I'm open - surprise me",
-                  ].map((option) => (
-                    <Chip
-                      key={option}
-                      label={option}
-                      selected={q1Finding.includes(option)}
-                      onClick={() => toggleChip(q1Finding, option, setQ1Finding, 3)}
+                <div className="mt-4 flex flex-col gap-4">
+                  {/* Name Input */}
+                  <div>
+                    <label className="text-[13px] font-bold text-[#1C2B22]">Your Name / Display Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Amirah"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-[14px] border border-[#1C3A27]/15 bg-[#F6F1EA] px-4 text-[14px] font-medium text-[#1C2B22] outline-none transition-all focus:border-[#C85A32]"
                     />
-                  ))}
+                  </div>
+
+                  {/* Optional Photo Upload */}
+                  <div>
+                    <label className="text-[13px] font-bold text-[#1C2B22]">Profile Photo (Optional)</label>
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-[#1C3A27]/20 bg-[#EBDDD0]">
+                        {userPhoto ? (
+                          <img src={userPhoto} alt="Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[#6E7F75]">
+                            <User className="h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+
+                      <label className="cursor-pointer rounded-[14px] border border-[#1C3A27]/15 bg-[#F6F1EA] px-4 py-2 text-[13px] font-bold text-[#1C2B22] hover:bg-[#EBDDD0]">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                        {userPhoto ? 'Change Photo' : 'Upload Photo'}
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Intent Chips */}
+                  <div>
+                    <label className="text-[13px] font-bold text-[#1C2B22]">What are you hoping to find here? (Up to 3)</label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {[
+                        'A close inner circle',
+                        'New people to hang out with',
+                        'Activity buddies',
+                        'Deep, meaningful friendships',
+                        'People who share my interests',
+                        'Adventure / travel friends',
+                        'Creative or intellectual friends',
+                        "I'm open - surprise me",
+                      ].map((option) => (
+                        <Chip
+                          key={option}
+                          label={option}
+                          selected={q1Finding.includes(option)}
+                          onClick={() => toggleChip(q1Finding, option, setQ1Finding, 3)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -203,12 +267,12 @@ export default function OnboardingPage() {
             {step === 2 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 2 of 8 — Relational Feeling
+                  Step 2 of 8 — Relational Feeling
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   What does a great friendship feel like to you?
                 </h3>
-                <p className="mt-1 text-[12px] font-medium text-[#7A6B5F]">Choose up to 4.</p>
+                <p className="mt-1 text-[12px] font-medium text-[#6E7F75]">Choose up to 4.</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[
@@ -220,7 +284,6 @@ export default function OnboardingPage() {
                     "We're there when it matters",
                     "We don't need constant contact to stay close",
                     'We share everyday life',
-                    'We motivate each other',
                     'Comfortable silence is enough',
                   ].map((option) => (
                     <Chip
@@ -238,15 +301,15 @@ export default function OnboardingPage() {
             {step === 3 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 3 of 8 — Social Energy
+                  Step 3 of 8 — Social Energy
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   What kind of social energy feels most like you?
                 </h3>
 
                 <div className="mt-5 flex flex-col gap-4">
                   <div>
-                    <div className="flex items-center justify-between text-[12px] font-bold text-[#4A3B30]">
+                    <div className="flex items-center justify-between text-[12px] font-bold text-[#3A4D42]">
                       <span>Quiet & intimate</span>
                       <span>Big & energetic</span>
                     </div>
@@ -262,7 +325,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div>
-                    <label className="text-[13px] font-bold text-[#3D2E24]">Preferred group size:</label>
+                    <label className="text-[13px] font-bold text-[#1C2B22]">Preferred group size:</label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {['One-on-one', '3-4 people', '5-8 people', 'Bigger groups', 'Depends on the situation'].map((size) => (
                         <Chip
@@ -282,12 +345,12 @@ export default function OnboardingPage() {
             {step === 4 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 4 of 8 — Communication Style
+                  Step 4 of 8 — Communication Style
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   How do you naturally stay connected with friends?
                 </h3>
-                <p className="mt-1 text-[12px] font-medium text-[#7A6B5F]">Choose all that apply.</p>
+                <p className="mt-1 text-[12px] font-medium text-[#6E7F75]">Choose all that apply.</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[
@@ -315,9 +378,9 @@ export default function OnboardingPage() {
             {step === 5 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 5 of 8 — Planning & Rhythm
+                  Step 5 of 8 — Planning & Rhythm
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   How do you like making plans?
                 </h3>
 
@@ -337,7 +400,7 @@ export default function OnboardingPage() {
                         className={`rounded-[16px] p-3 text-left text-[13.5px] font-bold transition-all ${
                           q5PlanningRhythm === mode
                             ? 'bg-[#C85A32] text-[#FFFDF9] shadow-sm'
-                            : 'border border-[#3D2E24]/10 bg-[#FFFDF9] text-[#4A3B30] hover:bg-[#EFE5D8]'
+                            : 'border border-[#1C3A27]/10 bg-[#FFFDF9] text-[#3A4D42] hover:bg-[#EBDDD0]'
                         }`}
                       >
                         {mode}
@@ -346,7 +409,7 @@ export default function OnboardingPage() {
                   </div>
 
                   <div className="mt-2">
-                    <label className="text-[13px] font-bold text-[#3D2E24]">Usual Availability:</label>
+                    <label className="text-[13px] font-bold text-[#1C2B22]">Usual Availability:</label>
                     <RhythmStrip userAvailability={q5Availability} interactive={true} onToggleSlot={toggleSlot} className="mt-2" />
                   </div>
                 </div>
@@ -357,12 +420,11 @@ export default function OnboardingPage() {
             {step === 6 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 6 of 8 — Outing Preferences
+                  Step 6 of 8 — Outing Preferences
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   Pick the outings you'd actually say yes to
                 </h3>
-                <p className="mt-1 text-[12px] font-medium text-[#7A6B5F]">Pick at least 5.</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[
@@ -378,16 +440,9 @@ export default function OnboardingPage() {
                     'Workshops',
                     'Nightlife',
                     'Picnics',
-                    'Beach days',
-                    'Volunteering',
-                    'Coworking',
                     'Bookshops',
-                    'Photography',
                     'Food hunting',
                     'Wellness',
-                    'Gaming',
-                    'Travel',
-                    'Trying something completely new',
                   ].map((outing) => (
                     <Chip
                       key={outing}
@@ -404,9 +459,9 @@ export default function OnboardingPage() {
             {step === 7 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 7 of 8 — Emotional Pacing
+                  Step 7 of 8 — Emotional Pacing
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   When getting to know someone, which sounds most like you?
                 </h3>
 
@@ -425,7 +480,7 @@ export default function OnboardingPage() {
                       className={`rounded-[16px] p-3 text-left text-[13.5px] font-bold transition-all ${
                         q7EmotionalPacing === pace
                           ? 'bg-[#C85A32] text-[#FFFDF9] shadow-sm'
-                          : 'border border-[#3D2E24]/10 bg-[#FFFDF9] text-[#4A3B30] hover:bg-[#EFE5D8]'
+                          : 'border border-[#1C3A27]/10 bg-[#FFFDF9] text-[#3A4D42] hover:bg-[#EBDDD0]'
                       }`}
                     >
                       {pace}
@@ -439,12 +494,11 @@ export default function OnboardingPage() {
             {step === 8 && (
               <div>
                 <span className="text-[11px] font-bold tracking-wider text-[#C85A32] uppercase">
-                  Question 8 of 8 — Desired Qualities
+                  Step 8 of 8 — Desired Qualities
                 </span>
-                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#3D2E24]">
+                <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-[#1C2B22]">
                   Who would you be excited to meet right now?
                 </h3>
-                <p className="mt-1 text-[12px] font-medium text-[#7A6B5F]">Pick up to 5 qualities.</p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {[
@@ -457,11 +511,7 @@ export default function OnboardingPage() {
                     'Creative',
                     'Grounded',
                     'Spontaneous',
-                    'Emotionally open',
-                    'Intellectual',
-                    'Easygoing',
                     'Reliable',
-                    'Energetic',
                     'Independent',
                     'Community-minded',
                   ].map((quality) => (
@@ -479,7 +529,7 @@ export default function OnboardingPage() {
             {/* Next Button */}
             <div className="mt-7 flex justify-end">
               <Button variant="primary" size="md" onClick={handleNext}>
-                {step === 8 ? 'Activate Tribal Pass' : 'Next Question'}
+                {step === 8 ? 'Activate My Tribal Pass' : 'Next Step'}
               </Button>
             </div>
           </motion.div>

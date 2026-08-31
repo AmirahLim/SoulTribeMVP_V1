@@ -1,184 +1,122 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import {
-  IllustratedGround,
-  Bloom,
-  ResonanceRead,
-  SocialDnaBars,
-  Button,
-} from '@soul-tribe/ui';
+import { IllustratedGround, Bloom, ResonanceRead, PitchCard, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, Compass, Check, Users } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Users, Calendar, MapPin } from 'lucide-react';
+import { SYNTHETIC_PROFILES } from '../../../supabase/seed/seed';
+import { generateMatchExplanation } from '../../../packages/core/explain/generator';
 
 export default function LandingPage() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const sampleBloomDimensions = [
-    { key: 'p', label: 'Personality', strength: 0.8, confidence: 0.9, sentence: 'You recharge in quiet spaces and go deep quickly.' },
-    { key: 'c', label: 'Communication', strength: 0.7, confidence: 0.85, sentence: 'You reply within a day and prefer intentional messages.' },
-    { key: 'r', label: 'Rhythm', strength: 0.6, confidence: 0.8, sentence: 'You prefer plans made a few days ahead on weekends.' },
-    { key: 'i', label: 'Intent', strength: 0.9, confidence: 0.95, sentence: 'You are looking for a small, regular circle of close friends.' },
-    { key: 'e', label: 'Emotional', strength: 0.75, confidence: 0.9, sentence: 'You open up gradually and stay loyal once comfortable.' },
-    { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: 'You love pottery, specialty coffee, and analog film.' },
-    { key: 'v', label: 'Values', strength: 0.7, confidence: 0.8, sentence: 'Personal growth and creativity matter deeply to you.' },
-    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: 'You enjoy quiet dining and $20–50 low-key meetups.' },
-  ];
-
-  const sampleCategories = [
-    { key: 'personality', name: 'Personality', score: 80, filledBlocks: 8 },
-    { key: 'communication', name: 'Communication', score: 90, filledBlocks: 9 },
-    { key: 'rhythm', name: 'Social Rhythm', score: 70, filledBlocks: 7 },
-    { key: 'intent', name: 'Friendship Intent', score: 100, filledBlocks: 10 },
-    { key: 'emotional', name: 'Emotional Style', score: 80, filledBlocks: 8 },
-    { key: 'interests', name: 'Interests', score: 60, filledBlocks: 6 },
-    { key: 'values', name: 'Values', score: 90, filledBlocks: 9 },
-    { key: 'lifestyle', name: 'Lifestyle', score: 70, filledBlocks: 7 },
-  ];
-
-  const handleWaitlist = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) setSubmitted(true);
-  };
+  const p1 = SYNTHETIC_PROFILES[0];
+  const p2 = SYNTHETIC_PROFILES[1];
+  const sampleExplanation = generateMatchExplanation(p1, p2);
 
   return (
-    <IllustratedGround variant="paper" className="min-h-screen pb-16">
-      {/* Botanical Header */}
-      <header className="flex items-center justify-between py-4">
+    <IllustratedGround variant="paper" className="min-h-screen pb-20">
+      {/* OPAL HERO HEADER */}
+      <header className="flex items-center justify-between pt-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C85A32] text-[#FFFDF9] shadow-sm">
-            <Compass className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1C3A27] text-[#FFFDF9]">
+            <Sparkles className="h-4.5 w-4.5" />
           </div>
-          <h1
-            className="text-[26px] font-semibold tracking-tight text-[#3D2E24]"
-            style={{ fontFamily: 'var(--font-fraunces), serif' }}
-          >
+          <span className="text-[20px] font-extrabold tracking-tight text-[#1C2B22]">
             Soul Tribe
-          </h1>
+          </span>
         </div>
+
         <Link href="/onboarding">
-          <Button variant="secondary" size="sm">
+          <Button variant="primary" size="sm">
             Start Pass
           </Button>
         </Link>
       </header>
 
-      {/* Overlapping Mobile Device Layering Hero (Ref: 99 Peaks & Sonar) */}
-      <section className="mt-4 flex flex-col items-center text-center">
-        <span className="rounded-[999px] border border-[#2E5345]/20 bg-[#E1E8E3] px-3.5 py-1 text-[11px] font-semibold tracking-wider text-[#2E5345] uppercase shadow-sm">
+      {/* HERO INTRODUCTION */}
+      <motion.section
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="mt-6 flex flex-col items-center text-center"
+      >
+        <span className="rounded-full border border-[#1C3A27]/15 bg-[#E1E8E3] px-3.5 py-1 text-[11px] font-bold tracking-wider text-[#1C3A27] uppercase">
           Friendship-First Social Coordination · Singapore
         </span>
 
-        <h2
-          className="mt-3 text-[40px] font-semibold leading-[44px] tracking-tight text-[#3D2E24]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
-          Six people. <br />
-          One good Saturday. <br />
+        <h1 className="mt-4 text-[34px] font-extrabold tracking-tight text-[#1C2B22] leading-[40px]">
+          Six people.<br />One good Saturday.<br />
           <span className="text-[#C85A32]">Start there.</span>
-        </h2>
+        </h1>
 
-        <p className="mt-2.5 max-w-[340px] text-[15px] leading-[23px] text-[#4A3B30]">
+        <p className="mt-3 max-w-[320px] text-[15px] font-medium leading-[22px] text-[#3A4D42]">
           Not a dating app, not an endless feed. A coordination layer that surfaces the right handful of people.
         </p>
 
-        <Link href="/onboarding" className="mt-5 w-full max-w-[280px]">
-          <Button variant="primary" size="lg" className="w-full">
-            Begin 8-Category Social DNA Pass <ArrowRight className="ml-2 h-4 w-4" />
+        <Link href="/onboarding" className="mt-6 w-full max-w-[320px]">
+          <Button variant="primary" size="lg" className="w-full shadow-md">
+            Begin 8-Question Social DNA Pass <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>
-      </section>
+      </motion.section>
 
-      {/* Layered Overlapping Phone Mockup Displays (Ref: 99 Peaks & Sonar) */}
-      <section className="relative my-10 flex items-center justify-center">
-        {/* Rear Card (Angled Left -3deg) */}
-        <motion.div
-          initial={{ rotate: -6, y: 20, opacity: 0 }}
-          animate={{ rotate: -3, y: 0, opacity: 0.9 }}
-          transition={{ duration: 0.6 }}
-          className="absolute -left-3 top-2 w-[240px] rounded-[32px] border border-[#3D2E24]/10 bg-[#EBDDD0] p-4 shadow-md"
-        >
-          <div className="text-[11px] font-semibold text-[#7A6B5F] uppercase">Social DNA Map</div>
-          <div className="my-2">
-            <Bloom dimensions={sampleBloomDimensions} size={110} interactive={false} />
-          </div>
-        </motion.div>
+      {/* SAMPLE MATCH CARD PREVIEW */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="mt-8 flex flex-col gap-4"
+      >
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[12px] font-bold tracking-wider text-[#6E7F75] uppercase">
+            Sample Tribal Pass Match
+          </span>
+          <span className="text-[12px] font-bold text-[#1C3A27]">
+            Strong Fit
+          </span>
+        </div>
 
-        {/* Front Featured Card (Angled Right 2deg) */}
-        <motion.div
-          initial={{ rotate: 4, scale: 0.95, opacity: 0 }}
-          animate={{ rotate: 1.5, scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="relative z-20 w-[290px] rounded-[32px] border border-[#3D2E24]/12 bg-[#FFFDF9] p-5 shadow-[0_16px_36px_-10px_rgba(61,46,36,0.22)]"
-        >
-          <div className="flex items-center gap-2.5">
+        {/* CANDIDATE CARD */}
+        <div className="rounded-[28px] border border-[#1C3A27]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(28,58,39,0.06)]">
+          <div className="flex items-center gap-3">
             <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-              alt="Priya"
-              className="h-12 w-12 rounded-full object-cover shadow-sm ring-2 ring-[#C85A32]"
+              src={p2.profile.avatar_url || ''}
+              alt={p2.profile.display_name}
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-[#C85A32]"
             />
             <div>
-              <h3 className="text-[17px] font-semibold text-[#3D2E24]">Priya Sharma</h3>
-              <p className="text-[12px] text-[#7A6B5F]">Tiong Bahru · Singapore</p>
+              <h3 className="text-[18px] font-extrabold text-[#1C2B22]">
+                {p2.profile.display_name}
+              </h3>
+              <p className="text-[12px] font-medium text-[#6E7F75]">
+                {p2.profile.home_area} · Singapore
+              </p>
             </div>
           </div>
 
-          <div className="mt-3">
-            <SocialDnaBars categories={sampleCategories} className="p-3" />
+          <div className="mt-3.5">
+            <ResonanceRead
+              clickText={sampleExplanation.click_text}
+              rubText={sampleExplanation.rub_text}
+            />
           </div>
-        </motion.div>
-      </section>
+        </div>
+      </motion.section>
 
-      {/* SPECIMEN RESONANCE READ CARD WITH MANDATORY FRICTION */}
-      <section className="mt-6">
-        <h3
-          className="mb-3 text-[22px] font-semibold text-[#3D2E24]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
-          Sample Resonance Read
+      {/* Singapore Cohort CTA */}
+      <section className="mt-8 rounded-[28px] border border-[#1C3A27]/10 bg-[#EBDDD0] p-6 text-center shadow-sm">
+        <h3 className="text-[20px] font-extrabold text-[#1C2B22]">
+          Join the Singapore Test Cohort
         </h3>
-        <ResonanceRead
-          clickText="You both want a small circle of close friendships rather than a big social network, and neither of you expects constant texting — but you both want conversations that go somewhere when you do meet."
-          frictionText="Maya is considerably more spontaneous than you and enjoys larger groups. You tend to prefer plans in advance and groups of three or four."
-        />
-      </section>
-
-      {/* INLINE SIGN-IN / WAITLIST FORM */}
-      <section className="mt-10 rounded-[32px] border border-[#3D2E24]/10 bg-[#FFFDF9] p-6 text-center shadow-[0_4px_16px_rgba(61,46,36,0.06)]">
-        <h3
-          className="text-[26px] font-semibold text-[#3D2E24]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
-          Join the 30-Person Singapore Test Cohort
-        </h3>
-        <p className="mt-1 text-[14px] text-[#4A3B30]">
+        <p className="mt-1 text-[13.5px] font-medium text-[#3A4D42]">
           Experience coordination built for adults in Singapore.
         </p>
 
-        {!submitted ? (
-          <form onSubmit={handleWaitlist} className="mt-5 flex flex-col gap-3">
-            <input
-              type="email"
-              required
-              placeholder="Enter your email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 w-full rounded-[16px] border border-[#3D2E24]/15 bg-[#F5ECE3] px-4 text-[15px] text-[#3D2E24] outline-none transition-all focus:border-[#C85A32]"
-            />
-            <Link href="/onboarding" className="w-full">
-              <Button type="button" variant="primary" size="lg" className="w-full">
-                Begin 8-Category Social DNA <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </form>
-        ) : (
-          <div className="mt-5 flex items-center justify-center gap-2 text-[#2E5345]">
-            <Check className="h-5 w-5" />
-            <span className="font-medium">Waitlist joined! Redirecting to onboarding...</span>
-          </div>
-        )}
+        <Link href="/onboarding" className="mt-4 block">
+          <Button variant="primary" size="md" className="w-full">
+            Begin 8-Question Social DNA <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
       </section>
     </IllustratedGround>
   );
