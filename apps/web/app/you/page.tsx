@@ -19,7 +19,7 @@ export default function ProfilePage() {
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     homeArea: 'Tiong Bahru',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 85,
+    passCompletionPct: 10,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -64,26 +64,29 @@ export default function ProfilePage() {
   const deep = profile.deepProfile || {};
   const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
 
+  const completedCats = profile.completedCategoryNums || [];
+  const isCatDone = (num: number) => completedCats.includes(num);
+
   const bloomDimensions = [
-    { key: 'p', label: 'Personality', strength: 0.8, confidence: 0.9, sentence: deep.selfDescriptionOpen || 'Curious, reflective, and independent.' },
-    { key: 'c', label: 'Communication', strength: 0.7, confidence: 0.85, sentence: deep.messagingStyleOpen || 'Prefers intentional messages & voice notes.' },
-    { key: 'r', label: 'Rhythm', strength: 0.6, confidence: 0.8, sentence: deep.idealSaturdayOpen || 'Slow mornings, afternoons for exploring.' },
-    { key: 'i', label: 'Intent', strength: 0.9, confidence: 0.95, sentence: deep.realFriendOpen || 'Looking for a small, regular inner circle.' },
-    { key: 'e', label: 'Emotional', strength: 0.75, confidence: 0.9, sentence: deep.supportOpen || 'Listen first. Advice once understood.' },
-    { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: deep.talkForHoursOpen || 'Art, ceramics, psychology, travel.' },
-    { key: 'v', label: 'Values', strength: 0.7, confidence: 0.8, sentence: deep.respectPeopleOpen || 'Respects people who change their mind.' },
-    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: deep.instantYesOutingOpen || 'Enjoys low-key coffee and craft meetups.' },
+    { key: 'p', label: 'Personality', strength: isCatDone(5) ? 0.85 : 0, confidence: isCatDone(5) ? 0.9 : 0, sentence: isCatDone(5) ? (deep.selfDescriptionOpen || 'Curious, reflective, and independent.') : 'Unlock by completing Section 5 in Deeper Pass' },
+    { key: 'c', label: 'Communication', strength: isCatDone(2) ? 0.9 : 0, confidence: isCatDone(2) ? 0.95 : 0, sentence: isCatDone(2) ? (deep.messagingStyleOpen || 'Prefers intentional messages & voice notes.') : 'Unlock by completing Section 2 in Deeper Pass' },
+    { key: 'r', label: 'Rhythm', strength: isCatDone(4) ? 0.75 : 0, confidence: isCatDone(4) ? 0.85 : 0, sentence: isCatDone(4) ? (deep.idealSaturdayOpen || 'Slow mornings, afternoons for exploring.') : 'Unlock by completing Section 4 in Deeper Pass' },
+    { key: 'i', label: 'Intent', strength: isCatDone(3) ? 0.95 : 0, confidence: isCatDone(3) ? 0.95 : 0, sentence: isCatDone(3) ? (deep.realFriendOpen || 'Looking for a small, regular inner circle.') : 'Unlock by completing Section 3 in Deeper Pass' },
+    { key: 'e', label: 'Emotional', strength: isCatDone(9) ? 0.8 : 0, confidence: isCatDone(9) ? 0.9 : 0, sentence: isCatDone(9) ? (deep.likeMeIfPrompt || 'Listen first. Advice once understood.') : 'Unlock by completing Section 9 in Deeper Pass' },
+    { key: 'int', label: 'Interests', strength: isCatDone(7) ? 0.85 : 0, confidence: isCatDone(7) ? 0.85 : 0, sentence: isCatDone(7) ? (deep.talkForHoursOpen || 'Art, ceramics, psychology, travel.') : 'Unlock by completing Section 7 in Deeper Pass' },
+    { key: 'v', label: 'Values', strength: isCatDone(6) ? 0.9 : 0, confidence: isCatDone(6) ? 0.9 : 0, sentence: isCatDone(6) ? (deep.respectPeopleOpen || 'Respects people who change their mind.') : 'Unlock by completing Section 6 in Deeper Pass' },
+    { key: 'l', label: 'Lifestyle', strength: isCatDone(8) ? 0.8 : 0, confidence: isCatDone(8) ? 0.8 : 0, sentence: isCatDone(8) ? (deep.instantYesOutingOpen || 'Enjoys low-key coffee and craft meetups.') : 'Unlock by completing Section 8 in Deeper Pass' },
   ];
 
   const socialDnaCategories = [
-    { key: 'personality', name: 'Personality', score: 80 },
-    { key: 'communication', name: 'Communication', score: 90 },
-    { key: 'rhythm', name: 'Social Rhythm', score: 70 },
-    { key: 'intent', name: 'Friendship Intent', score: 100 },
-    { key: 'emotional', name: 'Emotional Style', score: 80 },
-    { key: 'interests', name: 'Interests', score: 65 },
-    { key: 'values', name: 'Values', score: 90 },
-    { key: 'lifestyle', name: 'Lifestyle', score: 75 },
+    { key: 'personality', name: 'Personality', score: isCatDone(5) ? 85 : 0, catNum: 5 },
+    { key: 'communication', name: 'Communication', score: isCatDone(2) ? 90 : 0, catNum: 2 },
+    { key: 'rhythm', name: 'Social Rhythm', score: isCatDone(4) ? 75 : 0, catNum: 4 },
+    { key: 'intent', name: 'Friendship Intent', score: isCatDone(3) ? 95 : 0, catNum: 3 },
+    { key: 'emotional', name: 'Emotional Style', score: isCatDone(9) ? 80 : 0, catNum: 9 },
+    { key: 'interests', name: 'Interests', score: isCatDone(7) ? 85 : 0, catNum: 7 },
+    { key: 'values', name: 'Values', score: isCatDone(6) ? 90 : 0, catNum: 6 },
+    { key: 'lifestyle', name: 'Lifestyle', score: isCatDone(8) ? 80 : 0, catNum: 8 },
   ];
 
   const coreValuesList = (deep.coreValues || 'Curiosity · Freedom · Growth · Community')
@@ -212,10 +215,10 @@ export default function ProfilePage() {
             Social DNA Breakdown
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">
-            Trait vectors calculated from your questionnaire responses.
+            Trait vectors calculated dynamically from your completed questionnaire sections.
           </p>
 
-          <div className="mt-4 rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="mt-4">
             <SocialDnaBars categories={socialDnaCategories} />
           </div>
         </section>
