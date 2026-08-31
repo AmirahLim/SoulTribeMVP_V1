@@ -91,9 +91,9 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Tiong Bahru',
   bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-  passCompletionPct: 82,
+  passCompletionPct: 10,
   hasCompletedOnboarding: true,
-  completedCategoryNums: [1, 2, 3, 4, 5, 6, 7, 8],
+  completedCategoryNums: [],
   deepProfile: {
     groupSize: '3–4 people',
     socialVibe: 'Intimate · Calm',
@@ -165,7 +165,9 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
-      const completedCats = parsed.completedCategoryNums || DEFAULT_USER_PROFILE.completedCategoryNums || [];
+      const completedCats = parsed.completedCategoryNums !== undefined
+        ? parsed.completedCategoryNums
+        : [];
       const hasOnboarded = parsed.hasCompletedOnboarding ?? true;
       const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
 

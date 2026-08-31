@@ -94,7 +94,7 @@ export default function DeeperTribalPassPage() {
           <div className="mt-3 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Tribal Pass · {passPct}% Complete (+9% per section)
+                Tribal Pass · {passPct}% Complete
               </span>
               <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
                 Deeper Tribal Pass
@@ -146,13 +146,13 @@ export default function DeeperTribalPassPage() {
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
               <div>
                 <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  Section {currentCat.num} of 10 · (+9% Tribal Pass)
+                  Section {currentCat.num} of 10
                 </span>
                 <h2 className="text-[22px] font-extrabold text-white flex items-center gap-2">
                   {currentCat.name}
                   {completedCats.includes(currentCat.num) && (
                     <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                      Completed (+9%)
+                      Completed
                     </span>
                   )}
                 </h2>
@@ -543,7 +543,7 @@ export default function DeeperTribalPassPage() {
                     setActiveCategoryNum((prev) => prev + 1);
                   }}
                 >
-                  Save Section {activeCategoryNum} (+9%) & Next →
+                  Save Section {activeCategoryNum} & Next →
                 </Button>
               ) : (
                 <Button
