@@ -56,9 +56,13 @@ function PitchComposerContent() {
     setCreated(true);
   };
 
+  const cohesionScore = (cohesionResult.cohesion * 100).toFixed(0);
+  const isFeasible = cohesionResult.feasibility;
+  const warningsList = cohesionResult.warnings || [];
+
   return (
     <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
-      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTSY GOLDEN-HOUR MOTION PHOTO (INSTEAD OF SOLID GREEN) */}
+      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTSY GOLDEN-HOUR MOTION PHOTO */}
       <img
         src="/user-outing-bg.jpg"
         alt="Outing Canvas Background"
@@ -210,30 +214,30 @@ function PitchComposerContent() {
                 <div>
                   <span className="text-[11px] font-bold text-white/70 uppercase">Cohesion Score</span>
                   <p className="text-[16px] font-bold text-white">
-                    {(cohesionResult.cohesion_score * 100).toFixed(0)} / 100
+                    {cohesionScore} / 100
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[11px] font-bold text-white/70 uppercase">Friction Level</span>
+                  <span className="text-[11px] font-bold text-white/70 uppercase">Feasibility</span>
                   <p className="text-[14px] font-bold text-white capitalize">
-                    {cohesionResult.friction_level}
+                    {isFeasible ? 'High Alignment' : 'Schedule Friction'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-3">
                 <p className="text-[13px] text-white/90 leading-relaxed">
-                  {cohesionResult.cohesion_summary}
+                  Calculated based on social energy balance, shared weekend availability, and communication style resonance across all {selectedGuests.length + 1} group members.
                 </p>
               </div>
 
-              {cohesionResult.friction_warnings.length > 0 && (
+              {warningsList.length > 0 && (
                 <div className="mt-3 flex items-start gap-2 rounded-[14px] border border-white/20 bg-black/60 p-3 text-[12.5px] text-white">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                   <div>
-                    {cohesionResult.friction_warnings.map((w, idx) => (
-                      <p key={idx}>{w}</p>
+                    {warningsList.map((w, idx) => (
+                      <p key={idx}>{String(w)}</p>
                     ))}
                   </div>
                 </div>
