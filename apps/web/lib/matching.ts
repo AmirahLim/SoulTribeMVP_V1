@@ -7,9 +7,9 @@ import {
   recordEvent,
 } from '@soul-tribe/core';
 import type { ProfileVector, MatchContext } from '@soul-tribe/core';
-import type { UserProfileData } from './userStore.ts';
-import { toProfileVector } from './profileAdapter.ts';
-import { initTelemetry } from './telemetryInit.ts';
+import type { UserProfileData } from './userStore';
+import { toProfileVector } from './profileAdapter';
+import { initTelemetry } from './telemetryInit';
 
 /** Swappable data source: DEMO_PROFILES today, Supabase after the backend lands. */
 export interface CandidateSource {
