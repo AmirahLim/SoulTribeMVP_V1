@@ -18,14 +18,9 @@ export interface SocialDnaBarsProps {
 export function SocialDnaBars({ categories, title = 'Your Tribal Print', className = '' }: SocialDnaBarsProps) {
   return (
     <div className={`flex flex-col gap-4 rounded-[28px] border border-emerald-500/30 bg-[#112519]/90 p-5 shadow-2xl backdrop-blur-xl ${className}`}>
-      <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
-        <div>
-          <h3 className="text-[18px] font-extrabold text-[#FFFDF9] tracking-tight">{title}</h3>
-          <p className="text-[11.5px] text-emerald-200/80 mt-0.5">Calculated live from completed Deeper Tribal Pass sections</p>
-        </div>
-        <span className="rounded-full bg-emerald-900/60 border border-emerald-400/40 px-3 py-1 text-[11px] font-bold text-emerald-100">
-          Live Vectors
-        </span>
+      <div className="border-b border-emerald-500/20 pb-3">
+        <h3 className="text-[18px] font-extrabold text-[#FFFDF9] tracking-tight">{title}</h3>
+        <p className="text-[11.5px] text-emerald-200/80 mt-0.5">Calculated live from completed Deeper Tribal Pass sections</p>
       </div>
 
       <div className="flex flex-col gap-3.5 mt-1">
