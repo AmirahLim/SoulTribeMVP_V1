@@ -52,6 +52,7 @@ export default function PersonDetailPage() {
         rubText: rankedMatch.rubText,
         fitLabel: rankedMatch.fitLabel,
         rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
+        interests: fallbackPerson?.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
       }
     : fallbackPerson;
 
@@ -268,7 +269,7 @@ export default function PersonDetailPage() {
             <div className="mt-4 pt-3 border-t border-white/15">
               <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
               <div className="mt-2 flex flex-wrap gap-2">
-                {foundPerson.interests.map((interest, idx) => (
+                {(foundPerson.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops']).map((interest, idx) => (
                   <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
                     <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
                   </span>
