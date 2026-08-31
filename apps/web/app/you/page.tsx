@@ -6,9 +6,12 @@ import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2
 } from 'lucide-react';
-import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
+import {
+  getUserProfile, setUserProfile, UserProfileData,
+  STANDING_LEVELS, calculateTribeStanding, StandingLevel
+} from '../../lib/userStore';
 
 export default function ProfilePage() {
   const [profile, setProfileState] = useState<UserProfileData>({
@@ -20,6 +23,7 @@ export default function ProfilePage() {
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isStandingGuideOpen, setIsStandingGuideOpen] = useState(false);
   const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -58,6 +62,7 @@ export default function ProfilePage() {
   };
 
   const deep = profile.deepProfile || {};
+  const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
 
   const bloomDimensions = [
     { key: 'p', label: 'Personality', strength: 0.8, confidence: 0.9, sentence: deep.selfDescriptionOpen || 'Curious, reflective, and independent.' },
@@ -134,12 +139,40 @@ export default function ProfilePage() {
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
               Tribe Standing
             </span>
-            <span className="text-[12px] font-semibold text-white">
-              Good Citizen
-            </span>
+            <button
+              type="button"
+              onClick={() => setIsStandingGuideOpen(true)}
+              className="flex items-center gap-1 text-[11.5px] font-semibold text-white/80 hover:text-white underline"
+            >
+              <Info className="h-3.5 w-3.5" /> How Standing Works
+            </button>
           </div>
 
-          <p className="mt-2 text-[14px] leading-relaxed text-white/90">
+          {/* Current Status Badge Display */}
+          <div className="mt-3 flex items-center justify-between rounded-[20px] border border-white/20 bg-black/60 p-3.5 shadow-xl backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="text-[24px] leading-none">{currentStanding.icon}</div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[15px] font-extrabold text-white">{currentStanding.label}</span>
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase ${currentStanding.badgeColor}`}>
+                    Active Level
+                  </span>
+                </div>
+                <p className="text-[12px] text-white/80">{currentStanding.meaning}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsStandingGuideOpen(true)}
+              className="rounded-full border border-white/20 bg-white/10 p-2 text-white hover:bg-white/20"
+            >
+              <Award className="h-4 w-4" />
+            </button>
+          </div>
+
+          <p className="mt-3 text-[13.5px] leading-relaxed text-white/90">
             {profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
           </p>
 
@@ -592,6 +625,78 @@ export default function ProfilePage() {
             </div>
           </motion.div>
         </section>
+
+        {/* TRIBE STANDING GUIDE MODAL */}
+        {isStandingGuideOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+            <div className="relative w-full max-w-[420px] max-h-[85vh] overflow-y-auto rounded-[28px] border border-white/20 bg-black/90 p-6 text-white shadow-2xl backdrop-blur-xl scrollbar-none">
+              <div className="flex items-center justify-between pb-4 border-b border-white/15">
+                <div className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-white" />
+                  <h2 className="text-[18px] font-extrabold">Tribe Standing System</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsStandingGuideOpen(false)}
+                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="mt-3 text-[13px] text-white/80 leading-relaxed">
+                Tribe Standing is earned through authentic IRL participation, hosting reliability, and positive community history.
+              </p>
+
+              <div className="mt-5 flex flex-col gap-3">
+                {STANDING_LEVELS.map((level) => {
+                  const isCurrent = level.key === currentStanding.key;
+                  return (
+                    <div
+                      key={level.key}
+                      className={`rounded-[20px] border p-4 transition-all ${
+                        isCurrent
+                          ? 'border-white bg-white/15 shadow-xl ring-1 ring-white/40'
+                          : 'border-white/15 bg-black/50 opacity-80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[22px] leading-none">{level.icon}</span>
+                          <div>
+                            <span className="text-[15px] font-extrabold text-white">{level.label}</span>
+                            {isCurrent && (
+                              <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[9.5px] font-bold text-white uppercase border border-white/30">
+                                Your Current Status
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 flex flex-col gap-1 text-[12.5px]">
+                        <div>
+                          <strong className="text-white/90">What it means:</strong>{' '}
+                          <span className="text-white/80">{level.meaning}</span>
+                        </div>
+                        <div>
+                          <strong className="text-white/90">How it's earned:</strong>{' '}
+                          <span className="text-white/70">{level.howEarned}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-white/15">
+                <Button variant="primary" size="sm" onClick={() => setIsStandingGuideOpen(false)} className="w-full">
+                  Got It
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* EDIT PROFILE SETTINGS MODAL */}
         {isSettingsOpen && (

@@ -48,6 +48,74 @@ export interface DeepProfileAnswers {
   cancellationStance?: string;
 }
 
+export interface StandingLevel {
+  key: string;
+  label: string;
+  meaning: string;
+  howEarned: string;
+  icon: string;
+  badgeColor: string;
+}
+
+export const STANDING_LEVELS: StandingLevel[] = [
+  {
+    key: 'new_here',
+    label: 'New Here',
+    meaning: 'Just joined Soul Tribe',
+    howEarned: 'Account / profile created',
+    icon: '🌱',
+    badgeColor: 'border-white/30 bg-white/10 text-white',
+  },
+  {
+    key: 'explorer',
+    label: 'Explorer',
+    meaning: 'Has started participating IRL',
+    howEarned: 'Attended first outing',
+    icon: '🧭',
+    badgeColor: 'border-sky-400/40 bg-sky-500/10 text-sky-200',
+  },
+  {
+    key: 'regular',
+    label: 'Regular',
+    meaning: 'Consistently participates',
+    howEarned: 'Multiple attended outings over time',
+    icon: '⚡',
+    badgeColor: 'border-amber-400/40 bg-amber-500/10 text-amber-200',
+  },
+  {
+    key: 'connector',
+    label: 'Connector',
+    meaning: 'Actively brings people together',
+    howEarned: 'Hosts outings + people attend',
+    icon: '🤝',
+    badgeColor: 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200',
+  },
+  {
+    key: 'trusted_host',
+    label: 'Trusted Host',
+    meaning: 'Proven reliable at creating good experiences',
+    howEarned: 'Multiple successful outings + strong attendee feedback',
+    icon: '🛡️',
+    badgeColor: 'border-purple-400/40 bg-purple-500/10 text-purple-200',
+  },
+  {
+    key: 'community_builder',
+    label: 'Community Builder',
+    meaning: 'Contributes beyond individual outings',
+    howEarned: 'Repeat hosting, connecting people, contributing to Circles/community',
+    icon: '🏗️',
+    badgeColor: 'border-indigo-400/40 bg-indigo-500/10 text-indigo-200',
+  },
+  {
+    key: 'established',
+    label: 'Established',
+    meaning: 'Long-term, trusted member',
+    howEarned: 'Sustained participation + reliability + positive community history',
+    icon: '👑',
+    badgeColor: 'border-rose-400/40 bg-rose-500/10 text-rose-200',
+  },
+];
+
 export interface UserProfileData {
   version?: number;
   displayName: string;
@@ -57,6 +125,9 @@ export interface UserProfileData {
   passCompletionPct: number;
   hasCompletedOnboarding?: boolean;
   completedCategoryNums?: number[];
+  outingsAttended?: number;
+  outingsHosted?: number;
+  standingKey?: string;
   deepProfile?: DeepProfileAnswers;
 }
 
@@ -91,6 +162,28 @@ export function calculatePassCompletion(hasOnboarded: boolean = true, completedC
   return Math.min(100, pct);
 }
 
+export function calculateTribeStanding(outingsAttended: number = 0, outingsHosted: number = 0): StandingLevel {
+  if (outingsHosted >= 8 || (outingsAttended >= 10 && outingsHosted >= 3)) {
+    return STANDING_LEVELS[6]; // Established
+  }
+  if (outingsHosted >= 5 || (outingsAttended >= 5 && outingsHosted >= 2)) {
+    return STANDING_LEVELS[5]; // Community Builder
+  }
+  if (outingsHosted >= 3) {
+    return STANDING_LEVELS[4]; // Trusted Host
+  }
+  if (outingsHosted >= 1) {
+    return STANDING_LEVELS[3]; // Connector
+  }
+  if (outingsAttended >= 3) {
+    return STANDING_LEVELS[2]; // Regular
+  }
+  if (outingsAttended >= 1) {
+    return STANDING_LEVELS[1]; // Explorer
+  }
+  return STANDING_LEVELS[0]; // New Here
+}
+
 export const DEFAULT_USER_PROFILE: UserProfileData = {
   version: 3,
   displayName: 'Priya Sharma',
@@ -100,6 +193,9 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   passCompletionPct: 10,
   hasCompletedOnboarding: true,
   completedCategoryNums: [],
+  outingsAttended: 3,
+  outingsHosted: 1,
+  standingKey: 'connector',
   deepProfile: {
     groupSize: '3–4 people',
     socialVibe: 'Intimate · Calm',
