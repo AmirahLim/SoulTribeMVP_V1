@@ -157,7 +157,7 @@ export default function LandingPage() {
             </Button>
           </Link>
           <p className="mt-3 text-[12px] text-white/70">
-            Takes ~3 minutes · Strictly confidential vector scoring
+            Takes ~3 minutes
           </p>
         </footer>
       </div>
