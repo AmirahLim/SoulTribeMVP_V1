@@ -68,10 +68,44 @@ export interface SoftGateResult {
   reason?: string;
 }
 
+export const KNOWN_GATE_CODES: Set<string> = new Set([
+  'ACCOUNT_NOT_ACTIVE',
+  'CONFIDENCE_TOO_LOW',
+  'BLOCKED_OR_REPORTED',
+  'AGE_PREFERENCE_MISMATCH',
+  'NO_SHARED_AVAILABILITY_SLOT',
+  'GEOGRAPHY_TOO_FAR',
+  'DEALBREAKER_VIOLATED',
+]);
+
 export function softGate(
   result: MatchResult,
   options?: ColdStartOptions
 ): SoftGateResult {
+  const reasons = result.gate_reasons || [];
+
+  // Fail-closed check: if result.gated is true and gate_reasons is empty, return ineligible
+  if (result.gated && reasons.length === 0) {
+    return {
+      eligible: false,
+      provisional: false,
+      adjustedScore: 0,
+      reason: 'GATED_REASON_UNKNOWN',
+    };
+  }
+
+  // Reject any reason not in the known list of 7 gate codes
+  for (const r of reasons) {
+    if (!KNOWN_GATE_CODES.has(r)) {
+      return {
+        eligible: false,
+        provisional: false,
+        adjustedScore: 0,
+        reason: 'GATED_REASON_UNKNOWN',
+      };
+    }
+  }
+
   const provisionalFloor = options?.provisionalFloor ?? 0.30;
   const confA = result.confidence_a ?? 0;
   const confB = result.confidence_b ?? 0;
@@ -87,8 +121,6 @@ export function softGate(
     };
   }
 
-  // Inspect gate reasons
-  const reasons = result.gate_reasons || [];
   const nonConfidenceReasons = reasons.filter((r) => r !== 'CONFIDENCE_TOO_LOW');
 
   // Any safety/hard gate failure -> stay ineligible

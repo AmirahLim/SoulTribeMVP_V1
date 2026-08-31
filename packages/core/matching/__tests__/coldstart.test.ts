@@ -159,4 +159,21 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     const res = softGate(matchResult);
     assert.strictEqual(res.eligible, false);
   });
+
+  it('9. Gated result with empty gate_reasons fails closed (eligible: false)', () => {
+    const matchResult: MatchResult = {
+      resonance: 0.8,
+      logistics: 0.7,
+      rank_score: 0,
+      gated: true,
+      gate_reasons: [],
+      contributions: {},
+      confidence_a: 0.9,
+      confidence_b: 0.9,
+    };
+
+    const res = softGate(matchResult);
+    assert.strictEqual(res.eligible, false);
+    assert.strictEqual(res.reason, 'GATED_REASON_UNKNOWN');
+  });
 });
