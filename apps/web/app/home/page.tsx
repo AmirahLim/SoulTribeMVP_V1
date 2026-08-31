@@ -8,12 +8,13 @@ import {
   IllustratedGround,
   PitchCard,
   Button,
+  ResonanceRead,
 } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
 import { score } from '../../../../packages/core/matching/engine';
 import { generateMatchExplanation } from '../../../../packages/core/explain/generator';
 import { motion } from 'framer-motion';
-import { MapPin, Plus, ArrowRight } from 'lucide-react';
+import { MapPin, Plus, Sparkles, Coffee } from 'lucide-react';
 import { getUserProfile, UserProfileData } from '../../lib/userStore';
 
 export default function HomeDashboardPage() {
@@ -23,7 +24,7 @@ export default function HomeDashboardPage() {
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     homeArea: 'Tiong Bahru',
     bio: '',
-    passCompletionPct: 72,
+    passCompletionPct: 85,
   });
 
   useEffect(() => {
@@ -31,15 +32,8 @@ export default function HomeDashboardPage() {
   }, []);
 
   const currentUser = SYNTHETIC_PROFILES[0]; // Priya Sharma
-
-  // Surface top candidate matches
-  const surfacedMatches = SYNTHETIC_PROFILES.slice(1)
-    .map((candidate) => ({
-      candidate,
-      matchResult: score(currentUser, candidate),
-      explanation: generateMatchExplanation(currentUser, candidate),
-    }))
-    .sort((a, b) => b.matchResult.score - a.matchResult.score);
+  const marcus = SYNTHETIC_PROFILES[1]; // Marcus Tan (1 real match profile)
+  const explanation = generateMatchExplanation(currentUser, marcus);
 
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
@@ -82,14 +76,14 @@ export default function HomeDashboardPage() {
         </div>
 
         <p className="mt-2.5 text-[15px] leading-relaxed text-[#F3F0E9]">
-          We’ve learned your social rhythm and communication style. 6 people look like a strong fit.
+          We’ve learned your social rhythm and communication style. 1 person looks like a strong fit.
         </p>
 
         {/* Minimal Hairline Data Points */}
         <div className="mt-4 flex items-center gap-6 text-[13px] text-[#A6AAA4]">
-          <div><strong className="text-[#F3F0E9] font-bold">6</strong> Strong Fit</div>
-          <div><strong className="text-[#F3F0E9] font-bold">3</strong> Outings Free</div>
-          <div><strong className="text-[#F3F0E9] font-bold">4</strong> New Bonds</div>
+          <div><strong className="text-[#F3F0E9] font-bold">1</strong> Strong Match</div>
+          <div><strong className="text-[#F3F0E9] font-bold">2</strong> Active Outings</div>
+          <div><strong className="text-[#F3F0E9] font-bold">1</strong> Established Bond</div>
         </div>
       </section>
 
@@ -105,7 +99,7 @@ export default function HomeDashboardPage() {
                 : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
-            Strong Fit (6)
+            Match (1)
           </button>
 
           <button
@@ -117,7 +111,7 @@ export default function HomeDashboardPage() {
                 : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
-            Outings (3)
+            Outings (2)
           </button>
 
           <button
@@ -129,76 +123,61 @@ export default function HomeDashboardPage() {
                 : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
-            Your Tribe (4)
+            Your Tribe (1)
           </button>
         </div>
       </section>
 
-      {/* TAB CONTENT: STRONG FIT CANDIDATES */}
+      {/* TAB CONTENT: 1 REAL MATCH CANDIDATE (MARCUS TAN) */}
       {activeTab === 'fit' && (
         <section className="mt-6 flex flex-col gap-6">
-          {surfacedMatches.slice(0, 3).map(({ candidate, explanation }) => {
-            const interestsList = candidate.tagged_interests || candidate.interests || ['Coffee', 'Pottery', 'Art'];
-            return (
-              <motion.div
-                key={candidate.profile.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={candidate.profile.avatar_url || ''}
-                      alt={candidate.profile.display_name}
-                      className="h-12 w-12 rounded-full object-cover ring-1 ring-[#F3F0E9]/20"
-                    />
-                    <div>
-                      <h3 className="text-[18px] font-bold text-[#F3F0E9]">
-                        {candidate.profile.display_name}
-                      </h3>
-                      <p className="text-[12.5px] text-[#A6AAA4]">
-                        {candidate.profile.home_area} · Singapore
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="text-[12px] font-bold text-[#F3F0E9]">
-                    Strong Fit
-                  </span>
-                </div>
-
-                {/* Editorial Resonance Read */}
-                <div className="mt-4 border-t border-[#F3F0E9]/10 pt-3.5">
-                  <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-                    Why You Might Click
-                  </span>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-[#F3F0E9]">
-                    {explanation.click_text}
-                  </p>
-
-                  <span className="mt-3 block text-[10px] font-bold tracking-widest text-[#A6AAA4] uppercase">
-                    Where You Might Rub
-                  </span>
-                  <p className="mt-1 text-[13.5px] leading-relaxed text-[#A6AAA4]">
-                    {explanation.rub_text}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={marcus.profile.avatar_url || ''}
+                  alt={marcus.profile.display_name}
+                  className="h-12 w-12 rounded-full object-cover ring-1 ring-[#F3F0E9]/20"
+                />
+                <div>
+                  <h3 className="text-[18px] font-bold text-[#F3F0E9]">
+                    {marcus.profile.display_name}
+                  </h3>
+                  <p className="text-[12.5px] text-[#A6AAA4]">
+                    {marcus.profile.home_area} · Singapore
                   </p>
                 </div>
+              </div>
 
-                <div className="mt-4 flex items-center justify-between pt-2 border-t border-[#F3F0E9]/10">
-                  <span className="text-[12px] text-[#A6AAA4]">
-                    {interestsList.slice(0, 3).join(' · ')}
-                  </span>
+              <span className="text-[12px] font-bold text-[#F3F0E9]">
+                Strong Match
+              </span>
+            </div>
 
-                  <Link href={`/people/${candidate.profile.id}`}>
-                    <Button variant="secondary" size="sm">
-                      View Tribal Pass →
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            );
-          })}
+            {/* Editorial Resonance Read */}
+            <div className="mt-4 border-t border-[#F3F0E9]/10 pt-3.5">
+              <ResonanceRead
+                clickText={explanation.click_text}
+                rubText={explanation.rub_text}
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between pt-3 border-t border-[#F3F0E9]/10">
+              <span className="text-[12px] text-[#A6AAA4]">
+                Specialty Coffee · Pottery · Books
+              </span>
+
+              <Link href={`/people/${marcus.profile.id}`}>
+                <Button variant="secondary" size="sm">
+                  View Full Profile →
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
         </section>
       )}
 
@@ -242,32 +221,27 @@ export default function HomeDashboardPage() {
       {/* TAB CONTENT: YOUR TRIBE */}
       {activeTab === 'tribe' && (
         <section className="mt-6 flex flex-col gap-4">
-          {SYNTHETIC_PROFILES.slice(1, 5).map((member) => (
-            <div
-              key={member.profile.id}
-              className="flex items-center justify-between rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={member.profile.avatar_url || ''}
-                  alt={member.profile.display_name}
-                  className="h-11 w-11 rounded-full object-cover"
-                />
-                <div>
-                  <h4 className="text-[15px] font-bold text-[#F3F0E9]">
-                    {member.profile.display_name}
-                  </h4>
-                  <p className="text-[12px] text-[#A6AAA4]">
-                    Connected · 2 Outings Shared
-                  </p>
-                </div>
+          <div className="flex items-center justify-between rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <img
+                src={marcus.profile.avatar_url || ''}
+                alt={marcus.profile.display_name}
+                className="h-11 w-11 rounded-full object-cover"
+              />
+              <div>
+                <h4 className="text-[15px] font-bold text-[#F3F0E9]">
+                  {marcus.profile.display_name}
+                </h4>
+                <p className="text-[12px] text-[#A6AAA4]">
+                  Connected · 2 Outings Shared
+                </p>
               </div>
-
-              <span className="text-[12px] font-bold text-[#F3F0E9]">
-                Established Bond
-              </span>
             </div>
-          ))}
+
+            <span className="text-[12px] font-bold text-[#F3F0E9]">
+              Established Bond
+            </span>
+          </div>
         </section>
       )}
     </IllustratedGround>
