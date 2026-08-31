@@ -1,157 +1,119 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, MoreVertical, X, Star, Heart, Coffee, Sparkles, BookOpen, MapPin } from 'lucide-react';
+import { IllustratedGround, Button, ResonanceRead } from '@soul-tribe/ui';
+import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
+import { score } from '../../../../packages/core/matching/engine';
+import { generateMatchExplanation } from '../../../../packages/core/explain/generator';
+import { MapPin, Coffee, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PeopleListPage() {
-  const [starred, setStarred] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const currentUser = SYNTHETIC_PROFILES[0]; // Priya Sharma
 
-  // Exact artsy, blurry user uploaded image saved in /user-community.jpg!
-  const heroPhoto = '/user-community.jpg';
-  const galleryPhotos = [
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80',
-  ];
+  // Surface top curated matches
+  const surfacedMatches = [SYNTHETIC_PROFILES[1], SYNTHETIC_PROFILES[2], SYNTHETIC_PROFILES[3]].map((candidate) => ({
+    candidate,
+    matchResult: score(currentUser, candidate),
+    explanation: generateMatchExplanation(currentUser, candidate),
+  }));
+
+  // Golden-hour motion artsy portraits
+  const heroPhotos: Record<string, string> = {
+    'Marcus Tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
+    'Maya Lin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+    'Chen Wei': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80',
+  };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#0D1D15] text-[#FFFDF9]">
-      {/* 2ND FRAME SPEC: YOUR ARTSY, BLURRY COMMUNITY PHOTO BACKGROUND */}
-      <img
-        src={heroPhoto}
-        alt="Artsy Blurry Community"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-
-      {/* Dark Ambient Gradient Overlay for Readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90" />
-
-      {/* 2ND FRAME SPEC: TOP TRANSPARENT NAVIGATION BAR */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-5 pt-8">
-        <Link
-          href="/home"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-
-        <h2 className="text-[18px] font-bold text-white tracking-tight drop-shadow-md">
-          Make Matches
-        </h2>
-
-        <button
-          type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20"
-        >
-          <MoreVertical className="h-5 w-5" />
-        </button>
+    <IllustratedGround variant="paper" className="min-h-screen pb-24">
+      {/* EDITORIAL HEADER: THIS WEEK'S PEOPLE */}
+      <header className="pb-6 border-b border-[#F3F0E9]/12">
+        <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+          Curated Batch · Singapore
+        </span>
+        <h1 className="mt-1 text-[28px] font-bold tracking-tight text-[#F3F0E9]">
+          This Week's People
+        </h1>
+        <p className="mt-1.5 text-[14px] text-[#A6AAA4] leading-relaxed max-w-[340px]">
+          Surfaced based on your Friendship DNA and Singapore rhythm. No swiping.
+        </p>
       </header>
 
-      {/* 2ND FRAME SPEC: OVERLAID CONTENT WITH RELEVANT SOUL TRIBE COPY */}
-      <main className="absolute bottom-24 left-5 right-5 z-30 flex flex-col gap-4">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col gap-4"
-        >
-          {/* ABOUT ME SECTION (RELEVANT SOUL TRIBE CONTENT) */}
-          <div>
-            <div className="flex items-center justify-between">
-              <h1 className="text-[22px] font-bold text-white tracking-tight drop-shadow-md">
-                About Me
-              </h1>
-              <span className="flex items-center text-[12.5px] font-semibold text-white/80">
-                <MapPin className="mr-1 h-3.5 w-3.5" /> Tiong Bahru · Singapore
-              </span>
-            </div>
+      {/* CURATED MATCHES BATCH LISTING */}
+      <div className="mt-6 flex flex-col gap-6">
+        {surfacedMatches.map(({ candidate, explanation }) => {
+          const photo = heroPhotos[candidate.profile.display_name] || heroPhotos['Marcus Tan'];
+          const interestsList = candidate.tagged_interests || candidate.interests || ['Specialty Coffee', 'Ceramics', 'Bookshops'];
 
-            <p className="mt-1.5 max-w-[340px] text-[13.5px] font-normal leading-[20px] text-white/90 drop-shadow-sm">
-              Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!
-            </p>
-          </div>
+          return (
+            <motion.div
+              key={candidate.profile.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Link href={`/people/${candidate.profile.id}`}>
+                <div className="group overflow-hidden rounded-[28px] border border-[#F3F0E9]/15 bg-[#15261C] shadow-xl transition-all hover:border-[#F3F0E9]/40">
+                  {/* Artsy Motion-Blur Cover Image */}
+                  <div className="relative h-64 w-full overflow-hidden bg-[#0D1D15]">
+                    <img
+                      src={photo}
+                      alt={candidate.profile.display_name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0D1D15] via-transparent to-transparent" />
 
-          {/* INTERESTS SECTION (SOUL TRIBE GLASS CHIPS) */}
-          <div>
-            <h2 className="text-[18px] font-bold text-white tracking-tight drop-shadow-md">
-              Interests
-            </h2>
-            <div className="mt-2 flex flex-wrap gap-2.5">
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <Coffee className="h-3.5 w-3.5" /> Specialty Coffee
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <Sparkles className="h-3.5 w-3.5" /> Ceramics
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <BookOpen className="h-3.5 w-3.5" /> Independent Bookshops
-              </span>
-            </div>
-          </div>
+                    <div className="absolute top-3.5 left-3.5 rounded-full bg-[#0D1D15]/90 px-3 py-1 text-[10px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm border border-[#F3F0E9]/15">
+                      Strong Fit · 90% Rhythm Overlap
+                    </div>
 
-          {/* PHOTO THUMBNAILS ROW (10+ BADGE) */}
-          <div className="flex items-center gap-3 pt-1">
-            {galleryPhotos.map((photo, idx) => (
-              <div
-                key={idx}
-                className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-[16px] border border-white/25 bg-black/40 shadow-lg"
-              >
-                <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
-                {idx === 2 && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[13px] font-bold text-white backdrop-blur-xs">
-                    10+
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <h2 className="text-[24px] font-extrabold text-[#F3F0E9] tracking-tight">
+                        {candidate.profile.display_name}
+                      </h2>
+                      <span className="flex items-center text-[13px] font-medium text-[#A6AAA4]">
+                        <MapPin className="mr-1 h-3.5 w-3.5" /> {candidate.profile.home_area} · Singapore
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </main>
 
-      {/* 2ND FRAME SPEC: FLOATING BOTTOM ACTION BUTTONS (PASS, STAR, LIKE) */}
-      <div className="absolute bottom-6 left-0 right-0 z-40 flex items-center justify-center">
-        <div className="flex items-center justify-center gap-5">
-          {/* Pass Action (X) */}
-          <button
-            type="button"
-            className="flex h-13 w-13 items-center justify-center rounded-full border border-white/30 bg-black/50 text-white backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-xl"
-            title="Pass"
-          >
-            <X className="h-6 w-6" />
-          </button>
+                  {/* Content & Resonance Read */}
+                  <div className="p-5">
+                    <p className="text-[13.5px] leading-relaxed text-[#A6AAA4]">
+                      {candidate.profile.bio || "Singapore-based. Interested in intentional friendships, quiet weekend coffee, and ceramic craft."}
+                    </p>
 
-          {/* Star Action (★) */}
-          <button
-            type="button"
-            onClick={() => setStarred(!starred)}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-xl ${
-              starred
-                ? 'border-white bg-white text-black'
-                : 'border-white/30 bg-black/50 text-white'
-            }`}
-            title="Star Match"
-          >
-            <Star className="h-6 w-6 fill-current" />
-          </button>
+                    <div className="mt-3.5 flex flex-wrap gap-2">
+                      {interestsList.slice(0, 3).map((interest) => (
+                        <span key={interest} className="flex items-center gap-1 rounded-full border border-[#F3F0E9]/12 bg-[#0D1D15] px-3 py-1 text-[12px] text-[#F3F0E9]">
+                          <Coffee className="h-3 w-3 text-[#8F998D]" /> {interest}
+                        </span>
+                      ))}
+                    </div>
 
-          {/* Like / Connect Action (♥) */}
-          <button
-            type="button"
-            onClick={() => setConnected(!connected)}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-xl ${
-              connected
-                ? 'border-white bg-white text-black'
-                : 'border-white/30 bg-black/50 text-white'
-            }`}
-            title="Connect"
-          >
-            <Heart className="h-6 w-6 fill-current" />
-          </button>
-        </div>
+                    <div className="mt-4 border-t border-[#F3F0E9]/10 pt-3.5">
+                      <ResonanceRead
+                        clickText={explanation.click_text}
+                        rubText={explanation.rub_text}
+                      />
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-[#F3F0E9]/10 pt-3.5">
+                      <span className="text-[12.5px] font-bold text-[#F3F0E9]">
+                        View Full 2nd Frame Profile →
+                      </span>
+                      <Button variant="primary" size="sm">
+                        Open Profile <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
-    </div>
+    </IllustratedGround>
   );
 }

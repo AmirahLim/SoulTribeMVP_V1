@@ -5,15 +5,25 @@ export const dynamic = 'force-dynamic';
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
+import { generateMatchExplanation } from '../../../../../packages/core/explain/generator';
 import { ArrowLeft, MoreVertical, X, Star, Heart, Coffee, Sparkles, BookOpen, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PersonDetailPage() {
+  const params = useParams();
   const router = useRouter();
-  const [starred, setStarred] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const personId = params.id as string;
 
-  // Exact artsy, blurry user uploaded image saved in /user-community.jpg!
+  const currentUser = SYNTHETIC_PROFILES[0]; // Priya
+  const person = SYNTHETIC_PROFILES.find((p) => p.profile.id === personId) || SYNTHETIC_PROFILES[1];
+
+  const [connected, setConnected] = useState(false);
+  const [starred, setStarred] = useState(false);
+
+  const explanation = generateMatchExplanation(currentUser, person);
+
+  // Exact artsy golden-hour motion-blur background image!
   const heroPhoto = '/user-community.jpg';
   const galleryPhotos = [
     'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
@@ -23,10 +33,10 @@ export default function PersonDetailPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#0D1D15] text-[#FFFDF9]">
-      {/* 2ND FRAME SPEC: YOUR ARTSY, BLURRY COMMUNITY PHOTO BACKGROUND */}
+      {/* 2ND FRAME SPEC: ARTSY GOLDEN-HOUR MOTION PHOTO BACKGROUND */}
       <img
         src={heroPhoto}
-        alt="Artsy Blurry Community"
+        alt={person.profile.display_name}
         className="absolute inset-0 h-full w-full object-cover"
       />
 
@@ -55,7 +65,7 @@ export default function PersonDetailPage() {
         </button>
       </header>
 
-      {/* 2ND FRAME SPEC: OVERLAID CONTENT WITH RELEVANT SOUL TRIBE COPY */}
+      {/* 2ND FRAME SPEC: OVERLAID CONTENT (ABOUT ME, INTERESTS, THUMBNAILS) */}
       <main className="absolute bottom-24 left-5 right-5 z-30 flex flex-col gap-4">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -63,23 +73,23 @@ export default function PersonDetailPage() {
           transition={{ duration: 0.3 }}
           className="flex flex-col gap-4"
         >
-          {/* ABOUT ME SECTION (RELEVANT SOUL TRIBE CONTENT) */}
+          {/* ABOUT ME SECTION (EXACT 2ND FRAME PLACEMENT & FONT SIZE) */}
           <div>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-bold text-white tracking-tight drop-shadow-md">
                 About Me
               </h1>
               <span className="flex items-center text-[12.5px] font-semibold text-white/80">
-                <MapPin className="mr-1 h-3.5 w-3.5" /> Tiong Bahru · Singapore
+                <MapPin className="mr-1 h-3.5 w-3.5" /> {person.profile.home_area} · Singapore
               </span>
             </div>
 
             <p className="mt-1.5 max-w-[340px] text-[13.5px] font-normal leading-[20px] text-white/90 drop-shadow-sm">
-              Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!
+              {person.profile.bio || "Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!"}
             </p>
           </div>
 
-          {/* INTERESTS SECTION (SOUL TRIBE GLASS CHIPS) */}
+          {/* INTERESTS SECTION (EXACT 2ND FRAME PLACEMENT & GLASS CHIPS) */}
           <div>
             <h2 className="text-[18px] font-bold text-white tracking-tight drop-shadow-md">
               Interests
@@ -97,7 +107,7 @@ export default function PersonDetailPage() {
             </div>
           </div>
 
-          {/* PHOTO THUMBNAILS ROW (10+ BADGE) */}
+          {/* PHOTO THUMBNAILS ROW (EXACT 2ND FRAME PLACEMENT & 10+ BADGE) */}
           <div className="flex items-center gap-3 pt-1">
             {galleryPhotos.map((photo, idx) => (
               <div
