@@ -6,7 +6,7 @@ import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise
 } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
@@ -398,19 +398,47 @@ export default function ProfilePage() {
             )}
           </motion.div>
 
-          {/* 5. PERSONALITY SIGNALS (DELTA VECTOR METER) */}
+          {/* 5. PERSONALITY SIGNALS (MBTI & ASTROLOGY BIG 3 VECTOR BADGES) */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
           >
-            <div className="flex items-center gap-2 text-white">
-              <Cpu className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">05. Personality Signals</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <Cpu className="h-4 w-4" />
+                <h3 className="text-[15.5px] font-extrabold">05. Personality & Astrology</h3>
+              </div>
+              {deep.mbti && (
+                <span className="rounded-full border border-white/30 bg-white/20 px-3 py-0.5 text-[11px] font-extrabold text-white">
+                  ✨ MBTI: {deep.mbti}
+                </span>
+              )}
             </div>
 
-            <div className="mt-3 flex flex-col gap-2">
+            {/* Astrology Big Three Badges */}
+            {(deep.sunSign || deep.moonSign || deep.risingSign) && (
+              <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-white/15">
+                {deep.sunSign && (
+                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
+                    <Sun className="h-3.5 w-3.5 text-white" /> Sun: {deep.sunSign}
+                  </span>
+                )}
+                {deep.moonSign && (
+                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
+                    <Moon className="h-3.5 w-3.5 text-white" /> Moon: {deep.moonSign}
+                  </span>
+                )}
+                {deep.risingSign && (
+                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
+                    <Sunrise className="h-3.5 w-3.5 text-white" /> Rising: {deep.risingSign}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="mt-3 flex flex-col gap-2 pt-2">
               <div>
                 <div className="flex justify-between text-[11.5px] font-semibold text-white">
                   <span>Reflective Curiosity</span>

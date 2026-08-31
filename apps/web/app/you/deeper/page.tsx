@@ -56,12 +56,24 @@ export default function DeeperTribalPassPage() {
     setTimeout(() => setSavedMessage(false), 3000);
   };
 
+  const zodiacSigns = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+  ];
+
+  const mbtiTypes = [
+    'INTJ', 'INTP', 'ENTJ', 'ENTP',
+    'INFJ', 'INFP', 'ENFJ', 'ENFP',
+    'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
+    'ISTP', 'ISFP', 'ESTP', 'ESFP'
+  ];
+
   const categories = [
     { num: 1, name: 'Social Energy', subtitle: 'What being around me feels like' },
     { num: 2, name: 'How I Connect', subtitle: 'Communication compatibility and expectations' },
     { num: 3, name: 'Friendship Style', subtitle: 'What kind of friend I am and what I want to build' },
     { num: 4, name: 'My Rhythm', subtitle: 'Whether two lives can practically fit together' },
-    { num: 5, name: 'Personality', subtitle: 'Behavioural personality signals' },
+    { num: 5, name: 'Personality', subtitle: 'MBTI, Horoscope Big 3 (Sun, Moon, Rising), & Signals' },
     { num: 6, name: 'Values & Worldview', subtitle: 'What matters beneath hobbies' },
     { num: 7, name: "I'm Into", subtitle: 'Interest graph + curiosity, not flat tags' },
     { num: 8, name: 'Outing DNA', subtitle: 'Connected to Soul Tribe flagship outings' },
@@ -348,10 +360,70 @@ export default function DeeperTribalPassPage() {
               </div>
             )}
 
-            {/* CATEGORY 5: PERSONALITY */}
+            {/* CATEGORY 5: PERSONALITY, MBTI & HOROSCOPE BIG 3 */}
             {activeCategoryNum === 5 && (
               <div className="mt-5 flex flex-col gap-5">
                 <div>
+                  <label className="text-[13.5px] font-bold text-white">MBTI Personality Type (Optional)</label>
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {mbtiTypes.map((type) => (
+                      <Chip
+                        key={type}
+                        label={type}
+                        selected={formState.mbti === type}
+                        onClick={() => updateField('mbti', formState.mbti === type ? '' : type)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/15 pt-4 flex flex-col gap-3">
+                  <label className="text-[13.5px] font-bold text-white">Horoscope / Astrology Big Three (Optional)</label>
+
+                  <div>
+                    <span className="text-[12px] font-semibold text-white/80">☀️ Sun Sign (Core Identity)</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {zodiacSigns.map((sign) => (
+                        <Chip
+                          key={`sun-${sign}`}
+                          label={sign}
+                          selected={formState.sunSign === sign}
+                          onClick={() => updateField('sunSign', formState.sunSign === sign ? '' : sign)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-2">
+                    <span className="text-[12px] font-semibold text-white/80">🌙 Moon Sign (Inner Emotional World)</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {zodiacSigns.map((sign) => (
+                        <Chip
+                          key={`moon-${sign}`}
+                          label={sign}
+                          selected={formState.moonSign === sign}
+                          onClick={() => updateField('moonSign', formState.moonSign === sign ? '' : sign)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-2">
+                    <span className="text-[12px] font-semibold text-white/80">🌅 Rising / Ascendant Sign (First Impression)</span>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {zodiacSigns.map((sign) => (
+                        <Chip
+                          key={`rising-${sign}`}
+                          label={sign}
+                          selected={formState.risingSign === sign}
+                          onClick={() => updateField('risingSign', formState.risingSign === sign ? '' : sign)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/15 pt-4">
                   <label className="text-[13.5px] font-bold text-white">Describe yourself in 1-2 sentences</label>
                   <textarea
                     rows={3}

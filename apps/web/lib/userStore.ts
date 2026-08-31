@@ -20,8 +20,12 @@ export interface DeepProfileAnswers {
   spontaneousTrip?: string;
   idealSaturdayOpen?: string;
 
-  // 5. Personality
+  // 5. Personality (MBTI & Astrology Big 3)
   selfDescriptionOpen?: string;
+  mbti?: string;
+  sunSign?: string;
+  moonSign?: string;
+  risingSign?: string;
 
   // 6. Values & Worldview
   coreValues?: string;
@@ -109,6 +113,10 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
     spontaneousTrip: 'Convince me',
     idealSaturdayOpen: 'Slow morning, something interesting in the afternoon, dinner if the energy is right.',
     selfDescriptionOpen: 'Curious, reflective, and independent with a subtle dry humor.',
+    mbti: 'INFJ',
+    sunSign: 'Scorpio',
+    moonSign: 'Cancer',
+    risingSign: 'Leo',
     coreValues: 'Curiosity · Freedom · Growth · Community',
     respectPeopleOpen: 'I really respect people who can change their mind when presented with better information.',
     talkForHoursOpen: 'Design history, why people make irrational choices, and filter coffee roast notes.',
@@ -167,7 +175,6 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Migrate old version 1 cached localStorage to version 2 (fresh 10% base rate)
       if (parsed.version !== 2) {
         parsed.version = 2;
         parsed.completedCategoryNums = [];
@@ -192,7 +199,6 @@ export function getUserProfile(): UserProfileData {
         },
       };
 
-      // Auto update localStorage with version 2
       localStorage.setItem('soul_tribe_user_profile', JSON.stringify(result));
       return result;
     }
