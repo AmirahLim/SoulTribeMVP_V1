@@ -6,7 +6,7 @@ import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3
 } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
@@ -190,24 +190,28 @@ export default function ProfilePage() {
 
         {/* SECTION C: 10-CATEGORY CREATIVE VISUAL DIAGRAM MAP */}
         <section className="py-6 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
                 Public Signals Map
               </span>
-              <h2 className="mt-1 text-[20px] font-bold text-white">
-                What People See About You
-              </h2>
-              <p className="mt-1 text-[13.5px] text-white/80">
-                Visual radar map representing all 10 categories of your Deeper Tribal Pass.
-              </p>
+
+              <Link href="/you/deeper">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-full border border-white/30 bg-black/70 px-4 py-1.5 text-[12.5px] font-bold text-white shadow-md hover:bg-white/20 backdrop-blur-md transition-all"
+                >
+                  <Edit3 className="h-3.5 w-3.5" /> Edit Pass
+                </button>
+              </Link>
             </div>
 
-            <Link href="/you/deeper">
-              <Button variant="secondary" size="sm">
-                Edit Pass
-              </Button>
-            </Link>
+            <h2 className="text-[20px] font-bold text-white">
+              What People See About You
+            </h2>
+            <p className="text-[13.5px] text-white/80">
+              Visual radar map representing all 10 categories of your Deeper Tribal Pass.
+            </p>
           </div>
 
           {/* 1. SOCIAL ENERGY (SVG SPECTRUM RADAR GAUGE) */}
