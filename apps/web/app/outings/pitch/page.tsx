@@ -9,7 +9,7 @@ import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
 import { calculateGroupCohesion } from '../../../../../packages/core/matching/cohesion';
 import { ProfileVector } from '../../../../../packages/core/domain/types';
 import { Check, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
-import { addUserPitch, PitchedOuting, JoinedGuest } from '../../../lib/userStore';
+import { addUserPitch, getUserProfile, PitchedOuting, JoinedGuest } from '../../../lib/userStore';
 
 function PitchComposerContent() {
   const router = useRouter();
