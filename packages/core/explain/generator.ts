@@ -101,7 +101,7 @@ export function generateMatchExplanation(
 
   const click_text = clickParts.join(' ');
 
-  // --- FIX 4 & FIX 3: HONEST FRICTION SELECTION ---
+  // --- HONEST FRICTION SELECTION WITHOUT TAUTOLOGIES ---
 
   // Filter to ONLY dimensions where BOTH sides actually have answered data
   const eligibleDims = evaluated.filter((d) =>
@@ -121,114 +121,148 @@ export function generateMatchExplanation(
   eligibleDims.sort((a, b) => a.score - b.score);
 
   const frictionParts: string[] = [];
+  const candidateDims = eligibleDims.filter((d) => d.score < 0.70);
 
-  // Check if ALL eligible dimensions are well aligned (score >= 0.70)
-  const allWellAligned = eligibleDims.every((d) => d.score >= 0.70);
+  for (const d of candidateDims) {
+    if (frictionParts.length >= 2) break;
 
-  if (allWellAligned) {
-    // Tier 3: Genuinely well aligned
-    const weakest = eligibleDims[0];
-    const label = DIM_LABELS[weakest.key] || 'social rhythm';
-    frictionParts.push(`Nothing much to flag — the mildest difference is around ${label}, and it's small.`);
-  } else {
-    // Take up to 2 lowest-scoring eligible dimensions
-    const selected = eligibleDims.slice(0, 2);
+    const isClearFriction = d.score < 0.55; // Tier 1 vs Tier 2
 
-    for (const d of selected) {
-      if (d.score >= 0.70) continue;
+    if (d.key === 'experience') {
+      const valA = vecA.experience?.group_size_pref ?? 0.5;
+      const valB = vecB.experience?.group_size_pref ?? 0.5;
+      if (PHRASES.groupSize(valA) === PHRASES.groupSize(valB)) continue;
 
-      const isClearFriction = d.score < 0.55; // Tier 1 vs Tier 2
+      const sizeA = PHRASES_YOU.groupSize(valA);
+      const sizeB = PHRASES.groupSize(valB);
+      if (isClearFriction) {
+        frictionParts.push(`${nameB} ${sizeB}, while you ${sizeA}.`);
+      } else {
+        frictionParts.push(`Only a small gap in group size preference: ${nameB} ${sizeB}, while you ${sizeA}.`);
+      }
+    } else if (d.key === 'personality') {
+      const valA = vecA.personality?.extraversion ?? 0.5;
+      const valB = vecB.personality?.extraversion ?? 0.5;
+      if (PHRASES.extraversion(valA) === PHRASES.extraversion(valB)) continue;
 
-      if (d.key === 'experience') {
-        const sizeA = PHRASES_YOU.groupSize(vecA.experience?.group_size_pref ?? 0.5);
-        const sizeB = PHRASES.groupSize(vecB.experience?.group_size_pref ?? 0.5);
-        if (isClearFriction) {
-          frictionParts.push(`${nameB} ${sizeB}, while you ${sizeA}.`);
-        } else {
-          frictionParts.push(`Only a small gap in group size preference: ${nameB} ${sizeB}, while you ${sizeA}.`);
-        }
-      } else if (d.key === 'personality') {
-        const extA = PHRASES_YOU.extraversion(vecA.personality?.extraversion ?? 0.5);
-        const extB = PHRASES.extraversion(vecB.personality?.extraversion ?? 0.5);
-        if (isClearFriction) {
-          frictionParts.push(`${nameB} ${extB}, while you ${extA}.`);
-        } else {
-          frictionParts.push(`In social energy, ${nameB} ${extB}, while you ${extA}.`);
-        }
-      } else if (d.key === 'social_rhythm') {
-        const planA = PHRASES_YOU.planningHorizon(vecA.social_rhythm?.planning_horizon ?? 0.5);
-        const planB = PHRASES.planningHorizon(vecB.social_rhythm?.planning_horizon ?? 0.5);
-        if (isClearFriction) {
-          frictionParts.push(`${nameB} ${planB}, whereas you usually ${planA}.`);
-        } else {
-          frictionParts.push(`Only a small thing: ${nameB} ${planB}, while you ${planA}.`);
-        }
-      } else if (d.key === 'emotional') {
-        const confA = PHRASES_YOU.conflictApproach(vecA.emotional?.er_conflict_approach ?? 0.5);
-        const confB = PHRASES.conflictApproach(vecB.emotional?.er_conflict_approach ?? 0.5);
-        if (isClearFriction) {
-          frictionParts.push(`On tension, ${nameB} ${confB}, while you ${confA}.`);
-        } else {
-          const openA = PHRASES_YOU.openingPace(vecA.emotional?.er_opening_pace ?? 0.5);
-          const openB = PHRASES.openingPace(vecB.emotional?.er_opening_pace ?? 0.5);
-          frictionParts.push(`In opening pace, ${nameB} ${openB}, while you ${openA}.`);
-        }
-      } else if (d.key === 'communication') {
-        const respA = PHRASES_YOU.responseSpeed(vecA.communication?.response_speed_self ?? 0.5);
-        const respB = PHRASES.responseSpeed(vecB.communication?.response_speed_self ?? 0.5);
-        if (isClearFriction) {
-          frictionParts.push(`In messaging, ${nameB} ${respB}, whereas you ${respA}.`);
-        } else {
-          const cadA = PHRASES_YOU.cadenceNeed(vecA.communication?.contact_frequency_self ?? 0.5);
-          const cadB = PHRASES.cadenceNeed(vecB.communication?.contact_frequency_self ?? 0.5);
-          frictionParts.push(`On communication pace, ${nameB} ${cadB}, while you ${cadA}.`);
-        }
-      } else if (d.key === 'intent') {
-        const depthA = PHRASES_YOU.depth(vecA.intent?.depth ?? 2);
-        const depthB = PHRASES.depth(vecB.intent?.depth ?? 2);
-        if (isClearFriction) {
-          frictionParts.push(`On friendship depth, ${nameB} ${depthB}, whereas you ${depthA}.`);
-        } else {
-          frictionParts.push(`In friendship intent, ${nameB} ${depthB}, while you ${depthA}.`);
-        }
-      } else if (d.key === 'lifestyle') {
-        const budgetA = PHRASES_YOU.budgetBand(vecA.lifestyle?.budget_band ?? 2);
-        const budgetB = PHRASES.budgetBand(vecB.lifestyle?.budget_band ?? 2);
-        if (isClearFriction) {
-          frictionParts.push(`${nameB} ${budgetB}, whereas you ${budgetA}.`);
-        } else {
-          const actA = PHRASES_YOU.activityLevel(vecA.lifestyle?.activity_level ?? 0.5);
-          const actB = PHRASES.activityLevel(vecB.lifestyle?.activity_level ?? 0.5);
-          frictionParts.push(`In activity style, ${nameB} ${actB}, while you ${actA}.`);
-        }
-      } else if (d.key === 'interests') {
-        if (isClearFriction) {
-          frictionParts.push(`You have different core interest focus areas, which may require exploring new shared topics.`);
-        } else {
-          frictionParts.push(`Your interests overlap only moderately, so outing themes might take a little extra alignment.`);
-        }
-      } else if (d.key === 'values') {
-        if (isClearFriction) {
-          frictionParts.push(`You have different core value priorities, so some worldviews may contrast.`);
-        } else {
-          frictionParts.push(`Your underlying value stances have slight nuance differences.`);
-        }
-      } else if (d.key === 'geography') {
-        const areaA = vecA.geography?.home_area || 'Singapore';
-        const areaB = vecB.geography?.home_area || 'Singapore';
-        if (isClearFriction) {
-          frictionParts.push(`${nameB} is based in ${areaB}, while you are in ${areaA}, so travel time requires planning.`);
-        } else {
-          frictionParts.push(`You live in different neighbourhoods in Singapore, so meetup spots will need mutual travel.`);
-        }
+      const extA = PHRASES_YOU.extraversion(valA);
+      const extB = PHRASES.extraversion(valB);
+      if (isClearFriction) {
+        frictionParts.push(`${nameB} ${extB}, while you ${extA}.`);
+      } else {
+        frictionParts.push(`In social energy, ${nameB} ${extB}, while you ${extA}.`);
+      }
+    } else if (d.key === 'social_rhythm') {
+      const valA = vecA.social_rhythm?.planning_horizon ?? 0.5;
+      const valB = vecB.social_rhythm?.planning_horizon ?? 0.5;
+      if (PHRASES.planningHorizon(valA) === PHRASES.planningHorizon(valB)) continue;
+
+      const planA = PHRASES_YOU.planningHorizon(valA);
+      const planB = PHRASES.planningHorizon(valB);
+      if (isClearFriction) {
+        frictionParts.push(`${nameB} ${planB}, whereas you usually ${planA}.`);
+      } else {
+        frictionParts.push(`Only a small thing: ${nameB} ${planB}, while you ${planA}.`);
+      }
+    } else if (d.key === 'emotional') {
+      if (isClearFriction) {
+        const valA = vecA.emotional?.er_conflict_approach ?? 0.5;
+        const valB = vecB.emotional?.er_conflict_approach ?? 0.5;
+        if (PHRASES.conflictApproach(valA) === PHRASES.conflictApproach(valB)) continue;
+
+        const confA = PHRASES_YOU.conflictApproach(valA);
+        const confB = PHRASES.conflictApproach(valB);
+        frictionParts.push(`On tension, ${nameB} ${confB}, while you ${confA}.`);
+      } else {
+        const valA = vecA.emotional?.er_opening_pace ?? 0.5;
+        const valB = vecB.emotional?.er_opening_pace ?? 0.5;
+        if (PHRASES.openingPace(valA) === PHRASES.openingPace(valB)) continue;
+
+        const openA = PHRASES_YOU.openingPace(valA);
+        const openB = PHRASES.openingPace(valB);
+        frictionParts.push(`In opening pace, ${nameB} ${openB}, while you ${openA}.`);
+      }
+    } else if (d.key === 'communication') {
+      if (isClearFriction) {
+        const valA = vecA.communication?.response_speed_self ?? 0.5;
+        const valB = vecB.communication?.response_speed_self ?? 0.5;
+        if (PHRASES.responseSpeed(valA) === PHRASES.responseSpeed(valB)) continue;
+
+        const respA = PHRASES_YOU.responseSpeed(valA);
+        const respB = PHRASES.responseSpeed(valB);
+        frictionParts.push(`In messaging, ${nameB} ${respB}, whereas you ${respA}.`);
+      } else {
+        const valA = vecA.communication?.contact_frequency_self ?? 0.5;
+        const valB = vecB.communication?.contact_frequency_self ?? 0.5;
+        if (PHRASES.cadenceNeed(valA) === PHRASES.cadenceNeed(valB)) continue;
+
+        const cadA = PHRASES_YOU.cadenceNeed(valA);
+        const cadB = PHRASES.cadenceNeed(valB);
+        frictionParts.push(`On communication pace, ${nameB} ${cadB}, while you ${cadA}.`);
+      }
+    } else if (d.key === 'intent') {
+      const valA = vecA.intent?.depth ?? 2;
+      const valB = vecB.intent?.depth ?? 2;
+      if (PHRASES.depth(valA) === PHRASES.depth(valB)) continue;
+
+      const depthA = PHRASES_YOU.depth(valA);
+      const depthB = PHRASES.depth(valB);
+      if (isClearFriction) {
+        frictionParts.push(`On friendship depth, ${nameB} ${depthB}, whereas you ${depthA}.`);
+      } else {
+        frictionParts.push(`In friendship intent, ${nameB} ${depthB}, while you ${depthA}.`);
+      }
+    } else if (d.key === 'lifestyle') {
+      if (isClearFriction) {
+        const valA = vecA.lifestyle?.budget_band ?? 2;
+        const valB = vecB.lifestyle?.budget_band ?? 2;
+        if (PHRASES.budgetBand(valA) === PHRASES.budgetBand(valB)) continue;
+
+        const budgetA = PHRASES_YOU.budgetBand(valA);
+        const budgetB = PHRASES.budgetBand(valB);
+        frictionParts.push(`${nameB} ${budgetB}, whereas you ${budgetA}.`);
+      } else {
+        const valA = vecA.lifestyle?.activity_level ?? 0.5;
+        const valB = vecB.lifestyle?.activity_level ?? 0.5;
+        if (PHRASES.activityLevel(valA) === PHRASES.activityLevel(valB)) continue;
+
+        const actA = PHRASES_YOU.activityLevel(valA);
+        const actB = PHRASES.activityLevel(valB);
+        frictionParts.push(`In activity style, ${nameB} ${actB}, while you ${actA}.`);
+      }
+    } else if (d.key === 'interests') {
+      if (isClearFriction) {
+        frictionParts.push(`You have different core interest focus areas, which may require exploring new shared topics.`);
+      } else {
+        frictionParts.push(`Your interests overlap only moderately, so outing themes might take a little extra alignment.`);
+      }
+    } else if (d.key === 'values') {
+      if (isClearFriction) {
+        frictionParts.push(`You have different core value priorities, so some worldviews may contrast.`);
+      } else {
+        frictionParts.push(`Your underlying value stances have slight nuance differences.`);
+      }
+    } else if (d.key === 'geography') {
+      const areaA = vecA.geography?.home_area || 'Singapore';
+      const areaB = vecB.geography?.home_area || 'Singapore';
+      if (areaA === areaB) continue;
+
+      if (isClearFriction) {
+        frictionParts.push(`${nameB} is based in ${areaB}, while you are in ${areaA}, so travel time requires planning.`);
+      } else {
+        frictionParts.push(`You live in different neighbourhoods in Singapore, so meetup spots will need mutual travel.`);
       }
     }
   }
 
-  const friction_text =
-    frictionParts.length > 0
-      ? frictionParts.join(' ')
-      : "Nothing much to flag — your rhythms align well across the board.";
+  // Fallback if no candidate dimension produced a sentence
+  if (frictionParts.length === 0) {
+    const weakest = eligibleDims[0];
+    const label = DIM_LABELS[weakest.key] || 'social rhythm';
+    frictionParts.push(`Nothing much to flag — the mildest difference is around ${label}, and it's small.`);
+  }
+
+  const friction_text = frictionParts.join(' ');
 
   return {
     click_text,

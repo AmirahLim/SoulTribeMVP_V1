@@ -126,4 +126,46 @@ describe('Fix Friction Explanations — generator.test.ts', () => {
     assert.strictEqual(matchRes.resonance, matchResAfter.resonance);
     assert.strictEqual(matchRes.logistics, matchResAfter.logistics);
   });
+
+  it('7. Direct guard test — values in same phrase band do not emit tautological comparison', () => {
+    const vecA: ProfileVector = JSON.parse(JSON.stringify(DEMO_PROFILES[0]));
+    const vecB: ProfileVector = JSON.parse(JSON.stringify(DEMO_PROFILES[1]));
+
+    vecA.experience.group_size_pref = 0.35;
+    vecA.experience.answered = 4;
+    vecB.experience.group_size_pref = 0.55;
+    vecB.experience.answered = 4;
+
+    const explanation = generateMatchExplanation(vecA, vecB);
+    assert.strictEqual(
+      explanation.friction_text.includes('groups of three or four, while you prefer groups of three or four'),
+      false,
+      'Must not emit tautological group size phrase'
+    );
+  });
+
+  it('8. No repeated band across demo set — no phrase of 15+ chars appears twice in one sentence', () => {
+    const viewer = DEMO_PROFILES[0];
+    for (let i = 1; i < DEMO_PROFILES.length; i++) {
+      const exp = generateMatchExplanation(viewer, DEMO_PROFILES[i]);
+      const normalized = exp.friction_text
+        .replace(/\b(prefers|replies|plans|wants|tends|opens|likes|recharges)\b/g, (m) => m.slice(0, -1));
+
+      const words = normalized.split(/\s+/);
+      for (let len = 3; len <= words.length / 2; len++) {
+        for (let idx = 0; idx <= words.length - len; idx++) {
+          const phrase = words.slice(idx, idx + len).join(' ');
+          if (phrase.length >= 15) {
+            const firstIndex = normalized.indexOf(phrase);
+            const secondIndex = normalized.indexOf(phrase, firstIndex + phrase.length);
+            assert.strictEqual(
+              secondIndex,
+              -1,
+              `Found repeated 15+ char phrase "${phrase}" in sentence: "${exp.friction_text}"`
+            );
+          }
+        }
+      }
+    }
+  });
 });
