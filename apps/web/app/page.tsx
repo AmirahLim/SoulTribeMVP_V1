@@ -65,9 +65,9 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-8">
-            <Link href="/onboarding" className="inline-block w-full">
-              <Button variant="primary" size="lg" className="w-full py-4 text-[13.5px] font-bold leading-tight">
-                Begin 8 Quick Category Social DNA. Your circle starts here <ArrowRight className="ml-1.5 inline h-4 w-4 shrink-0" />
+            <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
+              <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
+                Your Circle Starts Here <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -152,8 +152,8 @@ export default function LandingPage() {
         {/* BOTTOM CTA FOOTER */}
         <footer className="mt-12 text-center">
           <Link href="/onboarding">
-            <Button variant="primary" size="lg" className="w-full py-4 text-[14px] font-bold leading-tight">
-              Begin 8 Quick Category Social DNA. Your circle starts here →
+            <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
+              Your Circle Starts Here →
             </Button>
           </Link>
           <p className="mt-3 text-[12px] text-white/70">
