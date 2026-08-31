@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { IllustratedGround, Button, Chip } from '@soul-tribe/ui';
+import { Button, Chip } from '@soul-tribe/ui';
 import { ArrowLeft, Check, Sparkles, Lock, Globe } from 'lucide-react';
 import { getUserProfile, setUserProfile, DeepProfileAnswers } from '../../../lib/userStore';
 
@@ -50,555 +50,472 @@ export default function DeeperTribalPassPage() {
   const currentCat = categories.find((c) => c.num === activeCategoryNum) || categories[0];
 
   return (
-    <IllustratedGround variant="paper" className="min-h-screen pb-24">
-      {/* Header */}
-      <header className="py-2 border-b border-[#F3F0E9]/12 pb-4">
-        <Link href="/you" className="flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]">
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Profile
-        </Link>
+    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED CANDID CLIFF JUMP MOTION PHOTO */}
+      <img
+        src="/user-deeper-bg.jpg"
+        alt="Deeper Pass Canvas Background"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+      />
 
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-              Deep Profile & Matching System
-            </span>
-            <h1 className="text-[24px] font-bold tracking-tight text-[#F3F0E9]">
-              Deeper Tribal Pass
-            </h1>
-          </div>
-          <span className="rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 px-3 py-1 text-[11px] font-bold text-[#F3F0E9]">
-            Questions → Open-ended → Profile
-          </span>
-        </div>
-      </header>
+      {/* Dark Ambient Vignette Overlay for Readability */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
 
-      {/* Category Pills (PDF Specification: 10 Categories) */}
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {categories.map((cat) => (
-          <button
-            key={cat.num}
-            type="button"
-            onClick={() => setActiveCategoryNum(cat.num)}
-            className={`flex-shrink-0 rounded-[12px] px-3.5 py-2 text-[12.5px] font-bold transition-all ${
-              activeCategoryNum === cat.num
-                ? 'bg-[#F3F0E9] text-[#0D1D15] shadow-sm'
-                : 'border border-[#F3F0E9]/15 bg-[#15261C] text-[#A6AAA4] hover:text-[#F3F0E9]'
-            }`}
-          >
-            {cat.num}. {cat.name}
-          </button>
-        ))}
-      </div>
+      {/* PAGE CONTENT CONTAINER */}
+      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
+        {/* Header */}
+        <header className="py-2 border-b border-white/15 pb-4">
+          <Link href="/you" className="flex items-center text-[13.5px] font-semibold text-white/80 hover:text-white">
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Profile
+          </Link>
 
-      {/* Progressive Questionnaire & Open Answer Form */}
-      <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-              Category {currentCat.num} of 10
-            </span>
-            {currentCat.num === 10 ? (
-              <span className="flex items-center text-[11px] font-bold text-[#A6AAA4]">
-                <Lock className="mr-1 h-3 w-3" /> Private Matching Signals
+          <div className="mt-3 flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                Soul Tribe Spec · 10 Categories
               </span>
-            ) : (
-              <span className="flex items-center text-[11px] font-bold text-[#F3F0E9]">
-                <Globe className="mr-1 h-3 w-3" /> Appears on Profile
-              </span>
-            )}
+              <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
+                Deeper Tribal Pass
+              </h1>
+            </div>
+
+            <Button variant="primary" size="sm" onClick={handleSave}>
+              Save All
+            </Button>
           </div>
+        </header>
 
-          <h3 className="mt-1 text-[20px] font-bold text-[#F3F0E9]">
-            {currentCat.name}
-          </h3>
-          <p className="mt-0.5 text-[13px] text-[#A6AAA4]">
-            {currentCat.subtitle}
-          </p>
+        {savedMessage && (
+          <div className="mt-4 flex items-center gap-2 rounded-[16px] border border-white/30 bg-black/70 p-3 text-[13.5px] font-bold text-white shadow-xl backdrop-blur-md">
+            <Check className="h-4 w-4" />
+            <span>Deep profile answers saved successfully!</span>
+          </div>
+        )}
 
-          <div className="mt-6 flex flex-col gap-6 border-t border-[#F3F0E9]/10 pt-5">
-            {/* 1. SOCIAL ENERGY */}
+        {/* CATEGORY TABS STRIP */}
+        <nav className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {categories.map((cat) => {
+            const isActive = cat.num === activeCategoryNum;
+            return (
+              <button
+                key={cat.num}
+                type="button"
+                onClick={() => setActiveCategoryNum(cat.num)}
+                className={`flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold transition-all backdrop-blur-md ${
+                  isActive
+                    ? 'border-white bg-white text-black font-bold'
+                    : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40'
+                }`}
+              >
+                {cat.num}. {cat.name}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* ACTIVE CATEGORY CARD */}
+        <form onSubmit={handleSave} className="mt-6 flex flex-col gap-6">
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/15 pb-4">
+              <div>
+                <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                  Category {currentCat.num} of 10
+                </span>
+                <h2 className="text-[22px] font-extrabold text-white">
+                  {currentCat.name}
+                </h2>
+                <p className="mt-0.5 text-[13px] text-white/80">
+                  {currentCat.subtitle}
+                </p>
+              </div>
+
+              {currentCat.num === 10 ? (
+                <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-3 py-1 text-[11px] font-bold text-white">
+                  <Lock className="h-3 w-3" /> Private
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-3 py-1 text-[11px] font-bold text-white">
+                  <Globe className="h-3 w-3" /> Public
+                </span>
+              )}
+            </div>
+
+            {/* CATEGORY 1: SOCIAL ENERGY */}
             {activeCategoryNum === 1 && (
-              <>
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Your ideal social setting?
-                  </label>
-                  <p className="text-[12px] text-[#A6AAA4] mt-0.5">Quick structured answer:</p>
+                  <label className="text-[13.5px] font-bold text-white">Ideal Group Size</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['One-on-one', '3–4 people', '5–8 people', 'Big group', 'Depends'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.socialSetting === opt}
-                        onClick={() => updateField('socialSetting', opt)}
+                        selected={formState.groupSize === opt}
+                        onClick={() => updateField('groupSize', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: What makes that setting work for you?
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="Add your own words... e.g. I usually find one person I click with before I open up to the room."
-                      value={formState.socialEnergyOpen || ''}
-                      onChange={(e) => updateField('socialEnergyOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What atmosphere brings you alive?
-                  </label>
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Social Vibe</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Intimate', 'Playful-chaotic', 'Intellectual', 'Adventurous', 'Calm', 'High-energy', 'Creative'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.groupEnergy === opt}
-                        onClick={() => updateField('groupEnergy', opt)}
+                        selected={formState.socialVibe === opt}
+                        onClick={() => updateField('socialVibe', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Describe your perfect social atmosphere.
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Intimate, curious, slightly chaotic."
-                      value={formState.atmosphereOpen || ''}
-                      onChange={(e) => updateField('atmosphereOpen', e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
-              </>
+
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Add your own words (Optional Open-Ended)
+                  </label>
+                  <p className="text-[12px] text-white/80">
+                    What makes that setting work for you? Or describe your perfect social atmosphere.
+                  </p>
+                  <textarea
+                    rows={3}
+                    value={formState.socialAtmosphereOpen || ''}
+                    onChange={(e) => updateField('socialAtmosphereOpen', e.target.value)}
+                    placeholder="e.g. I find large parties draining, but give me 3 people around a kitchen table and I'll talk until 2am."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+              </div>
             )}
 
-            {/* 2. HOW I CONNECT */}
+            {/* CATEGORY 2: HOW I CONNECT */}
             {activeCategoryNum === 2 && (
-              <>
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    How do you naturally keep friendships alive?
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Messaging Style</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Random thoughts', 'Memes', 'Check-ins', 'Voice notes', 'Calls', 'Making plans', 'Mostly IRL'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.connectionMode === opt}
-                        onClick={() => updateField('connectionMode', opt)}
+                        selected={formState.messagingStyle === opt}
+                        onClick={() => updateField('messagingStyle', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Anything you want people to know about your texting style?
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. I don't need to talk every day to feel close, but when we talk I like actually talking."
-                      value={formState.messagingStyleOpen || ''}
-                      onChange={(e) => updateField('messagingStyleOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    When you're venting, what do you want?
-                  </label>
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">When someone is going through a hard time</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Listen', 'Reassure', 'Make sense of it', 'Advice', 'Solve it', 'Ask me'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.replyRhythm === opt}
-                        onClick={() => updateField('replyRhythm', opt)}
+                        selected={formState.supportStyle === opt}
+                        onClick={() => updateField('supportStyle', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: In your own words, what does good support feel like?
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Listen first. Advice is welcome once I feel understood."
-                      value={formState.supportOpen || ''}
-                      onChange={(e) => updateField('supportOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
-              </>
+
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Add your own words (Optional Open-Ended)
+                  </label>
+                  <p className="text-[12px] text-white/80">
+                    In your own words, what does good support or good communication feel like to you?
+                  </p>
+                  <textarea
+                    rows={3}
+                    value={formState.messagingStyleOpen || ''}
+                    onChange={(e) => updateField('messagingStyleOpen', e.target.value)}
+                    placeholder="e.g. I don't need to talk every day to feel close, but when we talk I like actually talking."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+              </div>
             )}
 
-            {/* 3. FRIENDSHIP STYLE */}
+            {/* CATEGORY 3: FRIENDSHIP STYLE */}
             {activeCategoryNum === 3 && (
-              <>
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    You know someone's becoming a real friend when...
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Friendship Pillars</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['We tell each other everything', 'Inside jokes', 'Spontaneous plans', 'Comfortable silence', 'Show up in hard times'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.bringsToFriendship === opt}
-                        onClick={() => updateField('bringsToFriendship', opt)}
+                        selected={formState.friendshipPillars === opt}
+                        onClick={() => updateField('friendshipPillars', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Finish this prompt in your own words.
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. We can disappear into our own lives and reconnect without it feeling weird."
-                      value={formState.realFriendOpen || ''}
-                      onChange={(e) => updateField('realFriendOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What makes you feel cared for?
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Prompt: I know we're actually friends when...
                   </label>
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Something small a friend can do that means a lot to you?
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Making time, remembering small details, showing up."
-                      value={formState.caredForOpen || ''}
-                      onChange={(e) => updateField('caredForOpen', e.target.value)}
-                      className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
+                  <textarea
+                    rows={3}
+                    value={formState.realFriendOpen || ''}
+                    onChange={(e) => updateField('realFriendOpen', e.target.value)}
+                    placeholder="e.g. We can sit in silence without anyone feeling obligated to fill it."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
                 </div>
-              </>
+              </div>
             )}
 
-            {/* 4. MY RHYTHM */}
+            {/* CATEGORY 4: MY RHYTHM */}
             {activeCategoryNum === 4 && (
-              <>
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Your ideal Saturday?
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Ideal Free Saturday</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Slow coffee', 'Outdoors', 'Hobbies', 'Exploring', 'Social all day', 'Dinner-drinks', 'Home', 'Spontaneous'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.timeAlive === opt}
-                        onClick={() => updateField('timeAlive', opt)}
+                        selected={formState.idealSaturday === opt}
+                        onClick={() => updateField('idealSaturday', opt)}
                       />
                     ))}
                   </div>
-
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Describe your ideal free Saturday in your own words.
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Slow morning, something interesting in the afternoon, dinner if the energy is right."
-                      value={formState.idealSaturdayOpen || ''}
-                      onChange={(e) => updateField('idealSaturdayOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
                 </div>
-              </>
-            )}
 
-            {/* 5. PERSONALITY */}
-            {activeCategoryNum === 5 && (
-              <>
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Your friend texts: 'Flights are cheap. Bali this weekend?'
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Spontaneous Weekend Trip?</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Already packing', 'Convince me', '24 hours notice needed', 'Not without itinerary'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.baliTextResponse === opt}
-                        onClick={() => updateField('baliTextResponse', opt)}
+                        selected={formState.spontaneousTrip === opt}
+                        onClick={() => updateField('spontaneousTrip', opt)}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Which describe you best?
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Describe your ideal free Saturday in your own words
                   </label>
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Describe yourself in 1–2 sentences without using job titles.
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Curious, reflective, and independent with a dry humor."
-                      value={formState.selfDescriptionOpen || ''}
-                      onChange={(e) => updateField('selfDescriptionOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
+                  <textarea
+                    rows={3}
+                    value={formState.idealSaturdayOpen || ''}
+                    onChange={(e) => updateField('idealSaturdayOpen', e.target.value)}
+                    placeholder="e.g. Slow morning, something interesting in the afternoon, dinner if the energy is right."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
                 </div>
-              </>
+              </div>
             )}
 
-            {/* 6. VALUES & WORLDVIEW */}
-            {activeCategoryNum === 6 && (
-              <>
+            {/* CATEGORY 5: PERSONALITY */}
+            {activeCategoryNum === 5 && (
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What matters most to the life you're building?
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Describe yourself in 1-2 sentences</label>
+                  <textarea
+                    rows={3}
+                    value={formState.selfDescriptionOpen || ''}
+                    onChange={(e) => updateField('selfDescriptionOpen', e.target.value)}
+                    placeholder="e.g. Curious about people's backstories, slow to judge, and easily drawn into spontaneous craft projects."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY 6: VALUES & WORLDVIEW */}
+            {activeCategoryNum === 6 && (
+              <div className="mt-5 flex flex-col gap-5">
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Life Priorities</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Family', 'Freedom', 'Adventure', 'Community', 'Achievement', 'Creativity', 'Growth', 'Stability', 'Curiosity'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.mattersMost === opt}
-                        onClick={() => updateField('mattersMost', opt)}
+                        selected={formState.coreValues === opt}
+                        onClick={() => updateField('coreValues', opt)}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What quality makes you respect someone?
-                  </label>
-                  <div className="mt-3">
-                    <label className="text-[12.5px] font-semibold text-[#A6AAA4]">
-                      Optional open answer: Finish this: "I really respect people who..."
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. I really respect people who can change their mind when presented with better information."
-                      value={formState.respectPeopleOpen || ''}
-                      onChange={(e) => updateField('respectPeopleOpen', e.target.value)}
-                      className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* 7. I'M INTO */}
-            {activeCategoryNum === 7 && (
-              <>
-                <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What could you lose hours talking about?
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Prompt: I really respect people who...
                   </label>
                   <textarea
+                    rows={3}
+                    value={formState.respectPeopleOpen || ''}
+                    onChange={(e) => updateField('respectPeopleOpen', e.target.value)}
+                    placeholder="e.g. Can change their mind when presented with better information."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY 7: I'M INTO */}
+            {activeCategoryNum === 7 && (
+              <div className="mt-5 flex flex-col gap-5">
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">What could you lose hours talking about?</label>
+                  <textarea
                     rows={2}
-                    placeholder="e.g. Design history, why people make irrational choices, and filter coffee roast notes."
                     value={formState.talkForHoursOpen || ''}
                     onChange={(e) => updateField('talkForHoursOpen', e.target.value)}
-                    className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
+                    placeholder="e.g. Architecture history, specialty coffee processing, and film photography."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
                   />
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What's your current rabbit hole?
-                  </label>
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Current rabbit hole</label>
                   <input
                     type="text"
-                    placeholder="e.g. Japanese woodworking joints and Studio Ghibli food aesthetics."
                     value={formState.currentRabbitHoleOpen || ''}
                     onChange={(e) => updateField('currentRabbitHoleOpen', e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
+                    placeholder="e.g. Fermentation & natural sourdough"
+                    className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[13.5px] text-white outline-none"
                   />
                 </div>
-
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    What would you love someone to introduce you to?
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Pottery throwing, ceramics, bouldering."
-                    value={formState.wantToTryOpen || ''}
-                    onChange={(e) => updateField('wantToTryOpen', e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-              </>
+              </div>
             )}
 
-            {/* 8. OUTING DNA */}
+            {/* CATEGORY 8: OUTING DNA */}
             {activeCategoryNum === 8 && (
-              <>
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Describe an outing you'd say yes to instantly.
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. A quiet pottery workshop followed by filter coffee in Tiong Bahru."
-                    value={formState.instantYesOutingOpen || ''}
-                    onChange={(e) => updateField('instantYesOutingOpen', e.target.value)}
-                    className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    Typical comfortable spend?
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">Outing Budget Preference</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Free', '<$20', '$20–50', '$50–100', '$100+'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.comfortableSpend === opt}
-                        onClick={() => updateField('comfortableSpend', opt)}
+                        selected={formState.budgetPref === opt}
+                        onClick={() => updateField('budgetPref', opt)}
                       />
                     ))}
                   </div>
                 </div>
-              </>
-            )}
 
-            {/* 9. YOU SHOULD KNOW */}
-            {activeCategoryNum === 9 && (
-              <>
-                <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    I'll probably like you if...
+                <div className="border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">
+                    Describe an outing you'd say yes to instantly
                   </label>
                   <textarea
-                    rows={2}
-                    placeholder="e.g. ...you can go from discussing something stupid to something existential in 5 minutes."
-                    value={formState.likeYouIfOpen || ''}
-                    onChange={(e) => updateField('likeYouIfOpen', e.target.value)}
-                    className="mt-1.5 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
+                    rows={3}
+                    value={formState.instantYesOutingOpen || ''}
+                    onChange={(e) => updateField('instantYesOutingOpen', e.target.value)}
+                    placeholder="e.g. 5km botanical garden walk at 8am followed by cold brew coffee."
+                    className="mt-2 w-full rounded-[14px] border border-white/20 bg-black/60 p-3 text-[13.5px] text-white outline-none"
                   />
                 </div>
-
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    The quickest way to get me out of the house is...
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. A quiet coffee walk or an invitation to an independent bookstore."
-                    value={formState.quickestOutHouseOpen || ''}
-                    onChange={(e) => updateField('quickestOutHouseOpen', e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    A weirdly specific thing I love...
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. The smell of old books and watching pottery glaze dry."
-                    value={formState.weirdThingILoveOpen || ''}
-                    onChange={(e) => updateField('weirdThingILoveOpen', e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[13.5px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-              </>
+              </div>
             )}
 
-            {/* 10. BOUNDARIES & MATCHING PREFERENCES */}
-            {activeCategoryNum === 10 && (
-              <>
+            {/* CATEGORY 9: YOU SHOULD KNOW */}
+            {activeCategoryNum === 9 && (
+              <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    How important is punctuality to you?
-                  </label>
+                  <label className="text-[13.5px] font-bold text-white">I'll probably like you if...</label>
+                  <input
+                    type="text"
+                    value={formState.likeMeIfPrompt || ''}
+                    onChange={(e) => updateField('likeMeIfPrompt', e.target.value)}
+                    placeholder="e.g. You can switch from silly memes to deep existential topics in 5 minutes."
+                    className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Quickest way to get me out of the house...</label>
+                  <input
+                    type="text"
+                    value={formState.quickestWayPrompt || ''}
+                    onChange={(e) => updateField('quickestWayPrompt', e.target.value)}
+                    placeholder="e.g. Mention a quiet coffee shop or pottery workshop."
+                    className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* CATEGORY 10: BOUNDARIES & MATCHING */}
+            {activeCategoryNum === 10 && (
+              <div className="mt-5 flex flex-col gap-5">
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Punctuality Importance</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Low', 'Flexible', 'Important', 'Essential'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.punctualityImportance === opt}
-                        onClick={() => updateField('punctualityImportance', opt)}
+                        selected={formState.punctualityPref === opt}
+                        onClick={() => updateField('punctualityPref', opt)}
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-[#F3F0E9]/10 pt-4">
-                  <label className="text-[13.5px] font-bold text-[#F3F0E9]">
-                    How do you feel about last-minute cancellations?
-                  </label>
+                <div>
+                  <label className="text-[13.5px] font-bold text-white">Last-minute cancellation stance</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Fine', 'Context matters', 'Dislike', 'Dealbreaker'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.cancellationFeeling === opt}
-                        onClick={() => updateField('cancellationFeeling', opt)}
+                        selected={formState.cancellationStance === opt}
+                        onClick={() => updateField('cancellationStance', opt)}
                       />
                     ))}
                   </div>
                 </div>
-              </>
+              </div>
             )}
+
+            {/* NEXT CATEGORY / SAVE FOOTER BUTTONS */}
+            <div className="mt-8 flex items-center justify-between border-t border-white/15 pt-5">
+              {activeCategoryNum > 1 ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => setActiveCategoryNum((prev) => prev - 1)}
+                >
+                  ← Previous
+                </Button>
+              ) : (
+                <div />
+              )}
+
+              {activeCategoryNum < 10 ? (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  onClick={() => setActiveCategoryNum((prev) => prev + 1)}
+                >
+                  Next Category ({activeCategoryNum + 1}/10) →
+                </Button>
+              ) : (
+                <Button variant="primary" size="sm" type="submit">
+                  Save All 10 Categories
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Live Profile Output Preview Box */}
-        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#0D1D15] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Live Public Profile Render Preview
-          </span>
-          <p className="mt-1.5 text-[13px] italic text-[#F3F0E9]">
-            {activeCategoryNum === 1 && (formState.socialEnergyOpen || formState.atmosphereOpen || '"Small groups · Warms up gradually"')}
-            {activeCategoryNum === 2 && (formState.messagingStyleOpen || formState.supportOpen || '"I don\'t need to talk every day to feel close..."')}
-            {activeCategoryNum === 3 && (formState.realFriendOpen || formState.caredForOpen || '"We can disappear into our own lives..."')}
-            {activeCategoryNum === 4 && (formState.idealSaturdayOpen || '"Slow morning, filter coffee, quiet afternoon."')}
-            {activeCategoryNum === 5 && (formState.selfDescriptionOpen || '"Curious, reflective, and independent."')}
-            {activeCategoryNum === 6 && (formState.respectPeopleOpen || '"I really respect people who can change their mind..."')}
-            {activeCategoryNum === 7 && (formState.talkForHoursOpen || '"Design history, psychology, and ceramics."')}
-            {activeCategoryNum === 8 && (formState.instantYesOutingOpen || '"A quiet pottery workshop followed by filter coffee."')}
-            {activeCategoryNum === 9 && (formState.likeYouIfOpen || '"I\'ll probably like you if you can go from stupid to existential in 5m."')}
-            {activeCategoryNum === 10 && '"Private matching signals — used strictly by algorithm."'}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between">
-          {savedMessage && (
-            <span className="flex items-center text-[13px] font-bold text-[#F3F0E9]">
-              <Check className="mr-1 h-4 w-4" /> Category {currentCat.num} Saved!
-            </span>
-          )}
-
-          <Button type="submit" variant="primary" size="md" className="ml-auto">
-            Save & Update Profile
-          </Button>
-        </div>
-      </form>
-    </IllustratedGround>
+        </form>
+      </div>
+    </div>
   );
 }
