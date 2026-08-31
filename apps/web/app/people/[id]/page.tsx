@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { getCandidatePeopleForCity, CandidatePerson } from '../../../lib/peopleStore';
+import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
@@ -17,10 +17,43 @@ export default function PersonDetailPage() {
   const router = useRouter();
   const personId = (params?.id as string) || '';
 
+  const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
+
+  useEffect(() => {
+    async function loadMatch() {
+      try {
+        const user = getUserProfile();
+        const matches = await getRankedMatches(user, { limit: 40 });
+        const found = matches.find((m) => m.id === personId || m.id.includes(personId));
+        if (found) {
+          setRankedMatch(found);
+        }
+      } catch (err) {
+        console.error('Failed to load match detail:', err);
+      }
+    }
+    loadMatch();
+  }, [personId]);
+
   const userProfile = getUserProfile();
   const activeCity = userProfile.homeArea || 'Singapore';
   const candidates = getCandidatePeopleForCity(activeCity);
-  const foundPerson = candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0];
+  const fallbackPerson = candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0];
+
+  const foundPerson = rankedMatch
+    ? {
+        id: rankedMatch.id,
+        name: rankedMatch.name,
+        avatarUrl: rankedMatch.avatarUrl,
+        homeArea: rankedMatch.homeArea,
+        bio: rankedMatch.bio,
+        clickText: rankedMatch.clickText,
+        rubText: rankedMatch.rubText,
+        fitLabel: rankedMatch.fitLabel,
+        rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
+      }
+    : fallbackPerson;
+
   const firstName = foundPerson.name.split(' ')[0];
   const possessiveFirstName = `${firstName}'s`;
 

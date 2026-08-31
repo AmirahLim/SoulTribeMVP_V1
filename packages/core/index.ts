@@ -15,3 +15,4 @@ export * from './matching/coldstart.ts';
 export * from './telemetry/events.ts';
 export * from './telemetry/sink.ts';
 export * from './telemetry/version.ts';
+export * from './fixtures/demoProfiles.ts';

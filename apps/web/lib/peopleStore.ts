@@ -11,7 +11,7 @@ export interface CandidatePerson {
   fitLabel: string;
 }
 
-export const CANDIDATE_PEOPLE: CandidatePerson[] = [
+export const DEMO_PEOPLE_FALLBACK: CandidatePerson[] = [
   {
     id: 'marcus-tan-101',
     name: 'Marcus Tan',
@@ -50,8 +50,13 @@ export const CANDIDATE_PEOPLE: CandidatePerson[] = [
   },
 ];
 
+export const CANDIDATE_PEOPLE = DEMO_PEOPLE_FALLBACK;
+
+/**
+ * @deprecated Use getRankedMatches() from apps/web/lib/matching.ts instead.
+ */
 export function getCandidatePeopleForCity(_city?: string): CandidatePerson[] {
-  return CANDIDATE_PEOPLE.map((person) => ({
+  return DEMO_PEOPLE_FALLBACK.map((person) => ({
     ...person,
     homeArea: 'Singapore',
   }));
