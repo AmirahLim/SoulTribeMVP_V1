@@ -6,7 +6,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "test": "node --experimental-strip-types --test"
+    "test": "node --experimental-strip-types --test",
+    "tune": "node --experimental-strip-types matching/tools/tune-weights.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"
