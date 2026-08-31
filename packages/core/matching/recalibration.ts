@@ -41,13 +41,13 @@ export function recalibrateTrait(
     if (traitName === 'social_frequency') {
       userFacingMessage =
         clampedShift > 0
-          ? "Your rhythm has shifted — you've been meeting more often than you expected to."
-          : "Your rhythm has shifted — you've been taking a quieter pace recently.";
+          ? "Your rhythm has shifted: you've been meeting more often than you expected to."
+          : "Your rhythm has shifted: you've been taking a quieter pace recently.";
     } else if (traitName === 'opening_pace') {
       userFacingMessage =
         clampedShift > 0
-          ? "Your rhythm has shifted — you've been opening up faster in recent meetups."
-          : "Your rhythm has shifted — you've been taking your time opening up.";
+          ? "Your rhythm has shifted: you've been opening up faster in recent meetups."
+          : "Your rhythm has shifted: you've been taking your time opening up.";
     } else {
       userFacingMessage = `Your rhythm has shifted based on ${observations.length} recent outings.`;
     }

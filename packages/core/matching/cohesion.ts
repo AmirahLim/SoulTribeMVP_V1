@@ -80,7 +80,7 @@ export function calculateGroupCohesion(group: ProfileVector[]): GroupCohesionRes
 
   if (minR < 0.35) {
     warnings.push(
-      `${minPair.pairNames[0]} and ${minPair.pairNames[1]} are quite different — that can work, but this group may need you to bridge them.`
+      `${minPair.pairNames[0]} and ${minPair.pairNames[1]} are quite different: that can work, but this group may need you to bridge them.`
     );
   }
 
@@ -100,7 +100,7 @@ export function calculateGroupCohesion(group: ProfileVector[]): GroupCohesionRes
 
   const groupSizePrefs = group.map((g) => g.experience?.group_size_pref ?? 0.5);
   if (stdev(groupSizePrefs) > 0.30) {
-    warnings.push("Two guests prefer 1:1 or small groups — six may feel like a lot for them.");
+    warnings.push("Two guests prefer 1:1 or small groups: six may feel like a lot for them.");
   }
 
   if (!feasibility) {
@@ -109,7 +109,7 @@ export function calculateGroupCohesion(group: ProfileVector[]): GroupCohesionRes
 
   if (group.length === 6) {
     warnings.push(
-      "This is the largest group Soul Tribe runs. Six is where conversation splits — that's fine, just expect it."
+      "This is the largest group Soul Tribe runs. Six is where conversation splits: that's fine, just expect it."
     );
   }
 

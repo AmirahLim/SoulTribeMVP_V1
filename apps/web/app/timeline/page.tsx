@@ -51,7 +51,7 @@ export default function TimelinePage() {
           The Tribe's Timeline
         </h1>
         <p className="mt-1 text-[14px] text-[#A6AAA4]">
-          The group chat holds the chatter — Soul Tribe holds the history.
+          The group chat holds the chatter. Soul Tribe holds the history.
         </p>
       </header>
 

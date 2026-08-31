@@ -55,7 +55,7 @@ export function generateMatchExplanation(
 
   for (const d of aligned) {
     if (d.key === 'intent') {
-      clickParts.push(`You both share alignment on friendship intent — ${PHRASES.depth(vecB.intent?.depth ?? 2)}.`);
+      clickParts.push(`You both share alignment on friendship intent: ${PHRASES.depth(vecB.intent?.depth ?? 2)}.`);
     } else if (d.key === 'social_rhythm') {
       clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(vecB.social_rhythm?.planning_horizon ?? 0.5)}.`);
     } else if (d.key === 'communication') {
@@ -103,7 +103,7 @@ export function generateMatchExplanation(
   const friction_text =
     frictionParts.length > 0
       ? frictionParts.join(' ')
-      : "Nothing obvious to flag here — you're aligned on most of what usually causes friction.";
+      : "Nothing obvious to flag here: you're aligned on most of what usually causes friction.";
 
   return {
     click_text,

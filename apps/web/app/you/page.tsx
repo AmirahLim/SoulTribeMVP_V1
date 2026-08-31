@@ -211,8 +211,7 @@ export default function ProfilePage() {
 
         {/* SECTION B: SOCIAL DNA METRIC BARS */}
         <section className="py-6 border-b border-white/15">
-          <span className="text-[11px] font-bold tracking-widest text-emerald-400 uppercase flex items-center gap-1.5">
-            <PawPrint className="h-3.5 w-3.5 text-emerald-400 fill-emerald-400/20" />
+          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
             Your Tribal Print
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">

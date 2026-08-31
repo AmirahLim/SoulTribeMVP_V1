@@ -201,7 +201,7 @@ export default function OnboardingPage() {
               {step === 1 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 1 of 8 — Profile & Intent
+                    Step 1 of 8: Profile & Intent
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     Who are you & what are you hoping to find?
@@ -278,7 +278,7 @@ export default function OnboardingPage() {
               {step === 2 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 2 of 8 — Relational Feeling
+                    Step 2 of 8: Relational Feeling
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     What does a great friendship feel like to you?
@@ -311,7 +311,7 @@ export default function OnboardingPage() {
               {step === 3 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 3 of 8 — Social Energy
+                    Step 3 of 8: Social Energy
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     How do you prefer to socialize?
@@ -355,7 +355,7 @@ export default function OnboardingPage() {
               {step === 4 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 4 of 8 — Communication
+                    Step 4 of 8: Communication
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     How do you naturally stay connected?
@@ -387,7 +387,7 @@ export default function OnboardingPage() {
               {step === 5 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 5 of 8 — Planning Rhythm
+                    Step 5 of 8: Planning Rhythm
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     How do you like making plans?
@@ -436,7 +436,7 @@ export default function OnboardingPage() {
               {step === 6 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 6 of 8 — Outing DNA
+                    Step 6 of 8: Outing DNA
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     Pick outings you'd actually say yes to
@@ -476,7 +476,7 @@ export default function OnboardingPage() {
               {step === 7 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 7 of 8 — Emotional Pacing
+                    Step 7 of 8: Emotional Pacing
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     When getting to know someone...
@@ -510,7 +510,7 @@ export default function OnboardingPage() {
               {step === 8 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 8 of 8 — Resonance Target
+                    Step 8 of 8: Resonance Target
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     Who would you be excited to meet right now?

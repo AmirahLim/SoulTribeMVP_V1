@@ -222,7 +222,7 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
     likeMeIfPrompt: 'I\'ll probably like you if you can go from discussing something stupid to something existential in 5 mins.',
     quickestWayPrompt: 'A quiet coffee walk or an invitation to a bookstore.',
     punctualityPref: 'Essential',
-    cancellationStance: 'Dislike — notice feels respectful',
+    cancellationStance: 'Dislike - notice feels respectful',
   },
 };
 

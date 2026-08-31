@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Soul Tribe — Friendship-First Social Platform',
+  title: 'Soul Tribe: Friendship-First Social Platform',
   description: 'Six people. One good Saturday. Soul Tribe holds the history of your adult friendships.',
 };
 

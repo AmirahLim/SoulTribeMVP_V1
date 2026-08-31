@@ -48,7 +48,7 @@ export default function OutingRecordPage() {
           {/* 1. RHYTHM CHECK */}
           <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <h3 className="text-[18px] font-bold text-[#F3F0E9]">
-              1. Rhythm Check — How did that land?
+              1. Rhythm Check: How did that land?
             </h3>
 
             <div className="mt-4 flex flex-col gap-4">
