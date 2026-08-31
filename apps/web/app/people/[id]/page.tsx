@@ -268,7 +268,7 @@ export default function PersonDetailPage() {
           </div>
 
           <div className="mt-4">
-            <ResonanceRead explanation={explanation} />
+            <ResonanceRead clickText={explanation.click_text} rubText={explanation.rub_text} />
           </div>
         </section>
 
