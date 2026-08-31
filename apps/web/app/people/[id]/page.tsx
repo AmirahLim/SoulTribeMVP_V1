@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { getCandidatePeopleForCity } from '../../../lib/peopleStore';
+import { DEMO_PROFILES } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
@@ -39,7 +40,23 @@ export default function PersonDetailPage() {
   const userProfile = getUserProfile();
   const activeCity = userProfile.homeArea || 'Singapore';
   const candidates = getCandidatePeopleForCity(activeCity);
-  const fallbackPerson = candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0];
+
+  const demoCandidate = DEMO_PROFILES.find((p) => p.profile.id === personId || p.profile.id.includes(personId));
+
+  const fallbackPerson = demoCandidate
+    ? {
+        id: demoCandidate.profile.id,
+        name: demoCandidate.profile.display_name,
+        avatarUrl: demoCandidate.profile.avatar_url,
+        homeArea: demoCandidate.profile.home_area,
+        bio: demoCandidate.profile.bio,
+        interests: ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
+        clickText: 'Shared commitment to low-pressure, intentional catch-ups.',
+        rubText: 'Rhythm schedules touch well across the week.',
+        fitLabel: 'Good Fit',
+        rhythmOverlap: Math.round((demoCandidate.profile.confidence || 0.7) * 100),
+      }
+    : (candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0]);
 
   const foundPerson = rankedMatch
     ? {
