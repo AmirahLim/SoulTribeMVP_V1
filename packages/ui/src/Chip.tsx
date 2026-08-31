@@ -14,10 +14,10 @@ export function Chip({ label, selected = false, onClick, className = '' }: ChipP
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center rounded-full px-3.5 py-1.5 text-[13px] font-bold transition-all ${
+      className={`inline-flex items-center rounded-[12px] px-3.5 py-1.5 text-[13px] font-semibold transition-all ${
         selected
-          ? 'bg-[#C85A32] text-[#FFFDF9] shadow-sm'
-          : 'border border-[#1C3A27]/10 bg-[#FFFDF9] text-[#3A4D42] hover:bg-[#EBDDD0]'
+          ? 'bg-[#F3F0E9] text-[#0D1D15] shadow-sm'
+          : 'border border-[#F3F0E9]/15 bg-[#15261C] text-[#F3F0E9] hover:border-[#F3F0E9]/40'
       } ${className}`}
     >
       {label}

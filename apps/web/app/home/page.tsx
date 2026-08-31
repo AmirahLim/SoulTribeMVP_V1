@@ -8,7 +8,6 @@ import {
   IllustratedGround,
   PitchCard,
   Button,
-  FeatherLogo,
 } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
 import { score } from '../../../../packages/core/matching/engine';
@@ -44,93 +43,66 @@ export default function HomeDashboardPage() {
 
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
-      {/* OPAL TOP BAR WITH OFFICIAL FEATHER LOGO */}
-      <header className="flex items-center justify-between pt-2">
+      {/* LUXURY DARK GREEN TOP BAR */}
+      <header className="flex items-center justify-between pb-6 border-b border-[#F3F0E9]/12">
         <div className="flex items-center gap-3">
-          <Link href="/you" className="relative">
+          <Link href="/you">
             <img
               src={profile.avatarUrl}
               alt={profile.displayName}
-              className="h-11 w-11 rounded-full object-cover ring-2 ring-[#D49B4B]"
+              className="h-11 w-11 rounded-full object-cover ring-2 ring-[#D49B4B]/50"
             />
-            <div className="absolute -bottom-1 -right-1">
-              <FeatherLogo size={14} />
-            </div>
           </Link>
           <div>
-            <span className="text-[11px] font-bold tracking-wider text-[#D49B4B] uppercase">
+            <span className="text-[11px] font-bold tracking-widest text-[#D49B4B] uppercase">
               Singapore Cohort
             </span>
-            <h1 className="text-[20px] font-extrabold tracking-tight text-[#1F3D2C]">
+            <h1 className="text-[22px] font-bold text-[#F3F0E9] tracking-tight">
               Hey, {profile.displayName}
             </h1>
           </div>
         </div>
 
-        <Link
-          href="/outings/pitch"
-          className="flex items-center gap-1.5 rounded-full bg-[#2D523E] px-3.5 py-2 text-[12px] font-bold text-[#FFFDF9] shadow-sm transition-transform hover:scale-105"
-        >
-          <Plus className="h-4 w-4" /> Pitch Outing
+        <Link href="/outings/pitch">
+          <Button variant="ochre" size="sm">
+            <Plus className="mr-1 h-4 w-4" /> Pitch Outing
+          </Button>
         </Link>
       </header>
 
-      {/* OPAL STATS SUMMARY CARD */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mt-4 rounded-[28px] border border-[#2D523E]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(45,82,62,0.06)]"
-      >
+      {/* TRIBAL PASS EDITORIAL SUMMARY */}
+      <section className="py-6 border-b border-[#F3F0E9]/12">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold tracking-wider text-[#D49B4B] uppercase">
-            Tribal Pass · {profile.passCompletionPct}% Complete
+          <span className="text-[11px] font-bold tracking-widest text-[#A6AAA4] uppercase">
+            Tribal Pass Status
           </span>
-          <span className="rounded-full bg-[#2D523E]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#2D523E]">
-            Active Pass
+          <span className="text-[12px] font-semibold text-[#D49B4B]">
+            {profile.passCompletionPct}% Complete
           </span>
         </div>
 
-        <p className="mt-2 text-[14px] font-medium leading-[21px] text-[#4A3B30]">
-          We’ve learned more about your social rhythm and communication style. 6 people look like a strong fit.
+        <p className="mt-2.5 text-[15px] leading-relaxed text-[#F3F0E9]">
+          We’ve learned your social rhythm and communication style. 6 people look like a strong fit.
         </p>
 
-        {/* OPAL METRIC PILLS */}
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center justify-center rounded-[18px] border border-[#2D523E]/08 bg-[#F8F3EA] p-2.5 text-center">
-            <span className="text-[16px] font-extrabold text-[#1F3D2C]">6</span>
-            <span className="text-[10px] font-bold text-[#7A6B5F]">Strong Fit</span>
-          </div>
-
-          <div className="flex flex-col items-center justify-center rounded-[18px] border border-[#2D523E]/08 bg-[#F8F3EA] p-2.5 text-center">
-            <span className="text-[16px] font-extrabold text-[#D49B4B]">3</span>
-            <span className="text-[10px] font-bold text-[#7A6B5F]">Outings Free</span>
-          </div>
-
-          <div className="flex flex-col items-center justify-center rounded-[18px] border border-[#2D523E]/08 bg-[#F8F3EA] p-2.5 text-center">
-            <span className="text-[16px] font-extrabold text-[#2D523E]">4</span>
-            <span className="text-[10px] font-bold text-[#7A6B5F]">New Bonds</span>
-          </div>
+        {/* Minimal Hairline Data Points */}
+        <div className="mt-4 flex items-center gap-6 text-[13px] text-[#A6AAA4]">
+          <div><strong className="text-[#F3F0E9] font-bold">6</strong> Strong Fit</div>
+          <div><strong className="text-[#D49B4B] font-bold">3</strong> Outings Free</div>
+          <div><strong className="text-[#F3F0E9] font-bold">4</strong> New Bonds</div>
         </div>
+      </section>
 
-        <div className="mt-3 flex items-center justify-between pt-2 border-t border-[#2D523E]/06 text-[12px] font-bold text-[#4A3B30]">
-          <span>You’ve built 4 new bonds this month.</span>
-          <Link href="/you" className="text-[#D49B4B] hover:underline">
-            View Pass →
-          </Link>
-        </div>
-      </motion.section>
-
-      {/* OPAL PILL SEGMENTED CONTROL SWITCHER */}
-      <section className="mt-5">
-        <div className="flex rounded-full border border-[#2D523E]/10 bg-[#EFE6D8]/80 p-1">
+      {/* LUXURY MINIMALIST SEGMENTED SWITCHER */}
+      <section className="mt-6">
+        <div className="flex border-b border-[#F3F0E9]/12">
           <button
             type="button"
             onClick={() => setActiveTab('fit')}
-            className={`flex-1 rounded-full py-2.5 text-[13px] font-bold transition-all ${
+            className={`pb-3 pr-6 text-[14px] font-semibold transition-all ${
               activeTab === 'fit'
-                ? 'bg-[#FFFDF9] text-[#1F3D2C] shadow-sm'
-                : 'text-[#7A6B5F] hover:text-[#1F3D2C]'
+                ? 'text-[#D49B4B] border-b-2 border-[#D49B4B]'
+                : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
             Strong Fit (6)
@@ -139,10 +111,10 @@ export default function HomeDashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab('outings')}
-            className={`flex-1 rounded-full py-2.5 text-[13px] font-bold transition-all ${
+            className={`px-6 pb-3 text-[14px] font-semibold transition-all ${
               activeTab === 'outings'
-                ? 'bg-[#FFFDF9] text-[#1F3D2C] shadow-sm'
-                : 'text-[#7A6B5F] hover:text-[#1F3D2C]'
+                ? 'text-[#D49B4B] border-b-2 border-[#D49B4B]'
+                : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
             Outings (3)
@@ -151,10 +123,10 @@ export default function HomeDashboardPage() {
           <button
             type="button"
             onClick={() => setActiveTab('tribe')}
-            className={`flex-1 rounded-full py-2.5 text-[13px] font-bold transition-all ${
+            className={`px-6 pb-3 text-[14px] font-semibold transition-all ${
               activeTab === 'tribe'
-                ? 'bg-[#FFFDF9] text-[#1F3D2C] shadow-sm'
-                : 'text-[#7A6B5F] hover:text-[#1F3D2C]'
+                ? 'text-[#D49B4B] border-b-2 border-[#D49B4B]'
+                : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
             }`}
           >
             Your Tribe (4)
@@ -164,62 +136,61 @@ export default function HomeDashboardPage() {
 
       {/* TAB CONTENT: STRONG FIT CANDIDATES */}
       {activeTab === 'fit' && (
-        <section className="mt-4 flex flex-col gap-4">
+        <section className="mt-6 flex flex-col gap-6">
           {surfacedMatches.slice(0, 3).map(({ candidate, explanation }) => (
             <motion.div
               key={candidate.profile.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-[28px] border border-[#2D523E]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(45,82,62,0.06)]"
+              className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
                     src={candidate.profile.avatar_url || ''}
                     alt={candidate.profile.display_name}
-                    className="h-12 w-12 rounded-full object-cover ring-2 ring-[#2D523E]/15"
+                    className="h-12 w-12 rounded-full object-cover ring-1 ring-[#D49B4B]/30"
                   />
                   <div>
-                    <h3 className="text-[17px] font-extrabold text-[#1F3D2C]">
+                    <h3 className="text-[18px] font-bold text-[#F3F0E9]">
                       {candidate.profile.display_name}
                     </h3>
-                    <p className="flex items-center text-[12px] font-medium text-[#7A6B5F]">
-                      <MapPin className="mr-1 h-3.5 w-3.5 text-[#D49B4B]" />
+                    <p className="text-[12.5px] text-[#A6AAA4]">
                       {candidate.profile.home_area} · Singapore
                     </p>
                   </div>
                 </div>
 
-                <span className="rounded-full bg-[#2D523E]/10 px-3 py-1 text-[11px] font-bold text-[#2D523E]">
+                <span className="text-[12px] font-bold text-[#D49B4B]">
                   Strong Fit
                 </span>
               </div>
 
-              {/* RESONANCE COPY & FRICTION */}
-              <div className="mt-3.5 rounded-[18px] border border-[#2D523E]/08 bg-[#F8F3EA] p-3.5">
-                <span className="text-[10px] font-bold tracking-wider text-[#D49B4B] uppercase">
+              {/* Editorial Resonance Read */}
+              <div className="mt-4 border-t border-[#F3F0E9]/10 pt-3.5">
+                <span className="text-[10px] font-bold tracking-widest text-[#D49B4B] uppercase">
                   Why You Might Click
                 </span>
-                <p className="mt-1 text-[13px] font-medium leading-[19px] text-[#1F3D2C]">
+                <p className="mt-1 text-[13.5px] leading-relaxed text-[#F3F0E9]">
                   {explanation.click_text}
                 </p>
 
-                <span className="mt-3 block text-[10px] font-bold tracking-wider text-[#4A3B30] uppercase">
+                <span className="mt-3 block text-[10px] font-bold tracking-widest text-[#A6AAA4] uppercase">
                   Where You Might Rub
                 </span>
-                <p className="mt-1 text-[13px] font-medium leading-[19px] text-[#4A3B30]">
+                <p className="mt-1 text-[13.5px] leading-relaxed text-[#A6AAA4]">
                   {explanation.rub_text}
                 </p>
               </div>
 
-              <div className="mt-4 flex items-center justify-between pt-1">
-                <span className="text-[12px] font-bold text-[#7A6B5F]">
+              <div className="mt-4 flex items-center justify-between pt-2 border-t border-[#F3F0E9]/10">
+                <span className="text-[12px] text-[#A6AAA4]">
                   {candidate.tagged_interests.slice(0, 3).join(' · ')}
                 </span>
 
                 <Link href={`/people/${candidate.profile.id}`}>
-                  <Button variant="emerald" size="sm">
-                    View Tribal Pass <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  <Button variant="secondary" size="sm">
+                    View Tribal Pass →
                   </Button>
                 </Link>
               </div>
@@ -230,7 +201,7 @@ export default function HomeDashboardPage() {
 
       {/* TAB CONTENT: OUTINGS */}
       {activeTab === 'outings' && (
-        <section className="mt-4 flex flex-col gap-4">
+        <section className="mt-6 flex flex-col gap-6">
           <PitchCard
             id="out-101"
             title="Saturday Pottery & Filter Coffee"
@@ -243,6 +214,7 @@ export default function HomeDashboardPage() {
             seatsFilled={4}
             category="creative"
             orientation="conversation"
+            imageUrl="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80"
             onPitchClick={() => {}}
           />
 
@@ -258,6 +230,7 @@ export default function HomeDashboardPage() {
             seatsFilled={3}
             category="active"
             orientation="balanced"
+            imageUrl="https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&auto=format&fit=crop&q=80"
             onPitchClick={() => {}}
           />
         </section>
@@ -265,11 +238,11 @@ export default function HomeDashboardPage() {
 
       {/* TAB CONTENT: YOUR TRIBE */}
       {activeTab === 'tribe' && (
-        <section className="mt-4 flex flex-col gap-3">
+        <section className="mt-6 flex flex-col gap-4">
           {SYNTHETIC_PROFILES.slice(1, 5).map((member) => (
             <div
               key={member.profile.id}
-              className="flex items-center justify-between rounded-[22px] border border-[#2D523E]/08 bg-[#FFFDF9] p-4 shadow-sm"
+              className="flex items-center justify-between rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4 shadow-sm"
             >
               <div className="flex items-center gap-3">
                 <img
@@ -278,16 +251,16 @@ export default function HomeDashboardPage() {
                   className="h-11 w-11 rounded-full object-cover"
                 />
                 <div>
-                  <h4 className="text-[15px] font-extrabold text-[#1F3D2C]">
+                  <h4 className="text-[15px] font-bold text-[#F3F0E9]">
                     {member.profile.display_name}
                   </h4>
-                  <p className="text-[12px] font-medium text-[#7A6B5F]">
+                  <p className="text-[12px] text-[#A6AAA4]">
                     Connected · 2 Outings Shared
                   </p>
                 </div>
               </div>
 
-              <span className="rounded-full bg-[#2D523E] px-3 py-1 text-[11px] font-bold text-[#FFFDF9]">
+              <span className="text-[12px] font-bold text-[#D49B4B]">
                 Established Bond
               </span>
             </div>
