@@ -29,11 +29,11 @@ export function ResonanceRead({
         </p>
       </div>
 
-      {/* 2. WHERE YOU MIGHT RUB */}
+      {/* 2. POTENTIAL FRICTION */}
       {actualRubText && (
         <div className="border-t border-[#F3F0E9]/10 pt-3">
           <span className="text-[10px] font-bold tracking-widest text-[#A6AAA4] uppercase">
-            Where you might rub
+            Potential friction
           </span>
           <p className="mt-1 text-[13.5px] font-medium leading-relaxed text-[#A6AAA4]">
             {actualRubText}
