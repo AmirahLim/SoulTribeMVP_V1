@@ -1,3 +1,5 @@
+import { getGenderAvatarForName } from '@soul-tribe/core';
+
 export interface CandidatePerson {
   id: string;
   name: string;
@@ -58,6 +60,6 @@ export const CANDIDATE_PEOPLE = DEMO_PEOPLE_FALLBACK;
 export function getCandidatePeopleForCity(_city?: string): CandidatePerson[] {
   return DEMO_PEOPLE_FALLBACK.map((person) => ({
     ...person,
-    homeArea: 'Singapore',
+    avatarUrl: getGenderAvatarForName(person.name),
   }));
 }

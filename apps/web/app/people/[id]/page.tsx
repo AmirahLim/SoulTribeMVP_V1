@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { getCandidatePeopleForCity } from '../../../lib/peopleStore';
-import { DEMO_PROFILES } from '@soul-tribe/core';
+import { DEMO_PROFILES, getGenderAvatarForName } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
@@ -43,7 +43,7 @@ export default function PersonDetailPage() {
 
   const demoCandidate = DEMO_PROFILES.find((p) => p.profile.id === personId || p.profile.id.includes(personId));
 
-  const fallbackPerson = demoCandidate
+  const rawFallbackPerson = demoCandidate
     ? {
         id: demoCandidate.profile.id,
         name: demoCandidate.profile.display_name,
@@ -58,11 +58,16 @@ export default function PersonDetailPage() {
       }
     : (candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0]);
 
+  const fallbackPerson = {
+    ...rawFallbackPerson,
+    avatarUrl: getGenderAvatarForName(rawFallbackPerson.name),
+  };
+
   const foundPerson = rankedMatch
     ? {
         id: rankedMatch.id,
         name: rankedMatch.name,
-        avatarUrl: rankedMatch.avatarUrl,
+        avatarUrl: getGenderAvatarForName(rankedMatch.name),
         homeArea: rankedMatch.homeArea,
         bio: rankedMatch.bio,
         clickText: rankedMatch.clickText,

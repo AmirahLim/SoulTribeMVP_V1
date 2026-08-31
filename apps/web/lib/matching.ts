@@ -3,13 +3,14 @@ import {
   softGate,
   generateMatchExplanation,
   DEMO_PROFILES,
+  getGenderAvatarForName,
   buildMatchSurfacedEvent,
   recordEvent,
 } from '@soul-tribe/core';
 import type { ProfileVector, MatchContext } from '@soul-tribe/core';
-import type { UserProfileData } from './userStore';
-import { toProfileVector } from './profileAdapter';
-import { initTelemetry } from './telemetryInit';
+import type { UserProfileData } from './userStore.ts';
+import { toProfileVector } from './profileAdapter.ts';
+import { initTelemetry } from './telemetryInit.ts';
 
 /** Swappable data source: DEMO_PROFILES today, Supabase after the backend lands. */
 export interface CandidateSource {
@@ -91,7 +92,7 @@ export async function getRankedMatches(
     results.push({
       id: candVec.profile.id,
       name: candVec.profile.display_name,
-      avatarUrl: candVec.profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
       homeArea: user.homeArea || 'Singapore',
       bio: candVec.profile.bio || 'Singapore-based member.',
       rankScore: softRes.adjustedScore,

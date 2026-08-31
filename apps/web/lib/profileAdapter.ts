@@ -1,4 +1,4 @@
-import type { UserProfileData } from './userStore';
+import type { UserProfileData } from './userStore.ts';
 import type { ProfileVector } from '@soul-tribe/core';
 import { confidenceFromCompleteness } from '@soul-tribe/core';
 

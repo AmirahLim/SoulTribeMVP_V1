@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import type { UserProfileData } from '../userStore';
-import { toProfileVector, completenessConfidence } from '../profileAdapter';
+import type { UserProfileData } from '../userStore.ts';
+import { toProfileVector, completenessConfidence } from '../profileAdapter.ts';
 
 describe('Part 5 — Profile Adapter Tests', () => {
   it('1. An empty UserProfileData produces a vector with low confidence and answered: 0', () => {

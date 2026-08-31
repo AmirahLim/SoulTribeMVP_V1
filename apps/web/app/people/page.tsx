@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ResonanceRead } from '@soul-tribe/ui';
 import { getUserProfile } from '../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../lib/matching';
+import { getGenderAvatarForName } from '@soul-tribe/core';
 import { MapPin, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -110,7 +111,7 @@ export default function PeopleListPage() {
                       {/* Candidate's Individual Portrait Image */}
                       <div className="relative h-64 w-full overflow-hidden bg-black/40">
                         <img
-                          src={person.avatarUrl}
+                          src={getGenderAvatarForName(person.name)}
                           alt={person.name}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
