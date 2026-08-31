@@ -152,12 +152,12 @@ export default function LandingPage() {
         {/* BOTTOM CTA FOOTER */}
         <footer className="mt-12 text-center">
           <Link href="/onboarding">
-            <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
-              Your Circle Starts Here →
+            <Button variant="primary" size="lg" className="w-full py-4 text-[14.5px] font-bold leading-tight">
+              Create Your Tribal Pass, 8 quick questions →
             </Button>
           </Link>
           <p className="mt-3 text-[12px] text-white/70">
-            Takes ~3 minutes
+            Takes ~2 minutes
           </p>
         </footer>
       </div>
