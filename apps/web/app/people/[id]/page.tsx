@@ -72,7 +72,7 @@ export default function PersonDetailPage() {
       realFriendOpen: 'We can go weeks without talking and pick right back up without any weirdness.',
       idealSaturday: 'Filter coffee & Woodworking',
       spontaneousTrip: 'Convince me',
-      idealSaturdayOpen: 'Morning filter coffee in Tiong Bahru, afternoon throwing clay or woodworking.',
+      idealSaturdayOpen: 'Morning filter coffee, afternoon throwing clay or woodworking.',
       selfDescriptionOpen: 'Analytical yet warm, curious about how things are designed and built.',
       mbti: 'INTJ',
       sunSign: 'Taurus',
@@ -208,7 +208,7 @@ export default function PersonDetailPage() {
                   {foundPerson.name}
                 </h1>
                 <span className="flex items-center text-[12.5px] font-semibold text-white/90">
-                  <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea} · Singapore
+                  <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea}
                 </span>
               </div>
 

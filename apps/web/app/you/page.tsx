@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const [profile, setProfileState] = useState<UserProfileData>({
     displayName: 'You',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    homeArea: 'Tiong Bahru',
+    homeArea: 'Singapore',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
     passCompletionPct: 10,
   });
@@ -181,7 +181,7 @@ export default function ProfilePage() {
 
           <div className="mt-4 flex items-center justify-between">
             <div className="text-[12.5px] text-white/80">
-              <strong className="text-white font-semibold">{profile.homeArea}</strong> · Singapore
+              <strong className="text-white font-semibold">{profile.homeArea}</strong>
             </div>
 
             <Link href="/you/deeper">

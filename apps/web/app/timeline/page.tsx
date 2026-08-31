@@ -24,9 +24,9 @@ export default function TimelinePage() {
     {
       id: 'e2',
       date: '10 Aug 2026',
-      title: 'Tiong Bahru Pottery Workshop',
+      title: 'Ceramics & Pottery Workshop',
       headline: 'Marcus brought filter coffee while we spent two hours learning to throw clay.',
-      location: 'Tiong Bahru',
+      location: 'Singapore',
       attendees: [
         { name: 'Priya', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
         { name: 'Marcus', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },

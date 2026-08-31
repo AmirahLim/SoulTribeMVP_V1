@@ -64,7 +64,7 @@ export default function PeopleListPage() {
                           {person.name}
                         </h2>
                         <span className="flex items-center text-[13px] font-medium text-white/80">
-                          <MapPin className="mr-1 h-3.5 w-3.5" /> {person.homeArea} · Singapore
+                          <MapPin className="mr-1 h-3.5 w-3.5" /> {person.homeArea}
                         </span>
                       </div>
                     </div>

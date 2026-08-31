@@ -31,7 +31,7 @@ export default function OutingDetailPage() {
         />
 
         <div className="absolute top-4 left-4 rounded-full bg-[#0D1D15]/90 px-3 py-1 text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm">
-          Tiong Bahru · Singapore
+          Singapore
         </div>
 
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
@@ -64,7 +64,7 @@ export default function OutingDetailPage() {
             <Clock className="mr-2 h-4 w-4 text-[#8F998D]" /> 3:00pm – 5:30pm (2.5 hrs)
           </div>
           <div className="flex items-center text-[13.5px] text-[#F3F0E9]">
-            <MapPin className="mr-2 h-4 w-4 text-[#8F998D]" /> Tiong Bahru Studios & Forty Hands
+            <MapPin className="mr-2 h-4 w-4 text-[#8F998D]" /> Ceramic Studio & Specialty Coffee
           </div>
         </div>
 
