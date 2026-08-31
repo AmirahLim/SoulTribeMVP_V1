@@ -185,7 +185,7 @@ export function calculateTribeStanding(outingsAttended: number = 0, outingsHoste
 }
 
 export const DEFAULT_USER_PROFILE: UserProfileData = {
-  version: 6,
+  version: 7,
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Singapore',
@@ -218,11 +218,11 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
     talkForHoursOpen: 'Design history, why people make irrational choices, and filter coffee roast notes.',
     currentRabbitHoleOpen: 'Japanese woodworking joints and studio ghibli food aesthetics.',
     budgetPref: '$20–50',
-    instantYesOutingOpen: 'A quiet pottery workshop followed by filter coffee.',
-    likeMeIfPrompt: 'I\'ll probably like you if you can go from discussing something stupid to something existential in 5 mins.',
-    quickestWayPrompt: 'A quiet coffee walk or an invitation to a bookstore.',
-    punctualityPref: 'Essential',
-    cancellationStance: 'Dislike - notice feels respectful',
+    instantYesOutingOpen: 'Pottery studio session followed by quiet specialty coffee.',
+    likeMeIfPrompt: 'You value quiet quality over constant social noise.',
+    quickestWayPrompt: 'Propose a slow weekend coffee walk or share a good design article.',
+    punctualityPref: 'On time',
+    cancellationStance: '24h notice',
   },
 };
 
@@ -271,8 +271,8 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.version !== 6) {
-        parsed.version = 6;
+      if (parsed.version !== 7) {
+        parsed.version = 7;
         parsed.homeArea = 'Singapore';
         parsed.deepProfile = {
           ...DEFAULT_USER_PROFILE.deepProfile,
@@ -289,7 +289,7 @@ export function getUserProfile(): UserProfileData {
       const result: UserProfileData = {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
-        version: 6,
+        version: 7,
         homeArea: 'Singapore',
         passCompletionPct: calculatedPct,
         completedCategoryNums: completedCats,
