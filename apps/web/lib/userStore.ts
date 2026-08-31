@@ -45,6 +45,7 @@ export interface DeepProfileAnswers {
 }
 
 export interface UserProfileData {
+  version?: number;
   displayName: string;
   avatarUrl: string;
   homeArea: string;
@@ -87,6 +88,7 @@ export function calculatePassCompletion(hasOnboarded: boolean = true, completedC
 }
 
 export const DEFAULT_USER_PROFILE: UserProfileData = {
+  version: 2,
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Tiong Bahru',
@@ -165,15 +167,22 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
+      // Migrate old version 1 cached localStorage to version 2 (fresh 10% base rate)
+      if (parsed.version !== 2) {
+        parsed.version = 2;
+        parsed.completedCategoryNums = [];
+      }
+
       const completedCats = parsed.completedCategoryNums !== undefined
         ? parsed.completedCategoryNums
         : [];
       const hasOnboarded = parsed.hasCompletedOnboarding ?? true;
       const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
 
-      return {
+      const result: UserProfileData = {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
+        version: 2,
         passCompletionPct: calculatedPct,
         completedCategoryNums: completedCats,
         hasCompletedOnboarding: hasOnboarded,
@@ -182,6 +191,10 @@ export function getUserProfile(): UserProfileData {
           ...(parsed.deepProfile || {}),
         },
       };
+
+      // Auto update localStorage with version 2
+      localStorage.setItem('soul_tribe_user_profile', JSON.stringify(result));
+      return result;
     }
   } catch (e) {
     console.error('Failed to read user profile', e);
@@ -203,6 +216,7 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
   const updated: UserProfileData = {
     ...current,
     ...data,
+    version: 2,
     passCompletionPct: calculatedPct,
     completedCategoryNums: completedCats,
     hasCompletedOnboarding: hasOnboarded,
