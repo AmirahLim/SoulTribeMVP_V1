@@ -90,11 +90,8 @@ export default function PeopleListPage() {
                         />
                       </div>
 
-                      <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-3.5">
-                        <span className="text-[12.5px] font-bold text-white">
-                          View Candidate Profile →
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[12.5px] font-bold text-black shadow-md">
+                      <div className="mt-5 flex items-center justify-end border-t border-white/15 pt-3.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-black shadow-md transition-transform group-hover:scale-105">
                           Open Profile <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
