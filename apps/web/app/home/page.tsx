@@ -335,7 +335,7 @@ export default function HomeDashboardPage() {
               id="out-101"
               title="Saturday Pottery & Filter Coffee"
               pitch="Let's spend two hours throwing clay at a local studio, followed by a quiet filter coffee to talk properly."
-              area={profile.homeArea || 'Singapore'}
+              area="Singapore"
               dateTime="Sat 14 Sep · 3:00pm"
               hostName="Priya Sharma"
               hostAvatar="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
@@ -351,7 +351,7 @@ export default function HomeDashboardPage() {
               id="out-102"
               title="Sunday Morning Botanical Walk & Matcha"
               pitch="A gentle 5km loop around Botanic Gardens at 8am before the heat hits, followed by iced matcha."
-              area={profile.homeArea || 'Singapore'}
+              area="Singapore"
               dateTime="Sun 15 Sep · 8:00am"
               hostName="Marcus Tan"
               hostAvatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80"
