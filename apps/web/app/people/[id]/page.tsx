@@ -23,8 +23,13 @@ export default function PersonDetailPage() {
 
   const explanation = generateMatchExplanation(currentUser, person);
 
-  // Exact artsy golden-hour motion-blur background image!
-  const heroPhoto = '/user-community.jpg';
+  // Artsy golden-hour motion-blur background image!
+  const heroPhotos: Record<string, string> = {
+    'Marcus Tan': '/user-community.jpg',
+    'Maya Lin': '/user-community-2.png',
+  };
+  const activePhoto = heroPhotos[person.profile.display_name] || '/user-community.jpg';
+
   const galleryPhotos = [
     'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
@@ -35,7 +40,7 @@ export default function PersonDetailPage() {
     <div className="relative h-screen w-full overflow-hidden bg-[#0D1D15] text-[#FFFDF9]">
       {/* 2ND FRAME SPEC: ARTSY GOLDEN-HOUR MOTION PHOTO BACKGROUND */}
       <img
-        src={heroPhoto}
+        src={activePhoto}
         alt={person.profile.display_name}
         className="absolute inset-0 h-full w-full object-cover"
       />
