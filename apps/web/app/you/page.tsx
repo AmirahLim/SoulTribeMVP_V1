@@ -67,7 +67,7 @@ export default function ProfilePage() {
     { key: 'e', label: 'Emotional', strength: 0.75, confidence: 0.9, sentence: deep.supportOpen || 'Listen first. Advice once understood.' },
     { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: deep.talkForHoursOpen || 'Art, ceramics, psychology, travel.' },
     { key: 'v', label: 'Values', strength: 0.7, confidence: 0.8, sentence: deep.respectPeopleOpen || 'Respects people who change their mind.' },
-    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: deep.instantYesOutingOpen || 'Enjoys $20–50 low-key coffee and craft meetups.' },
+    { key: 'l', label: 'Lifestyle', strength: 0.65, confidence: 0.75, sentence: deep.instantYesOutingOpen || 'Enjoys low-key coffee and craft meetups.' },
   ];
 
   const socialDnaCategories = [
@@ -482,7 +482,7 @@ export default function ProfilePage() {
             )}
           </motion.div>
 
-          {/* 8. OUTING DNA (SPEND & TEMPO VECTOR GAUGE) */}
+          {/* 8. OUTING DNA (ACTIVITY & VIBE VECTOR) */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -495,7 +495,7 @@ export default function ProfilePage() {
                 <h3 className="text-[15.5px] font-extrabold">08. Outing DNA</h3>
               </div>
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                {deep.budgetPref || '$20–50'}
+                Low-Key & Creative Outings
               </span>
             </div>
 
