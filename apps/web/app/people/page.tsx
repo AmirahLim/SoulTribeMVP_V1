@@ -6,7 +6,7 @@ import { IllustratedGround, Button, ResonanceRead } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
 import { score } from '../../../../packages/core/matching/engine';
 import { generateMatchExplanation } from '../../../../packages/core/explain/generator';
-import { MapPin, Coffee, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
+import { MapPin, Coffee, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PeopleListPage() {
@@ -45,7 +45,11 @@ export default function PeopleListPage() {
       <div className="mt-6 flex flex-col gap-6">
         {surfacedMatches.map(({ candidate, explanation }) => {
           const photo = heroPhotos[candidate.profile.display_name] || heroPhotos['Marcus Tan'];
-          const interestsList = candidate.tagged_interests || candidate.interests || ['Specialty Coffee', 'Ceramics', 'Bookshops'];
+          const rawInterests = candidate.tagged_interests || candidate.interests || [];
+          const interestsList = (Array.isArray(rawInterests) ? rawInterests : []).map((item) =>
+            typeof item === 'string' ? item : (item as any)?.node_name || 'Specialty Coffee'
+          );
+          const safeInterests = interestsList.length > 0 ? interestsList : ['Specialty Coffee', 'Ceramics', 'Bookshops'];
 
           return (
             <motion.div
@@ -85,8 +89,8 @@ export default function PeopleListPage() {
                     </p>
 
                     <div className="mt-3.5 flex flex-wrap gap-2">
-                      {interestsList.slice(0, 3).map((interest) => (
-                        <span key={interest} className="flex items-center gap-1 rounded-full border border-[#F3F0E9]/12 bg-[#0D1D15] px-3 py-1 text-[12px] text-[#F3F0E9]">
+                      {safeInterests.slice(0, 3).map((interest, idx) => (
+                        <span key={idx} className="flex items-center gap-1 rounded-full border border-[#F3F0E9]/12 bg-[#0D1D15] px-3 py-1 text-[12px] text-[#F3F0E9]">
                           <Coffee className="h-3 w-3 text-[#8F998D]" /> {interest}
                         </span>
                       ))}
