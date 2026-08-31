@@ -11,7 +11,7 @@ import { score } from '../../../../../packages/core/matching/engine';
 import { generateMatchExplanation } from '../../../../../packages/core/explain/generator';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
-  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award
+  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { calculateTribeStanding } from '../../../lib/userStore';
@@ -37,6 +37,12 @@ export default function PersonDetailPage() {
     'Chen Wei': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1000&auto=format&fit=crop&q=80',
   };
   const activePhoto = heroPhotos[person.profile.display_name] || heroPhotos['Marcus Tan'];
+
+  const galleryPhotos = [
+    'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
+  ];
 
   // Bot Standing Level
   const botStanding = calculateTribeStanding(
@@ -85,7 +91,7 @@ export default function PersonDetailPage() {
       mbti: 'INTJ',
       sunSign: 'Taurus',
       moonSign: 'Virgo',
-      risingSign: 'Scorpio',
+      risingSign: 'Leo',
       coreValues: 'Craft · Curiosity · Honesty · Freedom',
       respectPeopleOpen: 'can stay calm and open-minded during a disagreement.',
       talkForHoursOpen: 'Japanese woodworking joints, espresso extraction variables, and analog camera lenses.',
@@ -192,7 +198,7 @@ export default function PersonDetailPage() {
 
       {/* MAIN CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-6 flex flex-col gap-6">
-        {/* HERO CARD & TRIBE STANDING BADGE */}
+        {/* HERO CARD (ORIGINAL DETAILS + BIO + INTEREST CHIPS + GALLERY THUMBNAILS + STANDING) */}
         <div className="rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl p-5 shadow-2xl">
           <div className="flex items-start justify-between">
             <div>
@@ -217,8 +223,41 @@ export default function PersonDetailPage() {
           </div>
 
           <p className="mt-3.5 text-[14px] leading-relaxed text-white/90">
-            {person.profile.bio || "Singapore-based. Looking for genuine, intentional friendships over quiet coffee."}
+            {person.profile.bio || "Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!"}
           </p>
+
+          {/* INTERESTS CHIPS */}
+          <div className="mt-4 pt-3 border-t border-white/15">
+            <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                <Coffee className="h-3.5 w-3.5" /> Specialty Coffee
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                <Sparkles className="h-3.5 w-3.5" /> Ceramics
+              </span>
+              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                <BookOpen className="h-3.5 w-3.5" /> Independent Bookshops
+              </span>
+            </div>
+          </div>
+
+          {/* GALLERY THUMBNAILS */}
+          <div className="mt-4 flex items-center gap-3 pt-3 border-t border-white/15">
+            {galleryPhotos.map((photo, idx) => (
+              <div
+                key={idx}
+                className="relative h-14 w-18 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-lg"
+              >
+                <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
+                {idx === 2 && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[12px] font-bold text-white backdrop-blur-xs">
+                    10+
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* RESONANCE READ MATCH EXPLANATION (WHY YOU CLICK & FRICTION) */}
