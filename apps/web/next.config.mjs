@@ -16,7 +16,6 @@ const nextConfig = {
   // real TypeScript/lint errors can't ship silently. If a deploy then fails,
   // read the error, fix it, and try again — don't just turn this back on.
   typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
 
   images: {
     unoptimized: true,
