@@ -10,7 +10,7 @@ import { generateMatchExplanation } from '../../../../packages/core/explain/gene
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles } from 'lucide-react';
 import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
-import { CANDIDATE_PEOPLE } from '../../lib/peopleStore';
+import { getCandidatePeopleForCity } from '../../lib/peopleStore';
 
 export default function HomeDashboardPage() {
   const [activeTab, setActiveTab] = useState<'fit' | 'outings' | 'pitches' | 'tribe'>('fit');
@@ -24,7 +24,8 @@ export default function HomeDashboardPage() {
 
   const currentUser = SYNTHETIC_PROFILES[0]; // Priya Sharma
   const marcus = SYNTHETIC_PROFILES[1]; // Marcus Tan (1 real match profile)
-  const marcusCandidate = CANDIDATE_PEOPLE[0]; // Marcus Tan candidate profile
+  const candidates = getCandidatePeopleForCity(profile.homeArea);
+  const marcusCandidate = candidates[0]; // Marcus Tan candidate profile
   const explanation = generateMatchExplanation(currentUser, marcus);
 
   return (
@@ -53,7 +54,7 @@ export default function HomeDashboardPage() {
             </Link>
             <div>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Singapore Cohort
+                {profile.homeArea || 'Singapore'} Cohort
               </span>
               <h1 className="text-[22px] font-extrabold text-white tracking-tight drop-shadow-md">
                 Hey, {profile.displayName}
@@ -334,7 +335,7 @@ export default function HomeDashboardPage() {
               id="out-101"
               title="Saturday Pottery & Filter Coffee"
               pitch="Let's spend two hours throwing clay at a local studio, followed by a quiet filter coffee to talk properly."
-              area="Singapore"
+              area={profile.homeArea || 'Singapore'}
               dateTime="Sat 14 Sep · 3:00pm"
               hostName="Priya Sharma"
               hostAvatar="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
@@ -350,7 +351,7 @@ export default function HomeDashboardPage() {
               id="out-102"
               title="Sunday Morning Botanical Walk & Matcha"
               pitch="A gentle 5km loop around Botanic Gardens at 8am before the heat hits, followed by iced matcha."
-              area="Singapore"
+              area={profile.homeArea || 'Singapore'}
               dateTime="Sun 15 Sep · 8:00am"
               hostName="Marcus Tan"
               hostAvatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80"

@@ -1,13 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button, ResonanceRead } from '@soul-tribe/ui';
-import { CANDIDATE_PEOPLE } from '../../lib/peopleStore';
+import { getCandidatePeopleForCity } from '../../lib/peopleStore';
+import { getUserProfile } from '../../lib/userStore';
 import { MapPin, Coffee, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PeopleListPage() {
+  const [city, setCity] = useState('Singapore');
+
+  useEffect(() => {
+    const loaded = getUserProfile();
+    if (loaded.homeArea) {
+      setCity(loaded.homeArea);
+    }
+  }, []);
+
+  const candidates = getCandidatePeopleForCity(city);
   return (
     <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
       {/* PAGE CANVAS BACKGROUND */}
@@ -25,19 +36,19 @@ export default function PeopleListPage() {
         {/* EDITORIAL HEADER: THIS WEEK'S PEOPLE */}
         <header className="pb-6 border-b border-white/15">
           <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            Curated Batch · Singapore
+            Curated Batch · {city}
           </span>
           <h1 className="mt-1 text-[28px] font-extrabold tracking-tight text-white drop-shadow-md">
             This Week's People
           </h1>
           <p className="mt-1.5 text-[14px] text-white/90 leading-relaxed max-w-[340px] drop-shadow-sm">
-            Surfaced based on your Friendship DNA and Singapore rhythm. No swiping.
+            Surfaced based on your Friendship DNA and {city} rhythm. No swiping.
           </p>
         </header>
 
         {/* CURATED MATCHES BATCH LISTING */}
         <div className="mt-6 flex flex-col gap-6">
-          {CANDIDATE_PEOPLE.map((person) => {
+          {candidates.map((person) => {
             return (
               <motion.div
                 key={person.id}

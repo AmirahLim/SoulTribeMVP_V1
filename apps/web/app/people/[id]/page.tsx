@@ -4,20 +4,23 @@ import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { CANDIDATE_PEOPLE, CandidatePerson } from '../../../lib/peopleStore';
+import { getCandidatePeopleForCity, CandidatePerson } from '../../../lib/peopleStore';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { calculateTribeStanding } from '../../../lib/userStore';
+import { calculateTribeStanding, getUserProfile } from '../../../lib/userStore';
 
 export default function PersonDetailPage() {
   const params = useParams();
   const router = useRouter();
   const personId = (params?.id as string) || '';
 
-  const foundPerson = CANDIDATE_PEOPLE.find((p) => p.id === personId || p.id.includes(personId)) || CANDIDATE_PEOPLE[0];
+  const userProfile = getUserProfile();
+  const activeCity = userProfile.homeArea || 'Singapore';
+  const candidates = getCandidatePeopleForCity(activeCity);
+  const foundPerson = candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0];
   const firstName = foundPerson.name.split(' ')[0];
   const possessiveFirstName = `${firstName}'s`;
 
@@ -41,7 +44,7 @@ export default function PersonDetailPage() {
     { key: 'p', label: 'Personality', strength: 0.85, confidence: 0.9, sentence: `${foundPerson.name} is thoughtful, analytical, and loves quiet craft.` },
     { key: 'c', label: 'Communication', strength: 0.9, confidence: 0.95, sentence: 'Prefers deep one-on-one talks and voice notes.' },
     { key: 'r', label: 'Rhythm', strength: 0.75, confidence: 0.85, sentence: 'Active Saturday afternoons and quiet Sunday coffee mornings.' },
-    { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: 'Seeking 3–4 long-term intentional friends in Singapore.' },
+    { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: `Seeking 3–4 long-term intentional friends in ${activeCity}.` },
     { key: 'e', label: 'Emotional', strength: 0.8, confidence: 0.9, sentence: 'Listens first, offers grounded perspective.' },
     { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: 'Pottery throwing, specialty filter coffee, woodworking.' },
     { key: 'v', label: 'Values', strength: 0.9, confidence: 0.9, sentence: 'Values honesty, quiet reliability, and continuous learning.' },
@@ -202,7 +205,7 @@ export default function PersonDetailPage() {
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
               <div>
                 <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  Singapore Member Profile
+                  {foundPerson.homeArea || 'Singapore'} Member Profile
                 </span>
                 <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
                   {foundPerson.name}

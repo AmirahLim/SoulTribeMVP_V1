@@ -21,7 +21,13 @@ function PitchComposerContent() {
   const [pitch, setPitch] = useState(
     "Let's spend two hours throwing clay at Tiong Bahru Studios, followed by a quiet filter coffee to talk properly."
   );
-  const [area, setArea] = useState('Tiong Bahru');
+  const [area, setArea] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = getUserProfile();
+      return p.homeArea || 'Singapore';
+    }
+    return 'Singapore';
+  });
   const [dateTime, setDateTime] = useState('Sat 14 Sep · 3:00pm');
   const [totalSeats] = useState(6);
 
