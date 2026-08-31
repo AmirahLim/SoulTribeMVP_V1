@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button, Chip } from '@soul-tribe/ui';
-import { ArrowLeft, Check, Sparkles, Lock, Globe } from 'lucide-react';
-import { getUserProfile, setUserProfile, DeepProfileAnswers } from '../../../lib/userStore';
+import { ArrowLeft, Check, Sparkles, Lock, Globe, CheckCircle2 } from 'lucide-react';
+import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassCompletion } from '../../../lib/userStore';
 
 export default function DeeperTribalPassPage() {
   const [activeCategoryNum, setActiveCategoryNum] = useState<number>(1);
   const [savedMessage, setSavedMessage] = useState(false);
+  const [completedCats, setCompletedCats] = useState<number[]>([]);
+  const [passPct, setPassPct] = useState<number>(10);
 
   // Form State
   const [formState, setFormState] = useState<DeepProfileAnswers>({});
@@ -18,18 +20,38 @@ export default function DeeperTribalPassPage() {
     if (profile.deepProfile) {
       setFormState(profile.deepProfile);
     }
+    const cats = profile.completedCategoryNums || [];
+    setCompletedCats(cats);
+    setPassPct(profile.passCompletionPct);
   }, []);
 
   const updateField = (key: keyof DeepProfileAnswers, value: any) => {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUserProfile({
+  const handleSaveCurrentCategory = (catNum: number) => {
+    const updatedCats = Array.from(new Set([...completedCats, catNum]));
+    setCompletedCats(updatedCats);
+    const updated = setUserProfile({
       deepProfile: formState,
-      passCompletionPct: 100,
+      completedCategoryNums: updatedCats,
+      hasCompletedOnboarding: true,
     });
+    setPassPct(updated.passCompletionPct);
+    setSavedMessage(true);
+    setTimeout(() => setSavedMessage(false), 3000);
+  };
+
+  const handleSaveAllTen = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const allTen = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    setCompletedCats(allTen);
+    const updated = setUserProfile({
+      deepProfile: formState,
+      completedCategoryNums: allTen,
+      hasCompletedOnboarding: true,
+    });
+    setPassPct(updated.passCompletionPct);
     setSavedMessage(true);
     setTimeout(() => setSavedMessage(false), 3000);
   };
@@ -50,12 +72,12 @@ export default function DeeperTribalPassPage() {
   const currentCat = categories.find((c) => c.num === activeCategoryNum) || categories[0];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
       {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED CANDID CLIFF JUMP MOTION PHOTO */}
       <img
         src="/user-deeper-bg.jpg"
         alt="Deeper Pass Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Readability */}
@@ -72,14 +94,14 @@ export default function DeeperTribalPassPage() {
           <div className="mt-3 flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Soul Tribe Spec · 10 Categories
+                Tribal Pass · {passPct}% Complete (+9% per section)
               </span>
               <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
                 Deeper Tribal Pass
               </h1>
             </div>
 
-            <Button variant="primary" size="sm" onClick={handleSave}>
+            <Button variant="primary" size="sm" onClick={() => handleSaveAllTen()}>
               Save All
             </Button>
           </div>
@@ -88,7 +110,7 @@ export default function DeeperTribalPassPage() {
         {savedMessage && (
           <div className="mt-4 flex items-center gap-2 rounded-[16px] border border-white/30 bg-black/70 p-3 text-[13.5px] font-bold text-white shadow-xl backdrop-blur-md">
             <Check className="h-4 w-4" />
-            <span>Deep profile answers saved successfully!</span>
+            <span>Section saved! Tribal Pass updated to {passPct}% Complete!</span>
           </div>
         )}
 
@@ -96,17 +118,22 @@ export default function DeeperTribalPassPage() {
         <nav className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
           {categories.map((cat) => {
             const isActive = cat.num === activeCategoryNum;
+            const isCompleted = completedCats.includes(cat.num);
+
             return (
               <button
                 key={cat.num}
                 type="button"
                 onClick={() => setActiveCategoryNum(cat.num)}
-                className={`flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold transition-all backdrop-blur-md ${
+                className={`flex items-center gap-1.5 flex-shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold transition-all backdrop-blur-md ${
                   isActive
                     ? 'border-white bg-white text-black font-bold'
+                    : isCompleted
+                    ? 'border-white/40 bg-white/10 text-white font-semibold'
                     : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40'
                 }`}
               >
+                {isCompleted && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
                 {cat.num}. {cat.name}
               </button>
             );
@@ -114,15 +141,20 @@ export default function DeeperTribalPassPage() {
         </nav>
 
         {/* ACTIVE CATEGORY CARD */}
-        <form onSubmit={handleSave} className="mt-6 flex flex-col gap-6">
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveCurrentCategory(activeCategoryNum); }} className="mt-6 flex flex-col gap-6">
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
               <div>
                 <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  Category {currentCat.num} of 10
+                  Section {currentCat.num} of 10 · (+9% Tribal Pass)
                 </span>
-                <h2 className="text-[22px] font-extrabold text-white">
+                <h2 className="text-[22px] font-extrabold text-white flex items-center gap-2">
                   {currentCat.name}
+                  {completedCats.includes(currentCat.num) && (
+                    <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
+                      Completed (+9%)
+                    </span>
+                  )}
                 </h2>
                 <p className="mt-0.5 text-[13px] text-white/80">
                   {currentCat.subtitle}
@@ -490,9 +522,12 @@ export default function DeeperTribalPassPage() {
                   variant="secondary"
                   size="sm"
                   type="button"
-                  onClick={() => setActiveCategoryNum((prev) => prev - 1)}
+                  onClick={() => {
+                    handleSaveCurrentCategory(activeCategoryNum);
+                    setActiveCategoryNum((prev) => prev - 1);
+                  }}
                 >
-                  ← Previous
+                  ← Save & Previous
                 </Button>
               ) : (
                 <div />
@@ -503,13 +538,21 @@ export default function DeeperTribalPassPage() {
                   variant="primary"
                   size="sm"
                   type="button"
-                  onClick={() => setActiveCategoryNum((prev) => prev + 1)}
+                  onClick={() => {
+                    handleSaveCurrentCategory(activeCategoryNum);
+                    setActiveCategoryNum((prev) => prev + 1);
+                  }}
                 >
-                  Next Category ({activeCategoryNum + 1}/10) →
+                  Save Section {activeCategoryNum} (+9%) & Next →
                 </Button>
               ) : (
-                <Button variant="primary" size="sm" type="submit">
-                  Save All 10 Categories
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  onClick={() => handleSaveAllTen()}
+                >
+                  Save Section 10 & Reach 100% ✨
                 </Button>
               )}
             </div>

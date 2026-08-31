@@ -2,60 +2,46 @@
 
 export interface DeepProfileAnswers {
   // 1. Social Energy
-  socialSetting?: string;
-  socialEnergyOpen?: string;
-  groupEnergy?: string;
-  atmosphereOpen?: string;
+  groupSize?: string;
+  socialVibe?: string;
+  socialAtmosphereOpen?: string;
 
   // 2. How I Connect
-  connectionMode?: string;
+  messagingStyle?: string;
+  supportStyle?: string;
   messagingStyleOpen?: string;
-  replyRhythm?: string;
-  supportOpen?: string;
 
   // 3. Friendship Style
+  friendshipPillars?: string;
   realFriendOpen?: string;
-  bringsToFriendship?: string;
-  caredForOpen?: string;
-  independenceBalance?: string;
 
   // 4. My Rhythm
-  timeAlive?: string;
+  idealSaturday?: string;
+  spontaneousTrip?: string;
   idealSaturdayOpen?: string;
-  plansAheadHorizon?: string;
-  idealHangLength?: string;
 
   // 5. Personality
-  baliTextResponse?: string;
-  unstructuredSaturdayOpen?: string;
   selfDescriptionOpen?: string;
 
   // 6. Values & Worldview
-  mattersMost?: string;
+  coreValues?: string;
   respectPeopleOpen?: string;
-  worldviewSharing?: string;
 
   // 7. I'm Into
-  genuinelyInto?: string[];
   talkForHoursOpen?: string;
   currentRabbitHoleOpen?: string;
-  wantToTryOpen?: string;
 
   // 8. Outing DNA
-  outingIngredients?: string[];
+  budgetPref?: string;
   instantYesOutingOpen?: string;
-  adventureLevel?: string;
-  comfortableSpend?: string;
 
   // 9. You Should Know
-  likeYouIfOpen?: string;
-  quickestOutHouseOpen?: string;
-  weirdThingILoveOpen?: string;
+  likeMeIfPrompt?: string;
+  quickestWayPrompt?: string;
 
   // 10. Boundaries & Matching
-  punctualityImportance?: string;
-  cancellationFeeling?: string;
-  privateMatchingNotesOpen?: string;
+  punctualityPref?: string;
+  cancellationStance?: string;
 }
 
 export interface UserProfileData {
@@ -64,6 +50,8 @@ export interface UserProfileData {
   homeArea: string;
   bio: string;
   passCompletionPct: number;
+  hasCompletedOnboarding?: boolean;
+  completedCategoryNums?: number[];
   deepProfile?: DeepProfileAnswers;
 }
 
@@ -90,47 +78,45 @@ export interface PitchedOuting {
   createdAt: string;
 }
 
+export function calculatePassCompletion(hasOnboarded: boolean = true, completedCategoryNums: number[] = []): number {
+  if (!hasOnboarded) return 0;
+  const uniqueCats = new Set(completedCategoryNums);
+  const count = uniqueCats.size;
+  const pct = 10 + count * 9;
+  return Math.min(100, pct);
+}
+
 export const DEFAULT_USER_PROFILE: UserProfileData = {
   displayName: 'Priya Sharma',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Tiong Bahru',
   bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-  passCompletionPct: 85,
+  passCompletionPct: 82,
+  hasCompletedOnboarding: true,
+  completedCategoryNums: [1, 2, 3, 4, 5, 6, 7, 8],
   deepProfile: {
-    socialSetting: '3–4 people',
-    socialEnergyOpen: 'I usually find one person I click with before I open up to the room.',
-    groupEnergy: 'Listener · Connector',
-    atmosphereOpen: 'Intimate, curious, slightly chaotic.',
-    connectionMode: 'Voice notes · Memes · Mostly IRL',
+    groupSize: '3–4 people',
+    socialVibe: 'Intimate · Calm',
+    socialAtmosphereOpen: 'I usually find one person I click with before I open up to the room.',
+    messagingStyle: 'Voice notes · Memes',
+    supportStyle: 'Listen first',
     messagingStyleOpen: 'I don\'t need to talk every day to feel close, but when we talk I like actually talking.',
-    replyRhythm: 'Same day',
-    supportOpen: 'Listen first. Advice is welcome once I feel understood.',
+    friendshipPillars: 'Comfortable silence · Reliability',
     realFriendOpen: 'We can disappear into our own lives and reconnect without it feeling weird.',
-    bringsToFriendship: 'Reliability · Adventures · Emotional support',
-    caredForOpen: 'Making time · Remembering small details · Showing up',
-    independenceBalance: 'Independent but deeply invested',
-    timeAlive: 'Weekend afternoons',
+    idealSaturday: 'Slow coffee & Hobbies',
+    spontaneousTrip: 'Convince me',
     idealSaturdayOpen: 'Slow morning, something interesting in the afternoon, dinner if the energy is right.',
-    plansAheadHorizon: '2–3 days ahead',
-    idealHangLength: '2–3 hours · Somewhere we can actually talk',
-    baliTextResponse: 'Convince me — adventurous but likes structure',
     selfDescriptionOpen: 'Curious, reflective, and independent with a subtle dry humor.',
-    mattersMost: 'Curiosity · Freedom · Growth · Community',
+    coreValues: 'Curiosity · Freedom · Growth · Community',
     respectPeopleOpen: 'I really respect people who can change their mind when presented with better information.',
-    worldviewSharing: 'Open-minded about differences; alignment matters on core values.',
-    genuinelyInto: ['Art', 'Psychology', 'Travel', 'Ceramics'],
     talkForHoursOpen: 'Design history, why people make irrational choices, and filter coffee roast notes.',
     currentRabbitHoleOpen: 'Japanese woodworking joints and studio ghibli food aesthetics.',
-    wantToTryOpen: 'Pottery throwing and bouldering.',
-    outingIngredients: ['Culture', 'Food', 'Nature', 'Learning'],
+    budgetPref: '$20–50',
     instantYesOutingOpen: 'A quiet pottery workshop followed by filter coffee in Tiong Bahru.',
-    adventureLevel: 'Will absolutely try something new',
-    comfortableSpend: '$20–50',
-    likeYouIfOpen: 'I\'ll probably like you if you can go from discussing something stupid to something existential in 5 mins.',
-    quickestOutHouseOpen: 'A quiet coffee walk or an invitation to a bookstore.',
-    weirdThingILoveOpen: 'The smell of old books and watching pottery glaze dry.',
-    punctualityImportance: 'Essential',
-    cancellationFeeling: 'Dislike — notice feels respectful',
+    likeMeIfPrompt: 'I\'ll probably like you if you can go from discussing something stupid to something existential in 5 mins.',
+    quickestWayPrompt: 'A quiet coffee walk or an invitation to a bookstore.',
+    punctualityPref: 'Essential',
+    cancellationStance: 'Dislike — notice feels respectful',
   },
 };
 
@@ -179,9 +165,16 @@ export function getUserProfile(): UserProfileData {
     const saved = localStorage.getItem('soul_tribe_user_profile');
     if (saved) {
       const parsed = JSON.parse(saved);
+      const completedCats = parsed.completedCategoryNums || DEFAULT_USER_PROFILE.completedCategoryNums || [];
+      const hasOnboarded = parsed.hasCompletedOnboarding ?? true;
+      const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
+
       return {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
+        passCompletionPct: calculatedPct,
+        completedCategoryNums: completedCats,
+        hasCompletedOnboarding: hasOnboarded,
         deepProfile: {
           ...DEFAULT_USER_PROFILE.deepProfile,
           ...(parsed.deepProfile || {}),
@@ -196,14 +189,27 @@ export function getUserProfile(): UserProfileData {
 
 export function setUserProfile(data: Partial<UserProfileData>): UserProfileData {
   const current = getUserProfile();
-  const updated = {
+  const completedCats = data.completedCategoryNums !== undefined
+    ? data.completedCategoryNums
+    : (current.completedCategoryNums || []);
+  const hasOnboarded = data.hasCompletedOnboarding !== undefined
+    ? data.hasCompletedOnboarding
+    : (current.hasCompletedOnboarding ?? true);
+
+  const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
+
+  const updated: UserProfileData = {
     ...current,
     ...data,
+    passCompletionPct: calculatedPct,
+    completedCategoryNums: completedCats,
+    hasCompletedOnboarding: hasOnboarded,
     deepProfile: {
       ...(current.deepProfile || {}),
       ...(data.deepProfile || {}),
     },
   };
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('soul_tribe_user_profile', JSON.stringify(updated));

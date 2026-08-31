@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bloom, RhythmStrip, Button, Chip } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, User } from 'lucide-react';
+import { Sparkles, ArrowRight, User, CheckCircle2 } from 'lucide-react';
 import { getUserProfile, setUserProfile } from '../../lib/userStore';
 
 export default function OnboardingPage() {
@@ -49,8 +49,8 @@ export default function OnboardingPage() {
 
   const [isRevealing, setIsRevealing] = useState(false);
 
-  // Tribal Pass Completion %
-  const passCompletionPct = Math.round((step / 8) * 100);
+  // Initial Onboarding Step Progress (1 -> 8)
+  const stepPct = Math.round((step / 8) * 100);
 
   const confidence = Math.min(0.95, 0.25 + step * 0.09);
   const bloomDimensions = [
@@ -79,10 +79,12 @@ export default function OnboardingPage() {
       setStep(step + 1);
     } else {
       setIsRevealing(true);
+      // Onboarding 8 questions complete -> set hasCompletedOnboarding to true, 0 deeper sections completed -> 10% Tribal Pass completion
       setUserProfile({
         displayName: userName.trim() || 'You',
         avatarUrl: userPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-        passCompletionPct: 100,
+        hasCompletedOnboarding: true,
+        completedCategoryNums: [],
       });
     }
   };
@@ -99,11 +101,11 @@ export default function OnboardingPage() {
 
   if (isRevealing) {
     return (
-      <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-16">
+      <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-16">
         <img
           src="/user-onboarding-bg.jpg"
           alt="Onboarding Canvas Background"
-          className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+          className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
         />
         <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
 
@@ -117,15 +119,19 @@ export default function OnboardingPage() {
               <Sparkles className="h-7 w-7" />
             </div>
 
-            <h2 className="mt-4 text-[26px] font-extrabold text-white">
-              Welcome, {userName || 'Friend'}
+            <span className="mt-3 rounded-full border border-white/20 bg-white/20 px-3.5 py-1 text-[11.5px] font-bold text-white backdrop-blur-md">
+              Part I Complete · 10% Tribal Pass
+            </span>
+
+            <h2 className="mt-3 text-[26px] font-extrabold text-white">
+              Welcome, {userName || 'Friend'}!
             </h2>
 
             <p className="mt-2 max-w-[340px] text-[14px] font-medium leading-relaxed text-white/90">
-              Your custom Tribal Pass is live. We've learned your baseline rhythm, outings, and relational style. 6 people look like a strong fit!
+              Your baseline Tribal Pass is live at <strong className="text-white">10% Complete</strong>. Complete each of the 10 Deeper Tribal Pass sections (+9% each) to reach 100%!
             </p>
 
-            <div className="my-6 rounded-[24px] border border-white/20 bg-black/50 p-4 backdrop-blur-xl">
+            <div className="my-6 rounded-[24px] border border-white/20 bg-black/60 p-4 backdrop-blur-xl">
               <Bloom dimensions={bloomDimensions} size={210} interactive={true} />
             </div>
 
@@ -135,7 +141,7 @@ export default function OnboardingPage() {
               onClick={() => router.push('/home')}
               className="w-full max-w-[280px] py-4 text-[16px] font-bold"
             >
-              Explore My Matches & Outings <ArrowRight className="ml-2 h-4 w-4" />
+              Explore My Dashboard →
             </Button>
           </motion.div>
         </div>
@@ -144,12 +150,12 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-16">
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-16">
       {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED TRAMPOLINE FEET MOTION PHOTO */}
       <img
         src="/user-onboarding-bg.jpg"
         alt="Onboarding Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Readability */}
@@ -160,15 +166,15 @@ export default function OnboardingPage() {
         {/* Header with Tribal Pass Completion Status */}
         <header className="flex flex-col pt-2">
           <div className="flex w-full items-center justify-between text-[12px] font-bold text-white/80">
-            <span>Part I: Quick Onboarding</span>
-            <span className="text-white font-semibold">{passCompletionPct}% Complete</span>
+            <span>Part I: 8-Question Onboarding</span>
+            <span className="text-white font-semibold">Step {step} of 8</span>
           </div>
 
           {/* Progress Bar */}
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/60 border border-white/15">
             <div
               className="h-full rounded-full bg-white transition-all duration-300"
-              style={{ width: `${passCompletionPct}%` }}
+              style={{ width: `${stepPct}%` }}
             />
           </div>
         </header>
@@ -189,7 +195,7 @@ export default function OnboardingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="rounded-[28px] border border-white/20 bg-black/50 backdrop-blur-xl p-6 shadow-2xl"
+              className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl"
             >
               {/* STEP 1: NAME, PHOTO & FRIENDSHIP INTENT */}
               {step === 1 && (
@@ -556,7 +562,7 @@ export default function OnboardingPage() {
                   size="sm"
                   onClick={handleNextStep}
                 >
-                  {step < 8 ? 'Next Step →' : 'Reveal My Tribal Pass ✨'}
+                  {step < 8 ? 'Next Step →' : 'Reveal My Tribal Pass (10%) ✨'}
                 </Button>
               </div>
             </motion.div>
