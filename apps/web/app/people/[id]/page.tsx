@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MoreVertical, X, Star, Heart, Coffee, Music, BookOpen, MapPin } from 'lucide-react';
+import { ArrowLeft, MoreVertical, X, Star, Heart, Coffee, Sparkles, BookOpen, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PersonDetailPage() {
@@ -13,8 +13,8 @@ export default function PersonDetailPage() {
   const [starred, setStarred] = useState(false);
   const [connected, setConnected] = useState(false);
 
-  // Golden-hour motion aesthetic photo matching user reference
-  const heroPhoto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=80';
+  // Exact artsy, blurry user uploaded image saved in /user-community.jpg!
+  const heroPhoto = '/user-community.jpg';
   const galleryPhotos = [
     'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
@@ -23,10 +23,10 @@ export default function PersonDetailPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#0D1D15] text-[#FFFDF9]">
-      {/* 2ND FRAME SPEC: FULL-SCREEN CINEMATIC PORTRAIT PHOTO BACKGROUND */}
+      {/* 2ND FRAME SPEC: YOUR ARTSY, BLURRY COMMUNITY PHOTO BACKGROUND */}
       <img
         src={heroPhoto}
-        alt="Maya Lin"
+        alt="Artsy Blurry Community"
         className="absolute inset-0 h-full w-full object-cover"
       />
 
@@ -55,7 +55,7 @@ export default function PersonDetailPage() {
         </button>
       </header>
 
-      {/* 2ND FRAME SPEC: OVERLAID CONTENT (ABOUT ME, INTERESTS, THUMBNAILS) */}
+      {/* 2ND FRAME SPEC: OVERLAID CONTENT WITH RELEVANT SOUL TRIBE COPY */}
       <main className="absolute bottom-24 left-5 right-5 z-30 flex flex-col gap-4">
         <motion.div
           initial={{ y: 20, opacity: 0 }}
@@ -63,7 +63,7 @@ export default function PersonDetailPage() {
           transition={{ duration: 0.3 }}
           className="flex flex-col gap-4"
         >
-          {/* ABOUT ME SECTION (EXACT 2ND FRAME PLACEMENT & FONT SIZE) */}
+          {/* ABOUT ME SECTION (RELEVANT SOUL TRIBE CONTENT) */}
           <div>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-bold text-white tracking-tight drop-shadow-md">
@@ -75,29 +75,29 @@ export default function PersonDetailPage() {
             </div>
 
             <p className="mt-1.5 max-w-[340px] text-[13.5px] font-normal leading-[20px] text-white/90 drop-shadow-sm">
-              Adventure seeker and sunset chaser. Always up for spontaneous coffee walks, ceramic craft, and discovering quiet bookshops. Let's create some memories together!
+              Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!
             </p>
           </div>
 
-          {/* INTERESTS SECTION (EXACT 2ND FRAME PLACEMENT & GLASS CHIPS) */}
+          {/* INTERESTS SECTION (SOUL TRIBE GLASS CHIPS) */}
           <div>
             <h2 className="text-[18px] font-bold text-white tracking-tight drop-shadow-md">
               Interests
             </h2>
             <div className="mt-2 flex flex-wrap gap-2.5">
               <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <Coffee className="h-3.5 w-3.5" /> Coffee
+                <Coffee className="h-3.5 w-3.5" /> Specialty Coffee
               </span>
               <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <Music className="h-3.5 w-3.5" /> Music
+                <Sparkles className="h-3.5 w-3.5" /> Ceramics
               </span>
               <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/40 px-4 py-1.5 text-[12.5px] font-medium text-white backdrop-blur-md">
-                <BookOpen className="h-3.5 w-3.5" /> Reading
+                <BookOpen className="h-3.5 w-3.5" /> Independent Bookshops
               </span>
             </div>
           </div>
 
-          {/* PHOTO THUMBNAILS ROW (EXACT 2ND FRAME PLACEMENT & 10+ BADGE) */}
+          {/* PHOTO THUMBNAILS ROW (10+ BADGE) */}
           <div className="flex items-center gap-3 pt-1">
             {galleryPhotos.map((photo, idx) => (
               <div
