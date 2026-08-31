@@ -1,14 +1,10 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
-import { score } from '../../../../../packages/core/matching/engine';
-import { generateMatchExplanation } from '../../../../../packages/core/explain/generator';
+import { CANDIDATE_PEOPLE, CandidatePerson } from '../../../lib/peopleStore';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen
@@ -19,24 +15,11 @@ import { calculateTribeStanding } from '../../../lib/userStore';
 export default function PersonDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const personId = params.id as string;
+  const personId = (params?.id as string) || '';
 
-  const currentUser = SYNTHETIC_PROFILES[0]; // Priya Sharma
-  const person = SYNTHETIC_PROFILES.find((p) => p.profile.id === personId) || SYNTHETIC_PROFILES[1];
-
+  const foundPerson = CANDIDATE_PEOPLE.find((p) => p.id === personId || p.id.includes(personId)) || CANDIDATE_PEOPLE[0];
   const [connected, setConnected] = useState(false);
   const [starred, setStarred] = useState(false);
-
-  const matchResult = score(currentUser, person);
-  const explanation = generateMatchExplanation(currentUser, person);
-
-  // Bot Profile Real Photo Mapping
-  const heroPhotos: Record<string, string> = {
-    'Marcus Tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1000&auto=format&fit=crop&q=80',
-    'Maya Lin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=80',
-    'Chen Wei': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1000&auto=format&fit=crop&q=80',
-  };
-  const activePhoto = heroPhotos[person.profile.display_name] || heroPhotos['Marcus Tan'];
 
   const galleryPhotos = [
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
@@ -46,13 +29,13 @@ export default function PersonDetailPage() {
 
   // Bot Standing Level
   const botStanding = calculateTribeStanding(
-    person.profile.display_name === 'Marcus Tan' ? 5 : 2,
-    person.profile.display_name === 'Marcus Tan' ? 2 : 0
+    foundPerson.name === 'Marcus Tan' ? 5 : 2,
+    foundPerson.name === 'Marcus Tan' ? 2 : 0
   );
 
   // Candidate Traits for Friendship DNA Bloom
   const candidateBloomDimensions = [
-    { key: 'p', label: 'Personality', strength: 0.85, confidence: 0.9, sentence: `${person.profile.display_name} is thoughtful, analytical, and loves quiet craft.` },
+    { key: 'p', label: 'Personality', strength: 0.85, confidence: 0.9, sentence: `${foundPerson.name} is thoughtful, analytical, and loves quiet craft.` },
     { key: 'c', label: 'Communication', strength: 0.9, confidence: 0.95, sentence: 'Prefers deep one-on-one talks and voice notes.' },
     { key: 'r', label: 'Rhythm', strength: 0.75, confidence: 0.85, sentence: 'Active Saturday afternoons and quiet Sunday coffee mornings.' },
     { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: 'Seeking 3–4 long-term intentional friends in Singapore.' },
@@ -161,7 +144,7 @@ export default function PersonDetailPage() {
     },
   };
 
-  const currentBotDeep = botAnswers[person.profile.display_name] || botAnswers['Marcus Tan'];
+  const currentBotDeep = botAnswers[foundPerson.name] || botAnswers['Marcus Tan'];
   const coreValuesList = (currentBotDeep.coreValues || 'Craft · Curiosity · Freedom')
     .split(/·|,/)
     .map((s: string) => s.trim())
@@ -171,8 +154,8 @@ export default function PersonDetailPage() {
     <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-32">
       {/* BACKGROUND PORTRAIT PHOTO */}
       <img
-        src={activePhoto}
-        alt={person.profile.display_name}
+        src={foundPerson.avatarUrl}
+        alt={foundPerson.name}
         className="fixed inset-0 h-full w-full object-cover z-0 opacity-75"
       />
 
@@ -190,7 +173,7 @@ export default function PersonDetailPage() {
         </button>
 
         <h2 className="text-[16px] font-bold text-white tracking-tight drop-shadow-md">
-          Match Profile · {person.profile.display_name}
+          Match Profile · {foundPerson.name}
         </h2>
 
         <div className="w-10" />
@@ -206,10 +189,10 @@ export default function PersonDetailPage() {
                 Singapore Member Profile
               </span>
               <h1 className="mt-0.5 text-[28px] font-extrabold text-white tracking-tight drop-shadow-md">
-                {person.profile.display_name}
+                {foundPerson.name}
               </h1>
               <span className="flex items-center text-[13px] font-semibold text-white/80 mt-0.5">
-                <MapPin className="mr-1 h-3.5 w-3.5" /> {person.profile.home_area} · Singapore
+                <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea} · Singapore
               </span>
             </div>
 
@@ -223,22 +206,18 @@ export default function PersonDetailPage() {
           </div>
 
           <p className="mt-3.5 text-[14px] leading-relaxed text-white/90">
-            {person.profile.bio || "Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!"}
+            {foundPerson.bio}
           </p>
 
           {/* INTERESTS CHIPS */}
           <div className="mt-4 pt-3 border-t border-white/15">
             <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                <Coffee className="h-3.5 w-3.5" /> Specialty Coffee
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                <Sparkles className="h-3.5 w-3.5" /> Ceramics
-              </span>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                <BookOpen className="h-3.5 w-3.5" /> Independent Bookshops
-              </span>
+              {foundPerson.interests.map((interest, idx) => (
+                <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                  <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -268,7 +247,7 @@ export default function PersonDetailPage() {
           </div>
 
           <div className="mt-4">
-            <ResonanceRead clickText={explanation.click_text} rubText={explanation.rub_text} />
+            <ResonanceRead clickText={foundPerson.clickText} rubText={foundPerson.rubText} />
           </div>
         </section>
 
@@ -278,7 +257,7 @@ export default function PersonDetailPage() {
             Friendship DNA Bloom
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">
-            Visual trait petals representing {person.profile.display_name}'s social energy, rhythm, and values.
+            Visual trait petals representing {foundPerson.name}'s social energy, rhythm, and values.
           </p>
 
           <div className="mt-4 flex justify-center rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
@@ -292,7 +271,7 @@ export default function PersonDetailPage() {
             Your Tribal Print
           </span>
           <p className="mt-1 text-[13.5px] text-white/90">
-            Dynamic trait vectors from {person.profile.display_name}'s completed Tribal Pass.
+            Dynamic trait vectors from {foundPerson.name}'s completed Tribal Pass.
           </p>
 
           <div className="mt-4">
@@ -307,10 +286,10 @@ export default function PersonDetailPage() {
               Public Signals Map
             </span>
             <h2 className="mt-1 text-[20px] font-bold text-white">
-              What You See About {person.profile.display_name}
+              What You See About {foundPerson.name}
             </h2>
             <p className="mt-1 text-[13.5px] text-white/80">
-              Complete 10-category visual breakdown from {person.profile.display_name}'s Deeper Pass.
+              Complete 10-category visual breakdown from {foundPerson.name}'s Deeper Pass.
             </p>
           </div>
 
