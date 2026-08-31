@@ -8,14 +8,12 @@ import Link from 'next/link';
 import {
   IllustratedGround,
   ResonanceRead,
-  RhythmStrip,
   Bloom,
   Button,
-  Chip,
 } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
 import { generateMatchExplanation } from '../../../../../packages/core/explain/generator';
-import { MapPin, ArrowLeft, ShieldAlert, Sparkles } from 'lucide-react';
+import { MapPin, ArrowLeft } from 'lucide-react';
 
 export default function PersonDetailPage() {
   const params = useParams();
@@ -44,118 +42,58 @@ export default function PersonDetailPage() {
       <button
         type="button"
         onClick={() => router.back()}
-        className="mb-4 flex items-center text-[14px] font-medium text-[#5C4E44] hover:text-[#2B211B]"
+        className="mb-4 flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]"
       >
         <ArrowLeft className="mr-1 h-4 w-4" /> Back to People
       </button>
 
       {/* Person Header */}
-      <section className="flex flex-col items-center text-center">
+      <section className="flex flex-col items-center text-center pb-6 border-b border-[#F3F0E9]/12">
         <div className="relative">
           <img
             src={person.profile.avatar_url || ''}
             alt={person.profile.display_name}
-            className="h-28 w-28 rounded-full object-cover shadow-md ring-4 ring-[#FFFDFA]"
+            className="h-24 w-24 rounded-full object-cover shadow-lg ring-2 ring-[#F3F0E9]/20"
           />
         </div>
 
-        <h1
-          className="mt-3 text-[34px] font-semibold text-[#2B211B]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
+        <h1 className="mt-3 text-[26px] font-bold text-[#F3F0E9] tracking-tight">
           {person.profile.display_name}
         </h1>
 
-        <div className="mt-1 flex items-center gap-1.5 text-[14px] text-[#8A7D73]">
-          <MapPin className="h-4 w-4 text-[#D9663F]" />
-          <span>{person.profile.home_area}, Singapore</span>
-        </div>
-
-        <p className="mt-3 max-w-[420px] text-[16px] leading-[24px] text-[#5C4E44] italic">
-          "{person.profile.bio}"
+        <p className="flex items-center text-[13px] text-[#A6AAA4]">
+          <MapPin className="mr-1 h-3.5 w-3.5" /> {person.profile.home_area} · Singapore
         </p>
+
+        <div className="mt-4 flex gap-2">
+          <Link href={`/outings/pitch?inviteId=${person.profile.id}`}>
+            <Button variant="primary" size="md">
+              Invite to Outing
+            </Button>
+          </Link>
+        </div>
       </section>
 
-      {/* DNA Bloom Overlay Comparison */}
-      <section className="mt-8 flex flex-col items-center rounded-[24px] border border-[#2B211B]/10 bg-[#FFFDFA] p-5 shadow-sm">
-        <span className="text-[11px] font-semibold tracking-wider text-[#8A7D73] uppercase">
-          Friendship DNA Read
+      {/* Resonance Read */}
+      <section className="py-6 border-b border-[#F3F0E9]/12">
+        <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+          Match Resonance Read
         </span>
-        <div className="my-2">
-          <Bloom dimensions={bloomDimensions} size={200} interactive={true} />
+        <div className="mt-3">
+          <ResonanceRead
+            clickText={explanation.click_text}
+            rubText={explanation.rub_text}
+          />
         </div>
       </section>
 
-      {/* RESONANCE READ (Click + Friction) */}
-      <section className="mt-8">
-        <ResonanceRead
-          clickText={explanation.click_text}
-          frictionText={explanation.friction_text}
-        />
-      </section>
-
-      {/* RHYTHM OVERLAY */}
-      <section className="mt-8">
-        <h2
-          className="mb-2 text-[20px] font-semibold text-[#2B211B]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
-          Schedule & Rhythm Touchpoints
-        </h2>
-        <RhythmStrip
-          userAvailability={currentUser.social_rhythm.availability}
-          theirAvailability={person.social_rhythm.availability}
-          interactive={false}
-        />
-        <p className="mt-2 text-center text-[13px] font-medium text-[#3E6B5C]">
-          ✨ You're both usually free Sunday afternoons in central Singapore.
-        </p>
-      </section>
-
-      {/* WHAT THEY'RE UP FOR (Interest Nodes) */}
-      <section className="mt-8 rounded-[24px] border border-[#2B211B]/10 bg-[#FFFDFA] p-5 shadow-sm">
-        <h2
-          className="text-[20px] font-semibold text-[#2B211B]"
-          style={{ fontFamily: 'var(--font-fraunces), serif' }}
-        >
-          What {person.profile.display_name.split(' ')[0]}'s Up For
-        </h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {person.interests.map((interest) => (
-            <Chip
-              key={interest.node_id}
-              label={`${interest.node_name} (${interest.affinity === 'curious' ? 'curious to try' : interest.affinity})`}
-              selected={interest.affinity === 'curious' || interest.affinity === 'love'}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* PRIMARY ACTIONS */}
-      <section className="mt-8 flex flex-col gap-3">
-        <Link href={`/outings/pitch?inviteId=${person.profile.id}`}>
-          <Button variant="primary" size="lg" className="w-full">
-            Pitch something to {person.profile.display_name.split(' ')[0]}
-          </Button>
-        </Link>
-        <div className="flex gap-3">
-          <Button variant="secondary" size="md" className="flex-1" onClick={() => alert('Saved for later')}>
-            Save for Later
-          </Button>
-          <Button variant="ghost" size="md" className="flex-1" onClick={() => router.push('/people')}>
-            Not For Me
-          </Button>
-        </div>
-
-        {/* Safety & Report Spine */}
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => alert(`Report or Block ${person.profile.display_name}. Block is bidirectional and takes effect immediately.`)}
-            className="inline-flex items-center text-[12px] font-medium text-[#8A7D73] hover:text-[#B3453A]"
-          >
-            <ShieldAlert className="mr-1 h-3.5 w-3.5" /> Report or Block User
-          </button>
+      {/* Friendship DNA */}
+      <section className="py-6 flex flex-col items-center">
+        <span className="text-[11px] font-bold tracking-widest text-[#A6AAA4] uppercase">
+          Friendship DNA Bloom
+        </span>
+        <div className="my-4">
+          <Bloom dimensions={bloomDimensions} size={210} interactive={true} />
         </div>
       </section>
     </IllustratedGround>

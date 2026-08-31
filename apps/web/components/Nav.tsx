@@ -32,7 +32,7 @@ export function Nav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-[11px] font-bold transition-all ${
-                isActive ? 'text-[#D49B4B]' : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
+                isActive ? 'text-[#F3F0E9]' : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
               }`}
             >
               <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.6]'}`} />

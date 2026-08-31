@@ -46,7 +46,7 @@ export function PitchCard({
 
   return (
     <article
-      className={`group overflow-hidden rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] transition-all hover:border-[#D49B4B]/40 shadow-md ${className}`}
+      className={`group overflow-hidden rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] transition-all hover:border-[#F3F0E9]/30 shadow-md ${className}`}
     >
       {/* Image-Led Hero Cover */}
       <div className="relative h-48 w-full overflow-hidden bg-[#0D1D15]">
@@ -55,7 +55,7 @@ export function PitchCard({
           alt={title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-3.5 left-3.5 rounded-lg bg-[#0D1D15]/90 px-3 py-1 text-[10px] font-bold tracking-widest text-[#D49B4B] uppercase backdrop-blur-sm">
+        <div className="absolute top-3.5 left-3.5 rounded-lg bg-[#0D1D15]/90 px-3 py-1 text-[10px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm">
           {categoryLabels[category]} · {dateTime.split('·')[0]}
         </div>
       </div>
@@ -76,7 +76,7 @@ export function PitchCard({
             <img
               src={hostAvatar}
               alt={hostName}
-              className="h-8 w-8 rounded-full object-cover ring-1 ring-[#D49B4B]/40"
+              className="h-8 w-8 rounded-full object-cover ring-1 ring-[#F3F0E9]/20"
             />
             <div className="text-[12px]">
               <span className="font-semibold text-[#F3F0E9]">{hostName} + {seatsFilled - 1} others</span>
@@ -84,7 +84,7 @@ export function PitchCard({
             </div>
           </div>
 
-          <span className="text-[12px] font-bold text-[#D49B4B]">
+          <span className="text-[12px] font-bold text-[#F3F0E9]">
             Strong fit →
           </span>
         </div>

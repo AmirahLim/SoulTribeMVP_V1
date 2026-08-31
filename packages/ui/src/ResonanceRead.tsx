@@ -21,7 +21,7 @@ export function ResonanceRead({
     <div className={`flex flex-col gap-3.5 py-1 ${className}`}>
       {/* 1. WHY YOU MIGHT CLICK */}
       <div>
-        <span className="text-[10px] font-bold tracking-widest text-[#D49B4B] uppercase">
+        <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
           Why you might click
         </span>
         <p className="mt-1 text-[14px] font-medium leading-relaxed text-[#F3F0E9]">

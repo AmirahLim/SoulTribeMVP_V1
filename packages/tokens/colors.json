@@ -2,8 +2,8 @@
   "ground": {
     "paper": "#0D1D15",
     "card": "#15261C",
-    "sand": "#1C3325",
-    "mist": "#234232"
+    "wood": "#2A1E17",
+    "sand": "#1C3325"
   },
   "ink": {
     "primary": "#F3F0E9",
@@ -13,14 +13,14 @@
   },
   "accent": {
     "emerald": "#2D523E",
-    "ochre": "#D49B4B",
-    "clay": "#A8644A",
-    "sage": "#9DAA96"
+    "moss": "#386653",
+    "wood": "#3D2B1F",
+    "sage": "#8F998D"
   },
   "semantic": {
     "danger": "#AC3D32",
     "success": "#2D523E",
-    "warn": "#D49B4B"
+    "warn": "#8F998D"
   },
   "structure": {
     "divider": "rgba(243, 240, 233, 0.12)"
