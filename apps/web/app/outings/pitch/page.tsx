@@ -4,10 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  IllustratedGround,
-  Button,
-} from '@soul-tribe/ui';
+import { Button } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../../supabase/seed/seed';
 import { calculateGroupCohesion } from '../../../../../packages/core/matching/cohesion';
 import { ProfileVector } from '../../../../../packages/core/domain/types';
@@ -60,183 +57,224 @@ function PitchComposerContent() {
   };
 
   return (
-    <IllustratedGround variant="paper" className="min-h-screen pb-24">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mb-4 flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]"
-      >
-        <ArrowLeft className="mr-1 h-4 w-4" /> Cancel Proposal
-      </button>
+    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTSY GOLDEN-HOUR MOTION PHOTO (INSTEAD OF SOLID GREEN) */}
+      <img
+        src="/user-outing-bg.jpg"
+        alt="Outing Canvas Background"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+      />
 
-      {!created ? (
-        <form onSubmit={handleCreateOuting} className="flex flex-col gap-6">
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-              Host Proposal Composer
-            </span>
-            <h1 className="mt-1 text-[28px] font-bold tracking-tight text-[#F3F0E9]">
-              Pitch an Outing
-            </h1>
-            <p className="mt-1 text-[14px] text-[#A6AAA4]">
-              Design a small-group meetup for up to 6 people.
-            </p>
-          </div>
+      {/* Dark Ambient Vignette Overlay for Crisp Readability */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
 
-          {/* STEP 1: TITLE & DETAILS */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
-            <h3 className="text-[17px] font-bold text-[#F3F0E9]">
-              1. Title & Details
-            </h3>
+      {/* PAGE CONTENT CONTAINER */}
+      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-4 flex items-center text-[13.5px] font-semibold text-white/80 hover:text-white"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Cancel Proposal
+        </button>
 
-            <div className="mt-4 flex flex-col gap-4">
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Outing Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
-                  placeholder="e.g. Saturday Pottery & Coffee"
-                />
-              </div>
-
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Host Pitch (Your own words)</label>
-                <textarea
-                  rows={3}
-                  value={pitch}
-                  onChange={(e) => setPitch(e.target.value)}
-                  className="mt-1 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[14px] text-[#F3F0E9] outline-none"
-                  placeholder="Describe what you want to do..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[13px] font-semibold text-[#F3F0E9]">Area</label>
-                  <input
-                    type="text"
-                    value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[13px] font-semibold text-[#F3F0E9]">When</label>
-                  <input
-                    type="text"
-                    value={dateTime}
-                    onChange={(e) => setDateTime(e.target.value)}
-                    className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* STEP 2: INVITE CANDIDATES */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <h3 className="text-[17px] font-bold text-[#F3F0E9]">
-                2. Invite Candidates
-              </h3>
-              <span className="text-[12px] font-bold text-[#F3F0E9]">
-                {selectedGuests.length + 1} / {totalSeats} seats
+        {!created ? (
+          <form onSubmit={handleCreateOuting} className="flex flex-col gap-6">
+            <div>
+              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                Host Proposal Composer
               </span>
+              <h1 className="mt-1 text-[28px] font-extrabold tracking-tight text-white drop-shadow-md">
+                Pitch an Outing
+              </h1>
+              <p className="mt-1 text-[14px] text-white/80">
+                Design a small-group meetup for up to 6 people.
+              </p>
             </div>
 
-            {/* LIVE GROUP ADVISORY COHESION STRIP */}
-            <div className="mt-3.5 rounded-[16px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3.5">
-              <div className="flex items-center justify-between text-[12px] font-semibold">
-                <span className="text-[#F3F0E9]">Group Cohesion Indicator</span>
-                <span className="text-[#F3F0E9]">
-                  {Math.round(cohesionResult.cohesion * 100)}% Cohesion
+            {/* STEP 1: TITLE & DETAILS */}
+            <div className="rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+              <h3 className="text-[17px] font-bold text-white">
+                1. Title & Details
+              </h3>
+
+              <div className="mt-4 flex flex-col gap-4">
+                <div>
+                  <label className="text-[13px] font-semibold text-white">Outing Title</label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none"
+                    placeholder="e.g. Saturday Pottery & Coffee"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-semibold text-white">Host Pitch (Your own words)</label>
+                  <textarea
+                    rows={3}
+                    value={pitch}
+                    onChange={(e) => setPitch(e.target.value)}
+                    className="mt-1 w-full rounded-[12px] border border-white/20 bg-black/60 p-3 text-[14px] text-white outline-none"
+                    placeholder="Describe what you want to do..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[13px] font-semibold text-white">Area</label>
+                    <input
+                      type="text"
+                      value={area}
+                      onChange={(e) => setArea(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[13px] font-semibold text-white">When</label>
+                    <input
+                      type="text"
+                      value={dateTime}
+                      onChange={(e) => setDateTime(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2: INVITE CANDIDATES */}
+            <div className="rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[17px] font-bold text-white">
+                  2. Select Guests ({selectedGuests.length + 1} / {totalSeats} Seats)
+                </h3>
+                <span className="text-[11px] font-bold text-white/80">
+                  Max 6 Seats
                 </span>
               </div>
-              {cohesionResult.warnings.length > 0 && (
-                <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-medium text-[#A6AAA4]">
-                  <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-[#F3F0E9]" />
-                  <span>{cohesionResult.warnings[0]}</span>
+
+              <p className="mt-1 text-[12.5px] text-white/80">
+                Select high-resonance matches to invite. Cohesion is calculated dynamically.
+              </p>
+
+              <div className="mt-4 flex flex-col gap-3">
+                {candidatePool.slice(0, 4).map((candidate) => {
+                  const isSelected = selectedGuests.some((g) => g.profile.id === candidate.profile.id);
+
+                  return (
+                    <button
+                      key={candidate.profile.id}
+                      type="button"
+                      onClick={() => toggleGuest(candidate)}
+                      className={`flex items-center justify-between rounded-[16px] border p-3 text-left transition-all ${
+                        isSelected
+                          ? 'border-white bg-white/20 text-white'
+                          : 'border-white/15 bg-black/40 text-white/80 hover:border-white/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={candidate.profile.avatar_url || ''}
+                          alt={candidate.profile.display_name}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                        <div>
+                          <h4 className="text-[14px] font-bold text-white">
+                            {candidate.profile.display_name}
+                          </h4>
+                          <span className="text-[11.5px] text-white/70">
+                            {candidate.profile.home_area}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-full border ${isSelected ? 'border-white bg-white text-black' : 'border-white/30 bg-black/40 text-white'}`}>
+                        {isSelected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* STEP 3: GROUP COHESION READOUT */}
+            <div className="rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+              <h3 className="text-[17px] font-bold text-white">
+                3. Group Cohesion Calculation
+              </h3>
+
+              <div className="mt-3 flex items-center justify-between rounded-[16px] border border-white/15 bg-black/60 p-3.5">
+                <div>
+                  <span className="text-[11px] font-bold text-white/70 uppercase">Cohesion Score</span>
+                  <p className="text-[16px] font-bold text-white">
+                    {(cohesionResult.cohesion_score * 100).toFixed(0)} / 100
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-[11px] font-bold text-white/70 uppercase">Friction Level</span>
+                  <p className="text-[14px] font-bold text-white capitalize">
+                    {cohesionResult.friction_level}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <p className="text-[13px] text-white/90 leading-relaxed">
+                  {cohesionResult.cohesion_summary}
+                </p>
+              </div>
+
+              {cohesionResult.friction_warnings.length > 0 && (
+                <div className="mt-3 flex items-start gap-2 rounded-[14px] border border-white/20 bg-black/60 p-3 text-[12.5px] text-white">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <div>
+                    {cohesionResult.friction_warnings.map((w, idx) => (
+                      <p key={idx}>{w}</p>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Candidate List */}
-            <div className="mt-4 flex flex-col gap-2.5">
-              {candidatePool.slice(0, 5).map((candidate) => {
-                const isSelected = selectedGuests.some((g) => g.profile.id === candidate.profile.id);
-                return (
-                  <div
-                    key={candidate.profile.id}
-                    onClick={() => toggleGuest(candidate)}
-                    className={`flex cursor-pointer items-center justify-between rounded-[16px] p-3 transition-all ${
-                      isSelected
-                        ? 'border-2 border-[#F3F0E9] bg-[#1C3325]'
-                        : 'border border-[#F3F0E9]/12 bg-[#0D1D15] hover:bg-[#1C3325]/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={candidate.profile.avatar_url || ''}
-                        alt={candidate.profile.display_name}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <h4 className="text-[14px] font-bold text-[#F3F0E9]">
-                          {candidate.profile.display_name}
-                        </h4>
-                        <p className="text-[11.5px] font-medium text-[#A6AAA4]">
-                          {candidate.profile.home_area} · High availability overlap
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-                        isSelected ? 'bg-[#F3F0E9] text-[#0D1D15]' : 'bg-[#15261C] text-[#A6AAA4]'
-                      }`}
-                    >
-                      {isSelected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                    </button>
-                  </div>
-                );
-              })}
+            <Button variant="primary" size="lg" type="submit" className="w-full py-4 text-[16px] font-bold">
+              Publish Outing Proposal →
+            </Button>
+          </form>
+        ) : (
+          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 text-center shadow-2xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-black">
+              <Check className="h-7 w-7" />
             </div>
+
+            <h2 className="mt-4 text-[24px] font-bold text-white">
+              Outing Proposed!
+            </h2>
+            <p className="mt-2 text-[14px] text-white/80 leading-relaxed">
+              Your outing proposal <strong className="text-white">"{title}"</strong> has been saved. Your selected guests will receive an invitation.
+            </p>
+
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => router.push('/home')}
+              className="mt-6 w-full"
+            >
+              Return to Home Dashboard
+            </Button>
           </div>
-
-          <Button type="submit" variant="primary" size="lg" className="w-full">
-            Publish Outing Proposal
-          </Button>
-        </form>
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-8 text-center shadow-lg">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#1C3325] text-[#F3F0E9] border border-[#F3F0E9]/20">
-            <Check className="h-7 w-7" />
-          </div>
-
-          <h2 className="text-[26px] font-bold text-[#F3F0E9]">
-            Outing Proposal Published!
-          </h2>
-
-          <p className="mt-2 text-[14px] text-[#A6AAA4]">
-            Invitations have been sent to your selected candidates. You can track RSVPs in your dashboard.
-          </p>
-
-          <Button variant="primary" size="md" className="mt-6" onClick={() => router.push('/home')}>
-            Back to Home Dashboard
-          </Button>
-        </div>
-      )}
-    </IllustratedGround>
+        )}
+      </div>
+    </div>
   );
 }
 
-export default function PitchComposerPage() {
+export default function PitchOutingPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-[#A6AAA4]">Loading pitch composer...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0D1D15] p-6 text-[#FFFDF9]">Loading composer...</div>}>
       <PitchComposerContent />
     </Suspense>
   );
