@@ -1,0 +1,15 @@
+{
+  "fonts": {
+    "display": "var(--font-fraunces), serif",
+    "body": "var(--font-inter), sans-serif"
+  },
+  "scale": {
+    "displayL": { "fontSize": "48px", "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "600", "fontFamily": "display" },
+    "displayM": { "fontSize": "34px", "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600", "fontFamily": "display" },
+    "title": { "fontSize": "24px", "lineHeight": "30px", "letterSpacing": "0", "fontWeight": "500", "fontFamily": "display" },
+    "bodyL": { "fontSize": "17px", "lineHeight": "26px", "letterSpacing": "0", "fontWeight": "400", "fontFamily": "body" },
+    "body": { "fontSize": "15px", "lineHeight": "23px", "letterSpacing": "0", "fontWeight": "400", "fontFamily": "body" },
+    "meta": { "fontSize": "13px", "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "500", "fontFamily": "body" },
+    "label": { "fontSize": "11px", "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600", "textTransform": "uppercase", "fontFamily": "body" }
+  }
+}

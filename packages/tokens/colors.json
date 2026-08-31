@@ -1,0 +1,32 @@
+{
+  "ground": {
+    "paper": "#F7F2EB",
+    "sand": "#EFE5D8",
+    "card": "#FFFDF9",
+    "mist": "#E2E8E4"
+  },
+  "ink": {
+    "espresso": "#2D2118",
+    "bark": "#4A3B30",
+    "stone": "#7A6B5F",
+    "chalk": "#FFFDF9"
+  },
+  "accent": {
+    "terracotta": "#C85A32",
+    "sage": "#2E5345",
+    "amber": "#D69336",
+    "sky": "#96B8C6",
+    "clay": "#9E6B55"
+  },
+  "semantic": {
+    "danger": "#AC3D32",
+    "success": "#2E5345",
+    "warn": "#D69336"
+  },
+  "shadows": {
+    "e1": "0 2px 8px rgba(45,33,24,0.06), 0 12px 28px -10px rgba(45,33,24,0.12)",
+    "e2": "0 4px 12px rgba(45,33,24,0.08), 0 24px 48px -12px rgba(45,33,24,0.22)",
+    "e3": "0 32px 64px -24px rgba(45,33,24,0.30)"
+  },
+  "border": "rgba(45, 33, 24, 0.09)"
+}

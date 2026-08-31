@@ -1,0 +1,17 @@
+{
+  "name": "@soul-tribe/core",
+  "version": "0.1.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --experimental-strip-types --test"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.5"
+  }
+}
