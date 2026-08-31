@@ -56,7 +56,7 @@ export default function PeopleListPage() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
                       <div className="absolute top-3.5 left-3.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                        Strong Fit · 90% Rhythm Overlap
+                        {person.fitLabel} · {person.rhythmOverlap}% Rhythm Overlap
                       </div>
 
                       <div className="absolute bottom-4 left-4 right-4">

@@ -196,7 +196,7 @@ export default function PersonDetailPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
             <div className="absolute top-3.5 left-3.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-              Strong Fit · 90% Rhythm Overlap
+              {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
             </div>
 
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
