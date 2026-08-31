@@ -38,7 +38,7 @@ export default function LandingPage() {
 
           <Link href="/onboarding">
             <Button variant="primary" size="sm">
-              Start Pass
+              Meet Your Tribe
             </Button>
           </Link>
         </header>
@@ -67,7 +67,7 @@ export default function LandingPage() {
           <div className="mt-8">
             <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
               <Button variant="primary" size="lg" className="w-full py-4 text-[15.5px] font-bold">
-                Begin 8-Category Social DNA Pass <ArrowRight className="ml-2 h-4 w-4" />
+                Meet Your Tribe <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -153,7 +153,7 @@ export default function LandingPage() {
         <footer className="mt-12 text-center">
           <Link href="/onboarding">
             <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
-              Begin 8-Category Social DNA Pass →
+              Meet Your Tribe →
             </Button>
           </Link>
           <p className="mt-3 text-[12px] text-white/70">

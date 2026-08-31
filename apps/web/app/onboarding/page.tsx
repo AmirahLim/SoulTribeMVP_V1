@@ -573,7 +573,7 @@ export default function OnboardingPage() {
                   size="sm"
                   onClick={handleNextStep}
                 >
-                  {step < 8 ? 'Next Step →' : 'Reveal My Tribal Pass (10%) ✨'}
+                  {step < 8 ? 'Next Step →' : 'Meet Your Tribe ✨'}
                 </Button>
               </div>
             </motion.div>
