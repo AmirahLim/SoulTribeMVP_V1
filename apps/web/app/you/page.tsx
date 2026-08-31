@@ -3,7 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
-import { Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio, Quote, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight
+} from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
 export default function ProfilePage() {
@@ -184,50 +188,80 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* SECTION C: ORIGINAL 6 CATEGORIES WITH ENHANCED VISUAL DIAGRAMS */}
+        {/* SECTION C: 10-CATEGORY CREATIVE VISUAL DIAGRAM MAP */}
         <section className="py-6 flex flex-col gap-6">
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Public Profile Voice
-            </span>
-            <h2 className="mt-1 text-[20px] font-bold text-white">
-              What People See About You
-            </h2>
-            <p className="mt-1 text-[13.5px] text-white/80">
-              Visual diagrams and verbatim words rendered for matches.
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                Public Signals Map
+              </span>
+              <h2 className="mt-1 text-[20px] font-bold text-white">
+                What People See About You
+              </h2>
+              <p className="mt-1 text-[13.5px] text-white/80">
+                Visual radar map representing all 10 categories of your Deeper Tribal Pass.
+              </p>
+            </div>
+
+            <Link href="/you/deeper">
+              <Button variant="secondary" size="sm">
+                Edit Pass
+              </Button>
+            </Link>
           </div>
 
-          {/* 1. SOCIAL ENERGY (VISUAL SPECTRUM GAUGE) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          {/* 1. SOCIAL ENERGY (SVG SPECTRUM RADAR GAUGE) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <Smile className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">Social Energy</h3>
+                <h3 className="text-[15.5px] font-extrabold">01. Social Energy</h3>
               </div>
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
                 {deep.groupSize || '3–4 people'}
               </span>
             </div>
 
-            {/* Visual Spectrum Gauge Bar */}
-            <div className="mt-3.5 pt-1">
-              <div className="flex justify-between text-[11px] font-semibold text-white/70">
-                <span>Quiet & Intimate</span>
-                <span>High Energy & Lively</span>
+            {/* Creative SVG Vector Radar Dial */}
+            <div className="mt-4 flex items-center gap-4 border-t border-white/15 pt-3">
+              <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center">
+                <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/10"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-white"
+                    strokeDasharray="65, 100"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="absolute text-[10px] font-extrabold text-white">
+                  65%
+                </div>
               </div>
-              <div className="mt-1.5 h-2 w-full rounded-full bg-white/10 relative overflow-hidden border border-white/20">
-                <div className="h-full bg-gradient-to-r from-white/40 via-white to-white/80 w-[35%] rounded-full" />
-              </div>
-            </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[12px] font-medium text-white">
-                {deep.groupSize || 'Small groups (3–4)'}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[12px] font-medium text-white">
-                {deep.socialVibe || 'Playful-chaotic & Calm'}
-              </span>
+              <div>
+                <div className="flex items-center gap-2 text-[12px] font-semibold text-white">
+                  <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-white">
+                    {deep.socialVibe || 'Playful-chaotic & Calm'}
+                  </span>
+                </div>
+                <p className="mt-1 text-[12px] text-white/70">
+                  Optimal setting: Intimate small gatherings over large crowds.
+                </p>
+              </div>
             </div>
 
             {(deep.socialAtmosphereOpen || deep.socialEnergyOpen) && (
@@ -235,31 +269,40 @@ export default function ProfilePage() {
                 “{deep.socialAtmosphereOpen || deep.socialEnergyOpen || 'I usually find one person I click with before I open up to the room.'}”
               </p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 2. HOW I CONNECT (VISUAL NODE FLOW DIAGRAM) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          {/* 2. HOW I CONNECT (SVG VECTOR FLOW GRAPH) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
             <div className="flex items-center gap-2 text-white">
               <MessageSquare className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">How I Connect</h3>
+              <h3 className="text-[15.5px] font-extrabold">02. How I Connect</h3>
             </div>
 
-            {/* Visual Connected Channel Flow Diagram */}
-            <div className="mt-3 flex items-center justify-around py-2.5 border-y border-white/15 my-2">
+            {/* SVG Vector Flow Diagram */}
+            <div className="mt-3 flex items-center justify-around py-3 border-y border-white/15 my-2">
               <div className="flex flex-col items-center gap-0.5 text-center">
                 <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
                   🎙️
                 </div>
                 <span className="text-[11px] font-semibold text-white/90">Voice Notes</span>
               </div>
-              <div className="h-0.5 w-6 bg-gradient-to-r from-white/30 via-white to-white/30" />
+              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               <div className="flex flex-col items-center gap-0.5 text-center">
                 <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
                   💬
                 </div>
                 <span className="text-[11px] font-semibold text-white/90">Memes</span>
               </div>
-              <div className="h-0.5 w-6 bg-gradient-to-r from-white/30 via-white to-white/30" />
+              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
               <div className="flex flex-col items-center gap-0.5 text-center">
                 <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
                   ☕
@@ -268,38 +311,35 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-2.5 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[12px] font-medium text-white">
-                {deep.messagingStyle || 'Voice notes & Memes'}
-              </span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[12px] font-medium text-white">
-                {deep.supportStyle || 'Listen first'}
-              </span>
-            </div>
-
             {deep.messagingStyleOpen && (
               <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
                 “{deep.messagingStyleOpen}”
               </p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 3. FRIENDSHIP STYLE (DUAL-PILLAR BALANCE GRAPH) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          {/* 3. FRIENDSHIP STYLE (DUAL-AXIS VECTOR GRAPH) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
             <div className="flex items-center gap-2 text-white">
               <Heart className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">Friendship Style</h3>
+              <h3 className="text-[15.5px] font-extrabold">03. Friendship Style</h3>
             </div>
 
-            {/* Visual Pillar Graph */}
-            <div className="mt-3 grid grid-cols-2 gap-2.5">
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5 text-center">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Pillar I</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">Comfortable Silence</p>
+            {/* 2D Vector Axis Graphic */}
+            <div className="mt-3 relative h-20 w-full rounded-[16px] border border-white/15 bg-white/5 p-3 flex items-center justify-between">
+              <div className="flex flex-col text-left">
+                <span className="text-[10px] font-bold text-white/60 uppercase">Axis A</span>
+                <span className="text-[13px] font-bold text-white">Comfortable Silence</span>
               </div>
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5 text-center">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Pillar II</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">Reliability & Trust</p>
+              <div className="h-8 w-0.5 bg-white/20" />
+              <div className="flex flex-col text-right">
+                <span className="text-[10px] font-bold text-white/60 uppercase">Axis B</span>
+                <span className="text-[13px] font-bold text-white">Reliability & Trust</span>
               </div>
             </div>
 
@@ -308,21 +348,26 @@ export default function ProfilePage() {
                 “{deep.realFriendOpen}”
               </p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 4. MY RHYTHM (WEEKLY TIMELINE STRIP) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          {/* 4. MY RHYTHM (WEEKLY VECTOR TIMELINE) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <Compass className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">My Rhythm</h3>
+                <h3 className="text-[15.5px] font-extrabold">04. My Rhythm</h3>
               </div>
               <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
                 {deep.spontaneousTrip || 'Convince me'}
               </span>
             </div>
 
-            {/* Visual Weekly Strip */}
+            {/* Visual 7-Day Calendar Strip */}
             <div className="mt-3 flex items-center justify-between gap-1 py-2 border-y border-white/15">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
                 const isPeak = day === 'Sat' || day === 'Sun';
@@ -342,27 +387,57 @@ export default function ProfilePage() {
               })}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-0.5 text-[12px] font-medium text-white">
-                {deep.idealSaturday || 'Slow coffee & Hobbies'}
-              </span>
-            </div>
-
             {deep.idealSaturdayOpen && (
               <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
                 “{deep.idealSaturdayOpen}”
               </p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 5. WHAT MATTERS (VALUES CONSTELLATION CLOUD) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+          {/* 5. PERSONALITY SIGNALS (DELTA VECTOR METER) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
             <div className="flex items-center gap-2 text-white">
-              <Sparkles className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">What Matters</h3>
+              <Cpu className="h-4 w-4" />
+              <h3 className="text-[15.5px] font-extrabold">05. Personality Signals</h3>
             </div>
 
-            {/* Visual Value Constellation Cloud */}
+            <div className="mt-3 flex flex-col gap-2">
+              <div>
+                <div className="flex justify-between text-[11.5px] font-semibold text-white">
+                  <span>Reflective Curiosity</span>
+                  <span>90% Confidence</span>
+                </div>
+                <div className="mt-1 h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full bg-white w-[90%] rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            {deep.selfDescriptionOpen && (
+              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “{deep.selfDescriptionOpen}”
+              </p>
+            )}
+          </motion.div>
+
+          {/* 6. WHAT MATTERS (VALUES CONSTELLATION ORBIT) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
+            <div className="flex items-center gap-2 text-white">
+              <Sparkles className="h-4 w-4" />
+              <h3 className="text-[15.5px] font-extrabold">06. What Matters</h3>
+            </div>
+
+            {/* Glowing Value Cloud */}
             <div className="mt-3 flex flex-wrap justify-center gap-2 py-1">
               {coreValuesList.map((val) => (
                 <span
@@ -379,32 +454,112 @@ export default function ProfilePage() {
                 “I really respect people who {deep.respectPeopleOpen}”
               </p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 6. YOU SHOULD KNOW (EDITORIAL PROMPT CARDS) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl relative overflow-hidden">
+          {/* 7. I'M INTO (CURIOSITY RABBIT HOLE TREE) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
+            <div className="flex items-center gap-2 text-white">
+              <Flame className="h-4 w-4" />
+              <h3 className="text-[15.5px] font-extrabold">07. I'm Into & Rabbit Holes</h3>
+            </div>
+
+            <div className="mt-3 rounded-[16px] border border-white/15 bg-white/10 p-3">
+              <span className="text-[10px] font-bold text-white/70 uppercase">Current Rabbit Hole</span>
+              <p className="mt-1 text-[13px] font-bold text-white">
+                “{deep.currentRabbitHoleOpen || 'Japanese woodworking joints & specialty filter coffee roast notes.'}”
+              </p>
+            </div>
+
+            {deep.talkForHoursOpen && (
+              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “Could lose hours talking about {deep.talkForHoursOpen}”
+              </p>
+            )}
+          </motion.div>
+
+          {/* 8. OUTING DNA (SPEND & TEMPO VECTOR GAUGE) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <Layers className="h-4 w-4" />
+                <h3 className="text-[15.5px] font-extrabold">08. Outing DNA</h3>
+              </div>
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
+                {deep.budgetPref || '$20–50'}
+              </span>
+            </div>
+
+            {deep.instantYesOutingOpen && (
+              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “Instant Yes Outing: {deep.instantYesOutingOpen}”
+              </p>
+            )}
+          </motion.div>
+
+          {/* 9. YOU SHOULD KNOW (PROMPT VOICE CARDS) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl relative overflow-hidden"
+          >
             <Quote className="absolute right-3 top-3 h-16 w-16 opacity-10 text-white pointer-events-none" />
 
             <div className="flex items-center gap-2 text-white">
               <User className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">You Should Know</h3>
+              <h3 className="text-[15.5px] font-extrabold">09. You Should Know</h3>
             </div>
 
             <div className="mt-3 flex flex-col gap-3">
-              {deep.likeMeIfPrompt && (
-                <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                  <span className="text-[11px] font-bold text-white/70 uppercase">I'll probably like you if:</span>
-                  <p className="mt-1 text-[13.5px] text-white">“{deep.likeMeIfPrompt}”</p>
-                </div>
-              )}
-              {deep.quickestWayPrompt && (
-                <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                  <span className="text-[11px] font-bold text-white/70 uppercase">Quickest way to get me out:</span>
-                  <p className="mt-1 text-[13.5px] text-white">“{deep.quickestWayPrompt}”</p>
-                </div>
-              )}
+              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
+                <span className="text-[11px] font-bold text-white/70 uppercase">I'll probably like you if:</span>
+                <p className="mt-1 text-[13.5px] text-white">“{deep.likeMeIfPrompt || 'You can switch from silly memes to deep topics in 5 mins.'}”</p>
+              </div>
+              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
+                <span className="text-[11px] font-bold text-white/70 uppercase">Quickest way to get me out:</span>
+                <p className="mt-1 text-[13.5px] text-white">“{deep.quickestWayPrompt || 'Mention a quiet coffee walk or an invitation to a bookstore.'}”</p>
+              </div>
             </div>
-          </div>
+          </motion.div>
+
+          {/* 10. BOUNDARIES & MATCHING (SECURITY SHIELD VECTOR) */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <ShieldCheck className="h-4 w-4 text-white" />
+                <h3 className="text-[15.5px] font-extrabold">10. Boundaries & Matching</h3>
+              </div>
+              <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-2.5 py-0.5 text-[10.5px] font-bold text-white">
+                <Lock className="h-3 w-3" /> Algorithm Guard
+              </span>
+            </div>
+
+            <div className="mt-3.5 grid grid-cols-2 gap-2.5 text-center">
+              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
+                <span className="text-[10px] font-bold text-white/70 uppercase">Punctuality</span>
+                <p className="mt-0.5 text-[12.5px] font-bold text-white">{deep.punctualityPref || 'Essential'}</p>
+              </div>
+              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
+                <span className="text-[10px] font-bold text-white/70 uppercase">Cancellation</span>
+                <p className="mt-0.5 text-[12.5px] font-bold text-white">{deep.cancellationStance || 'Notice Required'}</p>
+              </div>
+            </div>
+          </motion.div>
         </section>
 
         {/* EDIT PROFILE SETTINGS MODAL */}
