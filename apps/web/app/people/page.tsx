@@ -10,27 +10,23 @@ import { MapPin, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PeopleListPage() {
-  const [user] = useState(() => getUserProfile());
-  const [city, setCity] = useState(() => user.homeArea || 'Singapore');
-  const [matches, setMatches] = useState<RankedMatch[]>(() => {
-    try {
-      return getRankedMatches(user, { limit: 6 });
-    } catch {
-      return [];
-    }
-  });
-  const [loading, setLoading] = useState(false);
+  const [city, setCity] = useState('Singapore');
+  const [matches, setMatches] = useState<RankedMatch[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
-      const u = getUserProfile();
-      if (u.homeArea) setCity(u.homeArea);
-      const ranked = getRankedMatches(u, { limit: 6 });
+      const user = getUserProfile();
+      if (user.homeArea) setCity(user.homeArea);
+      const ranked = getRankedMatches(user, { limit: 6 });
       setMatches(ranked);
       setError(null);
     } catch (err) {
       console.error('Failed to calculate matches:', err);
+      setError('Unable to load matches right now. Please try refreshing.');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
