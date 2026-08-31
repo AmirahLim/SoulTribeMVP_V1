@@ -1,32 +1,33 @@
 {
   "ground": {
-    "paper": "#F6F1EA",
-    "sand": "#EBDDD0",
+    "paper": "#F8F3EA",
+    "sand": "#EFE6D8",
     "card": "#FFFDF9",
     "mist": "#E1E8E3"
   },
   "ink": {
-    "espresso": "#1C2B22",
-    "bark": "#3A4D42",
-    "stone": "#6E7F75",
+    "forest": "#1F3D2C",
+    "espresso": "#2A2018",
+    "bark": "#4A3B30",
+    "stone": "#7A6B5F",
     "chalk": "#FFFDF9"
   },
   "accent": {
-    "emerald": "#1C3A27",
-    "terracotta": "#C85A32",
-    "ochre": "#D69336",
-    "sage": "#386653",
-    "clay": "#9E6B55"
+    "green": "#2D523E",
+    "ochre": "#D49B4B",
+    "mocha": "#8C5A37",
+    "terracotta": "#B85B33",
+    "sage": "#386653"
   },
   "semantic": {
     "danger": "#AC3D32",
-    "success": "#1C3A27",
-    "warn": "#D69336"
+    "success": "#2D523E",
+    "warn": "#D49B4B"
   },
   "shadows": {
-    "e1": "0 2px 8px rgba(28,58,39,0.06), 0 12px 28px -10px rgba(28,58,39,0.12)",
-    "e2": "0 4px 12px rgba(28,58,39,0.08), 0 24px 48px -12px rgba(28,58,39,0.22)",
-    "e3": "0 32px 64px -24px rgba(28,58,39,0.30)"
+    "e1": "0 2px 8px rgba(45,82,62,0.06), 0 12px 28px -10px rgba(45,82,62,0.10)",
+    "e2": "0 4px 12px rgba(45,82,62,0.08), 0 24px 48px -12px rgba(45,82,62,0.18)",
+    "e3": "0 32px 64px -24px rgba(45,82,62,0.25)"
   },
-  "border": "rgba(28, 58, 39, 0.08)"
+  "border": "rgba(45, 82, 62, 0.08)"
 }

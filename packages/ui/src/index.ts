@@ -9,3 +9,4 @@ export * from './Button';
 export * from './Chip';
 export * from './SocialDnaBars';
 export * from './VulnerabilityPrompt';
+export * from './FeatherLogo';

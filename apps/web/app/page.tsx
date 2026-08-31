@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { IllustratedGround, Bloom, ResonanceRead, PitchCard, Button } from '@soul-tribe/ui';
+import { IllustratedGround, ResonanceRead, Button, FeatherLogo } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, ShieldCheck, Users, Calendar, MapPin } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { SYNTHETIC_PROFILES } from '../../../supabase/seed/seed';
 import { generateMatchExplanation } from '../../../packages/core/explain/generator';
 
@@ -15,19 +15,17 @@ export default function LandingPage() {
 
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-20">
-      {/* OPAL HERO HEADER */}
+      {/* HEADER WITH OFFICIAL FEATHER LOGO */}
       <header className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1C3A27] text-[#FFFDF9]">
-            <Sparkles className="h-4.5 w-4.5" />
-          </div>
-          <span className="text-[20px] font-extrabold tracking-tight text-[#1C2B22]">
+        <div className="flex items-center gap-2.5">
+          <FeatherLogo size={24} />
+          <span className="text-[22px] font-extrabold tracking-tight text-[#1F3D2C]">
             Soul Tribe
           </span>
         </div>
 
         <Link href="/onboarding">
-          <Button variant="primary" size="sm">
+          <Button variant="emerald" size="sm">
             Start Pass
           </Button>
         </Link>
@@ -40,16 +38,16 @@ export default function LandingPage() {
         transition={{ duration: 0.4 }}
         className="mt-6 flex flex-col items-center text-center"
       >
-        <span className="rounded-full border border-[#1C3A27]/15 bg-[#E1E8E3] px-3.5 py-1 text-[11px] font-bold tracking-wider text-[#1C3A27] uppercase">
+        <span className="rounded-full border border-[#2D523E]/15 bg-[#E1E8E3] px-3.5 py-1 text-[11px] font-bold tracking-wider text-[#2D523E] uppercase">
           Friendship-First Social Coordination · Singapore
         </span>
 
-        <h1 className="mt-4 text-[34px] font-extrabold tracking-tight text-[#1C2B22] leading-[40px]">
+        <h1 className="mt-4 text-[34px] font-extrabold tracking-tight text-[#1F3D2C] leading-[40px]">
           Six people.<br />One good Saturday.<br />
-          <span className="text-[#C85A32]">Start there.</span>
+          <span className="text-[#D49B4B]">Start there.</span>
         </h1>
 
-        <p className="mt-3 max-w-[320px] text-[15px] font-medium leading-[22px] text-[#3A4D42]">
+        <p className="mt-3 max-w-[320px] text-[15px] font-medium leading-[22px] text-[#4A3B30]">
           Not a dating app, not an endless feed. A coordination layer that surfaces the right handful of people.
         </p>
 
@@ -68,27 +66,27 @@ export default function LandingPage() {
         className="mt-8 flex flex-col gap-4"
       >
         <div className="flex items-center justify-between px-1">
-          <span className="text-[12px] font-bold tracking-wider text-[#6E7F75] uppercase">
+          <span className="text-[12px] font-bold tracking-wider text-[#7A6B5F] uppercase">
             Sample Tribal Pass Match
           </span>
-          <span className="text-[12px] font-bold text-[#1C3A27]">
+          <span className="text-[12px] font-bold text-[#2D523E]">
             Strong Fit
           </span>
         </div>
 
         {/* CANDIDATE CARD */}
-        <div className="rounded-[28px] border border-[#1C3A27]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(28,58,39,0.06)]">
+        <div className="rounded-[28px] border border-[#2D523E]/08 bg-[#FFFDF9] p-5 shadow-[0_8px_24px_-6px_rgba(45,82,62,0.06)]">
           <div className="flex items-center gap-3">
             <img
               src={p2.profile.avatar_url || ''}
               alt={p2.profile.display_name}
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-[#C85A32]"
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-[#D49B4B]"
             />
             <div>
-              <h3 className="text-[18px] font-extrabold text-[#1C2B22]">
+              <h3 className="text-[18px] font-extrabold text-[#1F3D2C]">
                 {p2.profile.display_name}
               </h3>
-              <p className="text-[12px] font-medium text-[#6E7F75]">
+              <p className="text-[12px] font-medium text-[#7A6B5F]">
                 {p2.profile.home_area} · Singapore
               </p>
             </div>
@@ -104,11 +102,11 @@ export default function LandingPage() {
       </motion.section>
 
       {/* Singapore Cohort CTA */}
-      <section className="mt-8 rounded-[28px] border border-[#1C3A27]/10 bg-[#EBDDD0] p-6 text-center shadow-sm">
-        <h3 className="text-[20px] font-extrabold text-[#1C2B22]">
+      <section className="mt-8 rounded-[28px] border border-[#2D523E]/10 bg-[#EFE6D8] p-6 text-center shadow-sm">
+        <h3 className="text-[20px] font-extrabold text-[#1F3D2C]">
           Join the Singapore Test Cohort
         </h3>
-        <p className="mt-1 text-[13.5px] font-medium text-[#3A4D42]">
+        <p className="mt-1 text-[13.5px] font-medium text-[#4A3B30]">
           Experience coordination built for adults in Singapore.
         </p>
 
