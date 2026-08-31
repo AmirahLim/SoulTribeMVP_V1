@@ -6,7 +6,7 @@ import { IllustratedGround, Button, ResonanceRead } from '@soul-tribe/ui';
 import { SYNTHETIC_PROFILES } from '../../../../supabase/seed/seed';
 import { score } from '../../../../packages/core/matching/engine';
 import { generateMatchExplanation } from '../../../../packages/core/explain/generator';
-import { MapPin, Coffee, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import { MapPin, Coffee, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function PeopleListPage() {
@@ -19,11 +19,11 @@ export default function PeopleListPage() {
     explanation: generateMatchExplanation(currentUser, candidate),
   }));
 
-  // Artsy golden-hour motion-blur background images (uploaded by user)
+  // Real, natural human candid photos for each person
   const heroPhotos: Record<string, string> = {
-    'Marcus Tan': '/user-community.jpg',
-    'Maya Lin': '/user-community-2.png',
-    'Chen Wei': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&auto=format&fit=crop&q=80',
+    'Marcus Tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1000&auto=format&fit=crop&q=80',
+    'Maya Lin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=80',
+    'Chen Wei': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1000&auto=format&fit=crop&q=80',
   };
 
   return (
@@ -41,10 +41,10 @@ export default function PeopleListPage() {
         </p>
       </header>
 
-      {/* CURATED MATCHES BATCH LISTING (WITH ARTSY PHOTO BACKGROUND CARDS INSTEAD OF SOLID GREEN) */}
+      {/* CURATED MATCHES BATCH LISTING */}
       <div className="mt-6 flex flex-col gap-6">
         {surfacedMatches.map(({ candidate, explanation }) => {
-          const photo = heroPhotos[candidate.profile.display_name] || '/user-community.jpg';
+          const photo = heroPhotos[candidate.profile.display_name] || heroPhotos['Marcus Tan'];
           const rawInterests = candidate.tagged_interests || candidate.interests || [];
           const interestsList = (Array.isArray(rawInterests) ? rawInterests : []).map((item) =>
             typeof item === 'string' ? item : (item as any)?.node_name || 'Specialty Coffee'
@@ -59,7 +59,7 @@ export default function PeopleListPage() {
             >
               <Link href={`/people/${candidate.profile.id}`}>
                 <div className="group relative overflow-hidden rounded-[28px] border border-[#F3F0E9]/20 shadow-2xl transition-all hover:border-[#F3F0E9]/50">
-                  {/* ARTSY GOLDEN-HOUR MOTION PHOTO BACKGROUND INSTEAD OF SOLID GREEN */}
+                  {/* Natural Human Portrait Photo */}
                   <img
                     src={photo}
                     alt={candidate.profile.display_name}
@@ -69,7 +69,7 @@ export default function PeopleListPage() {
                   {/* Dark Vignette Overlay for Crisp White Text Legibility */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/90" />
 
-                  {/* Content Container Overlaid on Artsy Photo */}
+                  {/* Content Container Overlaid on Natural Human Photo */}
                   <div className="relative z-10 p-6 flex flex-col justify-between min-h-[320px]">
                     <div>
                       <div className="flex items-center justify-between">
@@ -112,10 +112,10 @@ export default function PeopleListPage() {
 
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-[12.5px] font-bold text-white drop-shadow-sm">
-                          Open 2nd Frame Profile →
+                          Open Candidate Profile →
                         </span>
                         <Button variant="primary" size="sm">
-                          View Match <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                          View Profile <ArrowRight className="ml-1 h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>

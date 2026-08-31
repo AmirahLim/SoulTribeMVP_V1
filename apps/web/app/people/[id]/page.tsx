@@ -23,22 +23,23 @@ export default function PersonDetailPage() {
 
   const explanation = generateMatchExplanation(currentUser, person);
 
-  // Artsy golden-hour motion-blur background image!
+  // Real, natural human candid photos for each person
   const heroPhotos: Record<string, string> = {
-    'Marcus Tan': '/user-community.jpg',
-    'Maya Lin': '/user-community-2.png',
+    'Marcus Tan': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1000&auto=format&fit=crop&q=80',
+    'Maya Lin': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&auto=format&fit=crop&q=80',
+    'Chen Wei': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1000&auto=format&fit=crop&q=80',
   };
-  const activePhoto = heroPhotos[person.profile.display_name] || '/user-community.jpg';
+  const activePhoto = heroPhotos[person.profile.display_name] || heroPhotos['Marcus Tan'];
 
   const galleryPhotos = [
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
   ];
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#0D1D15] text-[#FFFDF9]">
-      {/* 2ND FRAME SPEC: ARTSY GOLDEN-HOUR MOTION PHOTO BACKGROUND */}
+      {/* 2ND FRAME SPEC: REAL NATURAL HUMAN PORTRAIT PHOTO BACKGROUND */}
       <img
         src={activePhoto}
         alt={person.profile.display_name}
@@ -78,7 +79,7 @@ export default function PersonDetailPage() {
           transition={{ duration: 0.3 }}
           className="flex flex-col gap-4"
         >
-          {/* ABOUT ME SECTION (EXACT 2ND FRAME PLACEMENT & FONT SIZE) */}
+          {/* ABOUT ME SECTION */}
           <div>
             <div className="flex items-center justify-between">
               <h1 className="text-[22px] font-bold text-white tracking-tight drop-shadow-md">
@@ -94,7 +95,7 @@ export default function PersonDetailPage() {
             </p>
           </div>
 
-          {/* INTERESTS SECTION (EXACT 2ND FRAME PLACEMENT & GLASS CHIPS) */}
+          {/* INTERESTS SECTION (GLASS CHIPS) */}
           <div>
             <h2 className="text-[18px] font-bold text-white tracking-tight drop-shadow-md">
               Interests
@@ -112,7 +113,7 @@ export default function PersonDetailPage() {
             </div>
           </div>
 
-          {/* PHOTO THUMBNAILS ROW (EXACT 2ND FRAME PLACEMENT & 10+ BADGE) */}
+          {/* PHOTO THUMBNAILS ROW (10+ BADGE) */}
           <div className="flex items-center gap-3 pt-1">
             {galleryPhotos.map((photo, idx) => (
               <div
