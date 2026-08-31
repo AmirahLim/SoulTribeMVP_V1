@@ -68,7 +68,9 @@ export interface SoftGateResult {
   reason?: string;
 }
 
-export const KNOWN_GATE_CODES: Set<string> = new Set([
+/** The complete set of gate reason codes emitted by gates.ts.
+ *  Any reason outside this set is treated as an unknown safety failure. */
+export const KNOWN_GATE_REASONS: ReadonlySet<string> = new Set([
   'ACCOUNT_NOT_ACTIVE',
   'CONFIDENCE_TOO_LOW',
   'BLOCKED_OR_REPORTED',
@@ -82,9 +84,11 @@ export function softGate(
   result: MatchResult,
   options?: ColdStartOptions
 ): SoftGateResult {
-  const reasons = result.gate_reasons || [];
+  const reasons = result.gate_reasons ?? [];
 
-  // Fail-closed check: if result.gated is true and gate_reasons is empty, return ineligible
+  // --- FAIL-CLOSED GUARDS (must run first) ---
+
+  // Gated, but we were given no reason why → we cannot prove it is safe. Reject.
   if (result.gated && reasons.length === 0) {
     return {
       eligible: false,
@@ -94,16 +98,14 @@ export function softGate(
     };
   }
 
-  // Reject any reason not in the known list of 7 gate codes
-  for (const r of reasons) {
-    if (!KNOWN_GATE_CODES.has(r)) {
-      return {
-        eligible: false,
-        provisional: false,
-        adjustedScore: 0,
-        reason: 'GATED_REASON_UNKNOWN',
-      };
-    }
+  // A reason we do not recognise may be a new safety gate. Reject.
+  if (reasons.some((r) => !KNOWN_GATE_REASONS.has(r))) {
+    return {
+      eligible: false,
+      provisional: false,
+      adjustedScore: 0,
+      reason: 'UNRECOGNISED_GATE_REASON',
+    };
   }
 
   const provisionalFloor = options?.provisionalFloor ?? 0.30;

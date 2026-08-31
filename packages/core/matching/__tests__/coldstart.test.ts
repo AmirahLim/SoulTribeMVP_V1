@@ -6,7 +6,6 @@ import {
   softGate,
   explorationBoost,
   nextBestQuestions,
-  confidenceFromCompleteness,
 } from '../coldstart.ts';
 
 function createMockVector(id: string, name: string): ProfileVector {
@@ -131,11 +130,8 @@ describe('Module 3 — Cold start & exposure fairness', () => {
 
   it('7. nextBestQuestions returns the heaviest under-answered dimension first', () => {
     const vec = createMockVector('1', 'Alice');
-    // Personality answered 10/10 (100% complete)
     vec.personality.answered = 10;
-    // Communication answered 0/10 (0% complete, baseline weight 15)
     vec.communication.answered = 0;
-    // Intent answered 0/3 (0% complete, baseline weight 15)
     vec.intent.answered = 0;
 
     const questions = nextBestQuestions(vec, 3);
@@ -144,36 +140,58 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     assert.strictEqual(questions.includes('personality'), false);
   });
 
-  it('8. Unknown or unrecognised gate reasons fail closed (eligible: false)', () => {
-    const matchResult: MatchResult = {
-      resonance: 0.8,
-      logistics: 0.7,
-      rank_score: 0,
-      gated: true,
-      gate_reasons: ['UNKNOWN_CUSTOM_REASON'],
-      contributions: {},
-      confidence_a: 0.9,
-      confidence_b: 0.9,
+  it('8. Security tests for fail-closed guards', () => {
+    // 1. Gated with no reasons must fail closed
+    const gatedNoReasons: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0, gated: true, gate_reasons: [],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
     };
+    const res1 = softGate(gatedNoReasons);
+    assert.strictEqual(res1.eligible, false);
+    assert.strictEqual(res1.reason, 'GATED_REASON_UNKNOWN');
 
-    const res = softGate(matchResult);
-    assert.strictEqual(res.eligible, false);
-  });
-
-  it('9. Gated result with empty gate_reasons fails closed (eligible: false)', () => {
-    const matchResult: MatchResult = {
-      resonance: 0.8,
-      logistics: 0.7,
-      rank_score: 0,
-      gated: true,
-      gate_reasons: [],
-      contributions: {},
-      confidence_a: 0.9,
-      confidence_b: 0.9,
+    // 2. Unrecognised reason must fail closed
+    const unrecognisedReason: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0, gated: true, gate_reasons: ['SOME_NEW_GATE'],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
     };
+    const res2 = softGate(unrecognisedReason);
+    assert.strictEqual(res2.eligible, false);
+    assert.strictEqual(res2.reason, 'UNRECOGNISED_GATE_REASON');
 
-    const res = softGate(matchResult);
-    assert.strictEqual(res.eligible, false);
-    assert.strictEqual(res.reason, 'GATED_REASON_UNKNOWN');
+    // 3. Mixed known + unknown must fail closed
+    const mixedReasons: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0, gated: true, gate_reasons: ['CONFIDENCE_TOO_LOW', 'SOME_NEW_GATE'],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
+    };
+    const res3 = softGate(mixedReasons);
+    assert.strictEqual(res3.eligible, false);
+    assert.strictEqual(res3.reason, 'UNRECOGNISED_GATE_REASON');
+
+    // 4. Regression — confidence-only still works
+    const confidenceOnly: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0, gated: true, gate_reasons: ['CONFIDENCE_TOO_LOW'],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
+    };
+    const res4 = softGate(confidenceOnly);
+    assert.strictEqual(res4.eligible, true);
+    assert.strictEqual(res4.provisional, true);
+
+    // 5. Regression — a real safety gate still blocks
+    const safetyGate: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0, gated: true, gate_reasons: ['BLOCKED_OR_REPORTED'],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
+    };
+    const res5 = softGate(safetyGate);
+    assert.strictEqual(res5.eligible, false);
+
+    // 6. Regression — an ungated result is unaffected
+    const ungated: MatchResult = {
+      resonance: 0.8, logistics: 0.7, rank_score: 0.75, gated: false, gate_reasons: [],
+      contributions: {}, confidence_a: 0.9, confidence_b: 0.9,
+    };
+    const res6 = softGate(ungated);
+    assert.strictEqual(res6.eligible, true);
+    assert.strictEqual(res6.provisional, false);
   });
 });
