@@ -58,14 +58,14 @@ export default function DeeperTribalPassPage() {
 
   const zodiacSigns = [
     'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces', 'Prefer not to say'
   ];
 
   const mbtiTypes = [
     'INTJ', 'INTP', 'ENTJ', 'ENTP',
     'INFJ', 'INFP', 'ENFJ', 'ENFP',
     'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-    'ISTP', 'ISFP', 'ESTP', 'ESFP'
+    'ISTP', 'ISFP', 'ESTP', 'ESFP', 'Prefer not to say'
   ];
 
   const categories = [
@@ -190,7 +190,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Ideal Group Size</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['One-on-one', '3–4 people', '5–8 people', 'Big group', 'Depends'].map((opt) => (
+                    {['One-on-one', '3–4 people', '5–8 people', 'Big group', 'Depends', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -204,7 +204,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Social Vibe</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Intimate', 'Playful-chaotic', 'Intellectual', 'Adventurous', 'Calm', 'High-energy', 'Creative'].map((opt) => (
+                    {['Intimate', 'Playful-chaotic', 'Intellectual', 'Adventurous', 'Calm', 'High-energy', 'Creative', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -239,7 +239,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Messaging Style</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Random thoughts', 'Memes', 'Check-ins', 'Voice notes', 'Calls', 'Making plans', 'Mostly IRL'].map((opt) => (
+                    {['Random thoughts', 'Memes', 'Check-ins', 'Voice notes', 'Calls', 'Making plans', 'Mostly IRL', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -253,7 +253,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">When someone is going through a hard time</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Listen', 'Reassure', 'Make sense of it', 'Advice', 'Solve it', 'Ask me'].map((opt) => (
+                    {['Listen', 'Reassure', 'Make sense of it', 'Advice', 'Solve it', 'Ask me', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -288,7 +288,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Friendship Pillars</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['We tell each other everything', 'Inside jokes', 'Spontaneous plans', 'Comfortable silence', 'Show up in hard times'].map((opt) => (
+                    {['We tell each other everything', 'Inside jokes', 'Spontaneous plans', 'Comfortable silence', 'Show up in hard times', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -320,7 +320,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Ideal Free Saturday</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Slow coffee', 'Outdoors', 'Hobbies', 'Exploring', 'Social all day', 'Dinner-drinks', 'Home', 'Spontaneous'].map((opt) => (
+                    {['Slow coffee', 'Outdoors', 'Hobbies', 'Exploring', 'Social all day', 'Dinner-drinks', 'Home', 'Spontaneous', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -334,7 +334,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Spontaneous Weekend Trip?</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Already packing', 'Convince me', '24 hours notice needed', 'Not without itinerary'].map((opt) => (
+                    {['Already packing', 'Convince me', '24 hours notice needed', 'Not without itinerary', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -365,7 +365,7 @@ export default function DeeperTribalPassPage() {
               <div className="mt-5 flex flex-col gap-5">
                 <div>
                   <label className="text-[13.5px] font-bold text-white">MBTI Personality Type (Optional)</label>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {mbtiTypes.map((type) => (
                       <Chip
                         key={type}
@@ -442,7 +442,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Life Priorities</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Family', 'Freedom', 'Adventure', 'Community', 'Achievement', 'Creativity', 'Growth', 'Stability', 'Curiosity'].map((opt) => (
+                    {['Family', 'Freedom', 'Adventure', 'Community', 'Achievement', 'Creativity', 'Growth', 'Stability', 'Curiosity', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -501,7 +501,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Outing Budget Preference</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Free', '<$20', '$20–50', '$50–100', '$100+'].map((opt) => (
+                    {['Free', '<$20', '$20–50', '$50–100', '$100+', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -560,7 +560,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Punctuality Importance</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Low', 'Flexible', 'Important', 'Essential'].map((opt) => (
+                    {['Low', 'Flexible', 'Important', 'Essential', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
@@ -574,7 +574,7 @@ export default function DeeperTribalPassPage() {
                 <div>
                   <label className="text-[13.5px] font-bold text-white">Last-minute cancellation stance</label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {['Fine', 'Context matters', 'Dislike', 'Dealbreaker'].map((opt) => (
+                    {['Fine', 'Context matters', 'Dislike', 'Dealbreaker', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}

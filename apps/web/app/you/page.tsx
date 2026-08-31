@@ -162,7 +162,6 @@ export default function ProfilePage() {
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
               Friendship DNA Bloom
             </span>
-            <span className="text-[11px] text-white/70">7 Dimensions</span>
           </div>
 
           <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/90">
