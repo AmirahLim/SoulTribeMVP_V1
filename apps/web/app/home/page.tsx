@@ -30,16 +30,16 @@ export default function HomeDashboardPage() {
   const explanation = generateMatchExplanation(currentUser, marcus);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
-      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTSY GOLDEN-HOUR TRAMPOLINE PHOTO */}
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
+      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTSY GOLDEN-HOUR BUBBLES PHOTO */}
       <img
         src="/user-home-bg.jpg"
         alt="Home Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/95 z-0 pointer-events-none" />
 
       {/* PAGE CONTENT CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
@@ -140,7 +140,7 @@ export default function HomeDashboardPage() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl"
+              className="rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ export default function HomeDashboardPage() {
         {/* TAB CONTENT: YOUR TRIBE */}
         {activeTab === 'tribe' && (
           <section className="mt-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-4 shadow-2xl">
+            <div className="flex items-center justify-between rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-4 shadow-2xl">
               <div className="flex items-center gap-3">
                 <img
                   src={marcus.profile.avatar_url || ''}

@@ -27,16 +27,16 @@ export default function PeopleListPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
       {/* PAGE CANVAS BACKGROUND: YOUR EXACT USER-UPLOADED ARTSY GOLDEN-HOUR MOTION PHOTO */}
       <img
         src="/user-artsy-1.jpg"
         alt="Artsy Golden Hour Motion Canvas"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-55"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Crisp Legibility */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/75 via-black/50 to-black/95 z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/95 z-0 pointer-events-none" />
 
       {/* PAGE CONTENT CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
@@ -70,7 +70,7 @@ export default function PeopleListPage() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <Link href={`/people/${candidate.profile.id}`}>
-                  <div className="group overflow-hidden rounded-[28px] border border-white/20 bg-black/50 backdrop-blur-xl shadow-2xl transition-all hover:border-white/50">
+                  <div className="group overflow-hidden rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl shadow-2xl transition-all hover:border-white/50">
                     {/* Candidate's Individual Portrait Image */}
                     <div className="relative h-64 w-full overflow-hidden bg-black/40">
                       <img

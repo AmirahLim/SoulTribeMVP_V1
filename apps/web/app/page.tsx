@@ -14,16 +14,16 @@ export default function LandingPage() {
   const sampleExplanation = generateMatchExplanation(p1, p2);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-20">
+    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-20">
       {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED STYLISH MOTION-BLUR PORTRAIT PHOTO */}
       <img
         src="/user-intro-bg.jpg"
         alt="Intro Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
       />
 
       {/* Dark Ambient Vignette Overlay for Crisp Legibility */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/95 z-0 pointer-events-none" />
 
       {/* PAGE CONTENT CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
@@ -78,7 +78,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="mt-12 overflow-hidden rounded-[28px] border border-white/20 bg-black/50 backdrop-blur-xl p-6 shadow-2xl"
+          className="mt-12 overflow-hidden rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl"
         >
           <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
             Editorial Resonance Read Sample
@@ -112,7 +112,7 @@ export default function LandingPage() {
 
         {/* THREE CORE PRINCIPLES */}
         <section className="mt-12 flex flex-col gap-6">
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
               01 / Persistent Artifacts
             </span>
@@ -124,7 +124,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
               02 / Zero Swiping Or Scoring
             </span>
@@ -136,7 +136,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
               03 / 6-Person Cap Enforced
             </span>
