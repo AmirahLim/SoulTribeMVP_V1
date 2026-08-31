@@ -225,7 +225,7 @@ export default function OnboardingPage() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Amirah"
+                        placeholder="e.g. John"
                         value={userName}
                         onChange={(e) => setUserName(e.target.value)}
                         className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
