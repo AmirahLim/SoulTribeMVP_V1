@@ -54,7 +54,7 @@ export default function DeeperTribalPassPage() {
               Deeper Tribal Pass
             </h1>
           </div>
-          <span className="rounded-full bg-[#074710] px-3 py-1 text-[11px] font-bold text-[#F3F0E9]">
+          <span className="rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 px-3 py-1 text-[11px] font-bold text-[#F3F0E9]">
             User Editable
           </span>
         </div>
@@ -80,7 +80,7 @@ export default function DeeperTribalPassPage() {
 
       {/* Progressive Form Section */}
       <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
             Section {activeCategory}
           </span>
@@ -214,7 +214,7 @@ export default function DeeperTribalPassPage() {
 
         <div className="flex items-center justify-between">
           {savedMessage && (
-            <span className="flex items-center text-[13px] font-bold text-[#016401]">
+            <span className="flex items-center text-[13px] font-bold text-[#F3F0E9]">
               <Check className="mr-1 h-4 w-4" /> Section {activeCategory} Saved!
             </span>
           )}

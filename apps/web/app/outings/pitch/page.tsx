@@ -84,7 +84,7 @@ function PitchComposerContent() {
           </div>
 
           {/* STEP 1: TITLE & DETAILS */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <h3 className="text-[17px] font-bold text-[#F3F0E9]">
               1. Title & Details
             </h3>
@@ -137,7 +137,7 @@ function PitchComposerContent() {
           </div>
 
           {/* STEP 2: INVITE CANDIDATES */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <div className="flex items-center justify-between">
               <h3 className="text-[17px] font-bold text-[#F3F0E9]">
                 2. Invite Candidates
@@ -148,7 +148,7 @@ function PitchComposerContent() {
             </div>
 
             {/* LIVE GROUP ADVISORY COHESION STRIP */}
-            <div className="mt-3.5 rounded-[16px] border border-[#016401]/30 bg-[#074710]/40 p-3.5">
+            <div className="mt-3.5 rounded-[16px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3.5">
               <div className="flex items-center justify-between text-[12px] font-semibold">
                 <span className="text-[#F3F0E9]">Group Cohesion Indicator</span>
                 <span className="text-[#F3F0E9]">
@@ -173,8 +173,8 @@ function PitchComposerContent() {
                     onClick={() => toggleGuest(candidate)}
                     className={`flex cursor-pointer items-center justify-between rounded-[16px] p-3 transition-all ${
                       isSelected
-                        ? 'border-2 border-[#016401] bg-[#074710]/60'
-                        : 'border border-[#F3F0E9]/12 bg-[#0D1D15] hover:bg-[#15261C]'
+                        ? 'border-2 border-[#F3F0E9] bg-[#1C3325]'
+                        : 'border border-[#F3F0E9]/12 bg-[#0D1D15] hover:bg-[#1C3325]/40'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -196,7 +196,7 @@ function PitchComposerContent() {
                     <button
                       type="button"
                       className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-                        isSelected ? 'bg-[#016401] text-[#F3F0E9]' : 'bg-[#15261C] text-[#A6AAA4]'
+                        isSelected ? 'bg-[#F3F0E9] text-[#0D1D15]' : 'bg-[#15261C] text-[#A6AAA4]'
                       }`}
                     >
                       {isSelected ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
@@ -212,8 +212,8 @@ function PitchComposerContent() {
           </Button>
         </form>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-8 text-center shadow-lg">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#016401]/30 text-[#F3F0E9]">
+        <div className="flex flex-col items-center justify-center rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-8 text-center shadow-lg">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#1C3325] text-[#F3F0E9] border border-[#F3F0E9]/20">
             <Check className="h-7 w-7" />
           </div>
 

@@ -27,15 +27,15 @@ export default function MirrorProfilePage() {
 
       <div className="mt-6 flex flex-col gap-6">
         {/* REPUTATION & STANDING METRIC CARD */}
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#F3F0E9]">
-              <Award className="h-5 w-5 text-[#016401]" />
+              <Award className="h-5 w-5 text-[#F3F0E9]" />
               <span className="text-[12px] font-bold tracking-widest uppercase text-[#8F998D]">
                 Reputation & Standing
               </span>
             </div>
-            <span className="rounded-full bg-[#074710] px-3 py-0.5 text-[11px] font-bold text-[#F3F0E9]">
+            <span className="rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 px-3 py-0.5 text-[11px] font-bold text-[#F3F0E9]">
               High Standing
             </span>
           </div>
@@ -49,23 +49,23 @@ export default function MirrorProfilePage() {
           </p>
 
           <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[12px]">
-            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
+            <div className="rounded-[14px] bg-[#0D1D15] p-3 border border-[#F3F0E9]/10">
               <span className="font-bold text-[#F3F0E9] text-[16px]">6</span>
               <p className="text-[11px] text-[#A6AAA4]">Vouches / RSVPs</p>
             </div>
-            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
+            <div className="rounded-[14px] bg-[#0D1D15] p-3 border border-[#F3F0E9]/10">
               <span className="font-bold text-[#F3F0E9] text-[16px]">4</span>
               <p className="text-[11px] text-[#A6AAA4]">New Bonds</p>
             </div>
-            <div className="rounded-[14px] bg-[#15261C] p-3 border border-[#F3F0E9]/10">
-              <span className="font-bold text-[#016401] text-[16px]">0</span>
+            <div className="rounded-[14px] bg-[#0D1D15] p-3 border border-[#F3F0E9]/10">
+              <span className="font-bold text-[#F3F0E9] text-[16px]">0</span>
               <p className="text-[11px] text-[#A6AAA4]">Flakes</p>
             </div>
           </div>
         </div>
 
         {/* BEHAVIORAL PATTERNS */}
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
             Observed Friendship Rhythms
           </span>
@@ -77,7 +77,7 @@ export default function MirrorProfilePage() {
               'You check in every 2 weeks with established bonds',
             ].map((pattern) => (
               <div key={pattern} className="flex items-start gap-2.5 text-[13.5px] text-[#F3F0E9]">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#016401]" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#F3F0E9]" />
                 <span>{pattern}</span>
               </div>
             ))}

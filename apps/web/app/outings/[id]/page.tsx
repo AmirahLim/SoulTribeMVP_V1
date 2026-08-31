@@ -35,7 +35,7 @@ export default function OutingDetailPage() {
         </div>
 
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-          <span className="rounded-full bg-[#074710] px-3.5 py-1 text-[12px] font-bold text-[#F3F0E9]">
+          <span className="rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 px-3.5 py-1 text-[12px] font-bold text-[#F3F0E9]">
             Confirmed Outing
           </span>
           <img
@@ -56,7 +56,7 @@ export default function OutingDetailPage() {
           </h1>
         </div>
 
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg flex flex-col gap-3">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg flex flex-col gap-3">
           <div className="flex items-center text-[13.5px] text-[#F3F0E9]">
             <Calendar className="mr-2 h-4 w-4 text-[#8F998D]" /> Saturday, 14 Sep 2026
           </div>
@@ -68,7 +68,7 @@ export default function OutingDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
             Host Pitch
           </span>
@@ -77,7 +77,7 @@ export default function OutingDetailPage() {
           </p>
         </div>
 
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
               Seat Roster (Max 6)
@@ -92,7 +92,7 @@ export default function OutingDetailPage() {
             Reserve My Seat in this Outing
           </Button>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-[20px] bg-[#074710] p-4 text-center text-[#F3F0E9]">
+          <div className="flex flex-col items-center justify-center rounded-[20px] bg-[#15261C] border border-[#F3F0E9]/20 p-4 text-center text-[#F3F0E9]">
             <span className="flex items-center text-[15px] font-bold">
               <Check className="mr-1.5 h-5 w-5" /> Seat Reserved!
             </span>

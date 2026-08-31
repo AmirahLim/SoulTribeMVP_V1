@@ -14,7 +14,6 @@ export default function OutingRecordPage() {
   // Form State
   const [wouldMeetAgain, setWouldMeetAgain] = useState(5);
   const [energyRead, setEnergyRead] = useState<'quieter' | 'as_expected' | 'livelier'>('as_expected');
-  const [paceRead, setPaceRead] = useState<'slower' | 'as_expected' | 'faster'>('as_expected');
   const [headline, setHeadline] = useState('Discovered the quiet courtyard behind the vintage shop and agreed 4 people is the ideal group size.');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,7 +46,7 @@ export default function OutingRecordPage() {
           </div>
 
           {/* 1. RHYTHM CHECK */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <h3 className="text-[18px] font-bold text-[#F3F0E9]">
               1. Rhythm Check — How did that land?
             </h3>
@@ -65,7 +64,7 @@ export default function OutingRecordPage() {
                       onClick={() => setWouldMeetAgain(val)}
                       className={`flex h-10 w-10 items-center justify-center rounded-[12px] text-[14px] font-bold transition-all ${
                         wouldMeetAgain === val
-                          ? 'bg-[#016401] text-[#F3F0E9]'
+                          ? 'bg-[#F3F0E9] text-[#0D1D15]'
                           : 'border border-[#F3F0E9]/15 bg-[#0D1D15] text-[#F3F0E9]'
                       }`}
                     >
@@ -92,7 +91,7 @@ export default function OutingRecordPage() {
           </div>
 
           {/* 2. OUTING RECORD */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <h3 className="text-[18px] font-bold text-[#F3F0E9]">
               2. Outing Record (Timeline Artifact)
             </h3>
@@ -115,8 +114,8 @@ export default function OutingRecordPage() {
           </Button>
         </form>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-8 text-center shadow-lg">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#016401]/30 text-[#F3F0E9]">
+        <div className="flex flex-col items-center justify-center rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-8 text-center shadow-lg">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 text-[#F3F0E9]">
             <Check className="h-7 w-7" />
           </div>
 

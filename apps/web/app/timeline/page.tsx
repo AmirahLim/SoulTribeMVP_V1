@@ -58,7 +58,7 @@ export default function TimelinePage() {
       {/* Timeline Events */}
       <div className="mt-6 flex flex-col gap-6">
         {events.map((evt) => (
-          <div key={evt.id} className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-5 shadow-lg">
+          <div key={evt.id} className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
             <div className="flex items-center justify-between text-[12px]">
               <span className="font-bold text-[#F3F0E9]">{evt.date}</span>
               <span className="flex items-center text-[#A6AAA4]">

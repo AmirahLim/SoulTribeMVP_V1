@@ -111,7 +111,7 @@ export default function ProfilePage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[13.5px] font-bold text-[#F3F0E9]">Standing & Vouches</span>
-              <span className="text-[11px] font-bold text-[#016401]">High Standing</span>
+              <span className="text-[11px] font-bold text-[#F3F0E9]">High Standing</span>
             </div>
             <p className="mt-0.5 text-[12.5px] text-[#A6AAA4]">6 Vouches & Kept RSVPs · 4 Bonds</p>
           </div>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
 
       {/* LAYER 2 PROFILE ARTIFACT NAVIGATION */}
       <section className="py-6 border-b border-[#F3F0E9]/12 grid grid-cols-2 gap-4">
-        <Link href="/timeline" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-4">
+        <Link href="/timeline" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
           <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">Timeline</span>
           <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
             Tribe's Timeline
@@ -160,8 +160,8 @@ export default function ProfilePage() {
           <p className="mt-0.5 text-[12px] text-[#A6AAA4]">Holds your history</p>
         </Link>
 
-        <Link href="/mirror" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#2B1A17] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#016401] uppercase">Mirror</span>
+        <Link href="/mirror" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
+          <span className="text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase">Mirror</span>
           <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
             Mirror-Profile
           </h3>
@@ -177,7 +177,7 @@ export default function ProfilePage() {
       {/* EDIT PROFILE / SETTINGS MODAL */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-[380px] border border-[#F3F0E9]/15 bg-[#2B1A17] p-6 rounded-[24px] shadow-2xl">
+          <div className="relative w-full max-w-[380px] border border-[#F3F0E9]/15 bg-[#15261C] p-6 rounded-[24px] shadow-2xl">
             <button
               type="button"
               onClick={() => setIsSettingsOpen(false)}

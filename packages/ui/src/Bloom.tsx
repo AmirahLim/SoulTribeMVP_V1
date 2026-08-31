@@ -41,9 +41,9 @@ export function Bloom({
       >
         <defs>
           <radialGradient id="bloom-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#016401" stopOpacity="0.9" />
-            <stop offset="65%" stopColor="#074710" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#654422" stopOpacity="0.85" />
+            <stop offset="0%" stopColor="#2D523E" stopOpacity="0.9" />
+            <stop offset="65%" stopColor="#15261C" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#0D1D15" stopOpacity="0.95" />
           </radialGradient>
         </defs>
 
@@ -80,7 +80,7 @@ export function Bloom({
               d={pathData}
               fill="url(#bloom-gradient)"
               opacity={isSelected ? 1 : 0.85}
-              stroke={isSelected ? '#F3F0E9' : '#016401'}
+              stroke={isSelected ? '#F3F0E9' : '#2D523E'}
               strokeWidth={isSelected ? 2 : 1}
               className={`transition-all duration-300 ${interactive ? 'cursor-pointer hover:opacity-100 hover:scale-105' : ''}`}
               onClick={() => interactive && setSelectedKey(isSelected ? null : dim.key)}
@@ -94,7 +94,7 @@ export function Bloom({
 
       {/* Trait Sentence Tooltip */}
       {selectedDim && (
-        <div className="mt-3 max-w-[260px] rounded-[14px] border border-[#F3F0E9]/15 bg-[#2B1A17] p-3 text-center shadow-lg">
+        <div className="mt-3 max-w-[260px] rounded-[14px] border border-[#F3F0E9]/15 bg-[#15261C] p-3 text-center shadow-lg">
           <p className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
             {selectedDim.label}
           </p>
