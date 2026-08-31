@@ -234,31 +234,6 @@ export default function OnboardingPage() {
                       />
                     </div>
 
-                    {/* Your City Dropdown */}
-                    <div>
-                      <label className="text-[13px] font-semibold text-white">Your City *</label>
-                      <div className="relative mt-1">
-                        <select
-                          value={userCity}
-                          onChange={(e) => setUserCity(e.target.value)}
-                          className="h-11 w-full appearance-none rounded-[12px] border border-white/20 bg-black/80 px-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white cursor-pointer"
-                        >
-                          <option value="Singapore">Singapore</option>
-                          <option value="Tokyo">Tokyo</option>
-                          <option value="London">London</option>
-                          <option value="New York">New York</option>
-                          <option value="Sydney">Sydney</option>
-                          <option value="Melbourne">Melbourne</option>
-                          <option value="Hong Kong">Hong Kong</option>
-                          <option value="Kuala Lumpur">Kuala Lumpur</option>
-                          <option value="Jakarta">Jakarta</option>
-                        </select>
-                        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/60 text-[11px]">
-                          ▼
-                        </div>
-                      </div>
-                    </div>
-
                     {/* Optional Photo Upload */}
                     <div>
                       <label className="text-[13px] font-semibold text-white">Profile Photo (Optional)</label>
