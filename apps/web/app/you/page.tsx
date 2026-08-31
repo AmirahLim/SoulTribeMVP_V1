@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { IllustratedGround, Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
+import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData } from '../../lib/userStore';
 
@@ -78,270 +78,321 @@ export default function ProfilePage() {
   ];
 
   return (
-    <IllustratedGround variant="paper" className="min-h-screen pb-24">
-      {/* Top Bar Header */}
-      <header className="flex items-center justify-between pb-6 border-b border-[#F3F0E9]/12">
-        <div className="flex items-center gap-3">
-          <img
-            src={profile.avatarUrl}
-            alt={profile.displayName}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-[#F3F0E9]/30"
-          />
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-              Tribal Pass · {profile.passCompletionPct}% Complete
-            </span>
-            <h1 className="text-[22px] font-bold text-[#F3F0E9] tracking-tight">
-              {profile.displayName}
-            </h1>
-          </div>
-        </div>
+    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTISTIC PAINTER EASEL PHOTO */}
+      <img
+        src="/user-you-bg.jpg"
+        alt="You Canvas Background"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-45"
+      />
 
-        <button
-          type="button"
-          onClick={() => setIsSettingsOpen(true)}
-          className="rounded-full border border-[#F3F0E9]/15 bg-[#15261C] p-2.5 text-[#F3F0E9] hover:bg-[#1C3325]"
-          title="Edit Profile & Settings"
-        >
-          <Settings className="h-5 w-5" />
-        </button>
-      </header>
+      {/* Dark Ambient Vignette Overlay for Readability */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
 
-      {/* REPUTATION & STANDING METRIC */}
-      <section className="py-5 border-b border-[#F3F0E9]/12">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[13.5px] font-bold text-[#F3F0E9]">Standing & Vouches</span>
-              <span className="text-[11px] font-bold text-[#F3F0E9]">High Standing</span>
+      {/* PAGE CONTENT CONTAINER */}
+      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
+        {/* Top Bar Header */}
+        <header className="flex items-center justify-between pb-6 border-b border-white/15">
+          <div className="flex items-center gap-3">
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName}
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30"
+            />
+            <div>
+              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+                Tribal Pass · {profile.passCompletionPct}% Complete
+              </span>
+              <h1 className="text-[22px] font-extrabold text-white tracking-tight drop-shadow-md">
+                {profile.displayName}
+              </h1>
             </div>
-            <p className="mt-0.5 text-[12.5px] text-[#A6AAA4]">6 Vouches & Kept RSVPs · 4 Bonds</p>
           </div>
 
-          <Link href="/mirror" className="text-[12.5px] font-semibold text-[#F3F0E9] hover:underline">
-            View Standing →
-          </Link>
-        </div>
-      </section>
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="rounded-full border border-white/20 bg-black/50 p-2.5 text-white hover:bg-black/70 backdrop-blur-md"
+            title="Edit Profile & Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+        </header>
 
-      {/* PART II — DEEPER TRIBAL PASS NAVIGATION */}
-      <section className="py-5 border-b border-[#F3F0E9]/12">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Part II — Deeper Profile & Matching
-          </span>
-          <Link href="/you/deeper">
-            <Button variant="secondary" size="sm">
-              Deepen Pass →
-            </Button>
-          </Link>
-        </div>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-[#A6AAA4]">
-          10-Category Deep Profile active. Open-ended answers feed your public voice & private matching weights.
-        </p>
-      </section>
-
-      {/* PUBLIC DEEP PROFILE SECTIONS (PDF SPECIFICATION: HOW ANSWERS APPEAR ON THE PROFILE) */}
-      <section className="py-6 border-b border-[#F3F0E9]/12 flex flex-col gap-5">
-        <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-          Public Deep Profile Sections
-        </span>
-
-        {/* 1. SOCIAL ENERGY */}
-        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Social Energy
-          </span>
-          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
-            {deep.socialSetting || '3–4 people'} · {deep.groupEnergy || 'Listener · Connector'}
-          </p>
-          {deep.socialEnergyOpen && (
-            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
-              "{deep.socialEnergyOpen}"
-            </p>
-          )}
-        </div>
-
-        {/* 2. HOW I CONNECT */}
-        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-            How I Connect
-          </span>
-          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
-            {deep.connectionMode || 'Voice notes · Memes · Mostly IRL'} · {deep.replyRhythm || 'Same day'}
-          </p>
-          {deep.messagingStyleOpen && (
-            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
-              "{deep.messagingStyleOpen}"
-            </p>
-          )}
-        </div>
-
-        {/* 3. FRIENDSHIP STYLE */}
-        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Friendship Style
-          </span>
-          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
-            {deep.bringsToFriendship || 'Reliability · Adventures · Emotional support'}
-          </p>
-          {deep.realFriendOpen && (
-            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
-              "{deep.realFriendOpen}"
-            </p>
-          )}
-        </div>
-
-        {/* 4. MY RHYTHM */}
-        <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-            My Rhythm
-          </span>
-          <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
-            {deep.timeAlive || 'Weekend afternoons'} · {deep.plansAheadHorizon || '2–3 days ahead'}
-          </p>
-          {deep.idealSaturdayOpen && (
-            <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
-              "{deep.idealSaturdayOpen}"
-            </p>
-          )}
-        </div>
-
-        {/* 5. WHAT MATTERS */}
-        {deep.mattersMost && (
-          <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-            <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-              What Matters
+        {/* REPUTATION & STANDING METRIC */}
+        <section className="py-6 border-b border-white/15">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+              Tribe Standing
             </span>
-            <p className="mt-1 text-[13.5px] font-semibold text-[#F3F0E9]">
-              {deep.mattersMost}
+            <span className="text-[12px] font-semibold text-white">
+              Good Citizen
+            </span>
+          </div>
+
+          <p className="mt-2 text-[14px] leading-relaxed text-white/90">
+            {profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
+          </p>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-[12.5px] text-white/80">
+              <strong className="text-white font-semibold">{profile.homeArea}</strong> · Singapore
+            </div>
+
+            <Link href="/you/deeper">
+              <Button variant="secondary" size="sm">
+                Deepen Tribal Pass →
+              </Button>
+            </Link>
+          </div>
+        </section>
+
+        {/* SECTION A: FRIENDSHIP DNA BLOOM */}
+        <section className="py-6 border-b border-white/15">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+              Friendship DNA Bloom
+            </span>
+            <span className="text-[11px] text-white/70">7 Dimensions</span>
+          </div>
+
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/90">
+            A dynamic visual representation of your social energy, rhythm, and values.
+          </p>
+
+          <div className="mt-6 flex justify-center rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <Bloom dimensions={bloomDimensions} size={280} interactive />
+          </div>
+        </section>
+
+        {/* SECTION B: SOCIAL DNA METRIC BARS */}
+        <section className="py-6 border-b border-white/15">
+          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+            Social DNA Breakdown
+          </span>
+          <p className="mt-1 text-[13.5px] text-white/90">
+            Trait vectors calculated from your questionnaire responses.
+          </p>
+
+          <div className="mt-4 rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <SocialDnaBars categories={socialDnaCategories} />
+          </div>
+        </section>
+
+        {/* SECTION C: PUBLIC PROFILE ANSWERS & VERBATIM QUOTES */}
+        <section className="py-6 flex flex-col gap-6">
+          <div>
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+              Public Profile Voice
+            </span>
+            <h2 className="mt-1 text-[20px] font-bold text-white">
+              What People See About You
+            </h2>
+            <p className="mt-1 text-[13.5px] text-white/80">
+              Structured descriptors and your verbatim words rendered for matches.
             </p>
-            {deep.respectPeopleOpen && (
-              <p className="mt-2 text-[13px] italic text-[#A6AAA4] border-t border-[#F3F0E9]/10 pt-2">
-                "{deep.respectPeopleOpen}"
+          </div>
+
+          {/* 1. SOCIAL ENERGY */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <Smile className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">Social Energy</h3>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.groupSize || 'Small groups (3–4)'}
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.socialVibe || 'Playful-chaotic & Calm'}
+              </span>
+            </div>
+            {deep.socialAtmosphereOpen && (
+              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “{deep.socialAtmosphereOpen}”
               </p>
             )}
           </div>
-        )}
 
-        {/* 6. YOU SHOULD KNOW */}
-        {deep.likeYouIfOpen && (
-          <div className="rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-            <span className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
-              You Should Know
-            </span>
-            <p className="mt-1.5 text-[13.5px] italic text-[#F3F0E9]">
-              "{deep.likeYouIfOpen}"
-            </p>
+          {/* 2. HOW I CONNECT */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <MessageSquare className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">How I Connect</h3>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.messagingStyle || 'Voice notes & Memes'}
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.supportStyle || 'Listen first'}
+              </span>
+            </div>
+            {deep.messagingStyleOpen && (
+              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “{deep.messagingStyleOpen}”
+              </p>
+            )}
           </div>
-        )}
-      </section>
 
-      {/* FRIENDSHIP DNA BLOOM */}
-      <section className="py-6 border-b border-[#F3F0E9]/12 flex flex-col items-center">
-        <span className="text-[11px] font-bold tracking-widest text-[#A6AAA4] uppercase">
-          Interactive Friendship DNA
-        </span>
-        <p className="mt-1 text-[12px] text-[#A6AAA4]">Tap any petal to reveal your trait sentence</p>
-        <div className="my-4">
-          <Bloom dimensions={bloomDimensions} size={210} interactive={true} />
-        </div>
-      </section>
+          {/* 3. FRIENDSHIP STYLE */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <Heart className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">Friendship Style</h3>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.friendshipPillars || 'Comfortable silence & Reliability'}
+              </span>
+            </div>
+            {deep.realFriendOpen && (
+              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “{deep.realFriendOpen}”
+              </p>
+            )}
+          </div>
 
-      {/* LAYER 2 PROFILE ARTIFACT NAVIGATION */}
-      <section className="py-6 border-b border-[#F3F0E9]/12 grid grid-cols-2 gap-4">
-        <Link href="/timeline" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">Timeline</span>
-          <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
-            Tribe's Timeline
-          </h3>
-          <p className="mt-0.5 text-[12px] text-[#A6AAA4]">Holds your history</p>
-        </Link>
+          {/* 4. MY RHYTHM */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <Compass className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">My Rhythm</h3>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.idealSaturday || 'Slow coffee & Hobbies'}
+              </span>
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.spontaneousTrip || 'Convince me'}
+              </span>
+            </div>
+            {deep.idealSaturdayOpen && (
+              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “{deep.idealSaturdayOpen}”
+              </p>
+            )}
+          </div>
 
-        <Link href="/mirror" className="group rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4">
-          <span className="text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase">Mirror</span>
-          <h3 className="mt-1 text-[16px] font-bold text-[#F3F0E9] group-hover:underline">
-            Mirror-Profile
-          </h3>
-          <p className="mt-0.5 text-[12px] text-[#A6AAA4]">Behavioral patterns</p>
-        </Link>
-      </section>
+          {/* 5. WHAT MATTERS */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <Sparkles className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">What Matters</h3>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-medium text-white">
+                {deep.coreValues || 'Curiosity · Growth · Freedom'}
+              </span>
+            </div>
+            {deep.respectPeopleOpen && (
+              <p className="mt-3 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
+                “I really respect people who {deep.respectPeopleOpen}”
+              </p>
+            )}
+          </div>
 
-      {/* SOCIAL DNA INDEX BARS */}
-      <section className="py-6">
-        <SocialDnaBars categories={socialDnaCategories} />
-      </section>
+          {/* 6. YOU SHOULD KNOW */}
+          <div className="rounded-[20px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
+            <div className="flex items-center gap-2 text-white">
+              <User className="h-4 w-4" />
+              <h3 className="text-[15px] font-bold">You Should Know</h3>
+            </div>
+            {deep.likeMeIfPrompt && (
+              <p className="mt-2.5 text-[13.5px] text-white">
+                <span className="font-semibold text-white/80">I'll probably like you if:</span> “{deep.likeMeIfPrompt}”
+              </p>
+            )}
+            {deep.quickestWayPrompt && (
+              <p className="mt-2 text-[13.5px] text-white">
+                <span className="font-semibold text-white/80">Quickest way to get me out:</span> “{deep.quickestWayPrompt}”
+              </p>
+            )}
+          </div>
+        </section>
 
-      {/* EDIT PROFILE / SETTINGS MODAL */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-[380px] border border-[#F3F0E9]/15 bg-[#15261C] p-6 rounded-[24px] shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setIsSettingsOpen(false)}
-              className="absolute top-5 right-5 text-[#A6AAA4] hover:text-[#F3F0E9]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <h3 className="text-[20px] font-bold text-[#F3F0E9]">Edit Profile</h3>
-            <p className="text-[12px] text-[#A6AAA4]">Update your display name & profile photo</p>
-
-            <form onSubmit={handleSaveSettings} className="mt-5 flex flex-col gap-4">
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Display Name</label>
-                <input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
-                />
+        {/* EDIT PROFILE SETTINGS MODAL */}
+        {isSettingsOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+            <div className="relative w-full max-w-[400px] rounded-[28px] border border-white/20 bg-black/80 p-6 text-white shadow-2xl backdrop-blur-xl">
+              <div className="flex items-center justify-between pb-4 border-b border-white/15">
+                <h2 className="text-[18px] font-bold">Edit Profile Settings</h2>
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Profile Photo</label>
-                <div className="mt-2 flex items-center gap-3">
-                  <img src={editPhoto} alt="Preview" className="h-12 w-12 rounded-full object-cover ring-1 ring-[#F3F0E9]" />
-                  <label className="cursor-pointer rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-3.5 py-1.5 text-[12px] font-semibold text-[#F3F0E9]">
-                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                    Change Image
-                  </label>
+              <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4">
+                {/* Photo Preview & Custom Upload */}
+                <div className="flex items-center gap-4">
+                  <img
+                    src={editPhoto}
+                    alt="Preview"
+                    className="h-16 w-16 rounded-full object-cover ring-2 ring-white/30"
+                  />
+                  <div className="flex flex-col gap-1">
+                    <label className="cursor-pointer text-[12.5px] font-bold text-white underline">
+                      Upload Custom Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[11px] text-white/60">
+                      Upload any photo from your device
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Singapore Area</label>
-                <input
-                  type="text"
-                  value={editArea}
-                  onChange={(e) => setEditArea(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] px-4 text-[14px] text-[#F3F0E9] outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-[12.5px] font-semibold text-white/80">Display Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="mt-1 h-10 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[14px] text-white outline-none"
+                  />
+                </div>
 
-              <div>
-                <label className="text-[13px] font-semibold text-[#F3F0E9]">Bio</label>
-                <textarea
-                  rows={2}
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value)}
-                  className="mt-1 w-full rounded-[12px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3 text-[13.5px] text-[#F3F0E9] outline-none"
-                />
-              </div>
+                <div>
+                  <label className="text-[12.5px] font-semibold text-white/80">Home Area</label>
+                  <input
+                    type="text"
+                    value={editArea}
+                    onChange={(e) => setEditArea(e.target.value)}
+                    className="mt-1 h-10 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[14px] text-white outline-none"
+                  />
+                </div>
 
-              <div className="mt-3 flex gap-3">
-                <Button type="button" variant="secondary" size="md" className="flex-1" onClick={() => setIsSettingsOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" size="md" className="flex-1">
-                  Save Changes
-                </Button>
-              </div>
-            </form>
+                <div>
+                  <label className="text-[12.5px] font-semibold text-white/80">Bio</label>
+                  <textarea
+                    rows={2}
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    className="mt-1 w-full rounded-[12px] border border-white/20 bg-black/60 p-2.5 text-[13.5px] text-white outline-none"
+                  />
+                </div>
+
+                <div className="mt-2 flex gap-3 pt-2 border-t border-white/15">
+                  <Button variant="secondary" size="sm" type="button" onClick={() => setIsSettingsOpen(false)} className="w-1/2">
+                    Cancel
+                  </Button>
+                  <Button variant="primary" size="sm" type="submit" className="w-1/2">
+                    Save Changes
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </IllustratedGround>
+        )}
+      </div>
+    </div>
   );
 }
