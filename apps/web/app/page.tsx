@@ -102,7 +102,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <span className="text-[11px] font-bold text-white/70 uppercase">Where You Might Rub</span>
+              <span className="text-[11px] font-bold text-white/70 uppercase">Potential Friction</span>
               <p className="mt-1 text-[13.5px] leading-relaxed text-white/90">
                 “{sampleExplanation.rub_text}”
               </p>
@@ -132,7 +132,7 @@ export default function LandingPage() {
               Human language and shape, never numbers or hot-or-not
             </h3>
             <p className="mt-1 text-[13px] leading-relaxed text-white/80">
-              We never expose compatibility percentages or red/green human ratings. Every match includes honest click and rub explanations.
+              We never expose compatibility percentages or red/green human ratings. Every match includes honest click and friction explanations.
             </p>
           </div>
 
