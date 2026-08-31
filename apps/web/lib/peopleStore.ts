@@ -17,7 +17,7 @@ export const CANDIDATE_PEOPLE: CandidatePerson[] = [
     name: 'Marcus Tan',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
     homeArea: 'Singapore',
-    bio: "Based here. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!",
+    bio: "Singapore-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!",
     interests: ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
     clickText: 'Both value quiet craft, intentional catch-ups, and slow coffee walks in the city.',
     rubText: 'Marcus prefers 3-4 days advance notice for weekend plans, while you enjoy occasional spontaneous outings.',
@@ -50,13 +50,9 @@ export const CANDIDATE_PEOPLE: CandidatePerson[] = [
   },
 ];
 
-export function getCandidatePeopleForCity(city: string = 'Singapore'): CandidatePerson[] {
-  const currentCity = city || 'Singapore';
+export function getCandidatePeopleForCity(_city?: string): CandidatePerson[] {
   return CANDIDATE_PEOPLE.map((person) => ({
     ...person,
-    homeArea: currentCity,
-    bio: person.bio.includes('Based here')
-      ? `${currentCity}-based. Looking for genuine, intentional friendships. I love quiet weekend wandering, pottery throwing, and deep conversations over filter coffee. Let's connect!`
-      : person.bio,
+    homeArea: 'Singapore',
   }));
 }

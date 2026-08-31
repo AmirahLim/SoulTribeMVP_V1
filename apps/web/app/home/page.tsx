@@ -54,7 +54,7 @@ export default function HomeDashboardPage() {
             </Link>
             <div>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                {profile.homeArea || 'Singapore'} Cohort
+                Singapore Cohort
               </span>
               <h1 className="text-[22px] font-extrabold text-white tracking-tight drop-shadow-md">
                 Hey, {profile.displayName}

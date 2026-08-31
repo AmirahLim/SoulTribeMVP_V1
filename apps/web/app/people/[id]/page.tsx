@@ -44,7 +44,7 @@ export default function PersonDetailPage() {
     { key: 'p', label: 'Personality', strength: 0.85, confidence: 0.9, sentence: `${foundPerson.name} is thoughtful, analytical, and loves quiet craft.` },
     { key: 'c', label: 'Communication', strength: 0.9, confidence: 0.95, sentence: 'Prefers deep one-on-one talks and voice notes.' },
     { key: 'r', label: 'Rhythm', strength: 0.75, confidence: 0.85, sentence: 'Active Saturday afternoons and quiet Sunday coffee mornings.' },
-    { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: `Seeking 3–4 long-term intentional friends in ${activeCity}.` },
+    { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: 'Seeking 3–4 long-term intentional friends in Singapore.' },
     { key: 'e', label: 'Emotional', strength: 0.8, confidence: 0.9, sentence: 'Listens first, offers grounded perspective.' },
     { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: 'Pottery throwing, specialty filter coffee, woodworking.' },
     { key: 'v', label: 'Values', strength: 0.9, confidence: 0.9, sentence: 'Values honesty, quiet reliability, and continuous learning.' },
@@ -205,7 +205,7 @@ export default function PersonDetailPage() {
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
               <div>
                 <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  {foundPerson.homeArea || 'Singapore'} Member Profile
+                  Singapore Member Profile
                 </span>
                 <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
                   {foundPerson.name}
