@@ -19,7 +19,7 @@ export default function PersonDetailPage() {
 
   const foundPerson = CANDIDATE_PEOPLE.find((p) => p.id === personId || p.id.includes(personId)) || CANDIDATE_PEOPLE[0];
   const firstName = foundPerson.name.split(' ')[0];
-  const possessiveFirstName = firstName.endsWith('s') ? `${firstName}'` : `${firstName}'s`;
+  const possessiveFirstName = `${firstName}'s`;
 
   const [connected, setConnected] = useState(false);
   const [starred, setStarred] = useState(false);
