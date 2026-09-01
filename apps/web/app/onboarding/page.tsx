@@ -119,6 +119,11 @@ function OnboardingContent() {
     const res = await uploadAvatar(user?.id || 'onboarding_user', file);
     if (res.success && res.avatarUrl) {
       setUserPhoto(res.avatarUrl);
+      const current = getUserProfile();
+      setUserProfile({
+        ...current,
+        avatarUrl: res.avatarUrl,
+      });
     } else if (res.error) {
       alert(res.error);
     }
