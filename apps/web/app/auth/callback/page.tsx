@@ -30,17 +30,31 @@ function AuthCallbackContent() {
 
         if (session) {
           if (isMounted) {
-            router.push(next);
+            const { data: profile } = await client
+              .from('profiles')
+              .select('id')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            const targetPath = profile ? next : '/onboarding';
+            router.push(targetPath);
           }
           return;
         }
 
         // Listen for auth state change after hash/token processing
-        const { data: { subscription } } = client.auth.onAuthStateChange((event, newSession) => {
+        const { data: { subscription } } = client.auth.onAuthStateChange(async (event, newSession) => {
           if (!isMounted) return;
           if (newSession) {
             subscription.unsubscribe();
-            router.push(next);
+            const { data: profile } = await client
+              .from('profiles')
+              .select('id')
+              .eq('id', newSession.user.id)
+              .maybeSingle();
+
+            const targetPath = profile ? next : '/onboarding';
+            router.push(targetPath);
           }
         });
 

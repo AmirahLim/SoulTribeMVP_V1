@@ -2,14 +2,16 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { getSupabaseBrowserClient } from './supabase';
+import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from './supabase';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   error: string | null;
-  signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  signInWithOtp: (email: string, redirectToPath?: string) => Promise<{ error: Error | null }>;
+  signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   signOut: () => Promise<void>;
   isSupabaseConfigured: boolean;
 }
@@ -20,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   error: null,
   signInWithOtp: async () => ({ error: new Error('Auth not initialized') }),
+  signUpWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
+  signInWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signOut: async () => {},
   isSupabaseConfigured: false,
 });
@@ -29,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [isConfigured, setIsConfigured] = useState<boolean>(() => checkIsSupabaseConfigured());
 
   useEffect(() => {
     let mounted = true;
@@ -67,11 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signInWithOtp = async (email: string): Promise<{ error: Error | null }> => {
+  const signInWithOtp = async (
+    email: string,
+    redirectToPath?: string
+  ): Promise<{ error: Error | null }> => {
     try {
       const client = getSupabaseBrowserClient();
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const redirectTo = `${origin}/auth/callback`;
+      const nextParam = redirectToPath ? encodeURIComponent(redirectToPath) : '%2Fhome';
+      const redirectTo = `${origin}/auth/callback?next=${nextParam}`;
 
       const { error: sendErr } = await client.auth.signInWithOtp({
         email: email.trim(),
@@ -86,6 +94,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null };
     } catch (err: any) {
       return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  };
+
+  const signUpWithPassword = async (
+    email: string,
+    password: string
+  ): Promise<{ error: Error | null; user: User | null }> => {
+    if (password.length < 8) {
+      return { error: new Error('Password must be at least 8 characters long.'), user: null };
+    }
+
+    try {
+      const client = getSupabaseBrowserClient();
+      const { data, error: signUpErr } = await client.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+
+      if (signUpErr) {
+        return { error: new Error(signUpErr.message), user: null };
+      }
+
+      return { error: null, user: data.user };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)), user: null };
+    }
+  };
+
+  const signInWithPassword = async (
+    email: string,
+    password: string
+  ): Promise<{ error: Error | null; user: User | null }> => {
+    if (password.length < 8) {
+      return { error: new Error('Password must be at least 8 characters long.'), user: null };
+    }
+
+    try {
+      const client = getSupabaseBrowserClient();
+      const { data, error: signInErr } = await client.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (signInErr) {
+        return { error: new Error(signInErr.message), user: null };
+      }
+
+      return { error: null, user: data.user };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)), user: null };
     }
   };
 
@@ -112,6 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         error,
         signInWithOtp,
+        signUpWithPassword,
+        signInWithPassword,
         signOut,
         isSupabaseConfigured: isConfigured,
       }}
