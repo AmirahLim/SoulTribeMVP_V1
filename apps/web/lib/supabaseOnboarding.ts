@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from './supabase';
 import type { DeepProfileAnswers } from './userStore';
+import { ONBOARDING_INTEREST_NODES } from '@soul-tribe/core';
 
 export interface OnboardingDataToSave {
   displayName: string;
@@ -272,49 +273,17 @@ export async function saveUserInterestsAndValues(
         // Unit test mock client fallback
       }
 
-      // Static lookup map matching onboarding Q6 options & seed nodes
-      const staticNodeMap: Record<string, number> = {
-        'Coffee & Cafes': 7,
-        'Coffee & wandering': 7,
-        'Dining & Food': 8,
-        'Brunch': 8,
-        'Specialty Coffee': 9,
-        'Hawker Exploration': 10,
-        'Natural Wine': 11,
-        'Baking & Pastry': 12,
-        'Fitness & Movement': 13,
-        'Bouldering & Climbing': 14,
-        'Bouldering': 14,
-        'Trail Running': 15,
-        'Yoga & Pilates': 16,
-        'Arts & Museums': 17,
-        'Art & Design': 1,
-        'Contemporary Art': 2,
-        'Books & Literature': 18,
-        'Books & Ideas': 14,
-        'Music & Gigs': 19,
-        'Photography & Film': 20,
-        'Analog Photography': 24,
-        'Philosophy & Ideas': 21,
-        'Philosophy': 21,
-        'Pottery & Craft': 22,
-        'Pottery & Ceramics': 5,
-        'Woodworking': 23,
-        'Hiking & Outdoors': 25,
-        'Outdoors & Movement': 10,
-        'Cycling (East Coast)': 26,
-        'Boardgames & Gaming': 27,
-      };
-
+      // Single source of truth lookup map initialized from @soul-tribe/core
       const nameToIdMap = new Map<string, number>();
+
+      for (const node of ONBOARDING_INTEREST_NODES) {
+        nameToIdMap.set(node.name.trim().toLowerCase(), node.id);
+      }
+
+      // Override with DB nodes if present
       if (dbNodes) {
         for (const n of dbNodes) {
           nameToIdMap.set(n.name.trim().toLowerCase(), n.id);
-        }
-      }
-      for (const [k, v] of Object.entries(staticNodeMap)) {
-        if (!nameToIdMap.has(k.trim().toLowerCase())) {
-          nameToIdMap.set(k.trim().toLowerCase(), v);
         }
       }
 

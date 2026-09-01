@@ -1,4 +1,5 @@
 export * from './domain/types.ts';
+export * from './domain/interests.ts';
 export * from './matching/functions.ts';
 export * from './matching/dimensions.ts';
 export * from './matching/gates.ts';

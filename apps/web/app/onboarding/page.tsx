@@ -18,6 +18,7 @@ import {
 
 import { AuthGuard } from '../../components/AuthGuard';
 import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
+import { ONBOARDING_INTEREST_OPTIONS } from '@soul-tribe/core';
 
 export default function OnboardingPage() {
   return (
@@ -602,23 +603,7 @@ function OnboardingContent() {
                   <p className="mt-1 text-[13px] text-white/80">Select at least 5.</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {[
-                      'Coffee & wandering',
-                      'Brunch',
-                      'Workshops',
-                      'Food hunting',
-                      'Bookshops',
-                      'Museums & galleries',
-                      'Live music',
-                      'Quiet drinks',
-                      'Outdoor walks & nature',
-                      'Bouldering / movement',
-                      'Board games',
-                      'Cooking / dining at home',
-                      'Pottery / ceramics',
-                      'Natural wine',
-                      'Film & cinema',
-                    ].map((outing) => (
+                    {ONBOARDING_INTEREST_OPTIONS.map((outing) => (
                       <Chip
                         key={outing}
                         label={outing}
