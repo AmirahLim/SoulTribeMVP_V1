@@ -415,32 +415,40 @@ function HomeContent() {
                       </div>
 
                       {/* Guest Items */}
-                      {(item.joinedGuests || []).map((guest) => (
-                        <div
-                          key={guest.id}
-                          className="flex items-center justify-between rounded-[16px] border border-white/15 bg-black/40 p-2.5"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={guest.avatarUrl}
-                              alt={guest.name}
-                              className="h-9 w-9 rounded-full object-cover"
-                            />
-                            <div>
-                              <h4 className="text-[13.5px] font-bold text-white">
-                                {guest.name}
-                              </h4>
-                              <span className="text-[11px] text-white/70">
-                                {guest.homeArea} · Joined
-                              </span>
+                      {(item.joinedGuests || []).map((guest) => {
+                        const isGuestDemo = guest.isDemo || ['p2', 'p3', 'p4', 'priya_sharma', 'marcus_tan', 'maya_lin', 'chen_wei'].includes(guest.id) || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(guest.name);
+                        return (
+                          <div
+                            key={guest.id}
+                            className="flex items-center justify-between rounded-[16px] border border-white/15 bg-black/40 p-2.5"
+                          >
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={guest.avatarUrl}
+                                alt={guest.name}
+                                className="h-9 w-9 rounded-full object-cover"
+                              />
+                              <div>
+                                <h4 className="text-[13.5px] font-bold text-white flex items-center gap-1.5">
+                                  {guest.name}
+                                  {isGuestDemo && (
+                                    <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
+                                      ⚠️ Demo Profile
+                                    </span>
+                                  )}
+                                </h4>
+                                <span className="text-[11px] text-white/70">
+                                  {guest.homeArea} · Joined
+                                </span>
+                              </div>
                             </div>
-                          </div>
 
-                          <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-white/80" /> {guest.status}
-                          </span>
-                        </div>
-                      ))}
+                            <span className="text-[11px] font-bold text-white flex items-center gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-white/80" /> {guest.status}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </motion.div>
@@ -532,8 +540,13 @@ function HomeContent() {
                         alt={item.hostName}
                         className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30"
                       />
-                      <span className="text-[12.5px] text-white">
+                      <span className="text-[12.5px] text-white flex items-center gap-1.5">
                         Pitched by <strong className="font-bold">{item.hostName}</strong>
+                        {(item.isHostDemo || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(item.hostName)) && (
+                          <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
+                            ⚠️ Demo
+                          </span>
+                        )}
                       </span>
                     </div>
 
@@ -629,8 +642,13 @@ function HomeContent() {
                         alt={item.hostName}
                         className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30"
                       />
-                      <span className="text-[12.5px] text-white">
+                      <span className="text-[12.5px] text-white flex items-center gap-1.5">
                         Pitched by <strong className="font-bold">{item.hostName}</strong>
+                        {(item.isHostDemo || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(item.hostName)) && (
+                          <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
+                            ⚠️ Demo
+                          </span>
+                        )}
                       </span>
                     </div>
 

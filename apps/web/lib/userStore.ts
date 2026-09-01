@@ -203,6 +203,7 @@ export interface JoinedGuest {
   avatarUrl: string;
   homeArea: string;
   status: 'Confirmed' | 'Pending';
+  isDemo?: boolean;
 }
 
 export interface PitchedOuting {
@@ -213,11 +214,14 @@ export interface PitchedOuting {
   dateTime: string;
   hostName: string;
   hostAvatar: string;
+  hostId?: string;
+  isHostDemo?: boolean;
   seatsTotal: number;
   seatsFilled: number;
   cohesionScore: number;
   joinedGuests: JoinedGuest[];
   createdAt: string;
+  fitBadge?: string;
 }
 
 export function calculatePassCompletion(hasOnboarded: boolean = true, completedCategoryNums: number[] = []): number {
@@ -314,6 +318,7 @@ export const DEFAULT_PITCHES: PitchedOuting[] = [
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
         homeArea: 'Singapore',
         status: 'Confirmed',
+        isDemo: true,
       },
       {
         id: 'p3',
@@ -321,6 +326,7 @@ export const DEFAULT_PITCHES: PitchedOuting[] = [
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
         homeArea: 'Singapore',
         status: 'Confirmed',
+        isDemo: true,
       },
       {
         id: 'p4',
@@ -328,6 +334,7 @@ export const DEFAULT_PITCHES: PitchedOuting[] = [
         avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
         homeArea: 'Singapore',
         status: 'Confirmed',
+        isDemo: true,
       },
     ],
     createdAt: new Date().toISOString(),

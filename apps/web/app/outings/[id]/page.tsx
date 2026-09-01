@@ -58,8 +58,11 @@ function OutingDetailContent() {
 
       <div className="mt-6 flex flex-col gap-6">
         <div className="border-b border-[#F3F0E9]/12 pb-4">
-          <span className="text-[12px] font-semibold text-[#A6AAA4]">
+          <span className="text-[12px] font-semibold text-[#A6AAA4] flex items-center gap-1.5">
             Pitched by <strong className="text-[#F3F0E9]">Marcus Tan</strong>
+            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase">
+              ⚠️ Demo Profile
+            </span>
           </span>
           <h1 className="mt-1 text-[26px] font-bold tracking-tight text-[#F3F0E9]">
             Saturday Pottery & Filter Coffee

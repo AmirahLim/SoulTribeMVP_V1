@@ -67,6 +67,7 @@ function PitchComposerContent() {
       avatarUrl: g.profile.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
       homeArea: g.profile.home_area,
       status: 'Confirmed',
+      isDemo: true,
     }));
 
     const newPitchObj: PitchedOuting = {
@@ -218,8 +219,11 @@ function PitchComposerContent() {
                           className="h-10 w-10 rounded-full object-cover"
                         />
                         <div>
-                          <h4 className="text-[14px] font-bold text-white">
+                          <h4 className="text-[14px] font-bold text-white flex items-center gap-1.5">
                             {candidate.profile.display_name}
+                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                              ⚠️ Demo Profile
+                            </span>
                           </h4>
                           <span className="text-[11.5px] text-white/70">
                             {candidate.profile.home_area}
