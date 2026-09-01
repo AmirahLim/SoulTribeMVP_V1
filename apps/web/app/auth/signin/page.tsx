@@ -273,10 +273,20 @@ function LumaSignInForm() {
                     animate={{ opacity: 1, height: 'auto' }}
                     className="space-y-2 pt-1"
                   >
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="auth-password-input" className="block text-[13.5px] font-semibold text-white">
-                        Password
-                      </label>
+                    <label htmlFor="auth-password-input" className="block text-[13.5px] font-semibold text-white">
+                      Password
+                    </label>
+                    <input
+                      id="auth-password-input"
+                      type="password"
+                      required
+                      minLength={8}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
+                    />
+                    <div className="flex justify-end pt-0.5">
                       <button
                         type="button"
                         onClick={() => {
@@ -288,16 +298,6 @@ function LumaSignInForm() {
                         Forgot password?
                       </button>
                     </div>
-                    <input
-                      id="auth-password-input"
-                      type="password"
-                      required
-                      minLength={8}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
-                    />
 
                     {/* Remember me checkbox */}
                     <div className="pt-2 flex items-center gap-2">
