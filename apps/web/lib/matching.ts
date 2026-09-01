@@ -81,6 +81,7 @@ export const realCandidateSource: CandidateSource = {
         const emoRow = Array.isArray(p.trait_emotional) ? p.trait_emotional[0] : p.trait_emotional;
         const expRow = Array.isArray(p.trait_experience) ? p.trait_experience[0] : p.trait_experience;
 
+        const obData = p.onboarding_data || {};
         const vec = toProfileVector(
           {
             displayName: p.display_name,
@@ -89,6 +90,16 @@ export const realCandidateSource: CandidateSource = {
             bio: p.bio,
             birthYear: p.birth_year,
             passCompletionPct: 80,
+            q1Finding: obData.q1Finding || (intentRow?.intents),
+            q2Feelings: obData.q2Feelings || (commRow?.conv_styles),
+            q3Energy: obData.q3Energy ?? persRow?.extraversion,
+            q3GroupSize: obData.q3GroupSize ?? expRow?.group_size_pref,
+            q4Connected: obData.q4Connected || (commRow?.mediums),
+            q5PlanningRhythm: obData.q5PlanningRhythm ?? rhythmRow?.planning_horizon,
+            q5Availability: obData.q5Availability || (rhythmRow?.availability),
+            q6Outings: obData.q6Outings || (p.user_interests?.map((i: any) => i.node_name || i.name)),
+            q7EmotionalPacing: obData.q7EmotionalPacing ?? emoRow?.er_opening_pace,
+            q8Qualities: obData.q8Qualities || (p.user_values?.map((v: any) => v.value_name || v.name)),
             trait_intent: intentRow,
             trait_communication: commRow,
             trait_personality: persRow,

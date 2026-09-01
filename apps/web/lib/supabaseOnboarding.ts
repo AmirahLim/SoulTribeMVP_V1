@@ -37,6 +37,18 @@ export async function saveOnboardingToSupabase(
       bio: data.bio || null,
       profile_version: 1,
       confidence: 0.35,
+      onboarding_data: {
+        q1Finding: data.q1Finding,
+        q2Feelings: data.q2Feelings,
+        q3Energy: data.q3Energy,
+        q3GroupSize: data.q3GroupSize,
+        q4Connected: data.q4Connected,
+        q5PlanningRhythm: data.q5PlanningRhythm,
+        q5Availability: data.q5Availability,
+        q6Outings: data.q6Outings,
+        q7EmotionalPacing: data.q7EmotionalPacing,
+        q8Qualities: data.q8Qualities,
+      },
     };
 
     const { error: profileErr } = await supabase
