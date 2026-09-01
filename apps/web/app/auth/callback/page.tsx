@@ -32,11 +32,14 @@ function AuthCallbackContent() {
           if (isMounted) {
             const { data: profile } = await client
               .from('profiles')
-              .select('id')
+              .select('id, handle')
               .eq('id', session.user.id)
               .maybeSingle();
 
-            const targetPath = profile ? next : '/onboarding';
+            let targetPath = next;
+            if (!profile || !profile.handle) {
+              targetPath = `/auth/signin?step=choose_username&next=${encodeURIComponent(next)}`;
+            }
             router.push(targetPath);
           }
           return;
@@ -49,11 +52,14 @@ function AuthCallbackContent() {
             subscription.unsubscribe();
             const { data: profile } = await client
               .from('profiles')
-              .select('id')
+              .select('id, handle')
               .eq('id', newSession.user.id)
               .maybeSingle();
 
-            const targetPath = profile ? next : '/onboarding';
+            let targetPath = next;
+            if (!profile || !profile.handle) {
+              targetPath = `/auth/signin?step=choose_username&next=${encodeURIComponent(next)}`;
+            }
             router.push(targetPath);
           }
         });
@@ -111,7 +117,7 @@ function AuthCallbackContent() {
               </p>
               <button
                 onClick={() => router.push('/auth/signin')}
-                className="mt-6 rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-[13px] font-bold text-white hover:bg-white/20 transition-all"
+                className="mt-6 rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-[13px] font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
               >
                 Return to Sign In
               </button>

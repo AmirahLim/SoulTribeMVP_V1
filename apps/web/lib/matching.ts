@@ -138,6 +138,48 @@ export function getFitLabel(rankScore: number): string {
   return 'Worth Exploring';
 }
 
+export function getSmallCommunityThreshold(): number {
+  const envVal = process.env.NEXT_PUBLIC_SMALL_COMMUNITY_THRESHOLD;
+  if (envVal !== undefined && envVal !== null && envVal.trim() !== '') {
+    const parsed = parseInt(envVal, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+  return 30;
+}
+
+export async function countRealMembers(area?: string): Promise<number> {
+  if (customActiveSource) {
+    const candidates = await customActiveSource.getCandidates({ area });
+    return candidates.filter((c) => !c.isDemo).length;
+  }
+
+  if (checkIsSupabaseConfigured()) {
+    try {
+      const client = getSupabaseBrowserClient();
+      let query = client.from('profiles').select('id', { count: 'exact', head: true });
+      if (area) {
+        query = query.eq('home_area', area);
+      }
+      const { count, error } = await query;
+      if (!error && typeof count === 'number') {
+        return count;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  const realCandidates = await realCandidateSource.getCandidates({ area });
+  return realCandidates.filter((c) => !c.isDemo).length;
+}
+
+export function isSmallCommunityMode(realMemberCount: number): boolean {
+  const threshold = getSmallCommunityThreshold();
+  return realMemberCount <= threshold;
+}
+
 export async function getRankedMatches(
   user: UserProfileData & { id?: string },
   opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
@@ -169,7 +211,7 @@ export async function getRankedMatches(
   const limit = opts?.limit ?? 6;
   const viewerVec = toProfileVector(user, effectiveId);
   const source = getActiveCandidateSource();
-  const candidateVecs = await source.getCandidates({ area: opts?.area, limit });
+  const candidateVecs = await source.getCandidates({ area: opts?.area });
 
   const context: MatchContext = {
     activity_category: opts?.activityCategory as any,
@@ -229,5 +271,14 @@ export async function getRankedMatches(
   }
 
   results.sort((a, b) => b.rankScore - a.rankScore);
+
+  const realMemberCount = await countRealMembers(opts?.area || user.homeArea);
+  const isSmall = isSmallCommunityMode(realMemberCount);
+
+  // Small community mode: show ALL eligible members unless an explicit custom limit (different from default 6) was passed
+  if (isSmall && (opts?.limit === undefined || opts?.limit === 6)) {
+    return results;
+  }
+
   return results.slice(0, limit);
 }

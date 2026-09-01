@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ResonanceRead } from '@soul-tribe/ui';
 import { getUserProfile } from '../../lib/userStore';
-import { getRankedMatches, RankedMatch } from '../../lib/matching';
+import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode } from '../../lib/matching';
 import { getGenderAvatarForName } from '@soul-tribe/core';
-import { MapPin, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { MapPin, ArrowRight, AlertCircle, Sparkles, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { AuthGuard } from '../../components/AuthGuard';
@@ -24,6 +24,8 @@ function PeopleListContent() {
   const { user: authUser } = useAuth();
   const [city, setCity] = useState('Singapore');
   const [matches, setMatches] = useState<RankedMatch[]>([]);
+  const [realMemberCount, setRealMemberCount] = useState<number>(0);
+  const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,13 +34,22 @@ function PeopleListContent() {
     (async () => {
       try {
         const userProf = getUserProfile();
+        const effectiveCity = userProf.homeArea || city;
         if (userProf.homeArea) setCity(userProf.homeArea);
+
         const effectiveUser = {
           ...userProf,
           id: authUser?.id || userProf.id,
         };
-        const ranked = await getRankedMatches(effectiveUser, { limit: 6, userId: authUser?.id });
+
+        const realCount = await countRealMembers(effectiveCity);
+        const isSmall = isSmallCommunityMode(realCount);
+
+        const ranked = await getRankedMatches(effectiveUser, { userId: authUser?.id, area: effectiveCity });
         if (cancelled) return;
+
+        setRealMemberCount(realCount);
+        setIsSmallCommunity(isSmall);
         setMatches(ranked);
         setError(null);
       } catch (err) {
@@ -52,7 +63,7 @@ function PeopleListContent() {
     return () => {
       cancelled = true;
     };
-  }, [authUser?.id]);
+  }, [authUser?.id, city]);
 
   return (
     <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
@@ -80,6 +91,25 @@ function PeopleListContent() {
             Surfaced based on your Friendship DNA and {city} rhythm. No swiping.
           </p>
         </header>
+
+        {/* SMALL COMMUNITY HONEST BANNER */}
+        {!loading && !error && isSmallCommunity && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 rounded-[22px] border border-amber-400/40 bg-amber-500/15 p-4.5 text-[13px] text-amber-200 backdrop-blur-md shadow-xl flex items-start gap-3"
+          >
+            <Users className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-extrabold text-amber-300 uppercase tracking-wider text-[11px]">
+                Small Community Mode
+              </p>
+              <p className="mt-1 text-amber-100/90 leading-relaxed text-[13px]">
+                You're one of the first {realMemberCount} members in {city}. Matching sharpens as more people join - for now, here's everyone nearby.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* LOADING STATE */}
         {loading && (
@@ -143,9 +173,14 @@ function PeopleListContent() {
                               ⚠️ Demo Profile — Display Only
                             </span>
                           )}
-                          <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                            {person.fitLabel} · {Math.round(person.rankScore * 100)}% Resonance
-                          </span>
+
+                          {/* HIDE fit label and numeric score in Small Community Mode */}
+                          {!isSmallCommunity && (
+                            <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
+                              {person.fitLabel} · {Math.round(person.rankScore * 100)}% Resonance
+                            </span>
+                          )}
+
                           {person.provisional && (
                             <span className="rounded-full bg-amber-500/80 px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-wide text-black uppercase backdrop-blur-md">
                               Early Match — Complete pass for details
@@ -163,7 +198,7 @@ function PeopleListContent() {
                         </div>
                       </div>
 
-                      {/* Content & Resonance Read */}
+                      {/* Content & Resonance Read (Click and Friction texts kept in full) */}
                       <div className="p-5">
                         <p className="text-[13.5px] leading-relaxed text-white/90">
                           {person.bio}

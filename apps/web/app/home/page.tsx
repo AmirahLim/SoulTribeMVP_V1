@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch } from '../../lib/matching';
+import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode } from '../../lib/matching';
 import { fetchGoingOutings, fetchRadarOutings, OutingItem } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
@@ -31,6 +31,7 @@ function HomeContent() {
   const [pitches, setPitches] = useState<PitchedOuting[]>([]);
   const [goingOutings, setGoingOutings] = useState<OutingItem[]>([]);
   const [radarOutings, setRadarOutings] = useState<OutingItem[]>([]);
+  const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(true);
   const [radarJoined, setRadarJoined] = useState<Record<string, boolean>>({});
@@ -46,14 +47,18 @@ function HomeContent() {
         const userPitchesData = getUserPitches();
         setPitches(userPitchesData);
 
+        const realCount = await countRealMembers(userProf.homeArea || 'Singapore');
+        const smallMode = isSmallCommunityMode(realCount);
+
         const [rankedMatchesData, goingData, radarData] = await Promise.all([
-          getRankedMatches(userProf, { limit: 6 }),
+          getRankedMatches(userProf),
           fetchGoingOutings(user?.id),
           fetchRadarOutings(user?.id),
         ]);
 
         if (cancelled) return;
 
+        setIsSmallCommunity(smallMode);
         setMatches(rankedMatchesData);
         setGoingOutings(goingData);
         setRadarOutings(radarData);
@@ -261,9 +266,11 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 backdrop-blur-md">
-                      {person.fitLabel}
-                    </span>
+                    {!isSmallCommunity && (
+                      <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 backdrop-blur-md">
+                        {person.fitLabel}
+                      </span>
+                    )}
                   </div>
 
                   {/* Editorial Resonance Read */}

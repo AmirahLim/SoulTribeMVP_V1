@@ -1,7 +1,14 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import type { UserProfileData } from '../userStore';
-import { getRankedMatches, setCandidateSource, demoCandidateSource } from '../matching';
+import {
+  getRankedMatches,
+  setCandidateSource,
+  demoCandidateSource,
+  countRealMembers,
+  isSmallCommunityMode,
+  getSmallCommunityThreshold,
+} from '../matching';
 import { DEMO_PROFILES } from '@soul-tribe/core';
 
 describe('Part 5 — Matching Service Tests', () => {
@@ -113,5 +120,114 @@ describe('Part 5 — Matching Service Tests', () => {
       (m) => m.id === targetDemo.profile.id || m.name === targetDemo.profile.display_name
     );
     assert.strictEqual(containsSelf, false, 'Signed-in user must be excluded from their own match results');
+  });
+});
+
+describe('Small Community Mode Tests', () => {
+  const fullUser: UserProfileData = {
+    displayName: 'Priya Sharma',
+    avatarUrl: '',
+    homeArea: 'Singapore',
+    bio: 'Loves coffee and craft.',
+    passCompletionPct: 80,
+    deepProfile: {},
+  };
+
+  it('countRealMembers counts real members only (demo profiles never count)', async () => {
+    const mockSource = {
+      async getCandidates() {
+        const realMembers = [1, 2, 3, 4, 5].map((i) => ({
+          ...DEMO_PROFILES[0],
+          profile: { ...DEMO_PROFILES[0].profile, id: `real-user-${i}`, display_name: `Real User ${i}` },
+          isDemo: false,
+        }));
+        const demoMembers = DEMO_PROFILES.slice(0, 10).map((p) => ({ ...p, isDemo: true }));
+        return [...realMembers, ...demoMembers];
+      },
+    };
+
+    setCandidateSource(mockSource);
+
+    const count = await countRealMembers('Singapore');
+    assert.strictEqual(count, 5, 'Demo profiles must never count toward real member threshold');
+  });
+
+  it('With 5 real members (<= threshold 30): isSmallCommunityMode is true and all eligible members appear', async () => {
+    process.env.NEXT_PUBLIC_SMALL_COMMUNITY_THRESHOLD = '30';
+
+    const mockSource = {
+      async getCandidates() {
+        return [1, 2, 3, 4, 5].map((i) => ({
+          ...DEMO_PROFILES[i],
+          profile: { ...DEMO_PROFILES[i].profile, id: `real-member-${i}`, display_name: `Real Member ${i}` },
+          isDemo: false,
+        }));
+      },
+    };
+
+    setCandidateSource(mockSource);
+
+    const realCount = await countRealMembers('Singapore');
+    assert.strictEqual(realCount, 5);
+    assert.strictEqual(isSmallCommunityMode(realCount), true);
+
+    const matches = await getRankedMatches(fullUser);
+    assert.strictEqual(matches.length, 5, 'All eligible members appear in small community mode (no top-6 truncation)');
+  });
+
+  it('With 50 real members (> threshold 30): isSmallCommunityMode is false and top-6 slice returns', async () => {
+    process.env.NEXT_PUBLIC_SMALL_COMMUNITY_THRESHOLD = '30';
+
+    const mockSource = {
+      async getCandidates() {
+        return Array.from({ length: 50 }, (_, i) => ({
+          ...DEMO_PROFILES[i % DEMO_PROFILES.length],
+          profile: {
+            ...DEMO_PROFILES[i % DEMO_PROFILES.length].profile,
+            id: `real-member-${i + 1}`,
+            display_name: `Real Member ${i + 1}`,
+          },
+          isDemo: false,
+        }));
+      },
+    };
+
+    setCandidateSource(mockSource);
+
+    const realCount = await countRealMembers('Singapore');
+    assert.strictEqual(realCount, 50);
+    assert.strictEqual(isSmallCommunityMode(realCount), false);
+
+    const matches = await getRankedMatches(fullUser, { limit: 6 });
+    assert.strictEqual(matches.length, 6, 'Above threshold, ranked top-6 slice returns');
+  });
+
+  it('Gated members (hard gate failure) never appear in either small community mode or ranked mode', async () => {
+    const gatedId = 'gated-member-1';
+    const mockSource = {
+      async getCandidates() {
+        return [
+          {
+            ...DEMO_PROFILES[0],
+            profile: { ...DEMO_PROFILES[0].profile, id: 'real-1', display_name: 'Real 1' },
+            isDemo: false,
+          },
+          {
+            ...DEMO_PROFILES[1],
+            profile: { ...DEMO_PROFILES[1].profile, id: gatedId, display_name: 'Gated 1', status: 'banned' as const },
+            isDemo: false,
+          },
+        ];
+      },
+    };
+
+    setCandidateSource(mockSource);
+
+    const matches = await getRankedMatches(fullUser);
+    const containsGated = matches.some((m) => m.id === gatedId);
+    assert.strictEqual(containsGated, false, 'Gated members must never appear in either mode');
+
+    // Reset candidate source
+    setCandidateSource(demoCandidateSource);
   });
 });

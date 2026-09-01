@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch, toProfileVector } from '../../../lib/matching';
+import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode } from '../../../lib/matching';
 import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, PHRASES } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
@@ -46,12 +46,16 @@ function PersonDetailContent() {
   const personId = (params?.id as string) || '';
 
   const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
+  const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadMatch() {
       try {
         const user = getUserProfile();
+        const realCount = await countRealMembers(user.homeArea || 'Singapore');
+        setIsSmallCommunity(isSmallCommunityMode(realCount));
+
         const matches = await getRankedMatches(user, { limit: 40 });
         const found = matches.find(
           (m) =>
@@ -266,9 +270,11 @@ function PersonDetailContent() {
                   ⚠️ Demo Profile — Display Only
                 </span>
               )}
-              <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
-              </span>
+              {!isSmallCommunity && (
+                <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
+                  {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
+                </span>
+              )}
             </div>
 
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
