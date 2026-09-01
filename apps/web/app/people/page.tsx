@@ -10,6 +10,7 @@ import { MapPin, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { AuthGuard } from '../../components/AuthGuard';
+import { useAuth } from '../../lib/authContext';
 
 export default function PeopleListPage() {
   return (
@@ -51,7 +52,7 @@ function PeopleListContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authUser?.id]);
 
   return (
     <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
