@@ -62,7 +62,6 @@ const DIM_LABELS: Record<string, string> = {
   values: 'core values',
   lifestyle: 'outing budget & activity style',
   experience: 'group size preference',
-  geography: 'neighbourhood proximity',
 };
 
 const CLICK_DIM_PRIORITY: Record<string, number> = {
@@ -75,7 +74,6 @@ const CLICK_DIM_PRIORITY: Record<string, number> = {
   lifestyle: 4,
   experience: 3,
   social_rhythm: 2,
-  geography: 1,
 };
 
 export function generateMatchExplanation(
@@ -95,7 +93,6 @@ export function generateMatchExplanation(
     { key: 'values', score: scoreValues(vecA, vecB), weight: 8 },
     { key: 'lifestyle', score: scoreLifestyle(vecA, vecB), weight: 7 },
     { key: 'experience', score: scoreExperience(vecA, vecB), weight: 3 },
-    { key: 'geography', score: scoreGeography(vecA, vecB), weight: 2 },
   ];
 
   // Calculate contribution above baseline
@@ -112,13 +109,13 @@ export function generateMatchExplanation(
   // If no dimension is eligible (very thin profile), return honest thin-profile prompt
   if (eligibleClickDims.length === 0) {
     return {
-      click_text: "There isn't enough in your pass yet to say much — add more and this will sharpen.",
-      friction_text: "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
+      click_text: `Shared community member in Singapore with ${nameB}.`,
+      friction_text: `${nameB} is still completing their Tribal Pass — specific friction points will sharpen as more answers are shared.`,
       generated_by: 'deterministic_template',
     };
   }
 
-  // Sort eligible click dimensions by uniqueness priority + score (favoring interests, values, intent over raw geography)
+  // Sort eligible click dimensions by uniqueness priority + score
   eligibleClickDims.sort((a, b) => {
     const priorityA = (CLICK_DIM_PRIORITY[a.key] || 1) + a.score;
     const priorityB = (CLICK_DIM_PRIORITY[b.key] || 1) + b.score;
@@ -126,10 +123,7 @@ export function generateMatchExplanation(
   });
 
   const clickParts: string[] = [];
-  const nonGeoClickDims = eligibleClickDims.filter((d) => d.key !== 'geography');
-  const candidateClickDims = (nonGeoClickDims.length > 0 ? nonGeoClickDims : eligibleClickDims).filter(
-    (d) => d.score >= 0.45
-  );
+  const candidateClickDims = eligibleClickDims.filter((d) => d.score >= 0.40);
 
   for (const d of candidateClickDims) {
     if (clickParts.length >= 2) break;
@@ -144,7 +138,7 @@ export function generateMatchExplanation(
       } else if (formattedInterests.length > 0) {
         clickParts.push(`Overlap with ${nameB} in ${formattedInterests[0]}.`);
       } else {
-        clickParts.push(`There is shared curiosity across several interest topics.`);
+        clickParts.push(`Shared curiosity across several outing activity themes.`);
       }
     } else if (d.key === 'values') {
       const rawValues = vecB.values || [];
@@ -159,14 +153,14 @@ export function generateMatchExplanation(
     } else if (d.key === 'intent') {
       const valB = vecB.intent?.depth ?? 2;
       if (isStrong) {
-        clickParts.push(`You and ${nameB} share strong alignment on friendship intent: ${PHRASES.depth(valB)}.`);
+        clickParts.push(`Strong alignment on friendship intent with ${nameB}: ${PHRASES.depth(valB)}.`);
       } else {
-        clickParts.push(`You have a comfortable overlap with ${nameB} on friendship intent (${PHRASES.depth(valB)}).`);
+        clickParts.push(`Comfortable overlap with ${nameB} on friendship intent (${PHRASES.depth(valB)}).`);
       }
     } else if (d.key === 'personality') {
       const valB = vecB.personality?.extraversion ?? 0.5;
       if (isStrong) {
-        clickParts.push(`Social energy and curiosity align; ${nameB} ${PHRASES.extraversion(valB)}.`);
+        clickParts.push(`Social energy and curiosity align with ${nameB}; ${PHRASES.extraversion(valB)}.`);
       } else {
         clickParts.push(`Social energy levels with ${nameB} complement each other comfortably.`);
       }
@@ -174,9 +168,9 @@ export function generateMatchExplanation(
       const valB = vecB.communication?.contact_frequency_self ?? 0.5;
       const respB = vecB.communication?.response_speed_self ?? 0.5;
       if (isStrong) {
-        clickParts.push(`Compatible messaging rhythms; ${nameB} ${PHRASES.responseSpeed(respB)} and ${PHRASES.cadenceNeed(valB)}.`);
+        clickParts.push(`Compatible messaging rhythms with ${nameB}; ${PHRASES.responseSpeed(respB)} and ${PHRASES.cadenceNeed(valB)}.`);
       } else {
-        clickParts.push(`Messaging expectations are easy-going; ${nameB} ${PHRASES.responseSpeed(respB)}.`);
+        clickParts.push(`Messaging expectations with ${nameB} are easy-going; ${PHRASES.responseSpeed(respB)}.`);
       }
     } else if (d.key === 'emotional') {
       const valB = vecB.emotional?.er_opening_pace ?? 0.5;
@@ -191,12 +185,12 @@ export function generateMatchExplanation(
       if (isStrong) {
         clickParts.push(`Outing budget and activity style match nicely; ${nameB} ${PHRASES.budgetBand(valB)}.`);
       } else {
-        clickParts.push(`Outing preferences align well; ${nameB} ${PHRASES.activityLevel(actB)}.`);
+        clickParts.push(`Outing preferences align well with ${nameB}; ${PHRASES.activityLevel(actB)}.`);
       }
     } else if (d.key === 'experience') {
       const valB = vecB.experience?.group_size_pref ?? 0.5;
       if (isStrong) {
-        clickParts.push(`Identical group size preference; ${nameB} ${PHRASES.groupSize(valB)}.`);
+        clickParts.push(`Matching group size preference with ${nameB}; ${PHRASES.groupSize(valB)}.`);
       } else {
         clickParts.push(`Group size preferences with ${nameB} match easily (${PHRASES.groupSize(valB)}).`);
       }
@@ -205,14 +199,7 @@ export function generateMatchExplanation(
       if (isStrong) {
         clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
       } else {
-        clickParts.push(`Planning styles align comfortably; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
-      }
-    } else if (d.key === 'geography') {
-      const areaB = vecB.geography?.home_area || 'Singapore';
-      if (isStrong) {
-        clickParts.push(`Close neighbourhood proximity with ${nameB} in ${areaB}.`);
-      } else {
-        clickParts.push(`Proximity to ${nameB} in ${areaB} makes meetups straightforward.`);
+        clickParts.push(`Planning styles align comfortably with ${nameB}; ${PHRASES.planningHorizon(valB)}.`);
       }
     }
   }
@@ -221,7 +208,7 @@ export function generateMatchExplanation(
   if (clickParts.length === 0) {
     const highest = eligibleClickDims[0];
     const label = DIM_LABELS[highest.key] || 'social rhythm';
-    clickParts.push(`You have a gentle overall alignment with ${nameB}, with the strongest touchpoint around ${label}.`);
+    clickParts.push(`Gentle overall social alignment with ${nameB}, with a natural connection around ${label}.`);
   }
 
   const click_text = clickParts.join(' ');
@@ -367,23 +354,13 @@ export function generateMatchExplanation(
       } else {
         frictionParts.push(`Your underlying value stances have slight nuance differences.`);
       }
-    } else if (d.key === 'geography') {
-      const areaA = vecA.geography?.home_area || 'Singapore';
-      const areaB = vecB.geography?.home_area || 'Singapore';
-      if (areaA === areaB) continue;
-
-      if (isClearFriction) {
-        frictionParts.push(`${nameB} is based in ${areaB}, while you are in ${areaA}, so travel time requires planning.`);
-      } else {
-        frictionParts.push(`You live in different neighbourhoods in Singapore, so meetup spots will need mutual travel.`);
-      }
     }
   }
 
   // Fallback if no candidate dimension produced a sentence
   if (frictionParts.length === 0) {
-    const weakest = eligibleDims[0];
-    if (weakest?.key === 'geography' || eligibleDims.length <= 1) {
+    const weakest = eligibleDims.filter((d) => d.key !== 'geography')[0];
+    if (!weakest || eligibleDims.length <= 1) {
       frictionParts.push(`${nameB} is still completing their Tribal Pass — as more section answers are shared, specific friction flags will sharpen.`);
     } else {
       const label = DIM_LABELS[weakest.key] || 'social rhythm';
