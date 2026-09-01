@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   let authUserId: string | null = null;
 
   if (token) {
-    const authClient = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false } });
+    const authClient = createClient(supabaseUrl!, publishableKey!, { auth: { persistSession: false } });
     const { data: { user }, error: authErr } = await authClient.auth.getUser(token);
     if (!authErr && user) {
       authUserId = user.id;
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 2. Secret Key Client bypassing RLS (SERVER ONLY)
-    const adminClient = createClient(supabaseUrl, secretKey, {
+    const adminClient = createClient(supabaseUrl!, secretKey!, {
       auth: { persistSession: false },
     });
 

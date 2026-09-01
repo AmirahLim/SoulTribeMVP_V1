@@ -15,15 +15,13 @@ import { DEMO_PROFILES } from '@soul-tribe/core';
 describe('Part 5 — Matching Service Tests', () => {
   setCandidateSource(demoCandidateSource);
 
-  const fullUser: UserProfileData = {
+  const fullUser: UserProfileData & Record<string, any> = {
     displayName: 'Priya Sharma',
     avatarUrl: '',
     homeArea: 'Singapore',
     bio: 'Loves coffee and craft.',
     passCompletionPct: 100,
     birthYear: 1995,
-    agePrefMin: 18,
-    agePrefMax: 99,
     q1Finding: ['Close 1-on-1 friendships'],
     q2Feelings: ['Deep 1-on-1s', 'Chill & relaxed'],
     q4Connected: ['Voice notes', 'Regular check-ins'],
@@ -246,16 +244,6 @@ describe('Small Community Mode Tests', () => {
           lifestyle: { ...DEMO_PROFILES[i % DEMO_PROFILES.length].lifestyle, answered: 5 },
           experience: { ...DEMO_PROFILES[i % DEMO_PROFILES.length].experience, answered: 4 },
           geography: { ...DEMO_PROFILES[i % DEMO_PROFILES.length].geography, answered: 2 },
-          interests: [
-            { id: '1', name: 'Coffee & Cafes', category: 'food' },
-            { id: '2', name: 'Boardgames & Gaming', category: 'culture' },
-            { id: '3', name: 'Pottery & Craft', category: 'creative' },
-          ],
-          values: [
-            { id: '1', name: 'Authenticity', category: 'personal' },
-            { id: '2', name: 'Reliability', category: 'interpersonal' },
-            { id: '3', name: 'Curiosity', category: 'intellectual' },
-          ],
           user_interests: [{ node_name: 'Coffee & Cafes' }, { node_name: 'Boardgames & Gaming' }],
           user_values: [{ value_key: 'Authenticity' }, { value_key: 'Reliability' }],
           isDemo: false,
