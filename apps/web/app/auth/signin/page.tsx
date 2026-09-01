@@ -5,39 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/authContext';
 import { checkUserProfileExists } from '../../../lib/supabaseAuth';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, AlertCircle, KeyRound, CheckCircle2, Lock } from 'lucide-react';
-
-function GoogleIcon() {
-  return (
-    <svg className="h-5 w-5 mr-3 shrink-0" viewBox="0 0 24 24">
-      <path
-        fill="#EA4335"
-        d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
-      />
-      <path
-        fill="#4285F4"
-        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.6 7.2C.6 9.2 0 10.5 0 12s.6 2.8 1.6 4.8l3.7-2.1z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 16C3.5 19.8 7.4 23 12 23z"
-      />
-    </svg>
-  );
-}
+import { Sparkles, AlertCircle, KeyRound, CheckCircle2, Lock, Mail, Key } from 'lucide-react';
 
 function LumaSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams?.get('redirect') || '/home';
+  const redirectPath = searchParams?.get('next') || searchParams?.get('redirect') || '/home';
 
   const {
     signInWithOtp,
-    signInWithGoogle,
     signUpWithPassword,
     signInWithPassword,
     resetPasswordForEmail,
@@ -119,7 +95,7 @@ function LumaSignInForm() {
 
       // Try sign-in first, if user doesn't exist try sign-up
       const { error: signInErr, user: signedInUser } = await signInWithPassword(trimmedEmail, password);
-      
+
       if (signInErr) {
         if (signInErr.message.includes('Invalid login credentials') || signInErr.message.includes('User not found')) {
           // Attempt sign-up for new users seamlessly
@@ -149,12 +125,12 @@ function LumaSignInForm() {
         router.push(hasProfile ? redirectPath : '/onboarding');
       }
     } else {
-      // Magic link mode
+      // Magic link mode - pass redirectPath through as next=... parameter
       const { error } = await signInWithOtp(trimmedEmail, redirectPath);
       setIsSubmitting(false);
 
       if (error) {
-        setErrorMessage(error.message || 'Unable to send login link right now.');
+        setErrorMessage(error.message || 'Unable to send magic link right now.');
         return;
       }
 
@@ -226,31 +202,42 @@ function LumaSignInForm() {
                 </div>
               )}
 
-              {/* Google Button */}
-              <div className="mt-6">
+              {/* Tab Selector for Password vs Magic Link */}
+              <div className="mt-6 flex rounded-[16px] border border-[#27272a] bg-black/60 p-1">
                 <button
                   type="button"
-                  onClick={() => signInWithGoogle(redirectPath)}
-                  disabled
-                  className="flex h-12 w-full items-center justify-center rounded-[16px] border border-white/20 bg-[#18181b] text-[14.5px] font-semibold text-white/50 cursor-not-allowed shadow-sm transition-all"
+                  onClick={() => {
+                    setUsePasswordMode(true);
+                    setErrorMessage(null);
+                    setOtpSentSuccess(false);
+                  }}
+                  className={`flex-1 rounded-[12px] py-2 text-[13px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    usePasswordMode
+                      ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                      : 'text-white/60 hover:text-white'
+                  }`}
                 >
-                  <GoogleIcon />
-                  Continue with Google
-                  <span className="ml-2 text-[10.5px] font-bold text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">
-                    (Coming Soon)
-                  </span>
+                  <Key className="h-3.5 w-3.5" /> Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsePasswordMode(false);
+                    setErrorMessage(null);
+                    setOtpSentSuccess(false);
+                  }}
+                  className={`flex-1 rounded-[12px] py-2 text-[13px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    !usePasswordMode
+                      ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <Mail className="h-3.5 w-3.5" /> Magic Link
                 </button>
               </div>
 
-              {/* Divider */}
-              <div className="my-6 flex items-center gap-4">
-                <div className="h-[1px] flex-1 bg-white/15" />
-                <span className="text-[11.5px] font-bold tracking-widest text-white/40 uppercase">OR</span>
-                <div className="h-[1px] flex-1 bg-white/15" />
-              </div>
-
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                 <div>
                   <label htmlFor="auth-email-input" className="block text-[13.5px] font-semibold text-white mb-2">
                     Email Address
@@ -293,7 +280,7 @@ function LumaSignInForm() {
                           setView('forgot_password');
                           setErrorMessage(null);
                         }}
-                        className="text-[12.5px] font-medium text-white/60 hover:text-white underline underline-offset-4 transition-all"
+                        className="text-[12.5px] font-medium text-white/60 hover:text-white underline underline-offset-4 transition-all cursor-pointer"
                       >
                         Forgot password?
                       </button>
@@ -333,7 +320,7 @@ function LumaSignInForm() {
                     className="rounded-[14px] border border-emerald-500/40 bg-emerald-500/15 p-3.5 text-[13px] text-emerald-200 flex items-start gap-2.5"
                   >
                     <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
-                    <span>Login link sent! Please check your email inbox to sign in.</span>
+                    <span>Magic link sent! Check your inbox to complete sign-in.</span>
                   </motion.div>
                 )}
 
@@ -347,21 +334,22 @@ function LumaSignInForm() {
                     ? 'Processing...'
                     : usePasswordMode
                     ? 'Continue with Email →'
-                    : 'Send Login Link →'}
+                    : 'Send Magic Link →'}
                 </button>
               </form>
 
-              {/* Toggle Mode Underlined Link */}
+              {/* Underlined Sub-action Toggle */}
               <div className="mt-5 text-center">
                 <button
                   type="button"
                   onClick={() => {
                     setUsePasswordMode(!usePasswordMode);
                     setErrorMessage(null);
+                    setOtpSentSuccess(false);
                   }}
-                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all"
+                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all cursor-pointer"
                 >
-                  {usePasswordMode ? 'Sign in with email link instead' : 'Sign in with password instead'}
+                  {usePasswordMode ? 'Sign in with magic link instead' : 'Sign in with password instead'}
                 </button>
               </div>
             </motion.div>
@@ -435,7 +423,7 @@ function LumaSignInForm() {
                     setErrorMessage(null);
                     setResetSuccessMessage(null);
                   }}
-                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all"
+                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all cursor-pointer"
                 >
                   ← Back to log in
                 </button>
