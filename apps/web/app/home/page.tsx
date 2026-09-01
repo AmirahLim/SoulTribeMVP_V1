@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
 import { useAuth } from '../../lib/authContext';
+import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
 
 export default function HomeDashboardPage() {
@@ -22,7 +23,7 @@ export default function HomeDashboardPage() {
 }
 
 function HomeContent() {
-  const { user } = useAuth();
+  const { user, isSupabaseConfigured } = useAuth();
   const [activeTab, setActiveTab] = useState<'matches' | 'pitches' | 'going' | 'radar'>('matches');
   const [profile, setProfileState] = useState<UserProfileData>(DEFAULT_USER_PROFILE);
 
@@ -43,6 +44,23 @@ function HomeContent() {
       try {
         const userProf = getUserProfile();
         setProfileState(userProf);
+
+        if (user?.id && userProf.avatarUrl && isSupabaseConfigured) {
+          try {
+            const client = getSupabaseBrowserClient();
+            await client
+              .from('profiles')
+              .update({
+                display_name: userProf.displayName,
+                home_area: userProf.homeArea,
+                bio: userProf.bio,
+                avatar_url: userProf.avatarUrl,
+              })
+              .eq('id', user.id);
+          } catch {
+            // Ignore DB sync errors
+          }
+        }
 
         const userPitchesData = getUserPitches();
         setPitches(userPitchesData);

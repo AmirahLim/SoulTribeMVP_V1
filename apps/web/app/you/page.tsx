@@ -59,7 +59,24 @@ function ProfileContent() {
     setEditArea(loaded.homeArea);
     setEditBio(loaded.bio);
     setEditPhoto(loaded.avatarUrl);
-  }, []);
+
+    if (authUser?.id && loaded.avatarUrl) {
+      try {
+        const client = getSupabaseBrowserClient();
+        client
+          .from('profiles')
+          .update({
+            display_name: loaded.displayName,
+            home_area: loaded.homeArea,
+            bio: loaded.bio,
+            avatar_url: loaded.avatarUrl,
+          })
+          .eq('id', authUser.id);
+      } catch {
+        // DB sync fallback
+      }
+    }
+  }, [authUser?.id]);
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
