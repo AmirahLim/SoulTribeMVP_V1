@@ -1,14 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from './supabase';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  error: string | null;
+  isSupabaseConfigured: boolean;
   signInWithOtp: (email: string, redirectToPath?: string) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithGoogle: (redirectToPath?: string) => Promise<{ error: Error | null }>;
@@ -16,66 +16,71 @@ interface AuthContextType {
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  isSupabaseConfigured: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  loading: true,
-  error: null,
-  signInWithOtp: async () => ({ error: new Error('Auth not initialized') }),
-  verifyOtp: async () => ({ error: new Error('Auth not initialized'), user: null }),
-  signInWithGoogle: async () => ({ error: new Error('Auth not initialized') }),
-  signUpWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
-  signInWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
-  resetPasswordForEmail: async () => ({ error: new Error('Auth not initialized') }),
-  signOut: async () => {},
-  isSupabaseConfigured: false,
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function getSiteBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (envUrl && envUrl.trim().length > 0) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.origin) {
+    return window.location.origin;
+  }
+  return '';
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isConfigured, setIsConfigured] = useState<boolean>(() => checkIsSupabaseConfigured());
+  const [loading, setLoading] = useState<boolean>(true);
+  const isConfigured = checkIsSupabaseConfigured();
 
   useEffect(() => {
     let mounted = true;
 
-    try {
-      const client = getSupabaseBrowserClient();
-      setIsConfigured(true);
+    async function initAuth() {
+      if (!isConfigured) {
+        if (mounted) setLoading(false);
+        return;
+      }
 
-      client.auth.getSession().then(({ data: { session }, error: sessionErr }) => {
-        if (!mounted) return;
-        if (sessionErr) {
-          console.error('Failed to retrieve Supabase session:', sessionErr.message);
-          setError(sessionErr.message);
+      try {
+        const client = getSupabaseBrowserClient();
+        const { data: { session: initialSession } } = await client.auth.getSession();
+
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          setLoading(false);
         }
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
 
-      const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
-        if (!mounted) return;
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      });
+        const { data: { subscription } } = client.auth.onAuthStateChange(
+          (_event, currentSession) => {
+            if (mounted) {
+              setSession(currentSession);
+              setUser(currentSession?.user ?? null);
+              setLoading(false);
+            }
+          }
+        );
 
-      return () => {
-        mounted = false;
-        subscription.unsubscribe();
-      };
-    } catch (err: any) {
-      // Supabase env vars missing in local offline mode
-      setIsConfigured(false);
-      setLoading(false);
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (err) {
+        console.error('Supabase Auth init error:', err);
+        if (mounted) setLoading(false);
+      }
     }
-  }, []);
+
+    initAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isConfigured]);
 
   const signInWithOtp = async (
     email: string,
@@ -83,9 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<{ error: Error | null }> => {
     try {
       const client = getSupabaseBrowserClient();
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const baseUrl = getSiteBaseUrl();
       const nextParam = redirectToPath ? encodeURIComponent(redirectToPath) : '%2Fhome';
-      const redirectTo = `${origin}/auth/callback?next=${nextParam}`;
+      const redirectTo = `${baseUrl}/auth/callback?next=${nextParam}`;
 
       const { error: sendErr } = await client.auth.signInWithOtp({
         email: email.trim(),
@@ -127,9 +132,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async (redirectToPath?: string): Promise<{ error: Error | null }> => {
     try {
       const client = getSupabaseBrowserClient();
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const baseUrl = getSiteBaseUrl();
       const nextParam = redirectToPath ? encodeURIComponent(redirectToPath) : '%2Fhome';
-      const redirectTo = `${origin}/auth/callback?next=${nextParam}`;
+      const redirectTo = `${baseUrl}/auth/callback?next=${nextParam}`;
 
       const { error: oauthErr } = await client.auth.signInWithOAuth({
         provider: 'google',
@@ -176,10 +181,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string
   ): Promise<{ error: Error | null; user: User | null }> => {
-    if (password.length < 8) {
-      return { error: new Error('Password must be at least 8 characters long.'), user: null };
-    }
-
     try {
       const client = getSupabaseBrowserClient();
       const { data, error: signInErr } = await client.auth.signInWithPassword({
@@ -200,8 +201,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPasswordForEmail = async (email: string): Promise<{ error: Error | null }> => {
     try {
       const client = getSupabaseBrowserClient();
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const redirectTo = `${origin}/auth/callback?next=/you`;
+      const baseUrl = getSiteBaseUrl();
+      const redirectTo = `${baseUrl}/auth/callback?next=/you`;
 
       const { error: resetErr } = await client.auth.resetPasswordForEmail(email.trim(), {
         redirectTo,
@@ -218,16 +219,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async (): Promise<void> => {
     try {
-      const client = getSupabaseBrowserClient();
-      const { error: signOutErr } = await client.auth.signOut();
-      if (signOutErr) {
-        console.error('Supabase signOut error:', signOutErr.message);
+      if (isConfigured) {
+        const client = getSupabaseBrowserClient();
+        await client.auth.signOut();
       }
-    } catch (err) {
-      console.error('Sign out failed:', err);
-    } finally {
-      setUser(null);
       setSession(null);
+      setUser(null);
+    } catch (err) {
+      console.error('Supabase signOut error:', err);
     }
   };
 
@@ -237,7 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
-        error,
+        isSupabaseConfigured: isConfigured,
         signInWithOtp,
         verifyOtp,
         signInWithGoogle,
@@ -245,7 +244,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithPassword,
         resetPasswordForEmail,
         signOut,
-        isSupabaseConfigured: isConfigured,
       }}
     >
       {children}
@@ -253,6 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
+export function useAuth(): AuthContextType {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

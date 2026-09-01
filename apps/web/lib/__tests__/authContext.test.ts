@@ -1,6 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { getSiteBaseUrl } from '../authContext';
 
 describe('Auth & Session Integration Logic', () => {
+  it('uses NEXT_PUBLIC_SITE_URL if defined, stripping trailing slashes, otherwise falls back to origin', () => {
+    const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://soultribemvpv1.vercel.app/';
+    expect(getSiteBaseUrl()).toBe('https://soultribemvpv1.vercel.app');
+
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    expect(getSiteBaseUrl()).toBe('');
+
+    process.env.NEXT_PUBLIC_SITE_URL = originalEnv;
+  });
+
   it('validates email format before requesting magic link or password auth', () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     expect(emailRegex.test('user@example.com')).toBe(true);
