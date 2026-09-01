@@ -17,6 +17,7 @@ import {
 
 import { AuthGuard } from '../../components/AuthGuard';
 import { getActiveNextBestPrompts } from '../../lib/dimensionPrompts';
+import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 
 export default function ProfilePage() {
   return (
@@ -71,14 +72,21 @@ function ProfileContent() {
     setIsSettingsOpen(false);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validation = validateAvatarFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    const res = await uploadAvatar(profile.id || 'user', file);
+    if (res.success && res.avatarUrl) {
+      setEditPhoto(res.avatarUrl);
+    } else if (res.error) {
+      alert(res.error);
     }
   };
 

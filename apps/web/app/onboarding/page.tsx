@@ -17,6 +17,7 @@ import {
 } from '../../lib/userStore';
 
 import { AuthGuard } from '../../components/AuthGuard';
+import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 
 export default function OnboardingPage() {
   return (
@@ -105,25 +106,21 @@ function OnboardingContent() {
     { key: 'pacing', label: 'Emotional', strength: 0.7, confidence, sentence: `Prefers to ${q7EmotionalPacing ? q7EmotionalPacing.toLowerCase() : 'unfold naturally'}.` },
   ];
 
-  const MAX_MB = 4;
-  const OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!OK_TYPES.includes(file.type)) {
-        alert('Please use a JPG, PNG, or WebP image.');
-        return;
-      }
-      if (file.size > MAX_MB * 1024 * 1024) {
-        alert(`Image must be under ${MAX_MB} MB.`);
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUserPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const validation = validateAvatarFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    const res = await uploadAvatar(user?.id || 'onboarding_user', file);
+    if (res.success && res.avatarUrl) {
+      setUserPhoto(res.avatarUrl);
+    } else if (res.error) {
+      alert(res.error);
     }
   };
 
