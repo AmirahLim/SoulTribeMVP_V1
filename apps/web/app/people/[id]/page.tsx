@@ -199,10 +199,6 @@ function PersonDetailContent() {
   const firstName = nameString.split(' ')[0] || 'Member';
   const possessiveFirstName = `${firstName}'s`;
 
-  const [connected, setConnected] = useState(false);
-  const [starred, setStarred] = useState(false);
-  const [demoActionAlert, setDemoActionAlert] = useState<string | null>(null);
-
   // Real Standing Check (only rendered if person has real outings_attended or outings_hosted > 0)
   const attendedCount = (targetVec?.profile as any)?.outings_attended ?? 0;
   const hostedCount = (targetVec?.profile as any)?.outings_hosted ?? 0;
