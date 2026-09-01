@@ -348,9 +348,9 @@ function ProfileContent() {
               </div>
             </div>
 
-            {(deep.socialAtmosphereOpen || deep.socialEnergyOpen) && (
+            {(deep.socialAtmosphereOpen || (deep as any).socialEnergyOpen) && (
               <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.socialAtmosphereOpen || deep.socialEnergyOpen || 'I usually find one person I click with before I open up to the room.'}”
+                “{deep.socialAtmosphereOpen || (deep as any).socialEnergyOpen || 'I usually find one person I click with before I open up to the room.'}”
               </p>
             )}
           </motion.div>

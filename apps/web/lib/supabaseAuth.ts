@@ -53,7 +53,7 @@ export async function checkHandleAvailability(
 
   // Check synthetic demo profiles first
   const isSyntheticTaken = SYNTHETIC_PROFILES.some(
-    (p) => (p.handle || '').toLowerCase() === formatted
+    (p) => (p.profile?.handle || '').toLowerCase() === formatted
   );
   if (isSyntheticTaken) {
     return { available: false, message: `@${formatted} is already taken.` };

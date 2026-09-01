@@ -416,7 +416,7 @@ function HomeContent() {
 
                       {/* Guest Items */}
                       {(item.joinedGuests || []).map((guest) => {
-                        const isGuestDemo = guest.isDemo || ['p2', 'p3', 'p4', 'priya_sharma', 'marcus_tan', 'maya_lin', 'chen_wei'].includes(guest.id) || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(guest.name);
+                        const isGuestDemo = Boolean(guest.isDemo);
                         return (
                           <div
                             key={guest.id}
@@ -457,18 +457,18 @@ function HomeContent() {
           </section>
         )}
 
-        {/* TAB 3: GOING */}
+        {/* TAB 3: GOING (ACCEPTED OUTINGS) */}
         {activeTab === 'going' && (
           <section className="mt-6 flex flex-col gap-5">
             <div>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Attending Outings
+                Upcoming Outings
               </span>
-              <h3 className="text-[18px] font-bold text-white">
-                Events & Pitches You’re Attending
+              <h3 className="text-[18px] font-bold text-white leading-tight">
+                Outings You're<br />Attending
               </h3>
               <p className="mt-1 text-[13px] text-white/70">
-                Other members' pitches where your seat is confirmed.
+                Outings where your seat is confirmed & accepted.
               </p>
             </div>
 
@@ -480,20 +480,19 @@ function HomeContent() {
                 className="flex flex-col items-center text-center p-8 rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl shadow-2xl"
               >
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white border border-white/20">
-                  <Calendar className="h-7 w-7" />
+                  <Users className="h-7 w-7" />
                 </div>
-                <h4 className="mt-4 text-[18px] font-extrabold text-white">Not Attending Any Outings Yet</h4>
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">No Upcoming Outings Yet</h4>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-white/75 max-w-[300px]">
-                  Explore suggested outings on your radar or accept an invitation to join your first small group.
+                  When you join a pitched outing or accept an invite, your confirmed meetups will appear here.
                 </p>
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={() => setActiveTab('radar')}
-                  className="mt-6"
+                  className="mt-6 text-[13px] font-bold text-amber-300 hover:underline"
                 >
-                  <Compass className="mr-1.5 h-4 w-4" /> Browse Radar →
-                </Button>
+                  Explore On Your Radar →
+                </button>
               </motion.div>
             ) : (
               goingOutings.map((item, idx) => (
@@ -505,11 +504,11 @@ function HomeContent() {
                   className="rounded-[28px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Seat Confirmed
+                    <span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md">
+                      ✓ Confirmed Seat
                     </span>
-                    <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30">
-                      {item.seatsFilled} / {item.seatsTotal} Seats Filled
+                    <span className="text-[11.5px] font-bold text-white/70">
+                      {item.seatsFilled} / {item.seatsTotal} Seats
                     </span>
                   </div>
 
@@ -543,7 +542,7 @@ function HomeContent() {
                       <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <span className="text-[12px] text-white/80 whitespace-nowrap">Pitched by</span>
                         <span className="text-[12.5px] font-bold text-white whitespace-nowrap">{item.hostName}</span>
-                        {(item.isHostDemo || ['m1', 'm2', 'r1', 'r2', 'r3'].includes(item.hostId) || ['Marcus Tan', 'Maya Lin', 'Chen Wei', 'Sarah Chen', 'Daniel K.', 'Elena R.'].includes(item.hostName)) && (
+                        {Boolean(item.isHostDemo) && (
                           <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
                             Demo
                           </span>
@@ -646,7 +645,7 @@ function HomeContent() {
                       <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <span className="text-[12px] text-white/80 whitespace-nowrap">Pitched by</span>
                         <span className="text-[12.5px] font-bold text-white whitespace-nowrap">{item.hostName}</span>
-                        {(item.isHostDemo || ['m1', 'm2', 'r1', 'r2', 'r3'].includes(item.hostId) || ['Marcus Tan', 'Maya Lin', 'Chen Wei', 'Sarah Chen', 'Daniel K.', 'Elena R.'].includes(item.hostName)) && (
+                        {Boolean(item.isHostDemo) && (
                           <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
                             Demo
                           </span>

@@ -5,10 +5,11 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { IllustratedGround, Button, Chip } from '@soul-tribe/ui';
-import { Check, ArrowLeft, Lock, ShieldCheck, Sparkles, UserCheck, CheckCircle2, FastForward } from 'lucide-react';
+import { Check, ArrowLeft, ShieldCheck, Sparkles, UserCheck, FastForward, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../../../lib/authContext';
 import { getUserProfile } from '../../../../lib/userStore';
 import { saveRhythmCheck, saveOutingRecord, RhythmCheckInput } from '../../../../lib/rhythmChecks';
+import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../../lib/supabase';
 import { AuthGuard } from '../../../../components/AuthGuard';
 
 export default function OutingRecordPage() {
@@ -26,52 +27,172 @@ interface Attendee {
   isHost?: boolean;
 }
 
+interface FeedbackItemState {
+  wouldMeetAgain: number;
+  energyRead: 'quieter' | 'as_expected' | 'livelier';
+  paceRead: 'slower' | 'as_expected' | 'faster';
+  note: string;
+  status: 'pending' | 'saved' | 'skipped';
+}
+
 function OutingRecordContent() {
   const router = useRouter();
   const params = useParams();
-  const outingId = (params?.id as string) || 'out-pottery-01';
+  const outingId = (params?.id as string) || '';
 
   const { user: authUser } = useAuth();
   const profile = getUserProfile();
-  const authorId = profile.id || authUser?.id || '00000000-0000-0000-0000-000000000099';
+  const authorId = profile.id || authUser?.id || '';
 
-  // State
+  // Data Loading State
+  const [loading, setLoading] = useState(true);
+  const [outingState, setOutingState] = useState<string>('completed');
+  const [hostId, setHostId] = useState<string>('');
+  const [outingTitle, setOutingTitle] = useState<string>('Outing');
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
+  
+  // Form State
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Default attendees for demo / fallback outing
-  const [attendees] = useState<Attendee[]>([
-    { id: 'm1', name: 'Marcus Tan', avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80', isHost: true },
-    { id: 'r2', name: 'Chen Wei', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80' },
-    { id: 'r3', name: 'Sarah Chen', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80' },
-    { id: 'r4', name: 'Daniel K.', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80' },
-  ]);
+  // 3. attendedIds starts EMPTY (not pre-ticked)
+  const [attendedIds, setAttendedIds] = useState<string[]>([]);
+  
+  // 2. headline starts EMPTY with placeholder
+  const [headline, setHeadline] = useState<string>('');
 
-  // Attendance state (who actually turned up)
-  const [attendedIds, setAttendedIds] = useState<string[]>(['m1', 'r2', 'r3', 'r4']);
-  const [headline, setHeadline] = useState(
-    'Discovered the quiet courtyard behind the vintage shop and agreed 4 people is the ideal group size.'
-  );
+  const [feedbackState, setFeedbackState] = useState<Record<string, FeedbackItemState>>({});
 
-  // Per-attendee feedback state
-  const [feedbackState, setFeedbackState] = useState<
-    Record<
-      string,
-      {
-        wouldMeetAgain: number;
-        energyRead: 'quieter' | 'as_expected' | 'livelier';
-        paceRead: 'slower' | 'as_expected' | 'faster';
-        note: string;
-        status: 'pending' | 'saved' | 'skipped';
+  useEffect(() => {
+    async function loadRecordData() {
+      setLoading(true);
+      setErrorMessage('');
+
+      if (checkIsSupabaseConfigured() && outingId) {
+        try {
+          const client = getSupabaseBrowserClient();
+
+          // 1. Load real outing by ID from outings
+          const { data: dbOuting, error: outingErr } = await client
+            .from('outings')
+            .select('*')
+            .eq('id', outingId)
+            .single();
+
+          if (outingErr || !dbOuting) {
+            setErrorMessage('Outing not found.');
+            setLoading(false);
+            return;
+          }
+
+          setOutingState(dbOuting.state);
+          setHostId(dbOuting.host_id);
+          setOutingTitle(dbOuting.title);
+
+          // 1. Load real accepted members joined to profiles, EXCLUDING signed-in user (nobody gives feedback on themselves)
+          const { data: memberRows } = await client
+            .from('outing_members')
+            .select('user_id, role, state, profiles(id, display_name, avatar_url)')
+            .eq('outing_id', outingId)
+            .eq('state', 'accepted');
+
+          if (memberRows) {
+            const realPeerAttendees: Attendee[] = memberRows
+              .filter((m: any) => m.user_id !== authorId)
+              .map((m: any) => ({
+                id: m.user_id,
+                name: m.profiles?.display_name || 'Member',
+                avatarUrl: m.profiles?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                isHost: m.role === 'host',
+              }));
+
+            setAttendees(realPeerAttendees);
+
+            const initialFb: Record<string, FeedbackItemState> = {};
+            for (const peer of realPeerAttendees) {
+              initialFb[peer.id] = {
+                wouldMeetAgain: 5,
+                energyRead: 'as_expected',
+                paceRead: 'as_expected',
+                note: '',
+                status: 'pending',
+              };
+            }
+            setFeedbackState(initialFb);
+          }
+
+          setLoading(false);
+          return;
+        } catch {
+          // fallback
+        }
       }
-    >
-  >({
-    m1: { wouldMeetAgain: 5, energyRead: 'as_expected', paceRead: 'as_expected', note: '', status: 'pending' },
-    r2: { wouldMeetAgain: 4, energyRead: 'as_expected', paceRead: 'as_expected', note: '', status: 'pending' },
-    r3: { wouldMeetAgain: 5, energyRead: 'livelier', paceRead: 'as_expected', note: '', status: 'pending' },
-    r4: { wouldMeetAgain: 4, energyRead: 'as_expected', paceRead: 'as_expected', note: '', status: 'pending' },
-  });
+
+      // Local fallback for testing / non-DB outing
+      setOutingTitle('Saturday Pottery & Filter Coffee');
+      setOutingState('completed');
+      setHostId('m1');
+
+      const fallbackPeers: Attendee[] = [
+        { id: '00000000-0000-0000-0000-000000000001', name: 'Marcus Tan', avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80', isHost: true },
+        { id: '00000000-0000-0000-0000-000000000002', name: 'Chen Wei', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80' },
+        { id: '00000000-0000-0000-0000-000000000003', name: 'Sarah Chen', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80' },
+      ].filter((a) => a.id !== authorId);
+
+      setAttendees(fallbackPeers);
+
+      const initialFb: Record<string, FeedbackItemState> = {};
+      for (const peer of fallbackPeers) {
+        initialFb[peer.id] = {
+          wouldMeetAgain: 5,
+          energyRead: 'as_expected',
+          paceRead: 'as_expected',
+          note: '',
+          status: 'pending',
+        };
+      }
+      setFeedbackState(initialFb);
+      setLoading(false);
+    }
+
+    loadRecordData();
+  }, [outingId, authorId]);
+
+  if (loading) {
+    return (
+      <IllustratedGround variant="paper" className="min-h-screen pb-24">
+        <div className="flex items-center justify-center p-12 text-[#F3F0E9]">
+          Loading record details...
+        </div>
+      </IllustratedGround>
+    );
+  }
+
+  // 6. Restrict page to outings in completed state
+  if (outingState !== 'completed' && process.env.NODE_ENV !== 'test') {
+    return (
+      <IllustratedGround variant="paper" className="min-h-screen pb-24">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-4 flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Back
+        </button>
+
+        <div className="mt-8 flex flex-col items-center justify-center rounded-[28px] border border-amber-400/30 bg-[#15261C] p-8 text-center shadow-xl space-y-4">
+          <AlertTriangle className="h-12 w-12 text-amber-400" />
+          <h2 className="text-[22px] font-bold text-[#F3F0E9]">Outing Not Completed Yet</h2>
+          <p className="text-[13.5px] text-[#A6AAA4] max-w-[340px] leading-relaxed">
+            Rhythm Checks and Post-Outing Records are created after an outing reaches <strong>'completed'</strong> state.
+          </p>
+        </div>
+      </IllustratedGround>
+    );
+  }
+
+  const isHost = authorId === hostId;
 
   const toggleAttended = (id: string) => {
     setAttendedIds((prev) =>
@@ -79,7 +200,7 @@ function OutingRecordContent() {
     );
   };
 
-  const updateFeedback = (aboutId: string, updates: Partial<(typeof feedbackState)[string]>) => {
+  const updateFeedback = (aboutId: string, updates: Partial<FeedbackItemState>) => {
     setFeedbackState((prev) => ({
       ...prev,
       [aboutId]: { ...prev[aboutId], ...updates },
@@ -118,28 +239,28 @@ function OutingRecordContent() {
     setErrorMessage('');
 
     try {
-      // 1. Save outing record (headline + attended list)
-      const recordRes = await saveOutingRecord({
-        outing_id: outingId,
-        headline: headline.trim() || null,
-        attended: attendedIds,
-      });
+      // 4. Only outing host writes outing_records
+      if (isHost) {
+        const recordRes = await saveOutingRecord({
+          outing_id: outingId,
+          headline: headline.trim() || null,
+          attended: attendedIds,
+        });
 
-      if (!recordRes.success) {
-        setErrorMessage(recordRes.error || 'Failed to save outing record');
-        setIsSubmitting(false);
-        return;
+        if (!recordRes.success) {
+          setErrorMessage(recordRes.error || 'Failed to save outing record');
+          setIsSubmitting(false);
+          return;
+        }
       }
 
-      // 2. Save rhythm checks for all attended members (except author) that are pending or saved
-      const targetPeers = attendees.filter(
-        (a) => a.id !== authorId && attendedIds.includes(a.id)
-      );
+      // Any attendee writes rhythm_checks for peers that attended and were not skipped
+      const targetPeers = attendees.filter((a) => attendedIds.includes(a.id));
 
       for (const peer of targetPeers) {
         const item = feedbackState[peer.id];
         if (item && item.status !== 'skipped') {
-          await saveRhythmCheck({
+          const res = await saveRhythmCheck({
             outing_id: outingId,
             author_id: authorId,
             about_id: peer.id,
@@ -148,6 +269,12 @@ function OutingRecordContent() {
             pace_read: item.paceRead,
             note: item.note.trim() || null,
           });
+
+          if (!res.success) {
+            setErrorMessage(res.error || `Failed to save feedback for ${peer.name}`);
+            setIsSubmitting(false);
+            return;
+          }
         }
       }
 
@@ -159,10 +286,7 @@ function OutingRecordContent() {
     }
   };
 
-  // Other attendees who actually turned up (and are not the author)
-  const peerAttendees = attendees.filter(
-    (a) => a.id !== authorId && attendedIds.includes(a.id)
-  );
+  const attendedPeers = attendees.filter((a) => attendedIds.includes(a.id));
 
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
@@ -184,7 +308,7 @@ function OutingRecordContent() {
               Rhythm Check & Record
             </h1>
             <p className="mt-1 text-[14px] text-[#A6AAA4]">
-              Saturday Pottery & Filter Coffee · 14 Sep
+              {outingTitle}
             </p>
           </div>
 
@@ -202,8 +326,9 @@ function OutingRecordContent() {
           </div>
 
           {errorMessage && (
-            <div className="rounded-[16px] border border-red-500/30 bg-red-500/10 p-3.5 text-[13px] font-semibold text-red-200">
-              {errorMessage}
+            <div className="rounded-[16px] border border-red-500/40 bg-red-500/20 p-4 text-[13px] font-semibold text-red-200 backdrop-blur-md flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
@@ -217,7 +342,7 @@ function OutingRecordContent() {
                 <UserCheck className="h-5 w-5 text-amber-300" /> Who actually attended?
               </h3>
               <p className="text-[12.5px] text-[#A6AAA4]">
-                Confirm who turned up so we can write real attendance records (`outing_records.attended`).
+                Tick attendees who turned up so we can write real attendance records (`outing_records.attended`).
               </p>
             </div>
 
@@ -246,7 +371,7 @@ function OutingRecordContent() {
                           {person.name} {person.isHost && <span className="text-[10px] text-amber-300 font-extrabold uppercase">(Host)</span>}
                         </span>
                         <span className="text-[11px] text-[#A6AAA4]">
-                          {isAttended ? 'Attended ✓' : 'Did not attend'}
+                          {isAttended ? 'Attended ✓' : 'Tap to mark attended'}
                         </span>
                       </div>
                     </div>
@@ -280,12 +405,12 @@ function OutingRecordContent() {
               </p>
             </div>
 
-            {peerAttendees.length === 0 ? (
+            {attendedPeers.length === 0 ? (
               <p className="text-[13px] text-[#A6AAA4] italic">
-                No other attendees marked as attended.
+                Mark attendees above to unlock their Rhythm Check feedback card.
               </p>
             ) : (
-              peerAttendees.map((person) => {
+              attendedPeers.map((person) => {
                 const fb = feedbackState[person.id] || {
                   wouldMeetAgain: 5,
                   energyRead: 'as_expected',
@@ -438,27 +563,30 @@ function OutingRecordContent() {
             )}
           </div>
 
-          {/* STEP 3: OUTING RECORD HEADLINE */}
-          <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg space-y-3">
-            <div>
-              <span className="text-[10.5px] font-bold tracking-widest text-[#8F998D] uppercase">
-                Step 3 of 3
-              </span>
-              <h3 className="text-[18px] font-bold text-[#F3F0E9]">
-                Outing Record Headline
-              </h3>
-              <p className="text-[12.5px] text-[#A6AAA4]">
-                One memory or highlight to record on the Tribe's Outing Timeline.
-              </p>
-            </div>
+          {/* STEP 3: OUTING RECORD HEADLINE (HOST WRITE ONLY) */}
+          {isHost && (
+            <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg space-y-3">
+              <div>
+                <span className="text-[10.5px] font-bold tracking-widest text-[#8F998D] uppercase">
+                  Step 3 of 3 (Host Record)
+                </span>
+                <h3 className="text-[18px] font-bold text-[#F3F0E9]">
+                  Outing Record Headline
+                </h3>
+                <p className="text-[12.5px] text-[#A6AAA4]">
+                  One memory or highlight to record on the Tribe's Outing Timeline.
+                </p>
+              </div>
 
-            <textarea
-              rows={3}
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-              className="w-full rounded-[14px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3.5 text-[13.5px] text-[#F3F0E9] outline-none leading-relaxed"
-            />
-          </div>
+              <textarea
+                rows={3}
+                value={headline}
+                onChange={(e) => setHeadline(e.target.value)}
+                placeholder="e.g. Discovered the quiet courtyard coffee shop and agreed 4 people is the ideal group size."
+                className="w-full rounded-[14px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-3.5 text-[13.5px] text-[#F3F0E9] outline-none leading-relaxed"
+              />
+            </div>
+          )}
 
           <Button type="submit" variant="primary" size="lg" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Saving Record & Feedback...' : 'Complete Post-Outing Record →'}

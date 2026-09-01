@@ -119,7 +119,7 @@ describe('Cold Start Wiring Tests — explorationBoost & nextBestQuestions', () 
         instantYesOutingOpen: 'Pottery session',
         likeMeIfPrompt: 'You value listening',
         interestsList: ['Coffee', 'Ceramics', 'Design'],
-      },
+      } as any,
     };
 
     const prompts = getActiveNextBestPrompts(completeUser, 2);

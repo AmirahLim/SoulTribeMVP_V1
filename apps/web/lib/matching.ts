@@ -71,6 +71,7 @@ export const realCandidateSource: CandidateSource = {
             avatarUrl: p.avatar_url,
             bio: p.bio,
             birthYear: p.birth_year,
+            passCompletionPct: 80,
           },
           p.id
         );

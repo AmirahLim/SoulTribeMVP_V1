@@ -12,10 +12,7 @@
 const nextConfig = {
   transpilePackages: ['@soul-tribe/ui', '@soul-tribe/tokens', '@soul-tribe/core'],
 
-  // TODO (do this once the backend work settles): delete these two blocks so
-  // real TypeScript/lint errors can't ship silently. If a deploy then fails,
-  // read the error, fix it, and try again — don't just turn this back on.
-  typescript: { ignoreBuildErrors: true },
+  // TypeScript build error checking re-enabled
 
   images: {
     unoptimized: true,

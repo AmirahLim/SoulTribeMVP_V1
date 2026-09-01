@@ -17,6 +17,7 @@ const mockUser: UserProfileData = {
   passCompletionPct: 80,
   birthYear: 1995,
   handle: 'tester_99',
+  bio: 'Test bio',
 };
 
 describe('Candidate Source Mode & Safeguards', () => {

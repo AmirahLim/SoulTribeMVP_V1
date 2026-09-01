@@ -180,7 +180,7 @@ function PersonDetailContent() {
 
   // Dynamic Friendship DNA Bloom Petals
   const candidateBloomDimensions = targetVec ? [
-    { key: 'p', label: 'Personality', strength: targetVec.personality?.extraversion ?? 0.5, confidence: targetVec.personality?.confidence ?? 0.7, sentence: PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) },
+    { key: 'p', label: 'Personality', strength: targetVec.personality?.extraversion ?? 0.5, confidence: targetVec.profile?.confidence ?? 0.7, sentence: PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) },
     { key: 'c', label: 'Communication', strength: targetVec.communication?.response_speed_self ?? 0.5, confidence: 0.8, sentence: PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) },
     { key: 'r', label: 'Rhythm', strength: targetVec.social_rhythm?.planning_horizon ?? 0.5, confidence: 0.8, sentence: PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) },
     { key: 'i', label: 'Intent', strength: Math.min(1, (targetVec.intent?.depth ?? 2) / 4), confidence: 0.9, sentence: PHRASES.depth(targetVec.intent?.depth ?? 2) },

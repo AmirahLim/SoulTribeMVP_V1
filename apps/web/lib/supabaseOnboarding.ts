@@ -9,13 +9,13 @@ export interface OnboardingDataToSave {
   bio?: string;
   q1Finding: string[];
   q2Feelings: string[];
-  q3Energy: number;
-  q3GroupSize: string;
+  q3Energy?: number | null;
+  q3GroupSize?: string | null;
   q4Connected: string[];
-  q5PlanningRhythm: string;
+  q5PlanningRhythm?: string | null;
   q5Availability: string[];
   q6Outings: string[];
-  q7EmotionalPacing: string;
+  q7EmotionalPacing?: string | null;
   q8Qualities: string[];
 }
 

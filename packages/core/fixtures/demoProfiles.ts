@@ -420,8 +420,8 @@ export const DEMO_PROFILES: ProfileVector[] = DEMO_NAMES.map((entry, idx) => {
     lifestyle: {
       user_id: id,
       budget_band: budgetBandVal,
-      alcohol: (idx % 3 === 0) ? 'often' : (idx % 2 === 0) ? 'occasional' : 'none',
-      smoking: (idx % 5 === 0) ? 'social' : 'none',
+      alcohol: (idx % 3 === 0) ? 'regular' : (idx % 2 === 0) ? 'occasional' : 'none',
+      smoking: (idx % 5 === 0) ? 'occasional' : 'none',
       activity_level: 0.3 + (idx % 5) * 0.15,
       travel_frequency: 0.4,
       food_prefs: [],
