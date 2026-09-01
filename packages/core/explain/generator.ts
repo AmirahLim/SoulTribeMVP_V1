@@ -73,30 +73,115 @@ export function generateMatchExplanation(
     contrib: d.weight * (d.score - 0.5),
   }));
 
-  // Top positive aligned dimensions
-  const aligned = [...evaluated].sort((a, b) => b.contrib - a.contrib).slice(0, 3);
+  // --- HONEST POSITIVE CLICK SELECTION ---
+  const eligibleClickDims = evaluated.filter(
+    (d) => isDimensionAnswered(vecA, d.key) && isDimensionAnswered(vecB, d.key)
+  );
 
-  // Build positive click text
+  // If no dimension is eligible (very thin profile), return honest thin-profile prompt
+  if (eligibleClickDims.length === 0) {
+    return {
+      click_text: "There isn't enough in your pass yet to say much — add more and this will sharpen.",
+      friction_text: "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
+      generated_by: 'deterministic_template',
+    };
+  }
+
+  // Sort eligible dimensions by score descending (highest alignment score first)
+  eligibleClickDims.sort((a, b) => b.score - a.score);
+
   const clickParts: string[] = [];
+  const candidateClickDims = eligibleClickDims.filter((d) => d.score >= 0.50);
 
-  for (const d of aligned) {
+  for (const d of candidateClickDims) {
+    if (clickParts.length >= 2) break;
+
+    const isStrong = d.score >= 0.70; // Tier 1 (Strong) vs Tier 2 (Mild)
+
     if (d.key === 'intent') {
-      clickParts.push(`You both share alignment on friendship intent: ${PHRASES.depth(vecB.intent?.depth ?? 2)}.`);
+      const valB = vecB.intent?.depth ?? 2;
+      if (isStrong) {
+        clickParts.push(`You and ${nameB} share strong alignment on friendship intent: ${PHRASES.depth(valB)}.`);
+      } else {
+        clickParts.push(`You have a comfortable overlap with ${nameB} on friendship intent (${PHRASES.depth(valB)}).`);
+      }
     } else if (d.key === 'social_rhythm') {
-      clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(vecB.social_rhythm?.planning_horizon ?? 0.5)}.`);
+      const valB = vecB.social_rhythm?.planning_horizon ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
+      } else {
+        clickParts.push(`Planning styles align comfortably; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
+      }
     } else if (d.key === 'communication') {
-      clickParts.push(`You have compatible communication rhythms and ${PHRASES.cadenceNeed(vecB.emotional?.er_cadence_need ?? 0.5)}.`);
+      const valB = vecB.communication?.contact_frequency_self ?? 0.5;
+      const respB = vecB.communication?.response_speed_self ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Compatible messaging rhythms; ${nameB} ${PHRASES.responseSpeed(respB)} and ${PHRASES.cadenceNeed(valB)}.`);
+      } else {
+        clickParts.push(`Messaging expectations are easy-going; ${nameB} ${PHRASES.responseSpeed(respB)}.`);
+      }
     } else if (d.key === 'emotional') {
-      clickParts.push(`${nameB} ${PHRASES.openingPace(vecB.emotional?.er_opening_pace ?? 0.5)}.`);
+      const valB = vecB.emotional?.er_opening_pace ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Emotional opening pace matches well; ${nameB} ${PHRASES.openingPace(valB)}.`);
+      } else {
+        clickParts.push(`Comfortable opening pace with ${nameB} as you get to know each other.`);
+      }
     } else if (d.key === 'personality') {
-      clickParts.push(`You share similar energy balance and curiosity.`);
+      const valB = vecB.personality?.extraversion ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Social energy and curiosity align; ${nameB} ${PHRASES.extraversion(valB)}.`);
+      } else {
+        clickParts.push(`Social energy levels with ${nameB} complement each other comfortably.`);
+      }
     } else if (d.key === 'interests') {
-      clickParts.push(`You have overlapping curiosity in topics you'd enjoy exploring together.`);
+      const sharedInterests = vecB.interests || [];
+      if (isStrong && sharedInterests.length > 0) {
+        clickParts.push(`Shared curiosity with ${nameB} in ${sharedInterests.slice(0, 2).join(' and ')}.`);
+      } else if (sharedInterests.length > 0) {
+        clickParts.push(`Overlap with ${nameB} in ${sharedInterests[0]}.`);
+      } else {
+        clickParts.push(`There is shared curiosity across several interest topics.`);
+      }
+    } else if (d.key === 'values') {
+      const sharedValues = vecB.values || [];
+      if (isStrong && sharedValues.length > 0) {
+        clickParts.push(`Aligned core values with ${nameB} around ${sharedValues.slice(0, 2).join(' and ')}.`);
+      } else if (sharedValues.length > 0) {
+        clickParts.push(`Shared value focus with ${nameB} on ${sharedValues[0]}.`);
+      } else {
+        clickParts.push(`Steady alignment with ${nameB} on underlying core values.`);
+      }
+    } else if (d.key === 'lifestyle') {
+      const valB = vecB.lifestyle?.budget_band ?? 2;
+      const actB = vecB.lifestyle?.activity_level ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Outing budget and activity style match nicely; ${nameB} ${PHRASES.budgetBand(valB)}.`);
+      } else {
+        clickParts.push(`Outing preferences align well; ${nameB} ${PHRASES.activityLevel(actB)}.`);
+      }
+    } else if (d.key === 'experience') {
+      const valB = vecB.experience?.group_size_pref ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Identical group size preference; ${nameB} ${PHRASES.groupSize(valB)}.`);
+      } else {
+        clickParts.push(`Group size preferences with ${nameB} match easily (${PHRASES.groupSize(valB)}).`);
+      }
+    } else if (d.key === 'geography') {
+      const areaB = vecB.geography?.home_area || 'Singapore';
+      if (isStrong) {
+        clickParts.push(`Close neighbourhood proximity with ${nameB} in ${areaB}.`);
+      } else {
+        clickParts.push(`Proximity to ${nameB} in ${areaB} makes meetups straightforward.`);
+      }
     }
   }
 
+  // Fallback if no candidate dimension met score threshold
   if (clickParts.length === 0) {
-    clickParts.push(`You both share grounded expectations for low-pressure, regular catch-ups in Singapore.`);
+    const highest = eligibleClickDims[0];
+    const label = DIM_LABELS[highest.key] || 'social rhythm';
+    clickParts.push(`You have a gentle overall alignment with ${nameB}, with the strongest touchpoint around ${label}.`);
   }
 
   const click_text = clickParts.join(' ');

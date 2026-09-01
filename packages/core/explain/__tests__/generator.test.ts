@@ -5,7 +5,7 @@ import { generateMatchExplanation } from '../generator.ts';
 import { score } from '../../matching/engine.ts';
 import type { ProfileVector } from '../../domain/types.ts';
 
-describe('Fix Friction Explanations — generator.test.ts', () => {
+describe('Fix Friction & Click Explanations — generator.test.ts', () => {
   it('1. Grammar — no third-person verbs following "you"', () => {
     const viewer = DEMO_PROFILES[0];
     const invalidGrammarRegex = /\byou (prefers|replies|plans|tends|enjoys|is|opens|likes|recharges)\b/;
@@ -16,6 +16,11 @@ describe('Fix Friction Explanations — generator.test.ts', () => {
         invalidGrammarRegex.test(explanation.friction_text),
         false,
         `Grammar error in friction_text: "${explanation.friction_text}"`
+      );
+      assert.strictEqual(
+        invalidGrammarRegex.test(explanation.click_text),
+        false,
+        `Grammar error in click_text: "${explanation.click_text}"`
       );
     }
   });
@@ -167,5 +172,64 @@ describe('Fix Friction Explanations — generator.test.ts', () => {
         }
       }
     }
+  });
+
+  it('9. Click text diversity — at least 10 distinct click_text values and <40% fallback for one viewer against all candidates', () => {
+    const viewer = DEMO_PROFILES[0];
+    const clickTexts = new Set<string>();
+    let fallbackCount = 0;
+    const total = DEMO_PROFILES.length - 1;
+
+    for (let i = 1; i < DEMO_PROFILES.length; i++) {
+      const exp = generateMatchExplanation(viewer, DEMO_PROFILES[i]);
+      clickTexts.add(exp.click_text);
+      if (exp.click_text.includes('gentle overall alignment') || exp.click_text.includes("isn't enough in your pass")) {
+        fallbackCount++;
+      }
+    }
+
+    assert.ok(
+      clickTexts.size >= 10,
+      `Expected at least 10 distinct click_text values, got ${clickTexts.size}`
+    );
+    const fallbackPct = fallbackCount / total;
+    assert.ok(
+      fallbackPct < 0.40,
+      `Expected click fallback < 40%, got ${Math.round(fallbackPct * 100)}% (${fallbackCount}/${total})`
+    );
+  });
+
+  it('10. Click text thin profile — empty profile returns honest thin-profile prompt', () => {
+    const thinA: ProfileVector = JSON.parse(JSON.stringify(DEMO_PROFILES[0]));
+    const thinB: ProfileVector = JSON.parse(JSON.stringify(DEMO_PROFILES[1]));
+
+    // Set answered to 0 for all traits
+    thinA.personality.answered = 0;
+    thinA.communication.answered = 0;
+    thinA.social_rhythm.answered = 0;
+    thinA.intent.answered = 0;
+    thinA.emotional.answered = 0;
+    thinA.interests = [];
+    thinA.values = [];
+    thinA.lifestyle.answered = 0;
+    thinA.experience.answered = 0;
+    thinA.geography.answered = 0;
+
+    thinB.personality.answered = 0;
+    thinB.communication.answered = 0;
+    thinB.social_rhythm.answered = 0;
+    thinB.intent.answered = 0;
+    thinB.emotional.answered = 0;
+    thinB.interests = [];
+    thinB.values = [];
+    thinB.lifestyle.answered = 0;
+    thinB.experience.answered = 0;
+    thinB.geography.answered = 0;
+
+    const explanation = generateMatchExplanation(thinA, thinB);
+    assert.strictEqual(
+      explanation.click_text,
+      "There isn't enough in your pass yet to say much — add more and this will sharpen."
+    );
   });
 });
