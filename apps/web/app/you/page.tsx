@@ -85,6 +85,11 @@ function ProfileContent() {
     const res = await uploadAvatar(profile.id || 'user', file);
     if (res.success && res.avatarUrl) {
       setEditPhoto(res.avatarUrl);
+      const updated = setUserProfile({
+        ...profile,
+        avatarUrl: res.avatarUrl,
+      });
+      setProfileState(updated);
     } else if (res.error) {
       alert(res.error);
     }
