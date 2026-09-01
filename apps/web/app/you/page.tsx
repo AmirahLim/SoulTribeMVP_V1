@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
+import { Bloom, SocialDnaBars, Button, Chip, RhythmStrip } from '@soul-tribe/ui';
+import { ONBOARDING_INTEREST_OPTIONS } from '@soul-tribe/core';
+import { saveOnboardingToSupabase } from '../../lib/supabaseOnboarding';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut, Calendar, Check
 } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 import {
@@ -42,10 +44,85 @@ function ProfileContent() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStandingGuideOpen, setIsStandingGuideOpen] = useState(false);
+  const [isOnboardingEditOpen, setIsOnboardingEditOpen] = useState(false);
+  const [onboardingSavedMessage, setOnboardingSavedMessage] = useState(false);
+
   const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
+
+  const [q1Finding, setQ1Finding] = useState<string[]>([]);
+  const [q2Feelings, setQ2Feelings] = useState<string[]>([]);
+  const [q3GroupSize, setQ3GroupSize] = useState<string>('3–4 people');
+  const [q4Connected, setQ4Connected] = useState<string[]>([]);
+  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string>('Flexible');
+  const [q5Availability, setQ5Availability] = useState<string[]>([]);
+  const [q6Outings, setQ6Outings] = useState<string[]>([]);
+  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string>('Balanced opener');
+  const [q8Qualities, setQ8Qualities] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (isOnboardingEditOpen) {
+      setQ1Finding(profile.q1Finding || ['Close 1-on-1 friendships']);
+      setQ2Feelings(profile.q2Feelings || ['Deep 1-on-1s', 'Chill & relaxed']);
+      setQ3GroupSize(profile.q3GroupSize || '3–4 people');
+      setQ4Connected(profile.q4Connected || ['Voice notes', 'Regular check-ins']);
+      setQ5PlanningRhythm(profile.q5PlanningRhythm || 'Flexible');
+      setQ5Availability(profile.q5Availability || ['Fri night', 'Sat night']);
+      setQ6Outings(profile.q6Outings || ['Coffee & Cafes', 'Boardgames & Gaming']);
+      setQ7EmotionalPacing(profile.q7EmotionalPacing || 'Balanced opener');
+      setQ8Qualities(profile.q8Qualities || ['Authenticity', 'Reliability']);
+    }
+  }, [isOnboardingEditOpen, profile]);
+
+  const handleSaveOnboardingAnswers = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const updated = setUserProfile({
+      ...profile,
+      q1Finding,
+      q2Feelings,
+      q3GroupSize,
+      q4Connected,
+      q5PlanningRhythm,
+      q5Availability,
+      q6Outings,
+      q7EmotionalPacing,
+      q8Qualities,
+    });
+    setProfileState(updated);
+    setOnboardingSavedMessage(true);
+
+    if (authUser?.id) {
+      try {
+        await saveOnboardingToSupabase(authUser.id, {
+          displayName: profile.displayName,
+          handle: profile.handle || profile.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+          homeArea: profile.homeArea,
+          birthYear: profile.birthYear || 1995,
+          avatarUrl: profile.avatarUrl,
+          bio: profile.bio,
+          q1Finding,
+          q2Feelings,
+          q3Energy: 0.5,
+          q3GroupSize,
+          q4Connected,
+          q5PlanningRhythm,
+          q5Availability,
+          q6Outings,
+          q7EmotionalPacing,
+          q8Qualities,
+        });
+      } catch (err) {
+        console.error('Error syncing onboarding edits to Supabase:', err);
+      }
+    }
+
+    setTimeout(() => {
+      setOnboardingSavedMessage(false);
+      setIsOnboardingEditOpen(false);
+    }, 1200);
+  };
 
   const handleSignOutAction = async () => {
     await signOut();
@@ -296,16 +373,25 @@ function ProfileContent() {
             {profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
           </p>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             <div className="text-[12.5px] text-white/80">
               <strong className="text-white font-semibold">{profile.homeArea}</strong>
             </div>
 
-            <Link href="/you/deeper">
-              <Button variant="secondary" size="sm">
-                Deepen Tribal Pass →
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsOnboardingEditOpen(true)}
+                className="rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-1.5 shadow-md"
+              >
+                <Calendar className="h-3.5 w-3.5 text-amber-300" /> Edit Availability & Answers
+              </button>
+              <Link href="/you/deeper">
+                <Button variant="secondary" size="sm">
+                  Deepen Pass →
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -904,6 +990,204 @@ function ProfileContent() {
                   >
                     <LogOut className="h-4 w-4" /> Sign Out
                   </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* EDIT ONBOARDING & AVAILABILITY CALENDAR MODAL */}
+        {isOnboardingEditOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+            <div className="relative w-full max-w-[460px] max-h-[85vh] overflow-y-auto rounded-[28px] border border-white/20 bg-black/90 p-6 text-white shadow-2xl backdrop-blur-xl scrollbar-none">
+              <div className="flex items-center justify-between pb-4 border-b border-white/15">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-amber-300" />
+                  <h2 className="text-[18px] font-bold">Edit Availability & Onboarding</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOnboardingEditOpen(false)}
+                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {onboardingSavedMessage && (
+                <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-emerald-400/40 bg-emerald-500/20 p-3 text-[13px] font-bold text-emerald-200">
+                  <Check className="h-4 w-4 text-emerald-300" />
+                  <span>Onboarding answers & availability updated successfully!</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveOnboardingAnswers} className="mt-4 flex flex-col gap-6">
+                {/* 1. WEEKLY AVAILABILITY CALENDAR (Q5) */}
+                <div className="rounded-[20px] border border-white/15 bg-white/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[13px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-amber-300" /> Weekly Availability Calendar
+                    </label>
+                    <span className="text-[11px] text-white/70">Tap to toggle slots</span>
+                  </div>
+
+                  <RhythmStrip
+                    interactive={true}
+                    userAvailability={q5Availability}
+                    onToggleSlot={(slot) => {
+                      if (q5Availability.includes(slot)) {
+                        setQ5Availability(q5Availability.filter((s) => s !== slot));
+                      } else {
+                        setQ5Availability([...q5Availability, slot]);
+                      }
+                    }}
+                  />
+
+                  <div className="pt-2">
+                    <label className="text-[12px] font-semibold text-white/80">Planning Horizon</label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {['Spontaneous', 'Plan in advance', 'Flexible'].map((rhythm) => (
+                        <Chip
+                          key={rhythm}
+                          label={rhythm}
+                          selected={q5PlanningRhythm === rhythm}
+                          onClick={() => setQ5PlanningRhythm(rhythm)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. FRIENDSHIP INTENT (Q1) */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-white">Q1: What are you hoping to find?</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      'Close 1-on-1 friendships',
+                      'Activity & outing buddies',
+                      'Small inner circle',
+                      'Casual social events',
+                      'Networking & career chats'
+                    ].map((item) => {
+                      const sel = q1Finding.includes(item);
+                      return (
+                        <Chip
+                          key={item}
+                          label={item}
+                          selected={sel}
+                          onClick={() => {
+                            setQ1Finding(sel ? q1Finding.filter((s) => s !== item) : [...q1Finding, item]);
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. COMMUNICATION FEEL & MEDIUMS (Q2 & Q4) */}
+                <div className="space-y-3 border-t border-white/15 pt-4">
+                  <div>
+                    <label className="text-[13px] font-bold text-white">Q2: How do you like social connections to feel?</label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {['Deep 1-on-1s', 'Chill & relaxed', 'Active & energetic', 'Thoughtful & quiet'].map((feel) => {
+                        const sel = q2Feelings.includes(feel);
+                        return (
+                          <Chip
+                            key={feel}
+                            label={feel}
+                            selected={sel}
+                            onClick={() => {
+                              setQ2Feelings(sel ? q2Feelings.filter((s) => s !== feel) : [...q2Feelings, feel]);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[13px] font-bold text-white">Q4: Preferred communication channels</label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {['Voice notes', 'Regular check-ins', 'Memes & casual text', 'Spontaneous calls', 'In-person meetup focus'].map((med) => {
+                        const sel = q4Connected.includes(med);
+                        return (
+                          <Chip
+                            key={med}
+                            label={med}
+                            selected={sel}
+                            onClick={() => {
+                              setQ4Connected(sel ? q4Connected.filter((s) => s !== med) : [...q4Connected, med]);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. OUTING DNA & INTERESTS (Q6) */}
+                <div className="space-y-2 border-t border-white/15 pt-4">
+                  <label className="text-[13.5px] font-bold text-white">Q6: Outing DNA & Preferred Activities</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ONBOARDING_INTEREST_OPTIONS.map((opt) => {
+                      const sel = q6Outings.includes(opt);
+                      return (
+                        <Chip
+                          key={opt}
+                          label={opt}
+                          selected={sel}
+                          onClick={() => {
+                            setQ6Outings(sel ? q6Outings.filter((s) => s !== opt) : [...q6Outings, opt]);
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 5. EMOTIONAL PACING & CORE VALUES (Q7 & Q8) */}
+                <div className="space-y-3 border-t border-white/15 pt-4">
+                  <div>
+                    <label className="text-[13px] font-bold text-white">Q7: Emotional opening pace</label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {['Fast opener', 'Balanced opener', 'Slow burn'].map((pace) => (
+                        <Chip
+                          key={pace}
+                          label={pace}
+                          selected={q7EmotionalPacing === pace}
+                          onClick={() => setQ7EmotionalPacing(pace)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[13px] font-bold text-white">Q8: Core values you appreciate in friends</label>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {['Authenticity', 'Reliability', 'Curiosity', 'Empathy', 'Humor & Playfulness', 'Open-mindedness'].map((val) => {
+                        const sel = q8Qualities.includes(val);
+                        return (
+                          <Chip
+                            key={val}
+                            label={val}
+                            selected={sel}
+                            onClick={() => {
+                              setQ8Qualities(sel ? q8Qualities.filter((s) => s !== val) : [...q8Qualities, val]);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 flex gap-3 pt-3 border-t border-white/15">
+                  <Button variant="secondary" size="sm" type="button" onClick={() => setIsOnboardingEditOpen(false)} className="w-1/2">
+                    Cancel
+                  </Button>
+                  <Button variant="primary" size="sm" type="submit" className="w-1/2">
+                    Save Onboarding & Availability
+                  </Button>
                 </div>
               </form>
             </div>
