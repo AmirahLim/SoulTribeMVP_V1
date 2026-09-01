@@ -41,8 +41,6 @@ export function validateAvatarFile(file: File): AvatarValidationResult {
 }
 
 /**
- * Uploads an avatar image to Supabase Storage (avatars bucket) scoped under `avatars/{userId}/...`.
-/**
  * Reads a File as a base64 Data URL and updates user profile if connected.
  */
 async function readFileAsDataUrl(
