@@ -36,20 +36,32 @@ function isDimensionAnswered(vec: ProfileVector, key: string): boolean {
 
 function formatInterestName(item: any): string {
   if (!item) return '';
-  if (typeof item === 'string') return item;
-  if (typeof item === 'object') {
-    return item.node_name || item.node_path || item.name || item.interest_name || '';
+  let str = '';
+  if (typeof item === 'string') str = item;
+  else if (typeof item === 'object') {
+    str = item.node_name || item.node_path || item.name || item.interest_name || '';
+  } else {
+    str = String(item);
   }
-  return String(item);
+  if (!str) return '';
+  return str.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 function formatValueName(item: any): string {
   if (!item) return '';
-  if (typeof item === 'string') return item;
-  if (typeof item === 'object') {
-    return item.value_name || item.name || item.label || '';
+  let str = '';
+  if (typeof item === 'string') str = item;
+  else if (typeof item === 'object') {
+    str = item.value_name || item.name || item.label || item.value_key || '';
+  } else {
+    str = String(item);
   }
-  return String(item);
+  if (!str) return '';
+  str = str.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  if (str.toLowerCase().startsWith('i really respect people who ')) {
+    str = str.substring('i really respect people who '.length);
+  }
+  return str;
 }
 
 const DIM_LABELS: Record<string, string> = {
@@ -58,10 +70,11 @@ const DIM_LABELS: Record<string, string> = {
   social_rhythm: 'planning style',
   intent: 'friendship depth expectations',
   emotional: 'emotional opening pace',
-  interests: 'interest overlap',
-  values: 'core values',
-  lifestyle: 'outing budget & activity style',
-  experience: 'group size preference',
+  interests: 'activity interests',
+  values: 'underlying core values',
+  lifestyle: 'lifestyle habits',
+  experience: 'outing preferences',
+  geography: 'neighborhood location',
 };
 
 const CLICK_DIM_PRIORITY: Record<string, number> = {
@@ -110,7 +123,7 @@ export function generateMatchExplanation(
   if (eligibleClickDims.length === 0) {
     return {
       click_text: `Shared community member in Singapore with ${nameB}.`,
-      friction_text: `${nameB} is still completing their Tribal Pass — specific friction points will sharpen as more answers are shared.`,
+      friction_text: `${nameB} is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared.`,
       generated_by: 'deterministic_template',
     };
   }
@@ -224,7 +237,7 @@ export function generateMatchExplanation(
   if (eligibleDims.length === 0) {
     return {
       click_text,
-      friction_text: "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
+      friction_text: "There isn't enough in your pass yet to flag friction honestly - add more and this will sharpen.",
       generated_by: 'deterministic_template',
     };
   }
@@ -361,10 +374,10 @@ export function generateMatchExplanation(
   if (frictionParts.length === 0) {
     const weakest = eligibleDims.filter((d) => d.key !== 'geography')[0];
     if (!weakest || eligibleDims.length <= 1) {
-      frictionParts.push(`${nameB} is still completing their Tribal Pass — as more section answers are shared, specific friction flags will sharpen.`);
+      frictionParts.push(`${nameB} is still completing their Tribal Pass - as more section answers are shared, specific friction flags will sharpen.`);
     } else {
       const label = DIM_LABELS[weakest.key] || 'social rhythm';
-      frictionParts.push(`Nothing much to flag — the mildest difference is around ${label}, and it's small.`);
+      frictionParts.push(`Nothing much to flag - the mildest difference is around ${label}, and it's small.`);
     }
   }
 

@@ -96,7 +96,7 @@ describe('Fix Friction & Click Explanations — generator.test.ts', () => {
     const explanation = generateMatchExplanation(thinA, thinB);
     assert.strictEqual(
       explanation.friction_text,
-      "Marcus Tan is still completing their Tribal Pass — specific friction points will sharpen as more answers are shared."
+      "Marcus Tan is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared."
     );
   });
 

@@ -185,7 +185,7 @@ function PeopleListContent() {
 
                           {person.provisional && (
                             <span className="rounded-full bg-amber-500/80 px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-wide text-black uppercase backdrop-blur-md">
-                              Early Match — Complete pass for details
+                              Early Match - Complete pass for details
                             </span>
                           )}
                         </div>

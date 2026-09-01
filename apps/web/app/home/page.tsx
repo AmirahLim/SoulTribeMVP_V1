@@ -105,7 +105,7 @@ function HomeContent() {
       } catch (err: any) {
         console.error('[SoulTribe Error] Failed to load home dashboard data:', err);
         if (!cancelled) {
-          setLoadError("Couldn't load members right now — try again");
+          setLoadError("Couldn't load members right now - try again");
         }
       } finally {
         if (!cancelled) setLoading(false);
