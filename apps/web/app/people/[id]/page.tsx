@@ -239,13 +239,15 @@ function PersonDetailContent() {
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[20px] border border-amber-400/60 bg-amber-500/20 p-4 text-[13px] text-amber-200 shadow-xl flex items-start gap-3"
+            className="rounded-[20px] border border-amber-400/40 bg-amber-500/15 p-4 text-[13px] text-amber-200 backdrop-blur-md shadow-xl flex items-start gap-3.5 overflow-hidden"
           >
-            <span className="text-[18px]">⚠️</span>
-            <div>
-              <p className="font-extrabold uppercase text-amber-300 tracking-wider text-[11px]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/20 border border-amber-400/30 text-amber-300 shrink-0 mt-0.5 shadow-sm text-[14px]">
+              ⚠️
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-extrabold uppercase text-amber-300 tracking-wider text-[11px] leading-tight">
                 DEMO PROFILE — DISPLAY ONLY
-              </p>
+              </h4>
               <p className="mt-1 text-amber-100/90 leading-relaxed text-[12.5px]">
                 This synthetic candidate is for demonstration purposes only. Demo profiles do not exist in the database and cannot be invited to outings, pitched, or connected with.
               </p>

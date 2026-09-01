@@ -313,11 +313,13 @@ function OutingRecordContent() {
           </div>
 
           {/* PRIVACY GUARANTEE BANNER */}
-          <div className="rounded-[20px] border border-amber-400/30 bg-amber-500/10 p-4 backdrop-blur-md flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-[13.5px] font-bold text-amber-200 uppercase tracking-wider">
-                🔒 Private & Confidential Feedback
+          <div className="rounded-[20px] border border-amber-400/30 bg-amber-500/10 p-4 backdrop-blur-md flex items-start gap-3.5 overflow-hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/20 border border-amber-400/30 text-amber-300 shrink-0 mt-0.5 shadow-sm">
+              <ShieldCheck className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-[12px] font-extrabold text-amber-300 uppercase tracking-wider leading-tight">
+                Private & Confidential Feedback
               </h4>
               <p className="mt-1 text-[12.5px] text-[#F3F0E9]/90 leading-relaxed">
                 Your Rhythm Check feedback is strictly private and used exclusively by the algorithm to calibrate future matching weights. The people rated will <strong>never</strong> see your responses.

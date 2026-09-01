@@ -97,13 +97,15 @@ function PeopleListContent() {
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 rounded-[22px] border border-amber-400/40 bg-amber-500/15 p-4.5 text-[13px] text-amber-200 backdrop-blur-md shadow-xl flex items-start gap-3"
+            className="mt-6 rounded-[20px] border border-amber-400/40 bg-amber-500/15 p-4 sm:p-5 text-[13px] text-amber-200 backdrop-blur-md shadow-xl flex items-start gap-3.5 overflow-hidden"
           >
-            <Users className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-extrabold text-amber-300 uppercase tracking-wider text-[11px]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/20 border border-amber-400/30 text-amber-300 shrink-0 mt-0.5 shadow-sm">
+              <Users className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-extrabold text-amber-300 uppercase tracking-wider text-[11px] leading-tight">
                 Small Community Mode
-              </p>
+              </h4>
               <p className="mt-1 text-amber-100/90 leading-relaxed text-[13px]">
                 You're one of the first {realMemberCount} members in {city}. Matching sharpens as more people join - for now, here's everyone nearby.
               </p>
