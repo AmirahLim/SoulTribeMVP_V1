@@ -34,27 +34,33 @@ function OnboardingContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
-
-  // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
   const [userName, setUserName] = useState('');
   const [userHandle, setUserHandle] = useState('');
-  const [handleEdited, setHandleEdited] = useState(false);
   const [userDob, setUserDob] = useState('');
   const [userPhoto, setUserPhoto] = useState<string>('');
   const [userCity, setUserCity] = useState<string>('Singapore');
   const [step1Error, setStep1Error] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedHandle = localStorage.getItem('soul_tribe_handle');
+      const profile = getUserProfile();
+      if (storedHandle) {
+        setUserHandle(storedHandle);
+      } else if (profile.handle) {
+        setUserHandle(profile.handle);
+      }
+      if (profile.displayName && profile.displayName !== 'Priya Sharma') {
+        setUserName(profile.displayName);
+      }
+    }
+  }, []);
+
   const handleNameChange = (name: string) => {
     setUserName(name);
-    if (!handleEdited) {
+    if (!userHandle) {
       setUserHandle(deriveSuggestedHandle(name));
     }
-  };
-
-  const handleHandleChange = (handleVal: string) => {
-    setHandleEdited(true);
-    setUserHandle(handleVal);
   };
 
   // Q1: What are you hoping to find here? (Up to 3)
@@ -346,29 +352,6 @@ function OnboardingContent() {
                       />
                     </div>
 
-                    {/* Username / Handle Field */}
-                    <div>
-                      <label className="text-[13px] font-semibold text-white">Username (Handle) *</label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-4 top-3 text-[14px] font-medium text-white/50">@</span>
-                        <input
-                          type="text"
-                          required
-                          placeholder="priya_sharma"
-                          value={userHandle}
-                          onChange={(e) => handleHandleChange(e.target.value)}
-                          className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 pl-8 pr-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
-                        />
-                      </div>
-                      <p className="mt-1 text-[11.5px] text-white/60">
-                        3–20 characters: lowercase letters, numbers, and underscores. Must be unique.
-                      </p>
-                      {userHandle && !validateHandle(userHandle).valid && (
-                        <p className="mt-1 text-[12px] font-medium text-rose-400">
-                          {validateHandle(userHandle).error}
-                        </p>
-                      )}
-                    </div>
 
                     {/* Date of Birth Field */}
                     <div>
