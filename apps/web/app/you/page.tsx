@@ -53,25 +53,48 @@ function ProfileContent() {
   };
 
   useEffect(() => {
-    const loaded = getUserProfile();
+    let loaded = getUserProfile();
     setProfileState(loaded);
     setEditName(loaded.displayName);
     setEditArea(loaded.homeArea);
     setEditBio(loaded.bio);
     setEditPhoto(loaded.avatarUrl);
 
-    if (authUser?.id && loaded.avatarUrl) {
+    if (authUser?.id) {
       try {
         const client = getSupabaseBrowserClient();
         client
           .from('profiles')
-          .update({
-            display_name: loaded.displayName,
-            home_area: loaded.homeArea,
-            bio: loaded.bio,
-            avatar_url: loaded.avatarUrl,
-          })
-          .eq('id', authUser.id);
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle()
+          .then(({ data: remoteProfile }) => {
+            if (remoteProfile) {
+              const merged = setUserProfile({
+                ...loaded,
+                displayName: remoteProfile.display_name || loaded.displayName,
+                homeArea: remoteProfile.home_area || loaded.homeArea,
+                avatarUrl: remoteProfile.avatar_url || loaded.avatarUrl,
+                bio: remoteProfile.bio || loaded.bio,
+                handle: remoteProfile.handle || loaded.handle,
+              });
+              setProfileState(merged);
+              setEditName(merged.displayName);
+              setEditArea(merged.homeArea);
+              setEditBio(merged.bio);
+              setEditPhoto(merged.avatarUrl);
+            } else if (loaded.avatarUrl) {
+              client
+                .from('profiles')
+                .update({
+                  display_name: loaded.displayName,
+                  home_area: loaded.homeArea,
+                  bio: loaded.bio,
+                  avatar_url: loaded.avatarUrl,
+                })
+                .eq('id', authUser.id);
+            }
+          });
       } catch {
         // DB sync fallback
       }

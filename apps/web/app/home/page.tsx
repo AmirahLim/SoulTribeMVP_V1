@@ -9,7 +9,7 @@ import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode }
 import { fetchGoingOutings, fetchRadarOutings, OutingItem } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
-import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
+import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
 import { useAuth } from '../../lib/authContext';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
@@ -42,25 +42,43 @@ function HomeContent() {
 
     (async () => {
       try {
-        const userProf = getUserProfile();
-        setProfileState(userProf);
+        let userProf = getUserProfile();
 
-        if (user?.id && userProf.avatarUrl && isSupabaseConfigured) {
+        if (user?.id && isSupabaseConfigured) {
           try {
             const client = getSupabaseBrowserClient();
-            await client
+            const { data: remoteProfile } = await client
               .from('profiles')
-              .update({
-                display_name: userProf.displayName,
-                home_area: userProf.homeArea,
-                bio: userProf.bio,
-                avatar_url: userProf.avatarUrl,
-              })
-              .eq('id', user.id);
+              .select('*')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            if (remoteProfile) {
+              userProf = setUserProfile({
+                ...userProf,
+                displayName: remoteProfile.display_name || userProf.displayName,
+                homeArea: remoteProfile.home_area || userProf.homeArea,
+                avatarUrl: remoteProfile.avatar_url || userProf.avatarUrl,
+                bio: remoteProfile.bio || userProf.bio,
+                handle: remoteProfile.handle || userProf.handle,
+              });
+            } else if (userProf.avatarUrl) {
+              await client
+                .from('profiles')
+                .update({
+                  display_name: userProf.displayName,
+                  home_area: userProf.homeArea,
+                  bio: userProf.bio,
+                  avatar_url: userProf.avatarUrl,
+                })
+                .eq('id', user.id);
+            }
           } catch {
             // Ignore DB sync errors
           }
         }
+
+        setProfileState(userProf);
 
         const userPitchesData = getUserPitches();
         setPitches(userPitchesData);
