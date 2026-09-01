@@ -88,8 +88,9 @@ export const realCandidateSource: CandidateSource = {
 
 export const demoCandidateSource: CandidateSource = {
   async getCandidates(opts?: { area?: string; limit?: number; all?: boolean }): Promise<CandidateVector[]> {
-    // Cap demo bots to 5 max (within requested 3-5 range) to make room for real members
-    const pool = (opts as any)?.all ? DEMO_PROFILES : DEMO_PROFILES.slice(0, 5);
+    // Default to 3 demo candidates unless limit or all option is specified
+    const maxCount = opts?.limit ?? ((opts as any)?.all ? 40 : 3);
+    const pool = DEMO_PROFILES.slice(0, maxCount);
     return pool.map((vec) => ({
       ...vec,
       isDemo: true,
@@ -430,7 +431,7 @@ export async function getRankedMatches(
   const limit = opts?.limit ?? 6;
   const viewerVec = toProfileVector(user, effectiveId);
   const source = getActiveCandidateSource();
-  const candidateVecs = await source.getCandidates({ area: opts?.area });
+  const candidateVecs = await source.getCandidates({ area: opts?.area, limit: opts?.limit });
 
   const context: MatchContext = {
     activity_category: opts?.activityCategory as any,
