@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from './supabase';
+import type { DeepProfileAnswers } from './userStore';
 
 export interface OnboardingDataToSave {
   displayName: string;
@@ -231,11 +232,210 @@ export async function saveOnboardingToSupabase(
       return { success: false, error: `Failed to save geography traits: ${geoErr.message}` };
     }
 
+    // 9. Save user_interests & user_values from onboarding (Q6 Outings & Q8 Qualities)
+    await saveUserInterestsAndValues(userId, data.q6Outings || [], data.q8Qualities || []);
+
     return { success: true };
   } catch (err: any) {
     return {
       success: false,
       error: err.message || 'An unexpected error occurred while saving your profile to Supabase.',
     };
+  }
+}
+
+export async function saveUserInterestsAndValues(
+  userId: string,
+  outings: string[],
+  qualities: string[]
+) {
+  try {
+    const supabase = getSupabaseBrowserClient();
+
+    if (outings && outings.length > 0) {
+      const interestNodeMap: Record<string, number> = {
+        'Art & Design': 1,
+        'Contemporary Art': 2,
+        'Pottery & Ceramics': 5,
+        'Food & Dining': 6,
+        'Specialty Coffee': 7,
+        'Hawker Exploration': 8,
+        'Natural Wine': 9,
+        'Outdoors & Movement': 10,
+        'Trail Running': 11,
+        'Bouldering': 12,
+        'Cycling (East Coast)': 13,
+        'Books & Ideas': 14,
+        'Philosophy': 15,
+        'Fiction Book Clubs': 16,
+        'Making & Craft': 17,
+        'Woodworking': 18,
+        'Analog Photography': 19,
+      };
+
+      const interestRows = outings.map((name, idx) => ({
+        user_id: userId,
+        node_id: interestNodeMap[name] || ((idx % 19) + 1),
+        affinity: 'love',
+      }));
+
+      await supabase.from('user_interests').upsert(interestRows, { onConflict: 'user_id, node_id' });
+    }
+
+    if (qualities && qualities.length > 0) {
+      const valueRows = qualities.map((q) => ({
+        user_id: userId,
+        value_key: q.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+        stance: 0.8,
+        importance: 0.8,
+        visibility: 'matching_only',
+      }));
+
+      await supabase.from('user_values').upsert(valueRows, { onConflict: 'user_id, value_key' });
+    }
+  } catch (err) {
+    console.error('saveUserInterestsAndValues error:', err);
+  }
+}
+
+export async function saveDeeperPassToSupabase(
+  userId: string,
+  deepProfile: DeepProfileAnswers,
+  completedCategoryNums: number[]
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = getSupabaseBrowserClient();
+
+    // 1. Update profiles table with deep_profile, completed_categories, pass_completion_pct
+    const passPct = Math.min(100, Math.max(10, completedCategoryNums.length * 10));
+    await supabase
+      .from('profiles')
+      .update({
+        deep_profile: deepProfile,
+        completed_categories: completedCategoryNums,
+        pass_completion_pct: passPct,
+      })
+      .eq('id', userId);
+
+    // Import ANSWER_MAP dynamically if needed
+    const { ANSWER_MAP } = await import('./profileAdapter');
+
+    // 2. Trait Intent (Section 3)
+    const intentAnswered = deepProfile.friendshipPillars ? 3 : (deepProfile.realFriendOpen ? 2 : 0);
+    if (intentAnswered > 0) {
+      await supabase.from('trait_intent').upsert(
+        {
+          user_id: userId,
+          intents: deepProfile.friendshipPillars ? [deepProfile.friendshipPillars] : ['friendship', 'close_friends'],
+          depth: deepProfile.friendshipPillars ? 3 : 2,
+          answered: intentAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 3. Trait Communication (Section 2)
+    const messagingVal = ANSWER_MAP.messagingStyle(deepProfile.messagingStyle);
+    const commAnswered = (messagingVal ? 5 : 0) + (deepProfile.messagingStyleOpen ? 3 : 0);
+    if (commAnswered > 0) {
+      await supabase.from('trait_communication').upsert(
+        {
+          user_id: userId,
+          contact_frequency_self: messagingVal?.contact_frequency_self ?? 0.5,
+          contact_frequency_expect: messagingVal?.contact_frequency_self ?? 0.5,
+          response_speed_self: messagingVal?.response_speed_self ?? 0.5,
+          response_speed_expect: messagingVal?.response_speed_self ?? 0.5,
+          message_length: messagingVal?.message_length ?? 0.5,
+          conv_styles: deepProfile.messagingStyleOpen ? [deepProfile.messagingStyleOpen] : ['deep'],
+          mediums: ['text'],
+          answered: commAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 4. Trait Personality (Section 5)
+    const mbtiMap = ANSWER_MAP.mbti(deepProfile.mbti);
+    const socialVibeVal = ANSWER_MAP.socialVibe(deepProfile.socialVibe);
+    const saturdayVal = ANSWER_MAP.idealSaturday(deepProfile.idealSaturday);
+    const tripVal = ANSWER_MAP.spontaneousTrip(deepProfile.spontaneousTrip);
+    const persAnswered = (mbtiMap ? 10 : 0) + (socialVibeVal ? 3 : 0) + (deepProfile.sunSign ? 2 : 0);
+    if (persAnswered > 0) {
+      await supabase.from('trait_personality').upsert(
+        {
+          user_id: userId,
+          openness: mbtiMap?.openness ?? 0.6,
+          conscientiousness: mbtiMap?.conscientiousness ?? 0.5,
+          extraversion: mbtiMap?.extraversion ?? 0.5,
+          agreeableness: mbtiMap?.agreeableness ?? 0.6,
+          serious_playful: socialVibeVal?.serious_playful ?? 0.5,
+          intensity_easygoing: socialVibeVal?.intensity_easygoing ?? 0.5,
+          novelty_seeking: mbtiMap?.novelty_seeking ?? saturdayVal?.novelty ?? (tripVal ?? 0.5),
+          answered: persAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 5. Trait Social Rhythm (Section 4)
+    const rhythmAnswered = (saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : 0);
+    if (rhythmAnswered > 0) {
+      await supabase.from('trait_social_rhythm').upsert(
+        {
+          user_id: userId,
+          planning_horizon: saturdayVal?.planning_horizon ?? 0.5,
+          availability: ['sat_midday', 'sun_midday'],
+          answered: rhythmAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 6. Trait Emotional (Section 9)
+    const supportVal = ANSWER_MAP.supportStyle(deepProfile.supportStyle);
+    const emoAnswered = (supportVal !== null ? 5 : 0) + (deepProfile.likeMeIfPrompt ? 2 : 0);
+    if (emoAnswered > 0) {
+      await supabase.from('trait_emotional').upsert(
+        {
+          user_id: userId,
+          advice_vs_listening_self: supportVal ?? 0.5,
+          advice_vs_listening_expect: supportVal ?? 0.5,
+          er_opening_pace: 0.5,
+          answered: emoAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 7. Trait Lifestyle & Experience (Sections 8 & 10)
+    const groupSizeVal = ANSWER_MAP.groupSize(deepProfile.groupSize);
+    const expAnswered = groupSizeVal !== null ? 4 : 0;
+    if (expAnswered > 0) {
+      await supabase.from('trait_experience').upsert(
+        {
+          user_id: userId,
+          group_size_pref: groupSizeVal ?? 0.5,
+          novelty: saturdayVal?.novelty ?? 0.5,
+          answered: expAnswered,
+        },
+        { onConflict: 'user_id' }
+      );
+    }
+
+    // 8. Save user_interests & user_values
+    const interestsToSave: string[] = [];
+    if (deepProfile.talkForHoursOpen) interestsToSave.push(deepProfile.talkForHoursOpen);
+    if (deepProfile.instantYesOutingOpen) interestsToSave.push(deepProfile.instantYesOutingOpen);
+
+    const valuesToSave: string[] = [];
+    if (deepProfile.respectPeopleOpen) valuesToSave.push(deepProfile.respectPeopleOpen);
+    if (deepProfile.coreValues) valuesToSave.push(deepProfile.coreValues);
+
+    await saveUserInterestsAndValues(userId, interestsToSave, valuesToSave);
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('saveDeeperPassToSupabase error:', err);
+    return { success: false, error: err.message };
   }
 }

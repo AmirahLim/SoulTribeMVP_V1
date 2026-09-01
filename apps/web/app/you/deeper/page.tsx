@@ -8,6 +8,8 @@ import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassComple
 import { useSearchParams } from 'next/navigation';
 import { getActiveNextBestPrompts } from '../../../lib/dimensionPrompts';
 import { AuthGuard } from '../../../components/AuthGuard';
+import { saveDeeperPassToSupabase } from '../../../lib/supabaseOnboarding';
+import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 
 export default function DeeperTribalPassPage() {
   return (
@@ -56,7 +58,7 @@ function DeeperTribalPassContent() {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveCurrentCategory = (catNum: number) => {
+  const handleSaveCurrentCategory = async (catNum: number) => {
     const updatedCats = Array.from(new Set([...completedCats, catNum]));
     setCompletedCats(updatedCats);
     const updated = setUserProfile({
@@ -66,10 +68,24 @@ function DeeperTribalPassContent() {
     });
     setPassPct(updated.passCompletionPct);
     setSavedMessage(true);
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { data: authSession } = await client.auth.getSession();
+        const userId = authSession?.session?.user?.id || profile.id;
+        if (userId) {
+          await saveDeeperPassToSupabase(userId, formState, updatedCats);
+        }
+      } catch (err) {
+        console.error('Error syncing deeper pass section to Supabase:', err);
+      }
+    }
+
     setTimeout(() => setSavedMessage(false), 3000);
   };
 
-  const handleSaveAllTen = (e?: React.FormEvent) => {
+  const handleSaveAllTen = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const allTen = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     setCompletedCats(allTen);
@@ -80,6 +96,20 @@ function DeeperTribalPassContent() {
     });
     setPassPct(updated.passCompletionPct);
     setSavedMessage(true);
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { data: authSession } = await client.auth.getSession();
+        const userId = authSession?.session?.user?.id || profile.id;
+        if (userId) {
+          await saveDeeperPassToSupabase(userId, formState, allTen);
+        }
+      } catch (err) {
+        console.error('Error syncing all 10 deeper pass sections to Supabase:', err);
+      }
+    }
+
     setTimeout(() => setSavedMessage(false), 3000);
   };
 

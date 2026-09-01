@@ -302,25 +302,25 @@ function PersonDetailContent() {
 
   // Dynamic Friendship DNA Bloom Petals
   const candidateBloomDimensions = targetVec ? [
-    { key: 'p', label: 'Personality', strength: targetVec.personality?.extraversion ?? 0.5, confidence: targetVec.profile?.confidence ?? 0.7, sentence: PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) },
-    { key: 'c', label: 'Communication', strength: targetVec.communication?.response_speed_self ?? 0.5, confidence: 0.8, sentence: PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) },
-    { key: 'r', label: 'Rhythm', strength: targetVec.social_rhythm?.planning_horizon ?? 0.5, confidence: 0.8, sentence: PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) },
-    { key: 'i', label: 'Intent', strength: Math.min(1, (targetVec.intent?.depth ?? 2) / 4), confidence: 0.9, sentence: PHRASES.depth(targetVec.intent?.depth ?? 2) },
-    { key: 'e', label: 'Emotional', strength: targetVec.emotional?.er_opening_pace ?? 0.5, confidence: 0.8, sentence: PHRASES.openingPace(targetVec.emotional?.er_opening_pace ?? 0.5) },
-    { key: 'int', label: 'Interests', strength: Math.min(1, interestsList.length / 5), confidence: 0.8, sentence: interestsList.length ? interestsList.slice(0, 3).join(', ') : "Hasn't listed interest topics yet" },
-    { key: 'v', label: 'Values', strength: Math.min(1, valuesList.length / 5), confidence: 0.8, sentence: valuesList.length ? valuesList.slice(0, 3).join(', ') : "Hasn't listed core values yet" },
+    { key: 'p', label: 'Personality', strength: personalityAnswered ? (targetVec.personality?.extraversion ?? 0.5) : 0, confidence: personalityAnswered ? (targetVec.profile?.confidence ?? 0.7) : 0, sentence: personalityAnswered ? PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) : "Hasn't shared Section 5 yet" },
+    { key: 'c', label: 'Communication', strength: commAnswered ? (targetVec.communication?.response_speed_self ?? 0.5) : 0, confidence: commAnswered ? 0.8 : 0, sentence: commAnswered ? PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) : "Hasn't shared Section 2 yet" },
+    { key: 'r', label: 'Rhythm', strength: rhythmAnswered ? (targetVec.social_rhythm?.planning_horizon ?? 0.5) : 0, confidence: rhythmAnswered ? 0.8 : 0, sentence: rhythmAnswered ? PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) : "Hasn't shared Section 4 yet" },
+    { key: 'i', label: 'Intent', strength: intentAnswered ? Math.min(1, (targetVec.intent?.depth ?? 2) / 4) : 0, confidence: intentAnswered ? 0.9 : 0, sentence: intentAnswered ? PHRASES.depth(targetVec.intent?.depth ?? 2) : "Hasn't shared Section 3 yet" },
+    { key: 'e', label: 'Emotional', strength: emotionalAnswered ? (targetVec.emotional?.er_opening_pace ?? 0.5) : 0, confidence: emotionalAnswered ? 0.8 : 0, sentence: emotionalAnswered ? PHRASES.openingPace(targetVec.emotional?.er_opening_pace ?? 0.5) : "Hasn't shared Section 9 yet" },
+    { key: 'int', label: 'Interests', strength: interestsList.length ? Math.min(1, interestsList.length / 5) : 0, confidence: interestsList.length ? 0.8 : 0, sentence: interestsList.length ? interestsList.slice(0, 3).join(', ') : "Hasn't listed interest topics yet" },
+    { key: 'v', label: 'Values', strength: valuesList.length ? Math.min(1, valuesList.length / 5) : 0, confidence: valuesList.length ? 0.8 : 0, sentence: valuesList.length ? valuesList.slice(0, 3).join(', ') : "Hasn't listed core values yet" },
   ] : [];
 
-  // Dynamic Tribal Print Categories
+  // Dynamic Tribal Print Categories (unanswered traits show 0% / Unfilled, not false 50% defaults)
   const candidateSocialDna = targetVec ? [
-    { key: 'personality', name: 'Personality', score: Math.round((targetVec.personality?.extraversion ?? 0.5) * 100), catNum: 5 },
-    { key: 'communication', name: 'Communication', score: Math.round((targetVec.communication?.response_speed_self ?? 0.5) * 100), catNum: 2 },
-    { key: 'rhythm', name: 'Social Rhythm', score: Math.round((targetVec.social_rhythm?.planning_horizon ?? 0.5) * 100), catNum: 4 },
-    { key: 'intent', name: 'Friendship Intent', score: Math.round(((targetVec.intent?.depth ?? 2) / 4) * 100), catNum: 3 },
-    { key: 'emotional', name: 'Emotional Style', score: Math.round((targetVec.emotional?.er_opening_pace ?? 0.5) * 100), catNum: 9 },
-    { key: 'interests', name: 'Interests', score: Math.min(100, interestsList.length * 20), catNum: 7 },
-    { key: 'values', name: 'Values', score: Math.min(100, valuesList.length * 20), catNum: 6 },
-    { key: 'lifestyle', name: 'Lifestyle', score: Math.round((targetVec.lifestyle?.activity_level ?? 0.5) * 100), catNum: 8 },
+    { key: 'personality', name: 'Personality', score: personalityAnswered ? Math.round((targetVec.personality?.extraversion ?? 0.5) * 100) : 0, catNum: 5 },
+    { key: 'communication', name: 'Communication', score: commAnswered ? Math.round((targetVec.communication?.response_speed_self ?? 0.5) * 100) : 0, catNum: 2 },
+    { key: 'rhythm', name: 'Social Rhythm', score: rhythmAnswered ? Math.round((targetVec.social_rhythm?.planning_horizon ?? 0.5) * 100) : 0, catNum: 4 },
+    { key: 'intent', name: 'Friendship Intent', score: intentAnswered ? Math.round(((targetVec.intent?.depth ?? 2) / 4) * 100) : 0, catNum: 3 },
+    { key: 'emotional', name: 'Emotional Style', score: emotionalAnswered ? Math.round((targetVec.emotional?.er_opening_pace ?? 0.5) * 100) : 0, catNum: 9 },
+    { key: 'interests', name: 'Interests', score: interestsList.length > 0 ? Math.min(100, interestsList.length * 20) : 0, catNum: 7 },
+    { key: 'values', name: 'Values', score: valuesList.length > 0 ? Math.min(100, valuesList.length * 20) : 0, catNum: 6 },
+    { key: 'lifestyle', name: 'Lifestyle', score: lifestyleAnswered ? Math.round((targetVec.lifestyle?.activity_level ?? 0.5) * 100) : 0, catNum: 8 },
   ] : [];
 
   // Gallery Photos (Real gallery photos or empty)
