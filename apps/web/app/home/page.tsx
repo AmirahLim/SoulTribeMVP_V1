@@ -432,8 +432,8 @@ function HomeContent() {
                                 <h4 className="text-[13.5px] font-bold text-white flex items-center gap-1.5">
                                   {guest.name}
                                   {isGuestDemo && (
-                                    <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
-                                      ⚠️ Demo Profile
+                                    <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
+                                      Demo
                                     </span>
                                   )}
                                 </h4>
