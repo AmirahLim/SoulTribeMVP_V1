@@ -43,7 +43,10 @@ export default function PersonDetailPage() {
 function PersonDetailContent() {
   const params = useParams();
   const router = useRouter();
-  const personId = (params?.id as string) || '';
+
+  const rawId = params?.id;
+  const personId = Array.isArray(rawId) ? rawId[0] : (rawId as string) || '';
+  const cleanPersonId = personId ? decodeURIComponent(personId).trim().toLowerCase() : '';
 
   const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
   const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
@@ -51,18 +54,28 @@ function PersonDetailContent() {
 
   useEffect(() => {
     async function loadMatch() {
+      if (!cleanPersonId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const user = getUserProfile();
         const realCount = await countRealMembers(user.homeArea || 'Singapore');
         setIsSmallCommunity(isSmallCommunityMode(realCount));
 
         const matches = await getRankedMatches(user, { limit: 40 });
-        const found = matches.find(
-          (m) =>
-            m.id === personId ||
-            m.id.includes(personId) ||
-            personId.includes(m.id)
-        );
+        const found = matches.find((m) => {
+          const mId = (m.id || '').toLowerCase();
+          const mName = (m.name || '').toLowerCase().replace(/\s+/g, '');
+          return (
+            mId === cleanPersonId ||
+            (mId && mId.includes(cleanPersonId)) ||
+            (cleanPersonId && cleanPersonId.includes(mId)) ||
+            (mName && cleanPersonId.includes(mName))
+          );
+        });
+
         if (found) {
           setRankedMatch(found);
         }
@@ -73,24 +86,97 @@ function PersonDetailContent() {
       }
     }
     loadMatch();
-  }, [personId]);
+  }, [cleanPersonId]);
 
-  const demoCandidate = DEMO_PROFILES.find(
-    (p) =>
-      p.profile.id === personId ||
-      p.profile.id.includes(personId) ||
-      personId.includes(p.profile.id) ||
-      p.profile.handle?.toLowerCase() === personId.toLowerCase() ||
-      personId.toLowerCase().includes(p.profile.display_name.toLowerCase().replace(/\s+/g, ''))
-  );
+  const demoCandidate = cleanPersonId
+    ? DEMO_PROFILES.find((p) => {
+        const dId = (p.profile.id || '').toLowerCase();
+        const dName = (p.profile.display_name || '').toLowerCase().replace(/\s+/g, '');
+        const dHandle = (p.profile.handle || '').toLowerCase();
+        return (
+          dId === cleanPersonId ||
+          (dId && dId.includes(cleanPersonId)) ||
+          (cleanPersonId && cleanPersonId.includes(dId)) ||
+          (dHandle && dHandle === cleanPersonId) ||
+          (dName && cleanPersonId.includes(dName))
+        );
+      })
+    : null;
 
-  const targetVec = demoCandidate || (rankedMatch ? DEMO_PROFILES.find((p) => p.profile.id === rankedMatch.id) : null);
+  const targetVec =
+    demoCandidate ||
+    (rankedMatch
+      ? DEMO_PROFILES.find(
+          (p) =>
+            p.profile.id === rankedMatch.id ||
+            p.profile.display_name.toLowerCase() === (rankedMatch.name || '').toLowerCase()
+        )
+      : null);
 
   const userProfile = getUserProfile();
   const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
   const explanation = targetVec && viewerVector ? generateMatchExplanation(viewerVector, targetVec) : null;
 
-  if (!loading && !rankedMatch && !targetVec) {
+  const rawInterests = targetVec?.interests || [];
+  const interestsList = rawInterests.map(formatInterestLabel).filter(Boolean);
+
+  const rawValues = targetVec?.values || [];
+  const valuesList = rawValues.map(formatValueLabel).filter(Boolean);
+
+  const rawFallbackPerson = targetVec
+    ? {
+        id: targetVec.profile.id,
+        name: targetVec.profile.display_name || 'Member',
+        avatarUrl: targetVec.profile.avatar_url || getGenderAvatarForName(targetVec.profile.display_name || 'Member'),
+        homeArea: targetVec.profile.home_area || 'Singapore',
+        bio: targetVec.profile.bio || 'Singapore-based member.',
+        interests: interestsList,
+        clickText: explanation?.click_text || "There isn't enough in your pass yet to say much — add more and this will sharpen.",
+        rubText: explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
+        fitLabel: 'Good Fit',
+        rhythmOverlap: Math.round((targetVec.profile.confidence || 0.7) * 100),
+      }
+    : null;
+
+  const fallbackPerson = rawFallbackPerson
+    ? {
+        ...rawFallbackPerson,
+        avatarUrl: rawFallbackPerson.avatarUrl || getGenderAvatarForName(rawFallbackPerson.name),
+      }
+    : null;
+
+  const foundPerson = rankedMatch
+    ? {
+        id: rankedMatch.id,
+        name: rankedMatch.name || 'Member',
+        avatarUrl: rankedMatch.avatarUrl || getGenderAvatarForName(rankedMatch.name || 'Member'),
+        homeArea: rankedMatch.homeArea || 'Singapore',
+        bio: rankedMatch.bio || 'Singapore-based member.',
+        clickText: rankedMatch.clickText || explanation?.click_text || "Shared social rhythm and complementary interests.",
+        rubText: rankedMatch.rubText || explanation?.friction_text || "Different social energy levels — take time to adjust.",
+        fitLabel: rankedMatch.fitLabel || 'Good Fit',
+        rhythmOverlap: Math.round((rankedMatch.rankScore || 0.7) * 100),
+        interests: interestsList,
+        isDemo: Boolean(rankedMatch.isDemo),
+      }
+    : fallbackPerson
+    ? { ...fallbackPerson, isDemo: true }
+    : null;
+
+  const [connected, setConnected] = useState(false);
+  const [starred, setStarred] = useState(false);
+  const [demoActionAlert, setDemoActionAlert] = useState<string | null>(null);
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
+        <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+        <p className="mt-4 text-[13.5px] font-medium text-white/70">Loading profile details...</p>
+      </div>
+    );
+  }
+
+  if (!foundPerson) {
     return (
       <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white border border-white/20 shadow-xl">
@@ -109,55 +195,8 @@ function PersonDetailContent() {
     );
   }
 
-  const rawInterests = targetVec?.interests || [];
-  const interestsList = rawInterests.map(formatInterestLabel).filter(Boolean);
-
-  const rawValues = targetVec?.values || [];
-  const valuesList = rawValues.map(formatValueLabel).filter(Boolean);
-
-  const rawFallbackPerson = targetVec
-    ? {
-        id: targetVec.profile.id,
-        name: targetVec.profile.display_name,
-        avatarUrl: targetVec.profile.avatar_url,
-        homeArea: targetVec.profile.home_area || 'Singapore',
-        bio: targetVec.profile.bio || 'Singapore-based member.',
-        interests: interestsList,
-        clickText: explanation?.click_text || "There isn't enough in your pass yet to say much — add more and this will sharpen.",
-        rubText: explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
-        fitLabel: 'Good Fit',
-        rhythmOverlap: Math.round((targetVec.profile.confidence || 0.7) * 100),
-      }
-    : null;
-
-  const fallbackPerson = rawFallbackPerson
-    ? {
-        ...rawFallbackPerson,
-        avatarUrl: getGenderAvatarForName(rawFallbackPerson.name),
-      }
-    : null;
-
-  const foundPerson = rankedMatch
-    ? {
-        id: rankedMatch.id,
-        name: rankedMatch.name,
-        avatarUrl: getGenderAvatarForName(rankedMatch.name),
-        homeArea: rankedMatch.homeArea,
-        bio: rankedMatch.bio,
-        clickText: rankedMatch.clickText || explanation?.click_text || '',
-        rubText: rankedMatch.rubText || explanation?.friction_text || '',
-        fitLabel: rankedMatch.fitLabel,
-        rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
-        interests: interestsList,
-        isDemo: rankedMatch.isDemo,
-      }
-    : fallbackPerson
-    ? { ...fallbackPerson, isDemo: true }
-    : null;
-
-  if (!foundPerson) return null;
-
-  const firstName = foundPerson.name.split(' ')[0];
+  const nameString = foundPerson.name || 'Member';
+  const firstName = nameString.split(' ')[0] || 'Member';
   const possessiveFirstName = `${firstName}'s`;
 
   const [connected, setConnected] = useState(false);
