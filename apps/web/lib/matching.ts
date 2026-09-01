@@ -184,6 +184,188 @@ export function isSmallCommunityMode(realMemberCount: number): boolean {
   return realMemberCount <= threshold;
 }
 
+export function getMondayOfWeek(d: Date = new Date()): string {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(date.setDate(diff));
+  return monday.toISOString().split('T')[0];
+}
+
+export interface SurfacedRecord {
+  viewer_id: string;
+  shown_id: string;
+  week_of: string;
+  shown_at: string;
+  action: 'none' | 'saved' | 'pitched_to' | 'hidden';
+}
+
+export interface SharedOutingRecord {
+  viewer_id: string;
+  peer_id: string;
+  completed: boolean;
+}
+
+let mockSurfacedRecords: SurfacedRecord[] = [];
+let mockSharedOutings: SharedOutingRecord[] = [];
+
+export function getMockSurfacedRecords(): SurfacedRecord[] {
+  return mockSurfacedRecords;
+}
+
+export function setMockSurfacedRecords(records: SurfacedRecord[]): void {
+  mockSurfacedRecords = [...records];
+}
+
+export function setMockSharedOutings(records: SharedOutingRecord[]): void {
+  mockSharedOutings = [...records];
+}
+
+export function clearMockSuppressionData(): void {
+  mockSurfacedRecords = [];
+  mockSharedOutings = [];
+}
+
+export async function recordSurfacedMatches(
+  viewerId: string,
+  matches: RankedMatch[]
+): Promise<void> {
+  const realMatches = matches.filter((m) => !m.isDemo);
+  if (realMatches.length === 0 || !viewerId) return;
+
+  const currentMonday = getMondayOfWeek();
+  const nowStr = new Date().toISOString();
+
+  // Save to mock store for local tracking / unit testing
+  for (const m of realMatches) {
+    const existingIdx = mockSurfacedRecords.findIndex(
+      (r) => r.viewer_id === viewerId && r.shown_id === m.id && r.week_of === currentMonday
+    );
+    if (existingIdx >= 0) {
+      mockSurfacedRecords[existingIdx].shown_at = nowStr;
+    } else {
+      mockSurfacedRecords.push({
+        viewer_id: viewerId,
+        shown_id: m.id,
+        week_of: currentMonday,
+        shown_at: nowStr,
+        action: 'none',
+      });
+    }
+  }
+
+  // Database upsert if Supabase is connected
+  if (checkIsSupabaseConfigured()) {
+    try {
+      const client = getSupabaseBrowserClient();
+      const rows = realMatches.map((m, idx) => ({
+        viewer_id: viewerId,
+        shown_id: m.id,
+        week_of: currentMonday,
+        shown_at: nowStr,
+        action: 'none',
+        rank_position: idx + 1,
+        rank_score: m.rankScore,
+      }));
+
+      await client
+        .from('match_surfaced')
+        .upsert(rows, { onConflict: 'viewer_id,shown_id,week_of' });
+    } catch {
+      // Fail-safe
+    }
+  }
+}
+
+export async function getSuppressionData(viewerId: string): Promise<{
+  hiddenIds: Set<string>;
+  softSuppressedMap: Map<string, { reason: 'outing' | 'recent_shown'; shownAt?: string }>;
+}> {
+  const hiddenIds = new Set<string>();
+  const softSuppressedMap = new Map<string, { reason: 'outing' | 'recent_shown'; shownAt?: string }>();
+
+  const twoWeeksAgoDate = new Date(Date.now() - 13 * 86400 * 1000);
+  const twoWeeksAgoMonday = getMondayOfWeek(twoWeeksAgoDate);
+
+  // 1. Process mock records
+  for (const rec of mockSurfacedRecords) {
+    if (rec.viewer_id === viewerId) {
+      if (rec.action === 'hidden') {
+        hiddenIds.add(rec.shown_id);
+      } else if (rec.action === 'none') {
+        if (rec.week_of >= twoWeeksAgoMonday) {
+          softSuppressedMap.set(rec.shown_id, {
+            reason: 'recent_shown',
+            shownAt: rec.shown_at,
+          });
+        }
+      }
+    }
+  }
+
+  for (const outing of mockSharedOutings) {
+    if (outing.completed && outing.viewer_id === viewerId) {
+      softSuppressedMap.set(outing.peer_id, { reason: 'outing' });
+    }
+  }
+
+  // 2. Query Supabase if connected
+  if (checkIsSupabaseConfigured() && viewerId) {
+    try {
+      const client = getSupabaseBrowserClient();
+
+      const { data: surfacedRows } = await client
+        .from('match_surfaced')
+        .select('shown_id, week_of, action, shown_at')
+        .eq('viewer_id', viewerId);
+
+      if (surfacedRows) {
+        for (const row of surfacedRows) {
+          if (row.action === 'hidden') {
+            hiddenIds.add(row.shown_id);
+          } else if (row.action === 'none') {
+            if (row.week_of >= twoWeeksAgoMonday) {
+              if (!softSuppressedMap.has(row.shown_id)) {
+                softSuppressedMap.set(row.shown_id, {
+                  reason: 'recent_shown',
+                  shownAt: row.shown_at,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      const { data: myOutings } = await client
+        .from('outing_members')
+        .select('outing_id, outings!inner(state)')
+        .eq('user_id', viewerId)
+        .eq('state', 'accepted')
+        .eq('outings.state', 'completed');
+
+      if (myOutings && myOutings.length > 0) {
+        const outingIds = myOutings.map((o: any) => o.outing_id);
+        const { data: peerMembers } = await client
+          .from('outing_members')
+          .select('user_id')
+          .in('outing_id', outingIds)
+          .eq('state', 'accepted')
+          .neq('user_id', viewerId);
+
+        if (peerMembers) {
+          for (const peer of peerMembers) {
+            softSuppressedMap.set(peer.user_id, { reason: 'outing' });
+          }
+        }
+      }
+    } catch {
+      // Fail-safe
+    }
+  }
+
+  return { hiddenIds, softSuppressedMap };
+}
+
 export async function getRankedMatches(
   user: UserProfileData & { id?: string },
   opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
@@ -221,16 +403,21 @@ export async function getRankedMatches(
     activity_category: opts?.activityCategory as any,
   };
 
-  const results: RankedMatch[] = [];
+  const { hiddenIds, softSuppressedMap } = await getSuppressionData(effectiveId);
+
+  const freshPool: (RankedMatch & { lastShownAt?: string })[] = [];
+  const suppressedPool: (RankedMatch & { lastShownAt?: string })[] = [];
   let positionCounter = 1;
 
   for (const candVec of candidateVecs) {
-    // SELF-EXCLUSION SAFEGUARD: Never allow viewer to appear in their own matches list
+    // HARD EXCLUSION 1: Self-exclusion
     if (candVec.profile.id === viewerVec.profile.id) continue;
     if (viewerId && candVec.profile.id === viewerId) continue;
     if (user.handle && candVec.profile.handle === user.handle.toLowerCase()) continue;
 
-    // SAFEGUARD 1: Every demo candidate carries isDemo: true
+    // HARD EXCLUSION 2: Hidden candidates
+    if (hiddenIds.has(candVec.profile.id)) continue;
+
     const isDemo =
       candVec.isDemo ??
       DEMO_PROFILES.some((d) => d.profile.id === candVec.profile.id);
@@ -238,13 +425,12 @@ export async function getRankedMatches(
     const matchRes = score(viewerVec, candVec, context);
     const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
 
-    // Drop anything eligible === false
+    // HARD GATE: Drop anything eligible === false
     if (!softRes.eligible) continue;
 
     const explanation = generateMatchExplanation(viewerVec, candVec);
     const fitLabel = getFitLabel(softRes.adjustedScore);
 
-    // SAFEGUARD 4: Do NOT log demo matches to interaction_events. Telemetry records real members only.
     if (!isDemo) {
       const surfacedEvent = buildMatchSurfacedEvent(
         viewerVec,
@@ -257,7 +443,7 @@ export async function getRankedMatches(
       recordEvent(surfacedEvent);
     }
 
-    results.push({
+    const matchItem: RankedMatch & { lastShownAt?: string } = {
       id: candVec.profile.id,
       name: candVec.profile.display_name,
       avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
@@ -270,25 +456,62 @@ export async function getRankedMatches(
       rubText: explanation.friction_text,
       fitLabel,
       provisional: softRes.provisional,
-      isDemo, // SAFEGUARD 1
-    });
+      isDemo,
+    };
+
+    if (!isDemo && softSuppressedMap.has(candVec.profile.id)) {
+      const info = softSuppressedMap.get(candVec.profile.id);
+      matchItem.lastShownAt = info?.shownAt;
+      suppressedPool.push(matchItem);
+    } else {
+      freshPool.push(matchItem);
+    }
   }
 
-  results.sort((a, b) => b.rankScore - a.rankScore);
+  // Sort fresh pool by rankScore descending
+  freshPool.sort((a, b) => b.rankScore - a.rankScore);
+
+  // Sort suppressed pool by least-recently-shown first (oldest shownAt first)
+  suppressedPool.sort((a, b) => {
+    if (a.lastShownAt && b.lastShownAt) {
+      const tA = new Date(a.lastShownAt).getTime();
+      const tB = new Date(b.lastShownAt).getTime();
+      if (tA !== tB) return tA - tB;
+    } else if (a.lastShownAt) {
+      return -1;
+    } else if (b.lastShownAt) {
+      return 1;
+    }
+    return b.rankScore - a.rankScore;
+  });
 
   const realMemberCount = await countRealMembers(opts?.area || user.homeArea);
   const isSmall = isSmallCommunityMode(realMemberCount);
 
+  let finalResults: RankedMatch[] = [];
+
   if (isSmall) {
-    // Small community mode: show ALL eligible members (including below 60%, unlabelled)
+    const combined = [...freshPool, ...suppressedPool];
     if (opts?.limit === undefined || opts?.limit === 6) {
-      return results;
+      finalResults = combined;
+    } else {
+      finalResults = combined.slice(0, limit);
     }
-    return results.slice(0, limit);
+  } else {
+    const freshEligible = freshPool.filter((m) => m.rankScore >= 0.60);
+    const suppressedEligible = suppressedPool.filter((m) => m.rankScore >= 0.60);
+
+    if (freshEligible.length >= limit) {
+      finalResults = freshEligible.slice(0, limit);
+    } else {
+      const needed = limit - freshEligible.length;
+      finalResults = [...freshEligible, ...suppressedEligible.slice(0, needed)];
+    }
   }
 
-  // Above small community threshold: filter out candidates below 60% (rankScore < 0.60)
-  const rankedResults = results.filter((m) => m.rankScore >= 0.60);
+  if (viewerId) {
+    await recordSurfacedMatches(viewerId, finalResults);
+  }
 
-  return rankedResults.slice(0, limit);
+  return finalResults;
 }
