@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bloom, RhythmStrip, Button, Chip } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowRight, User, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowRight, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../lib/authContext';
+import { saveOnboardingToSupabase } from '../../lib/supabaseOnboarding';
 import {
   getUserProfile,
   setUserProfile,
@@ -16,7 +18,20 @@ import {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, loading: authLoading, isSupabaseConfigured } = useAuth();
+
   const [step, setStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Redirect signed-out visitors to sign-in
+  React.useEffect(() => {
+    if (!authLoading && isSupabaseConfigured && !user) {
+      router.push('/auth/signin?redirect=/onboarding');
+    }
+  }, [user, authLoading, isSupabaseConfigured, router]);
+
+  // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
 
   // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
   const [userName, setUserName] = useState('');
@@ -109,7 +124,9 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    setSaveError(null);
+
     if (step === 1) {
       if (!userName.trim()) {
         setStep1Error('Please enter your display name.');
@@ -131,9 +148,53 @@ export default function OnboardingPage() {
     if (step < 8) {
       setStep(step + 1);
     } else {
-      setIsRevealing(true);
+      if (isSupabaseConfigured && !user) {
+        router.push('/auth/signin?redirect=/onboarding');
+        return;
+      }
+
       const computedAge = calculateAge(userDob);
       const bYear = computedAge !== null ? new Date(userDob).getFullYear() : undefined;
+
+      if (!bYear) {
+        setStep(1);
+        setStep1Error('Date of birth is required.');
+        return;
+      }
+
+      setIsSaving(true);
+
+      if (isSupabaseConfigured && user) {
+        const saveRes = await saveOnboardingToSupabase(user.id, {
+          displayName: userName.trim(),
+          handle: userHandle.trim().toLowerCase(),
+          homeArea: userCity.trim(),
+          birthYear: bYear,
+          avatarUrl: userPhoto || undefined,
+          q1Finding,
+          q2Feelings,
+          q3Energy,
+          q3GroupSize,
+          q4Connected,
+          q5PlanningRhythm,
+          q5Availability,
+          q6Outings,
+          q7EmotionalPacing,
+          q8Qualities,
+        });
+
+        if (!saveRes.success) {
+          setIsSaving(false);
+          if (saveRes.isDuplicateHandle) {
+            setStep(1);
+            setStep1Error(saveRes.error || 'That username is already taken. Please choose another.');
+          } else {
+            setSaveError(saveRes.error || 'Failed to save profile to database.');
+          }
+          return;
+        }
+      }
+
       setUserProfile({
         displayName: userName.trim() || 'You',
         handle: userHandle.trim().toLowerCase(),
@@ -144,6 +205,9 @@ export default function OnboardingPage() {
         hasCompletedOnboarding: true,
         completedCategoryNums: [],
       });
+
+      setIsSaving(false);
+      setIsRevealing(true);
     }
   };
 
@@ -651,6 +715,16 @@ export default function OnboardingPage() {
                 </div>
               )}
 
+              {saveError && (
+                <div className="mb-4 rounded-[16px] border border-rose-500/40 bg-rose-500/15 p-4 text-[13px] text-rose-200 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-bold text-rose-100">Unable to Save Profile</span>
+                    <span className="leading-relaxed">{saveError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Navigation Controls */}
               <div className="mt-6 flex items-center justify-between border-t border-white/15 pt-4">
                 {step > 1 ? (
@@ -658,6 +732,7 @@ export default function OnboardingPage() {
                     variant="secondary"
                     size="sm"
                     onClick={() => setStep(step - 1)}
+                    disabled={isSaving}
                   >
                     ← Back
                   </Button>
@@ -669,8 +744,13 @@ export default function OnboardingPage() {
                   variant="primary"
                   size="sm"
                   onClick={handleNextStep}
+                  disabled={isSaving}
                 >
-                  {step < 8 ? 'Next Step →' : 'Meet Your Tribe ✨'}
+                  {isSaving
+                    ? 'Saving Profile...'
+                    : step < 8
+                    ? 'Next Step →'
+                    : 'Meet Your Tribe ✨'}
                 </Button>
               </div>
             </motion.div>
