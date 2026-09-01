@@ -351,14 +351,14 @@ function OnboardingContent() {
 
 
                     {/* Date of Birth Field */}
-                    <div>
+                    <div className="min-w-0 w-full">
                       <label className="text-[13px] font-semibold text-white">Date of Birth *</label>
                       <input
                         type="date"
                         required
                         value={userDob}
                         onChange={(e) => setUserDob(e.target.value)}
-                        className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
+                        className="mt-1 h-11 w-full min-w-0 max-w-full rounded-[12px] border border-white/20 bg-black/60 px-3.5 text-[13.5px] font-medium text-white outline-none transition-all focus:border-white box-border text-left"
                       />
                       <p className="mt-1 text-[11.5px] text-white/60">
                         Soul Tribe is strictly for adults aged 18 and above.

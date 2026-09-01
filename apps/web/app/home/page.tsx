@@ -244,30 +244,32 @@ function HomeContent() {
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-[24px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <img
                         src={person.avatarUrl}
                         alt={person.name}
-                        className="h-12 w-12 rounded-full object-cover ring-1 ring-white/30"
+                        className="h-12 w-12 rounded-full object-cover ring-1 ring-white/30 shrink-0 mt-0.5"
                       />
-                      <div>
-                        <h3 className="text-[18px] font-bold text-white flex items-center gap-2">
-                          {person.name}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-[17px] font-bold text-white leading-tight">
+                            {person.name}
+                          </h3>
                           {person.isDemo && (
-                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase">
+                            <span className="shrink-0 rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider">
                               Demo
                             </span>
                           )}
-                        </h3>
-                        <p className="text-[12.5px] text-white/80">
+                        </div>
+                        <p className="text-[12.5px] text-white/80 mt-1">
                           {person.homeArea}
                         </p>
                       </div>
                     </div>
 
                     {person.fitLabel ? (
-                      <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 backdrop-blur-md">
+                      <span className="shrink-0 whitespace-nowrap text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 backdrop-blur-md self-start">
                         {person.fitLabel}
                       </span>
                     ) : null}

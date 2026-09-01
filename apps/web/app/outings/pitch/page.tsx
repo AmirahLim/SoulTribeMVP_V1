@@ -300,13 +300,13 @@ function PitchComposerContent() {
               <span className="text-[10.5px] text-white/60 text-right block mt-1">{pitch.length}/600</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Category</label>
                 <select
                   value={activityCategory}
                   onChange={(e) => setActivityCategory(e.target.value as any)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13px] text-white outline-none focus:border-white/50"
                 >
                   <option value="coffee">Coffee</option>
                   <option value="dining">Dining</option>
@@ -317,47 +317,47 @@ function PitchComposerContent() {
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Area</label>
                 <input
                   type="text"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/50"
                   placeholder="e.g. Tiong Bahru"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Starts At</label>
                 <input
                   type="datetime-local"
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12.5px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 max-w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12px] sm:text-[13px] text-white outline-none focus:border-white/50"
                 />
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Duration (mins)</label>
                 <input
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10) || 120)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/50"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Orientation</label>
                 <select
                   value={orientation}
                   onChange={(e) => setOrientation(e.target.value as any)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12.5px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12.5px] text-white outline-none focus:border-white/50"
                 >
                   <option value="conversation_first">Conversation First</option>
                   <option value="activity_first">Activity First</option>
@@ -365,12 +365,12 @@ function PitchComposerContent() {
                 </select>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Visibility</label>
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value as any)}
-                  className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12.5px] text-white outline-none"
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12.5px] text-white outline-none focus:border-white/50"
                 >
                   <option value="requestable">Requestable</option>
                   <option value="invite_only">Invite Only</option>
