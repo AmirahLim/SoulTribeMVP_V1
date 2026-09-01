@@ -46,7 +46,7 @@ describe('Post-Outing Feedback & Record Service Tests', () => {
     const record: OutingRecordInput = {
       outing_id: 'out-pottery-01',
       headline: 'Discovered the quiet courtyard coffee shop.',
-      attended: ['m1', 'r2', 'r3'],
+      attended: ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'],
     };
 
     const res = await saveOutingRecord(record);
@@ -56,7 +56,7 @@ describe('Post-Outing Feedback & Record Service Tests', () => {
     assert.strictEqual(records.length, 1, 'Should have 1 saved outing record');
     assert.strictEqual(records[0].outing_id, 'out-pottery-01');
     assert.strictEqual(records[0].headline, 'Discovered the quiet courtyard coffee shop.');
-    assert.deepStrictEqual(records[0].attended, ['m1', 'r2', 'r3'], 'attended contains array of members who actually turned up');
+    assert.deepStrictEqual(records[0].attended, ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'], 'attended contains array of members who actually turned up');
   });
 
   it('3. Skipped peer responses leave no rhythm_checks entry', async () => {

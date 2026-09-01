@@ -93,7 +93,7 @@ function OutingDetailContent() {
             .eq('id', dbOuting.host_id)
             .single();
 
-          const isHostDemo = ['m1', 'm2', 'r1', 'r2', 'r3'].includes(dbOuting.host_id);
+          const isHostDemo = Boolean((dbOuting as any).is_demo || (hostProfile as any)?.is_demo);
 
           const loadedOuting: OutingData = {
             ...dbOuting,
@@ -118,7 +118,7 @@ function OutingDetailContent() {
               display_name: m.profiles?.display_name || 'Member',
               avatar_url: m.profiles?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
               home_area: m.profiles?.home_area || 'Singapore',
-              isDemo: ['m1', 'm2', 'r1', 'r2', 'r3', 'r4'].includes(m.user_id),
+              isDemo: Boolean(m.is_demo || m.profiles?.is_demo),
             }));
             setMembers(formattedMembers);
           }

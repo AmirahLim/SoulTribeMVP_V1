@@ -67,9 +67,13 @@ function OutingRecordContent() {
   useEffect(() => {
     async function loadRecordData() {
       setLoading(true);
-      setErrorMessage('');
+      if (!outingId) {
+        setErrorMessage('Invalid outing ID.');
+        setLoading(false);
+        return;
+      }
 
-      if (checkIsSupabaseConfigured() && outingId) {
+      if (checkIsSupabaseConfigured()) {
         try {
           const client = getSupabaseBrowserClient();
 
@@ -90,12 +94,18 @@ function OutingRecordContent() {
           setHostId(dbOuting.host_id);
           setOutingTitle(dbOuting.title);
 
-          // 1. Load real accepted members joined to profiles, EXCLUDING signed-in user (nobody gives feedback on themselves)
-          const { data: memberRows } = await client
+          // 2. Load real accepted members joined to profiles, EXCLUDING signed-in user
+          const { data: memberRows, error: memberErr } = await client
             .from('outing_members')
             .select('user_id, role, state, profiles(id, display_name, avatar_url)')
             .eq('outing_id', outingId)
             .eq('state', 'accepted');
+
+          if (memberErr) {
+            setErrorMessage(`Failed to load attendees: ${memberErr.message}`);
+            setLoading(false);
+            return;
+          }
 
           if (memberRows) {
             const realPeerAttendees: Attendee[] = memberRows
@@ -124,35 +134,14 @@ function OutingRecordContent() {
 
           setLoading(false);
           return;
-        } catch {
-          // fallback
+        } catch (err: any) {
+          setErrorMessage(err?.message || 'Error loading outing details.');
+          setLoading(false);
+          return;
         }
       }
 
-      // Local fallback for testing / non-DB outing
-      setOutingTitle('Saturday Pottery & Filter Coffee');
-      setOutingState('completed');
-      setHostId('m1');
-
-      const fallbackPeers: Attendee[] = [
-        { id: '00000000-0000-0000-0000-000000000001', name: 'Marcus Tan', avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80', isHost: true },
-        { id: '00000000-0000-0000-0000-000000000002', name: 'Chen Wei', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80' },
-        { id: '00000000-0000-0000-0000-000000000003', name: 'Sarah Chen', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80' },
-      ].filter((a) => a.id !== authorId);
-
-      setAttendees(fallbackPeers);
-
-      const initialFb: Record<string, FeedbackItemState> = {};
-      for (const peer of fallbackPeers) {
-        initialFb[peer.id] = {
-          wouldMeetAgain: 5,
-          energyRead: 'as_expected',
-          paceRead: 'as_expected',
-          note: '',
-          status: 'pending',
-        };
-      }
-      setFeedbackState(initialFb);
+      setErrorMessage('Database connection unavailable. Unable to load real outing attendees.');
       setLoading(false);
     }
 
@@ -164,6 +153,31 @@ function OutingRecordContent() {
       <IllustratedGround variant="paper" className="min-h-screen pb-24">
         <div className="flex items-center justify-center p-12 text-[#F3F0E9]">
           Loading record details...
+        </div>
+      </IllustratedGround>
+    );
+  }
+
+  if (errorMessage && !outingTitle) {
+    return (
+      <IllustratedGround variant="paper" className="min-h-screen pb-24">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="mb-4 flex items-center text-[13.5px] font-semibold text-[#A6AAA4] hover:text-[#F3F0E9]"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Home
+        </button>
+
+        <div className="mt-8 flex flex-col items-center justify-center rounded-[28px] border border-red-500/30 bg-[#15261C] p-8 text-center shadow-xl space-y-4">
+          <AlertTriangle className="h-12 w-12 text-red-400" />
+          <h2 className="text-[22px] font-bold text-[#F3F0E9]">Unable to Load Record</h2>
+          <p className="text-[13.5px] text-[#A6AAA4] max-w-[340px] leading-relaxed">
+            {errorMessage}
+          </p>
+          <Button variant="primary" size="md" onClick={() => router.push('/home')}>
+            Return to Home
+          </Button>
         </div>
       </IllustratedGround>
     );
