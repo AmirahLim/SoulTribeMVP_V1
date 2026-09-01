@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signInWithOtp: (email: string, redirectToPath?: string) => Promise<{ error: Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithGoogle: (redirectToPath?: string) => Promise<{ error: Error | null }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   error: null,
   signInWithOtp: async () => ({ error: new Error('Auth not initialized') }),
+  verifyOtp: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signInWithGoogle: async () => ({ error: new Error('Auth not initialized') }),
   signUpWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signInWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
@@ -96,6 +98,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null };
     } catch (err: any) {
       return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  };
+
+  const verifyOtp = async (
+    email: string,
+    token: string
+  ): Promise<{ error: Error | null; user: User | null }> => {
+    try {
+      const client = getSupabaseBrowserClient();
+      const { data, error: verifyErr } = await client.auth.verifyOtp({
+        email: email.trim(),
+        token: token.trim(),
+        type: 'email',
+      });
+
+      if (verifyErr) {
+        return { error: new Error(verifyErr.message), user: null };
+      }
+      return { error: null, user: data.user };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)), user: null };
     }
   };
 
@@ -195,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         error,
         signInWithOtp,
+        verifyOtp,
         signInWithGoogle,
         signUpWithPassword,
         signInWithPassword,
