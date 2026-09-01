@@ -35,18 +35,71 @@ function PitchComposerContent() {
   const [startsAt, setStartsAt] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
   const [maxParticipants] = useState<number>(6);
+  const [setting, setSetting] = useState<string>('General');
 
   const [candidates, setCandidates] = useState<CandidateVector[]>([]);
   const [selectedGuests, setSelectedGuests] = useState<CandidateVector[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Suggested Date & Time Generator
+  const suggestedDates = React.useMemo(() => {
+    const now = new Date();
+    const suggestions = [];
+
+    const toLocalIso = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    // Fri Eve (7:30 PM)
+    const fri = new Date(now);
+    const distFri = (5 - fri.getDay() + 7) % 7 || 7;
+    fri.setDate(fri.getDate() + distFri);
+    fri.setHours(19, 30, 0, 0);
+    suggestions.push({
+      label: `${fri.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 7:30 PM`,
+      isoValue: toLocalIso(fri),
+    });
+
+    // Sat Midday (3:00 PM)
+    const satMid = new Date(now);
+    const distSat = (6 - satMid.getDay() + 7) % 7 || 7;
+    satMid.setDate(satMid.getDate() + distSat);
+    satMid.setHours(15, 0, 0, 0);
+    suggestions.push({
+      label: `${satMid.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 3:00 PM`,
+      isoValue: toLocalIso(satMid),
+    });
+
+    // Sat Eve (7:30 PM)
+    const satEve = new Date(now);
+    satEve.setDate(satEve.getDate() + distSat);
+    satEve.setHours(19, 30, 0, 0);
+    suggestions.push({
+      label: `${satEve.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 7:30 PM`,
+      isoValue: toLocalIso(satEve),
+    });
+
+    // Sun Midday (2:00 PM)
+    const sunMid = new Date(now);
+    const distSun = (0 - sunMid.getDay() + 7) % 7 || 7;
+    sunMid.setDate(sunMid.getDate() + distSun);
+    sunMid.setHours(14, 0, 0, 0);
+    suggestions.push({
+      label: `${sunMid.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 2:00 PM`,
+      isoValue: toLocalIso(sunMid),
+    });
+
+    return suggestions;
+  }, []);
+
   useEffect(() => {
     async function loadCandidates() {
       const source = getActiveCandidateSource();
       const list = 'getCandidates' in source 
-        ? await source.getCandidates({ limit: 10 })
-        : (await source.getScoredMatches({ limit: 10 })).map((m: any) => ({
+        ? await source.getCandidates({ limit: 30 })
+        : (await source.getScoredMatches({ limit: 30 })).map((m: any) => ({
             profile: {
               id: m.id,
               handle: m.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
@@ -79,8 +132,9 @@ function PitchComposerContent() {
       if (initialInviteId) {
         const match = list.find((c: any) => c.profile.id === initialInviteId);
         if (match) setSelectedGuests([match]);
-      } else if (list.length >= 2) {
-        setSelectedGuests([list[0], list[1]]);
+      } else if (list.length > 0) {
+        const maxGuests = maxParticipants - 1;
+        setSelectedGuests(list.slice(0, maxGuests));
       }
     }
     loadCandidates();
@@ -171,6 +225,7 @@ function PitchComposerContent() {
             pitch: pitch.trim(),
             activity_category: activityCategory,
             area: area.trim(),
+            setting: setting.trim() || 'General',
             starts_at: startsAtIso,
             duration_minutes: durationMinutes,
             budget_band: budgetBand,
@@ -358,17 +413,39 @@ function PitchComposerContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="min-w-0">
-                <label className="text-[13px] font-semibold text-white">Starts At</label>
-                <input
-                  type="datetime-local"
-                  value={startsAt}
-                  onChange={(e) => setStartsAt(e.target.value)}
-                  className="mt-1 h-11 w-full min-w-0 max-w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[12px] sm:text-[13px] text-white outline-none focus:border-white/50"
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-[13px] font-semibold text-white">Date & Time (Calendar Format)</label>
+              <input
+                type="datetime-local"
+                value={startsAt}
+                onChange={(e) => setStartsAt(e.target.value)}
+                className="mt-1 h-11 w-full min-w-0 max-w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13px] text-white outline-none focus:border-white/50"
+              />
 
+              <div className="pt-1">
+                <span className="text-[11.5px] font-semibold text-amber-300/90 block mb-1.5">
+                  Suggested Upcoming Date & Time Slots:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestedDates.map((sug) => (
+                    <button
+                      key={sug.isoValue}
+                      type="button"
+                      onClick={() => setStartsAt(sug.isoValue)}
+                      className={`rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                        startsAt === sug.isoValue
+                          ? 'border-amber-300 bg-amber-400/25 text-amber-200 shadow-md ring-1 ring-amber-300/40'
+                          : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      {sug.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-4">
               <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Duration (mins)</label>
                 <input
@@ -378,9 +455,20 @@ function PitchComposerContent() {
                   className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/50"
                 />
               </div>
+
+              <div className="min-w-0">
+                <label className="text-[13px] font-semibold text-white">Setting / Environment</label>
+                <input
+                  type="text"
+                  value={setting}
+                  onChange={(e) => setSetting(e.target.value)}
+                  className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-4 text-[13.5px] text-white outline-none focus:border-white/50"
+                  placeholder="e.g. Cozy Cafe, Studio, Park"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3.5">
               <div className="min-w-0">
                 <label className="text-[13px] font-semibold text-white">Orientation</label>
                 <select
@@ -411,20 +499,37 @@ function PitchComposerContent() {
           {/* STEP 2: INVITE MEMBERS */}
           <div className="rounded-[24px] border border-white/20 bg-black/50 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-[17px] font-bold text-white">
-                2. Invite Guests ({selectedGuests.length + 1} / {maxParticipants} Seats)
-              </h3>
-              <span className="text-[11px] font-bold text-white/80">
-                Max 6 Seats
-              </span>
+              <div>
+                <h3 className="text-[17px] font-bold text-white">
+                  2. Invite Guests ({selectedGuests.length + 1} / {maxParticipants} Seats)
+                </h3>
+                <p className="text-[12px] text-white/80 mt-0.5">
+                  Select matches to invite to your outing proposal.
+                </p>
+              </div>
+
+              {candidates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const maxAllowedGuests = maxParticipants - 1;
+                    if (selectedGuests.length >= Math.min(candidates.length, maxAllowedGuests)) {
+                      setSelectedGuests([]);
+                    } else {
+                      setSelectedGuests(candidates.slice(0, maxAllowedGuests));
+                    }
+                  }}
+                  className="rounded-full border border-amber-300/40 bg-amber-500/20 px-3 py-1.5 text-[12px] font-bold text-amber-200 hover:bg-amber-500/30 transition-all shrink-0"
+                >
+                  {selectedGuests.length >= Math.min(candidates.length, maxParticipants - 1)
+                    ? 'Deselect All'
+                    : 'Select All Matches'}
+                </button>
+              )}
             </div>
 
-            <p className="mt-1 text-[12.5px] text-white/80">
-              Select members to invite to your outing proposal.
-            </p>
-
-            <div className="mt-4 flex flex-col gap-3">
-              {candidates.slice(0, 5).map((candidate) => {
+            <div className="mt-4 flex flex-col gap-3 max-h-[360px] overflow-y-auto pr-1">
+              {candidates.map((candidate) => {
                 const isSelected = selectedGuests.some((g) => g.profile.id === candidate.profile.id);
 
                 return (
