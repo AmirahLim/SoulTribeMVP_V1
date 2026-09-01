@@ -115,16 +115,16 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const tripVal = ANSWER_MAP.spontaneousTrip(deep.spontaneousTrip);
 
   // Extract 8 Onboarding Question Answers (either from direct user props or DB join)
-  const q1 = (user as any).q1Finding || (user as any).trait_intent?.intents || [];
-  const q2 = (user as any).q2Feelings || (user as any).trait_communication?.conv_styles || [];
-  const q3Energy = typeof (user as any).q3Energy === 'number' ? (user as any).q3Energy : (user as any).trait_personality?.extraversion;
-  const q3GroupSize = (user as any).q3GroupSize || (user as any).trait_experience?.group_size_pref;
-  const q4 = (user as any).q4Connected || (user as any).trait_communication?.mediums || [];
-  const q5Rhythm = (user as any).q5PlanningRhythm || (user as any).trait_social_rhythm?.planning_horizon;
-  const q5Avail = (user as any).q5Availability || (user as any).trait_social_rhythm?.availability || [];
-  const rawQ6 = (user as any).q6Outings || (user as any).user_interests?.map((i: any) => i.interest_nodes?.name || i.node_name || i.name) || [];
-  const q7Pacing = (user as any).q7EmotionalPacing || (user as any).trait_emotional?.er_opening_pace;
-  const rawQ8 = (user as any).q8Qualities || (user as any).user_values?.map((v: any) => v.value_key || v.value_name || v.name) || [];
+  const q1 = user.q1Finding || (user as any).trait_intent?.intents || [];
+  const q2 = user.q2Feelings || (user as any).trait_communication?.conv_styles || [];
+  const q3Energy = typeof user.q3Energy === 'number' ? user.q3Energy : (user as any).trait_personality?.extraversion;
+  const q3GroupSize = user.q3GroupSize || (user as any).trait_experience?.group_size_pref;
+  const q4 = user.q4Connected || (user as any).trait_communication?.mediums || [];
+  const q5Rhythm = user.q5PlanningRhythm || (user as any).trait_social_rhythm?.planning_horizon;
+  const q5Avail = user.q5Availability || (user as any).trait_social_rhythm?.availability || [];
+  const rawQ6 = user.q6Outings || (user as any).user_interests?.map((i: any) => i.interest_nodes?.name || i.node_name || i.name) || [];
+  const q7Pacing = user.q7EmotionalPacing || (user as any).trait_emotional?.er_opening_pace;
+  const rawQ8 = user.q8Qualities || (user as any).user_values?.map((v: any) => v.value_key || v.value_name || v.name) || [];
 
   const q6Outings = rawQ6;
   const q8Qualities = rawQ8;
@@ -310,9 +310,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     importance: 0.8,
   }));
 
-  const birthYear = (user as any).birth_year ?? (user as any).birthYear ?? 1995;
-  const agePrefMin = (user as any).age_pref_min ?? (user as any).agePrefMin;
-  const agePrefMax = (user as any).age_pref_max ?? (user as any).agePrefMax;
+  const birthYear = user.birthYear ?? (user as any).birth_year ?? 1995;
+  const agePrefMin = user.agePrefMin ?? (user as any).age_pref_min;
+  const agePrefMax = user.agePrefMax ?? (user as any).age_pref_max;
 
   const rawVec: ProfileVector = {
     profile: {

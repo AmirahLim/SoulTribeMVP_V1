@@ -123,6 +123,19 @@ export interface UserProfileData {
   handle?: string;
   dateOfBirth?: string;
   birthYear?: number;
+  agePrefMin?: number;
+  agePrefMax?: number;
+  // Onboarding answers Q1-Q8 (previously read via `as any` in profileAdapter)
+  q1Finding?: string[];
+  q2Feelings?: string[];
+  q3Energy?: number;
+  q3GroupSize?: string;
+  q4Connected?: string[];
+  q5PlanningRhythm?: string;
+  q5Availability?: string[];
+  q6Outings?: string[];
+  q7EmotionalPacing?: string;
+  q8Qualities?: string[];
   avatarUrl: string;
   homeArea: string;
   bio: string;
