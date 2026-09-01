@@ -91,6 +91,8 @@ function PersonDetailContent() {
                 trait_social_rhythm (*),
                 trait_emotional (*),
                 trait_experience (*),
+                trait_lifestyle (*),
+                trait_geography (*),
                 user_interests (*),
                 user_values (*)
               `)
@@ -99,29 +101,39 @@ function PersonDetailContent() {
 
             if (dbProfile) {
               const viewerVec = toProfileVector(user, user.id);
-              const obData = dbProfile.onboarding_data || {};
+              const intentRow = Array.isArray(dbProfile.trait_intent) ? dbProfile.trait_intent[0] : dbProfile.trait_intent;
+              const commRow = Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0] : dbProfile.trait_communication;
+              const persRow = Array.isArray(dbProfile.trait_personality) ? dbProfile.trait_personality[0] : dbProfile.trait_personality;
+              const rhythmRow = Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0] : dbProfile.trait_social_rhythm;
+              const emoRow = Array.isArray(dbProfile.trait_emotional) ? dbProfile.trait_emotional[0] : dbProfile.trait_emotional;
+              const expRow = Array.isArray(dbProfile.trait_experience) ? dbProfile.trait_experience[0] : dbProfile.trait_experience;
+              const lifeRow = Array.isArray(dbProfile.trait_lifestyle) ? dbProfile.trait_lifestyle[0] : dbProfile.trait_lifestyle;
+              const geoRow = Array.isArray(dbProfile.trait_geography) ? dbProfile.trait_geography[0] : dbProfile.trait_geography;
+
               const candVec = toProfileVector({
                 displayName: dbProfile.display_name,
-                homeArea: dbProfile.home_area,
+                homeArea: dbProfile.home_area || geoRow?.home_area || 'Singapore',
                 avatarUrl: dbProfile.avatar_url,
                 bio: dbProfile.bio,
                 birthYear: dbProfile.birth_year,
-                q1Finding: obData.q1Finding || (Array.isArray(dbProfile.trait_intent) ? dbProfile.trait_intent[0]?.intents : dbProfile.trait_intent?.intents),
-                q2Feelings: obData.q2Feelings || (Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0]?.conv_styles : dbProfile.trait_communication?.conv_styles),
-                q3Energy: obData.q3Energy ?? (Array.isArray(dbProfile.trait_personality) ? dbProfile.trait_personality[0]?.extraversion : dbProfile.trait_personality?.extraversion),
-                q3GroupSize: obData.q3GroupSize ?? (Array.isArray(dbProfile.trait_experience) ? dbProfile.trait_experience[0]?.group_size_pref : dbProfile.trait_experience?.group_size_pref),
-                q4Connected: obData.q4Connected || (Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0]?.mediums : dbProfile.trait_communication?.mediums),
-                q5PlanningRhythm: obData.q5PlanningRhythm ?? (Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0]?.planning_horizon : dbProfile.trait_social_rhythm?.planning_horizon),
-                q5Availability: obData.q5Availability || (Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0]?.availability : dbProfile.trait_social_rhythm?.availability),
-                q6Outings: obData.q6Outings || (dbProfile.user_interests?.map((i: any) => i.node_name || i.name)),
-                q7EmotionalPacing: obData.q7EmotionalPacing ?? (Array.isArray(dbProfile.trait_emotional) ? dbProfile.trait_emotional[0]?.er_opening_pace : dbProfile.trait_emotional?.er_opening_pace),
-                q8Qualities: obData.q8Qualities || (dbProfile.user_values?.map((v: any) => v.value_name || v.name)),
-                trait_intent: Array.isArray(dbProfile.trait_intent) ? dbProfile.trait_intent[0] : dbProfile.trait_intent,
-                trait_communication: Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0] : dbProfile.trait_communication,
-                trait_personality: Array.isArray(dbProfile.trait_personality) ? dbProfile.trait_personality[0] : dbProfile.trait_personality,
-                trait_social_rhythm: Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0] : dbProfile.trait_social_rhythm,
-                trait_emotional: Array.isArray(dbProfile.trait_emotional) ? dbProfile.trait_emotional[0] : dbProfile.trait_emotional,
-                trait_experience: Array.isArray(dbProfile.trait_experience) ? dbProfile.trait_experience[0] : dbProfile.trait_experience,
+                q1Finding: intentRow?.intents,
+                q2Feelings: commRow?.conv_styles,
+                q3Energy: persRow?.extraversion,
+                q3GroupSize: expRow?.group_size_pref,
+                q4Connected: commRow?.mediums,
+                q5PlanningRhythm: rhythmRow?.planning_horizon,
+                q5Availability: rhythmRow?.availability,
+                q6Outings: dbProfile.user_interests?.map((i: any) => i.node_name || i.name),
+                q7EmotionalPacing: emoRow?.er_opening_pace,
+                q8Qualities: dbProfile.user_values?.map((v: any) => v.value_name || v.name),
+                trait_intent: intentRow,
+                trait_communication: commRow,
+                trait_personality: persRow,
+                trait_social_rhythm: rhythmRow,
+                trait_emotional: emoRow,
+                trait_experience: expRow,
+                trait_lifestyle: lifeRow,
+                trait_geography: geoRow,
                 user_interests: dbProfile.user_interests || [],
                 user_values: dbProfile.user_values || [],
               } as any, dbProfile.id);

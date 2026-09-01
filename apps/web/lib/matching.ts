@@ -67,11 +67,18 @@ export const realCandidateSource: CandidateSource = {
           trait_social_rhythm (*),
           trait_emotional (*),
           trait_experience (*),
+          trait_lifestyle (*),
+          trait_geography (*),
           user_interests (*),
           user_values (*)
         `);
 
-      if (error || !dbProfiles) return [];
+      if (error) {
+        console.error('[SoulTribe Error] Failed to fetch real candidates from Supabase:', error);
+        throw new Error(`Failed to load member profiles: ${error.message}`);
+      }
+
+      if (!dbProfiles) return [];
 
       return dbProfiles.map((p: any) => {
         const intentRow = Array.isArray(p.trait_intent) ? p.trait_intent[0] : p.trait_intent;
@@ -80,32 +87,35 @@ export const realCandidateSource: CandidateSource = {
         const rhythmRow = Array.isArray(p.trait_social_rhythm) ? p.trait_social_rhythm[0] : p.trait_social_rhythm;
         const emoRow = Array.isArray(p.trait_emotional) ? p.trait_emotional[0] : p.trait_emotional;
         const expRow = Array.isArray(p.trait_experience) ? p.trait_experience[0] : p.trait_experience;
+        const lifeRow = Array.isArray(p.trait_lifestyle) ? p.trait_lifestyle[0] : p.trait_lifestyle;
+        const geoRow = Array.isArray(p.trait_geography) ? p.trait_geography[0] : p.trait_geography;
 
-        const obData = p.onboarding_data || {};
         const vec = toProfileVector(
           {
             displayName: p.display_name,
-            homeArea: p.home_area,
+            homeArea: p.home_area || geoRow?.home_area || 'Singapore',
             avatarUrl: p.avatar_url,
             bio: p.bio,
             birthYear: p.birth_year,
-            passCompletionPct: 80,
-            q1Finding: obData.q1Finding || (intentRow?.intents),
-            q2Feelings: obData.q2Feelings || (commRow?.conv_styles),
-            q3Energy: obData.q3Energy ?? persRow?.extraversion,
-            q3GroupSize: obData.q3GroupSize ?? expRow?.group_size_pref,
-            q4Connected: obData.q4Connected || (commRow?.mediums),
-            q5PlanningRhythm: obData.q5PlanningRhythm ?? rhythmRow?.planning_horizon,
-            q5Availability: obData.q5Availability || (rhythmRow?.availability),
-            q6Outings: obData.q6Outings || (p.user_interests?.map((i: any) => i.node_name || i.name)),
-            q7EmotionalPacing: obData.q7EmotionalPacing ?? emoRow?.er_opening_pace,
-            q8Qualities: obData.q8Qualities || (p.user_values?.map((v: any) => v.value_name || v.name)),
+            passCompletionPct: p.pass_completion_pct || 80,
+            q1Finding: intentRow?.intents,
+            q2Feelings: commRow?.conv_styles,
+            q3Energy: persRow?.extraversion,
+            q3GroupSize: expRow?.group_size_pref,
+            q4Connected: commRow?.mediums,
+            q5PlanningRhythm: rhythmRow?.planning_horizon,
+            q5Availability: rhythmRow?.availability,
+            q6Outings: p.user_interests?.map((i: any) => i.node_name || i.name),
+            q7EmotionalPacing: emoRow?.er_opening_pace,
+            q8Qualities: p.user_values?.map((v: any) => v.value_name || v.name),
             trait_intent: intentRow,
             trait_communication: commRow,
             trait_personality: persRow,
             trait_social_rhythm: rhythmRow,
             trait_emotional: emoRow,
             trait_experience: expRow,
+            trait_lifestyle: lifeRow,
+            trait_geography: geoRow,
             user_interests: p.user_interests || [],
             user_values: p.user_values || [],
           } as any,
@@ -116,8 +126,9 @@ export const realCandidateSource: CandidateSource = {
           isDemo: false,
         };
       });
-    } catch {
-      return [];
+    } catch (err: any) {
+      console.error('[SoulTribe Error] Exception fetching real candidates:', err);
+      throw err;
     }
   },
 };
