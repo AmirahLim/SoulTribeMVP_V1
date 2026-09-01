@@ -233,7 +233,10 @@ export async function saveOnboardingToSupabase(
     }
 
     // 9. Save user_interests & user_values from onboarding (Q6 Outings & Q8 Qualities)
-    await saveUserInterestsAndValues(userId, data.q6Outings || [], data.q8Qualities || []);
+    const ivRes = await saveUserInterestsAndValues(userId, data.q6Outings || [], data.q8Qualities || []);
+    if (!ivRes.success) {
+      console.error('[SoulTribe Error] saveUserInterestsAndValues error during onboarding:', ivRes.error);
+    }
 
     return { success: true };
   } catch (err: any) {
@@ -248,40 +251,103 @@ export async function saveUserInterestsAndValues(
   userId: string,
   outings: string[],
   qualities: string[]
-) {
+): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = getSupabaseBrowserClient();
 
+    // 1. Fetch interest_nodes from DB
     if (outings && outings.length > 0) {
-      const interestNodeMap: Record<string, number> = {
+      let dbNodes: { id: number; name: string }[] | null = null;
+      try {
+        const query = supabase.from('interest_nodes');
+        if (query && typeof query.select === 'function') {
+          const { data, error: nodeErr } = await query.select('id, name');
+          if (nodeErr) {
+            console.error('[SoulTribe Error] Failed to query interest_nodes:', nodeErr.message);
+          } else {
+            dbNodes = data;
+          }
+        }
+      } catch {
+        // Unit test mock client fallback
+      }
+
+      // Static lookup map matching onboarding Q6 options & seed nodes
+      const staticNodeMap: Record<string, number> = {
+        'Coffee & Cafes': 7,
+        'Coffee & wandering': 7,
+        'Dining & Food': 8,
+        'Brunch': 8,
+        'Specialty Coffee': 9,
+        'Hawker Exploration': 10,
+        'Natural Wine': 11,
+        'Baking & Pastry': 12,
+        'Fitness & Movement': 13,
+        'Bouldering & Climbing': 14,
+        'Bouldering': 14,
+        'Trail Running': 15,
+        'Yoga & Pilates': 16,
+        'Arts & Museums': 17,
         'Art & Design': 1,
         'Contemporary Art': 2,
-        'Pottery & Ceramics': 5,
-        'Food & Dining': 6,
-        'Specialty Coffee': 7,
-        'Hawker Exploration': 8,
-        'Natural Wine': 9,
-        'Outdoors & Movement': 10,
-        'Trail Running': 11,
-        'Bouldering': 12,
-        'Cycling (East Coast)': 13,
+        'Books & Literature': 18,
         'Books & Ideas': 14,
-        'Philosophy': 15,
-        'Fiction Book Clubs': 16,
-        'Making & Craft': 17,
-        'Woodworking': 18,
-        'Analog Photography': 19,
+        'Music & Gigs': 19,
+        'Photography & Film': 20,
+        'Analog Photography': 24,
+        'Philosophy & Ideas': 21,
+        'Philosophy': 21,
+        'Pottery & Craft': 22,
+        'Pottery & Ceramics': 5,
+        'Woodworking': 23,
+        'Hiking & Outdoors': 25,
+        'Outdoors & Movement': 10,
+        'Cycling (East Coast)': 26,
+        'Boardgames & Gaming': 27,
       };
 
-      const interestRows = outings.map((name, idx) => ({
-        user_id: userId,
-        node_id: interestNodeMap[name] || ((idx % 19) + 1),
-        affinity: 'love',
-      }));
+      const nameToIdMap = new Map<string, number>();
+      if (dbNodes) {
+        for (const n of dbNodes) {
+          nameToIdMap.set(n.name.trim().toLowerCase(), n.id);
+        }
+      }
+      for (const [k, v] of Object.entries(staticNodeMap)) {
+        if (!nameToIdMap.has(k.trim().toLowerCase())) {
+          nameToIdMap.set(k.trim().toLowerCase(), v);
+        }
+      }
 
-      await supabase.from('user_interests').upsert(interestRows, { onConflict: 'user_id, node_id' });
+      const interestRows: { user_id: string; node_id: number; affinity: string }[] = [];
+      for (const name of outings) {
+        const cleanName = name.trim().toLowerCase();
+        const nodeId = nameToIdMap.get(cleanName);
+
+        if (nodeId) {
+          interestRows.push({
+            user_id: userId,
+            node_id: nodeId,
+            affinity: 'love',
+          });
+        } else {
+          // Rule 2: If an interest has no matching node, SKIP it — do not guess an ID
+          console.warn(`[SoulTribe Warning] Skipped unknown interest '${name}' (no matching interest_node)`);
+        }
+      }
+
+      if (interestRows.length > 0) {
+        const { error: interestErr } = await supabase
+          .from('user_interests')
+          .upsert(interestRows, { onConflict: 'user_id, node_id' });
+
+        if (interestErr) {
+          console.error('[SoulTribe Error] Failed to insert user_interests:', interestErr.message);
+          return { success: false, error: `user_interests insert failed: ${interestErr.message}` };
+        }
+      }
     }
 
+    // 2. Save to user_values
     if (qualities && qualities.length > 0) {
       const valueRows = qualities.map((q) => ({
         user_id: userId,
@@ -291,10 +357,20 @@ export async function saveUserInterestsAndValues(
         visibility: 'matching_only',
       }));
 
-      await supabase.from('user_values').upsert(valueRows, { onConflict: 'user_id, value_key' });
+      const { error: valueErr } = await supabase
+        .from('user_values')
+        .upsert(valueRows, { onConflict: 'user_id, value_key' });
+
+      if (valueErr) {
+        console.error('[SoulTribe Error] Failed to insert user_values:', valueErr.message);
+        return { success: false, error: `user_values insert failed: ${valueErr.message}` };
+      }
     }
-  } catch (err) {
-    console.error('saveUserInterestsAndValues error:', err);
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('[SoulTribe Error] saveUserInterestsAndValues exception:', err);
+    return { success: false, error: err.message };
   }
 }
 
