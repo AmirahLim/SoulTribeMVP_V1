@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch } from '../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName } from '@soul-tribe/core';
+import { getRankedMatches, RankedMatch, toProfileVector } from '../../../lib/matching';
+import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle
@@ -69,6 +69,10 @@ function PersonDetailContent() {
     );
   }
 
+  const userProfile = getUserProfile();
+  const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
+  const explanation = demoCandidate && viewerVector ? generateMatchExplanation(viewerVector, demoCandidate) : null;
+
   const rawFallbackPerson = demoCandidate
     ? {
         id: demoCandidate.profile.id,
@@ -76,9 +80,9 @@ function PersonDetailContent() {
         avatarUrl: demoCandidate.profile.avatar_url,
         homeArea: demoCandidate.profile.home_area,
         bio: demoCandidate.profile.bio,
-        interests: ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
-        clickText: 'Shared commitment to low-pressure, intentional catch-ups.',
-        rubText: 'Rhythm schedules touch well across the week.',
+        interests: demoCandidate.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
+        clickText: explanation?.click_text || 'Shared commitment to low-pressure, intentional catch-ups.',
+        rubText: explanation?.friction_text || 'Rhythm schedules touch well across the week.',
         fitLabel: 'Good Fit',
         rhythmOverlap: Math.round((demoCandidate.profile.confidence || 0.7) * 100),
       }

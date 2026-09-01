@@ -10,6 +10,7 @@ import {
 import type { ProfileVector, MatchContext } from '@soul-tribe/core';
 import type { UserProfileData } from './userStore';
 import { toProfileVector } from './profileAdapter';
+export { toProfileVector };
 import { initTelemetry } from './telemetryInit';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from './supabase';
 
