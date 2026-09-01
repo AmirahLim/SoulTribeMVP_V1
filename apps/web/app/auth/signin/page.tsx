@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/authContext';
 import { checkUserProfileExists } from '../../../lib/supabaseAuth';
-import { Button } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Sparkles, AlertCircle, Lock, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Sparkles, AlertCircle, KeyRound, CheckCircle2, Lock } from 'lucide-react';
 
 function GoogleIcon() {
   return (
-    <svg className="h-5 w-5 mr-3 shrink-0 opacity-60" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 mr-3 shrink-0" viewBox="0 0 24 24">
       <path
         fill="#EA4335"
         d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
@@ -31,35 +30,51 @@ function GoogleIcon() {
   );
 }
 
-function WorkingSignInForm() {
+function LumaSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('redirect') || '/home';
 
   const {
     signInWithOtp,
-    verifyOtp,
     signInWithGoogle,
     signUpWithPassword,
     signInWithPassword,
+    resetPasswordForEmail,
     user,
     loading: authLoading,
     isSupabaseConfigured,
   } = useAuth();
 
-  // Primary mode: 'signup' (Create Account) or 'signin' (Sign In)
-  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
+  // Mode: 'login' | 'forgot_password'
+  const [view, setView] = useState<'login' | 'forgot_password'>('login');
 
+  // Toggle for password mode vs magic link
+  const [usePasswordMode, setUsePasswordMode] = useState(true);
+
+  // Form Fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
+  const [otpSentSuccess, setOtpSentSuccess] = useState(false);
 
-  // Toggle state for secondary notes
-  const [showOtherMethodsNote, setShowOtherMethodsNote] = useState(false);
+  // Remembered password / email local storage check
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedEmail = localStorage.getItem('soul_tribe_saved_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+      }
+    }
+  }, []);
 
   // Auto-redirect signed-in users based on profile presence
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && !authLoading) {
       checkUserProfileExists(user.id).then((hasProfile) => {
         router.push(hasProfile ? redirectPath : '/onboarding');
@@ -70,6 +85,7 @@ function WorkingSignInForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setOtpSentSuccess(false);
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
@@ -79,44 +95,94 @@ function WorkingSignInForm() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g., name@example.com).');
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
 
-    if (!password || password.length < 8) {
-      setErrorMessage('Password must be at least 8 characters long.');
-      return;
+    // Save or clear remembered email
+    if (typeof window !== 'undefined') {
+      if (rememberMe) {
+        localStorage.setItem('soul_tribe_saved_email', trimmedEmail);
+      } else {
+        localStorage.removeItem('soul_tribe_saved_email');
+      }
     }
 
     setIsSubmitting(true);
 
-    if (mode === 'signup') {
-      const { error, user: signedUpUser } = await signUpWithPassword(trimmedEmail, password);
-      setIsSubmitting(false);
-
-      if (error) {
-        setErrorMessage(error.message || 'Failed to create account. Please check your details.');
+    if (usePasswordMode) {
+      if (!password || password.length < 8) {
+        setIsSubmitting(false);
+        setErrorMessage('Password must be at least 8 characters long.');
         return;
       }
 
-      if (signedUpUser) {
-        const hasProfile = await checkUserProfileExists(signedUpUser.id);
-        router.push(hasProfile ? redirectPath : '/onboarding');
-      }
-    } else {
-      const { error, user: signedInUser } = await signInWithPassword(trimmedEmail, password);
-      setIsSubmitting(false);
+      // Try sign-in first, if user doesn't exist try sign-up
+      const { error: signInErr, user: signedInUser } = await signInWithPassword(trimmedEmail, password);
+      
+      if (signInErr) {
+        if (signInErr.message.includes('Invalid login credentials') || signInErr.message.includes('User not found')) {
+          // Attempt sign-up for new users seamlessly
+          const { error: signUpErr, user: signedUpUser } = await signUpWithPassword(trimmedEmail, password);
+          setIsSubmitting(false);
 
-      if (error) {
-        setErrorMessage(error.message || 'Invalid email or password. Please try again.');
+          if (signUpErr) {
+            setErrorMessage(signUpErr.message || 'Invalid email or password. Please try again.');
+            return;
+          }
+
+          if (signedUpUser) {
+            const hasProfile = await checkUserProfileExists(signedUpUser.id);
+            router.push(hasProfile ? redirectPath : '/onboarding');
+            return;
+          }
+        }
+
+        setIsSubmitting(false);
+        setErrorMessage(signInErr.message || 'Failed to sign in. Please check your password.');
         return;
       }
 
+      setIsSubmitting(false);
       if (signedInUser) {
         const hasProfile = await checkUserProfileExists(signedInUser.id);
         router.push(hasProfile ? redirectPath : '/onboarding');
       }
+    } else {
+      // Magic link mode
+      const { error } = await signInWithOtp(trimmedEmail, redirectPath);
+      setIsSubmitting(false);
+
+      if (error) {
+        setErrorMessage(error.message || 'Unable to send login link right now.');
+        return;
+      }
+
+      setOtpSentSuccess(true);
     }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setResetSuccessMessage(null);
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setErrorMessage('Please enter your email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await resetPasswordForEmail(trimmedEmail);
+    setIsSubmitting(false);
+
+    if (error) {
+      setErrorMessage(error.message || 'Failed to send password reset email.');
+      return;
+    }
+
+    setResetSuccessMessage('Password reset link sent! Please check your email inbox.');
   };
 
   return (
@@ -124,173 +190,259 @@ function WorkingSignInForm() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[32px] border border-white/20 bg-black/85 p-8 backdrop-blur-2xl shadow-2xl"
+        className="rounded-[32px] border border-white/15 bg-[#09090b]/90 p-8 backdrop-blur-2xl shadow-2xl text-white"
       >
-        {/* Brand Header */}
-        <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-inner">
-            <Sparkles className="h-7 w-7 text-amber-300" />
-          </div>
-          <span className="mt-3.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase backdrop-blur-md">
-            Soul Tribe · Authentication
-          </span>
-          <h1 className="mt-3 text-[26px] font-extrabold tracking-tight text-white">
-            {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
-          </h1>
-          <p className="mt-1.5 text-[13.5px] text-white/75">
-            {mode === 'signup'
-              ? 'Enter your email & password to start onboarding.'
-              : 'Sign in with your email and password.'}
-          </p>
-        </div>
-
-        {!isSupabaseConfigured && (
-          <div className="mt-6 rounded-[16px] border border-amber-400/40 bg-amber-500/10 p-4 text-[13px] text-amber-200">
-            <p className="font-semibold text-amber-300">Environment Configuration Required</p>
-            <p className="mt-1 text-amber-200/90 leading-relaxed">
-              Missing Supabase environment variables (<code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> & <code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>).
-            </p>
-          </div>
-        )}
-
-        {/* PRIMARY MODE TABS (CREATE ACCOUNT vs SIGN IN) */}
-        <div className="mt-6 flex rounded-[16px] border border-white/15 bg-black/60 p-1">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('signup');
-              setErrorMessage(null);
-            }}
-            className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-bold transition-all ${
-              mode === 'signup'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-white/70 hover:text-white'
-            }`}
-          >
-            Create Account
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode('signin');
-              setErrorMessage(null);
-            }}
-            className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-bold transition-all ${
-              mode === 'signin'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-white/70 hover:text-white'
-            }`}
-          >
-            Sign In
-          </button>
-        </div>
-
-        {/* WORKING EMAIL + PASSWORD FORM */}
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="auth-email" className="block text-[13px] font-semibold text-white">
-              Email Address
-            </label>
-            <div className="relative mt-2">
-              <Mail className="absolute left-3.5 top-3 h-5 w-5 text-white/50" />
-              <input
-                id="auth-email"
-                type="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11 w-full rounded-[14px] border border-white/20 bg-black/60 pl-11 pr-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="auth-password" className="block text-[13px] font-semibold text-white">
-              Password <span className="text-[11.5px] font-normal text-white/60">(min 8 characters)</span>
-            </label>
-            <div className="relative mt-2">
-              <Lock className="absolute left-3.5 top-3 h-5 w-5 text-white/50" />
-              <input
-                id="auth-password"
-                type="password"
-                required
-                minLength={8}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-11 w-full rounded-[14px] border border-white/20 bg-black/60 pl-11 pr-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-              />
-            </div>
-          </div>
-
-          {errorMessage && (
+        <AnimatePresence mode="wait">
+          {view === 'login' ? (
             <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3.5 text-[13px] text-rose-200 flex items-start gap-2.5"
+              key="login-view"
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
             >
-              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
-              <span>{errorMessage}</span>
+              {/* Header Icon */}
+              <div className="flex justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#18181b] text-white shadow-inner">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+              </div>
+
+              {/* Title & Subtitle */}
+              <div className="mt-5 text-center">
+                <h1 className="text-[26px] font-extrabold tracking-tight text-white">
+                  Welcome to Soul Tribe
+                </h1>
+                <p className="mt-1.5 text-[14px] text-white/70">
+                  Log in or sign up to get started.
+                </p>
+              </div>
+
+              {!isSupabaseConfigured && (
+                <div className="mt-5 rounded-[16px] border border-amber-400/40 bg-amber-500/10 p-3.5 text-[12.5px] text-amber-200">
+                  <p className="font-semibold text-amber-300">Environment Configuration Required</p>
+                  <p className="mt-0.5 text-amber-200/90 leading-relaxed">
+                    Set <code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> & <code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>.
+                  </p>
+                </div>
+              )}
+
+              {/* Google Button */}
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => signInWithGoogle(redirectPath)}
+                  disabled
+                  className="flex h-12 w-full items-center justify-center rounded-[16px] border border-white/20 bg-[#18181b] text-[14.5px] font-semibold text-white/50 cursor-not-allowed shadow-sm transition-all"
+                >
+                  <GoogleIcon />
+                  Continue with Google
+                  <span className="ml-2 text-[10.5px] font-bold text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">
+                    (Coming Soon)
+                  </span>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="my-6 flex items-center gap-4">
+                <div className="h-[1px] flex-1 bg-white/15" />
+                <span className="text-[11.5px] font-bold tracking-widest text-white/40 uppercase">OR</span>
+                <div className="h-[1px] flex-1 bg-white/15" />
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="auth-email-input" className="block text-[13.5px] font-semibold text-white mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    id="auth-email-input"
+                    type="email"
+                    required
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
+                  />
+                </div>
+
+                {/* Password input when password mode is active */}
+                {usePasswordMode && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-2 pt-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="auth-password-input" className="block text-[13.5px] font-semibold text-white">
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setView('forgot_password');
+                          setErrorMessage(null);
+                        }}
+                        className="text-[12.5px] font-medium text-white/60 hover:text-white underline underline-offset-4 transition-all"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <input
+                      id="auth-password-input"
+                      type="password"
+                      required
+                      minLength={8}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
+                    />
+
+                    {/* Remember me checkbox */}
+                    <div className="pt-2 flex items-center gap-2">
+                      <input
+                        id="remember-me"
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="h-4 w-4 rounded border-[#3f3f46] bg-black text-white focus:ring-0 accent-white cursor-pointer"
+                      />
+                      <label htmlFor="remember-me" className="text-[12.5px] text-white/70 cursor-pointer select-none">
+                        Remember password on this device
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+
+                {errorMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3.5 text-[13px] text-rose-200 flex items-start gap-2.5"
+                  >
+                    <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+                    <span>{errorMessage}</span>
+                  </motion.div>
+                )}
+
+                {otpSentSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-[14px] border border-emerald-500/40 bg-emerald-500/15 p-3.5 text-[13px] text-emerald-200 flex items-start gap-2.5"
+                  >
+                    <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
+                    <span>Login link sent! Please check your email inbox to sign in.</span>
+                  </motion.div>
+                )}
+
+                {/* Primary Cream Pill CTA Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-12 w-full rounded-[16px] bg-[#FDFBF7] hover:bg-white active:scale-[0.99] text-black font-extrabold text-[15px] transition-all shadow-lg flex items-center justify-center gap-2 mt-3 cursor-pointer"
+                >
+                  {isSubmitting
+                    ? 'Processing...'
+                    : usePasswordMode
+                    ? 'Continue with Email →'
+                    : 'Send Login Link →'}
+                </button>
+              </form>
+
+              {/* Toggle Mode Underlined Link */}
+              <div className="mt-5 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsePasswordMode(!usePasswordMode);
+                    setErrorMessage(null);
+                  }}
+                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all"
+                >
+                  {usePasswordMode ? 'Sign in with email link instead' : 'Sign in with password instead'}
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            /* FORGOT PASSWORD VIEW */
+            <motion.div
+              key="forgot-password-view"
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+            >
+              <div className="flex justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-[#18181b] text-amber-300 shadow-inner">
+                  <KeyRound className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="mt-5 text-center">
+                <h2 className="text-[24px] font-extrabold tracking-tight text-white">
+                  Reset Your Password
+                </h2>
+                <p className="mt-1.5 text-[13.5px] text-white/70">
+                  Enter your email address and we'll send you a password reset link.
+                </p>
+              </div>
+
+              <form onSubmit={handleResetPassword} className="mt-6 space-y-4">
+                <div>
+                  <label htmlFor="reset-email-input" className="block text-[13.5px] font-semibold text-white mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    id="reset-email-input"
+                    type="email"
+                    required
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
+                  />
+                </div>
+
+                {errorMessage && (
+                  <div className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3.5 text-[13px] text-rose-200 flex items-start gap-2.5">
+                    <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                {resetSuccessMessage && (
+                  <div className="rounded-[14px] border border-emerald-500/40 bg-emerald-500/15 p-3.5 text-[13px] text-emerald-200 flex items-start gap-2.5">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
+                    <span>{resetSuccessMessage}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-12 w-full rounded-[16px] bg-[#FDFBF7] hover:bg-white active:scale-[0.99] text-black font-extrabold text-[15px] transition-all shadow-lg flex items-center justify-center cursor-pointer mt-3"
+                >
+                  {isSubmitting ? 'Sending Reset Link...' : 'Send Reset Link →'}
+                </button>
+              </form>
+
+              <div className="mt-5 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('login');
+                    setErrorMessage(null);
+                    setResetSuccessMessage(null);
+                  }}
+                  className="text-[13px] font-medium text-white/70 hover:text-white underline underline-offset-4 transition-all"
+                >
+                  ← Back to log in
+                </button>
+              </div>
             </motion.div>
           )}
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            disabled={isSubmitting}
-            className="w-full justify-center py-3.5 text-[14px] font-bold"
-          >
-            {isSubmitting
-              ? mode === 'signup'
-                ? 'Creating Account...'
-                : 'Signing In...'
-              : mode === 'signup'
-              ? 'Create Account & Start Onboarding →'
-              : 'Sign In →'}
-          </Button>
-        </form>
-
-        {/* DIVIDER & DISABLED/COMING SOON OPTIONS */}
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-[1px] flex-1 bg-white/15" />
-          <span className="text-[11.5px] font-semibold text-white/35 uppercase tracking-wider">Other Options</span>
-          <div className="h-[1px] flex-1 bg-white/15" />
-        </div>
-
-        {/* DISABLED GOOGLE BUTTON WITH CLEAR NOTE */}
-        <div className="space-y-3">
-          <button
-            type="button"
-            disabled
-            className="flex h-11 w-full items-center justify-center rounded-[16px] border border-white/10 bg-white/5 px-4 text-[13.5px] font-semibold text-white/40 cursor-not-allowed"
-          >
-            <GoogleIcon />
-            Continue with Google <span className="ml-2 text-[11px] font-bold text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">(Coming Soon)</span>
-          </button>
-        </div>
-
-        {/* COLLAPSIBLE NOTE FOR MAGIC LINK / 6-DIGIT CODE */}
-        <div className="mt-4 pt-2 text-center">
-          <button
-            type="button"
-            onClick={() => setShowOtherMethodsNote(!showOtherMethodsNote)}
-            className="text-[12px] text-white/50 hover:text-white/80 transition-all underline underline-offset-4"
-          >
-            {showOtherMethodsNote ? 'Hide note on email links & OTP codes' : 'Why is email link / 6-digit code sign-in disabled?'}
-          </button>
-
-          {showOtherMethodsNote && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 rounded-[14px] border border-white/15 bg-white/5 p-3.5 text-[12px] text-white/70 text-left leading-relaxed"
-            >
-              Email magic links and 6-digit OTP codes are currently disabled until custom SMTP provider setup is completed. Please use <strong>Email + Password</strong> above to sign in or create your account.
-            </motion.div>
-          )}
-        </div>
+        </AnimatePresence>
       </motion.div>
     </div>
   );
@@ -315,7 +467,7 @@ export default function SignInPage() {
           </div>
         }
       >
-        <WorkingSignInForm />
+        <LumaSignInForm />
       </React.Suspense>
     </div>
   );

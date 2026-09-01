@@ -14,6 +14,7 @@ interface AuthContextType {
   signInWithGoogle: (redirectToPath?: string) => Promise<{ error: Error | null }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isSupabaseConfigured: boolean;
 }
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => ({ error: new Error('Auth not initialized') }),
   signUpWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signInWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
+  resetPasswordForEmail: async () => ({ error: new Error('Auth not initialized') }),
   signOut: async () => {},
   isSupabaseConfigured: false,
 });
@@ -195,6 +197,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPasswordForEmail = async (email: string): Promise<{ error: Error | null }> => {
+    try {
+      const client = getSupabaseBrowserClient();
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const redirectTo = `${origin}/auth/callback?next=/you`;
+
+      const { error: resetErr } = await client.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo,
+      });
+
+      if (resetErr) {
+        return { error: new Error(resetErr.message) };
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  };
+
   const signOut = async (): Promise<void> => {
     try {
       const client = getSupabaseBrowserClient();
@@ -222,6 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signUpWithPassword,
         signInWithPassword,
+        resetPasswordForEmail,
         signOut,
         isSupabaseConfigured: isConfigured,
       }}
