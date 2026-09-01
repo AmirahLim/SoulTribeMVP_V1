@@ -85,8 +85,10 @@ export const realCandidateSource: CandidateSource = {
 };
 
 export const demoCandidateSource: CandidateSource = {
-  async getCandidates(_opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
-    return DEMO_PROFILES.map((vec) => ({
+  async getCandidates(opts?: { area?: string; limit?: number; all?: boolean }): Promise<CandidateVector[]> {
+    // Cap demo bots to 5 max (within requested 3-5 range) to make room for real members
+    const pool = (opts as any)?.all ? DEMO_PROFILES : DEMO_PROFILES.slice(0, 5);
+    return pool.map((vec) => ({
       ...vec,
       isDemo: true,
     }));

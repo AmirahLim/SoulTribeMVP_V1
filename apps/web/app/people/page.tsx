@@ -175,7 +175,7 @@ function PeopleListContent() {
                           )}
 
                           {/* HIDE fit label and numeric score in Small Community Mode */}
-                          {!isSmallCommunity && person.fitLabel ? (
+                          {person.fitLabel ? (
                             <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
                               {person.fitLabel}
                             </span>

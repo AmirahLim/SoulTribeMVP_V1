@@ -266,7 +266,7 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    {!isSmallCommunity && person.fitLabel ? (
+                    {person.fitLabel ? (
                       <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full border border-white/30 backdrop-blur-md">
                         {person.fitLabel}
                       </span>
