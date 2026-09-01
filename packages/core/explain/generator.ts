@@ -126,7 +126,10 @@ export function generateMatchExplanation(
   });
 
   const clickParts: string[] = [];
-  const candidateClickDims = eligibleClickDims.filter((d) => d.score >= 0.50);
+  const nonGeoClickDims = eligibleClickDims.filter((d) => d.key !== 'geography');
+  const candidateClickDims = (nonGeoClickDims.length > 0 ? nonGeoClickDims : eligibleClickDims).filter(
+    (d) => d.score >= 0.45
+  );
 
   for (const d of candidateClickDims) {
     if (clickParts.length >= 2) break;

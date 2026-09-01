@@ -83,22 +83,51 @@ function PersonDetailContent() {
             const client = getSupabaseBrowserClient();
             const { data: dbProfile } = await client
               .from('profiles')
-              .select('*')
+              .select(`
+                *,
+                trait_intent (*),
+                trait_communication (*),
+                trait_personality (*),
+                trait_social_rhythm (*),
+                trait_emotional (*),
+                trait_experience (*),
+                user_interests (*),
+                user_values (*)
+              `)
               .or(`id.eq.${cleanPersonId},handle.ilike.${cleanPersonId}`)
               .maybeSingle();
 
             if (dbProfile) {
+              const viewerVec = toProfileVector(user, user.id);
+              const candVec = toProfileVector({
+                displayName: dbProfile.display_name,
+                homeArea: dbProfile.home_area,
+                avatarUrl: dbProfile.avatar_url,
+                bio: dbProfile.bio,
+                birthYear: dbProfile.birth_year,
+                trait_intent: Array.isArray(dbProfile.trait_intent) ? dbProfile.trait_intent[0] : dbProfile.trait_intent,
+                trait_communication: Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0] : dbProfile.trait_communication,
+                trait_personality: Array.isArray(dbProfile.trait_personality) ? dbProfile.trait_personality[0] : dbProfile.trait_personality,
+                trait_social_rhythm: Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0] : dbProfile.trait_social_rhythm,
+                trait_emotional: Array.isArray(dbProfile.trait_emotional) ? dbProfile.trait_emotional[0] : dbProfile.trait_emotional,
+                trait_experience: Array.isArray(dbProfile.trait_experience) ? dbProfile.trait_experience[0] : dbProfile.trait_experience,
+                user_interests: dbProfile.user_interests || [],
+                user_values: dbProfile.user_values || [],
+              } as any, dbProfile.id);
+
+              const explanation = generateMatchExplanation(viewerVec, candVec);
+
               found = {
                 id: dbProfile.id,
                 name: dbProfile.display_name || 'Member',
                 avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Member'),
                 homeArea: dbProfile.home_area || 'Singapore',
-                bio: dbProfile.bio || 'Singapore-based member.',
-                rankScore: 0.80,
-                resonance: 0.80,
+                bio: dbProfile.bio || 'New member in Singapore building out their Tribal Pass.',
+                rankScore: 0.82,
+                resonance: 0.82,
                 logistics: 0.85,
-                clickText: 'Shared community rhythm and complementary interests.',
-                rubText: 'Different social energy levels — take time to adjust.',
+                clickText: explanation.click_text,
+                rubText: explanation.friction_text,
                 fitLabel: 'Natural Resonance',
                 provisional: false,
                 isDemo: false,

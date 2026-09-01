@@ -59,11 +59,28 @@ export const realCandidateSource: CandidateSource = {
       const client = getSupabaseBrowserClient();
       const { data: dbProfiles, error } = await client
         .from('profiles')
-        .select('*');
+        .select(`
+          *,
+          trait_intent (*),
+          trait_communication (*),
+          trait_personality (*),
+          trait_social_rhythm (*),
+          trait_emotional (*),
+          trait_experience (*),
+          user_interests (*),
+          user_values (*)
+        `);
 
       if (error || !dbProfiles) return [];
 
-      return dbProfiles.map((p) => {
+      return dbProfiles.map((p: any) => {
+        const intentRow = Array.isArray(p.trait_intent) ? p.trait_intent[0] : p.trait_intent;
+        const commRow = Array.isArray(p.trait_communication) ? p.trait_communication[0] : p.trait_communication;
+        const persRow = Array.isArray(p.trait_personality) ? p.trait_personality[0] : p.trait_personality;
+        const rhythmRow = Array.isArray(p.trait_social_rhythm) ? p.trait_social_rhythm[0] : p.trait_social_rhythm;
+        const emoRow = Array.isArray(p.trait_emotional) ? p.trait_emotional[0] : p.trait_emotional;
+        const expRow = Array.isArray(p.trait_experience) ? p.trait_experience[0] : p.trait_experience;
+
         const vec = toProfileVector(
           {
             displayName: p.display_name,
@@ -72,7 +89,15 @@ export const realCandidateSource: CandidateSource = {
             bio: p.bio,
             birthYear: p.birth_year,
             passCompletionPct: 80,
-          },
+            trait_intent: intentRow,
+            trait_communication: commRow,
+            trait_personality: persRow,
+            trait_social_rhythm: rhythmRow,
+            trait_emotional: emoRow,
+            trait_experience: expRow,
+            user_interests: p.user_interests || [],
+            user_values: p.user_values || [],
+          } as any,
           p.id
         );
         return {
