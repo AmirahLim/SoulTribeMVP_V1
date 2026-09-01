@@ -16,6 +16,7 @@ import {
 } from '../../lib/userStore';
 
 import { AuthGuard } from '../../components/AuthGuard';
+import { getActiveNextBestPrompts } from '../../lib/dimensionPrompts';
 
 export default function ProfilePage() {
   return (
@@ -170,6 +171,30 @@ function ProfileContent() {
               <Info className="h-3.5 w-3.5" /> How Standing Works
             </button>
           </div>
+
+          {/* NEXT BEST QUESTIONS PROMPT BANNER */}
+          {getActiveNextBestPrompts(profile, 2).length > 0 && (
+            <div className="mt-4 space-y-2.5">
+              <span className="text-[11px] font-bold tracking-widest text-amber-300/90 uppercase flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Sharpen Your Matches
+              </span>
+              {getActiveNextBestPrompts(profile, 2).map((prompt) => (
+                <Link key={prompt.dimension} href={prompt.href} className="block">
+                  <div className="rounded-[20px] border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 p-4 transition shadow-lg backdrop-blur-md flex items-center justify-between gap-3 group">
+                    <div className="space-y-1">
+                      <h4 className="text-[14px] font-extrabold text-amber-200 flex items-center gap-2">
+                        {prompt.label}
+                      </h4>
+                      <p className="text-[12.5px] text-white/80 leading-relaxed">
+                        {prompt.copy}
+                      </p>
+                    </div>
+                    <ArrowUpRight className="h-5 w-5 text-amber-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Current Status Badge Display */}
           <div className="mt-3 flex items-center justify-between rounded-[20px] border border-white/20 bg-black/60 p-3.5 shadow-xl backdrop-blur-md">

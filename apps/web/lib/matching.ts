@@ -6,6 +6,7 @@ import {
   getGenderAvatarForName,
   buildMatchSurfacedEvent,
   recordEvent,
+  explorationBoost,
 } from '@soul-tribe/core';
 import type { ProfileVector, MatchContext } from '@soul-tribe/core';
 import type { UserProfileData } from './userStore';
@@ -366,6 +367,37 @@ export async function getSuppressionData(viewerId: string): Promise<{
   return { hiddenIds, softSuppressedMap };
 }
 
+export async function getGlobalSurfacedCounts(candidateIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (candidateIds.length === 0) return counts;
+
+  for (const rec of mockSurfacedRecords) {
+    if (candidateIds.includes(rec.shown_id)) {
+      counts.set(rec.shown_id, (counts.get(rec.shown_id) ?? 0) + 1);
+    }
+  }
+
+  if (checkIsSupabaseConfigured()) {
+    try {
+      const client = getSupabaseBrowserClient();
+      const { data } = await client
+        .from('match_surfaced')
+        .select('shown_id')
+        .in('shown_id', candidateIds);
+
+      if (data) {
+        for (const row of data) {
+          counts.set(row.shown_id, (counts.get(row.shown_id) ?? 0) + 1);
+        }
+      }
+    } catch {
+      // Fail-safe
+    }
+  }
+
+  return counts;
+}
+
 export async function getRankedMatches(
   user: UserProfileData & { id?: string },
   opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
@@ -404,8 +436,10 @@ export async function getRankedMatches(
   };
 
   const { hiddenIds, softSuppressedMap } = await getSuppressionData(effectiveId);
+  const candidateIds = candidateVecs.map((c) => c.profile.id);
+  const globalSurfacedCounts = await getGlobalSurfacedCounts(candidateIds);
 
-  const freshPool: (RankedMatch & { lastShownAt?: string })[] = [];
+  const freshPool: (RankedMatch & { orderingScore: number; lastShownAt?: string })[] = [];
   const suppressedPool: (RankedMatch & { lastShownAt?: string })[] = [];
   let positionCounter = 1;
 
@@ -443,13 +477,18 @@ export async function getRankedMatches(
       recordEvent(surfacedEvent);
     }
 
-    const matchItem: RankedMatch & { lastShownAt?: string } = {
+    // Exposure fairness: count global times surfaced & calculate ordering boost
+    const timesSurfaced = isDemo ? 0 : (globalSurfacedCounts.get(candVec.profile.id) ?? 0);
+    const boost = isDemo ? 0 : explorationBoost(timesSurfaced);
+    const orderingScore = softRes.adjustedScore + boost;
+
+    const matchItem: RankedMatch & { orderingScore: number; lastShownAt?: string } = {
       id: candVec.profile.id,
       name: candVec.profile.display_name,
       avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
       homeArea: user.homeArea || 'Singapore',
       bio: candVec.profile.bio || 'Singapore-based member.',
-      rankScore: softRes.adjustedScore,
+      rankScore: softRes.adjustedScore, // DISPLAYED SCORE UNTOUCHED!
       resonance: matchRes.resonance,
       logistics: matchRes.logistics,
       clickText: explanation.click_text,
@@ -457,6 +496,7 @@ export async function getRankedMatches(
       fitLabel,
       provisional: softRes.provisional,
       isDemo,
+      orderingScore,
     };
 
     if (!isDemo && softSuppressedMap.has(candVec.profile.id)) {
@@ -468,8 +508,8 @@ export async function getRankedMatches(
     }
   }
 
-  // Sort fresh pool by rankScore descending
-  freshPool.sort((a, b) => b.rankScore - a.rankScore);
+  // Sort fresh pool by orderingScore descending (newcomers with low timesSurfaced float higher)
+  freshPool.sort((a, b) => b.orderingScore - a.orderingScore);
 
   // Sort suppressed pool by least-recently-shown first (oldest shownAt first)
   suppressedPool.sort((a, b) => {

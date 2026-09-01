@@ -5,35 +5,52 @@ import Link from 'next/link';
 import { Button, Chip } from '@soul-tribe/ui';
 import { ArrowLeft, Check, Sparkles, Lock, Globe, CheckCircle2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassCompletion } from '../../../lib/userStore';
-
+import { useSearchParams } from 'next/navigation';
+import { getActiveNextBestPrompts } from '../../../lib/dimensionPrompts';
 import { AuthGuard } from '../../../components/AuthGuard';
 
 export default function DeeperTribalPassPage() {
   return (
     <AuthGuard>
-      <DeeperTribalPassContent />
+      <React.Suspense fallback={null}>
+        <DeeperTribalPassContent />
+      </React.Suspense>
     </AuthGuard>
   );
 }
 
 function DeeperTribalPassContent() {
+  const searchParams = useSearchParams();
+  const catParam = searchParams.get('cat');
+
   const [activeCategoryNum, setActiveCategoryNum] = useState<number>(1);
   const [savedMessage, setSavedMessage] = useState(false);
   const [completedCats, setCompletedCats] = useState<number[]>([]);
   const [passPct, setPassPct] = useState<number>(10);
+  const [profile, setProfileState] = useState(getUserProfile());
 
   // Form State
   const [formState, setFormState] = useState<DeepProfileAnswers>({});
 
   useEffect(() => {
-    const profile = getUserProfile();
-    if (profile.deepProfile) {
-      setFormState(profile.deepProfile);
+    const loaded = getUserProfile();
+    setProfileState(loaded);
+    if (loaded.deepProfile) {
+      setFormState(loaded.deepProfile);
     }
-    const cats = profile.completedCategoryNums || [];
+    const cats = loaded.completedCategoryNums || [];
     setCompletedCats(cats);
-    setPassPct(profile.passCompletionPct);
+    setPassPct(loaded.passCompletionPct);
   }, []);
+
+  useEffect(() => {
+    if (catParam) {
+      const num = parseInt(catParam, 10);
+      if (!isNaN(num) && num >= 1 && num <= 10) {
+        setActiveCategoryNum(num);
+      }
+    }
+  }, [catParam]);
 
   const updateField = (key: keyof DeepProfileAnswers, value: any) => {
     setFormState((prev) => ({ ...prev, [key]: value }));

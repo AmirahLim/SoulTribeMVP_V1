@@ -234,6 +234,15 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     answered: 2,
   };
 
+  const valuesArr = (deep.coreValues || '')
+    .split(/·|,/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((v, i) => ({ value_node_id: String(i + 1), weight: 0.8 }));
+
+  const interestsArr = (deep.interestsList || (user.bio ? [user.bio] : []))
+    .map((item, i) => ({ interest_node_id: i + 1, level: 0.8 }));
+
   const rawVec: ProfileVector = {
     profile: {
       id: userId,
