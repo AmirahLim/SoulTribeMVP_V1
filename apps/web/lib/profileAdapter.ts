@@ -122,30 +122,29 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const q4 = (user as any).q4Connected || (user as any).trait_communication?.mediums || [];
   const q5Rhythm = (user as any).q5PlanningRhythm || (user as any).trait_social_rhythm?.planning_horizon;
   const q5Avail = (user as any).q5Availability || (user as any).trait_social_rhythm?.availability || [];
-  const rawQ6 = (user as any).q6Outings || (user as any).user_interests?.map((i: any) => i.node_name || i.name) || [];
+  const rawQ6 = (user as any).q6Outings || (user as any).user_interests?.map((i: any) => i.interest_nodes?.name || i.node_name || i.name) || [];
   const q7Pacing = (user as any).q7EmotionalPacing || (user as any).trait_emotional?.er_opening_pace;
-  const rawQ8 = (user as any).q8Qualities || (user as any).user_values?.map((v: any) => v.value_name || v.name) || [];
+  const rawQ8 = (user as any).q8Qualities || (user as any).user_values?.map((v: any) => v.value_key || v.value_name || v.name) || [];
 
-  // Check if this is a real member profile (has real displayName or onboarding questions answered)
-  const isRealMember = Boolean(
-    (user.displayName && !['Empty User', 'Thin User'].includes(user.displayName) && (user.passCompletionPct ?? 0) >= 35) ||
-    user.hasCompletedOnboarding ||
-    q1.length > 0 ||
-    q2.length > 0 ||
-    typeof q3Energy === 'number' ||
-    q4.length > 0 ||
-    q5Rhythm ||
-    q5Avail.length > 0 ||
-    rawQ6.length > 0 ||
-    q7Pacing ||
-    rawQ8.length > 0
+  const q6Outings = rawQ6;
+  const q8Qualities = rawQ8;
+
+  const isThinUser = Boolean(
+    (user as any).displayName === 'Empty User' ||
+    (user as any).display_name === 'Empty User' ||
+    (user as any).displayName === 'Thin User' ||
+    (user as any).display_name === 'Thin User' ||
+    (user.passCompletionPct !== undefined && user.passCompletionPct !== null && user.passCompletionPct < 35)
   );
 
-  const q6Outings = rawQ6.length > 0 ? rawQ6 : (isRealMember ? ['Coffee & Cafes', 'Dining & Food'] : []);
-  const q8Qualities = rawQ8.length > 0 ? rawQ8 : (isRealMember ? ['Authenticity', 'Reliability'] : []);
+  const hasOnboardedFlag = !isThinUser;
 
   // 1. Personality
-  const personalityAnswered = (q2.length > 0 || typeof q3Energy === 'number') ? 8 : (mbtiMap ? 10 : (isRealMember ? 6 : 0));
+  const dbPersAnswered = (user as any).trait_personality?.answered;
+  const personalityAnswered = typeof dbPersAnswered === 'number'
+    ? dbPersAnswered
+    : ((q2.length > 0 || typeof q3Energy === 'number') ? 8 : (mbtiMap ? 10 : (hasOnboardedFlag ? 6 : 0)));
+
   const serious_playful = q2.some((f: string) => f.includes('Deep') || f.includes('meaningful')) ? 0.7 
     : q2.some((f: string) => f.includes('Chill') || f.includes('relaxed')) ? 0.4 
     : (socialVibeVal?.serious_playful ?? 0.5);
@@ -171,7 +170,11 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 2. Communication
-  const commAnswered = q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : (isRealMember ? 6 : 0)));
+  const dbCommAnswered = (user as any).trait_communication?.answered;
+  const commAnswered = typeof dbCommAnswered === 'number'
+    ? dbCommAnswered
+    : (q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : (hasOnboardedFlag ? 6 : 0))));
+
   const communication = {
     user_id: userId,
     contact_frequency_self: q4.some((c: string) => c.includes('check-in')) ? 0.7 : (messagingVal?.contact_frequency_self ?? 0.5),
@@ -189,16 +192,20 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 3. Social Rhythm
-  const rhythmAnswered = q5Avail.length > 0 || q5Rhythm ? 6 : ((saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : (isRealMember ? 6 : 0)));
+  const dbRhythmAnswered = (user as any).trait_social_rhythm?.answered;
+  const rhythmAnswered = typeof dbRhythmAnswered === 'number'
+    ? dbRhythmAnswered
+    : (q5Avail.length > 0 || q5Rhythm ? 6 : ((saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : (hasOnboardedFlag ? 6 : 0))));
+
   const planning_horizon = typeof q5Rhythm === 'string'
     ? (q5Rhythm.includes('Spontaneous') ? 0.2 : 0.8)
     : (typeof q5Rhythm === 'number' ? q5Rhythm : (saturdayVal?.planning_horizon ?? 0.5));
 
   const social_rhythm = {
     user_id: userId,
-    availability: q5Avail.length > 0 ? q5Avail : ['sat_midday', 'sun_midday'],
-    fri_night: true,
-    sat_night: true,
+    availability: q5Avail.length > 0 ? q5Avail : [],
+    fri_night: Boolean((user as any).trait_social_rhythm?.fri_night ?? (user as any).fri_night),
+    sat_night: Boolean((user as any).trait_social_rhythm?.sat_night ?? (user as any).sat_night),
     planning_horizon,
     social_freq_self: 0.5,
     social_freq_expect: 0.5,
@@ -208,17 +215,25 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 4. Intent
-  const intentAnswered = q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : (isRealMember ? 5 : 0));
+  const dbIntentAnswered = (user as any).trait_intent?.answered;
+  const intentAnswered = typeof dbIntentAnswered === 'number'
+    ? dbIntentAnswered
+    : (q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : (hasOnboardedFlag ? 5 : 0)));
+
   const intent = {
     user_id: userId,
-    intents: q1.length > 0 ? q1 : ['friendship', 'close_friends'],
+    intents: q1.length > 0 ? q1 : ['friendship'],
     depth: q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : 2,
     open_to_hosting: false,
     answered: intentAnswered,
   };
 
   // 5. Emotional
-  const emotionalAnswered = q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : (isRealMember ? 6 : 0));
+  const dbEmoAnswered = (user as any).trait_emotional?.answered;
+  const emotionalAnswered = typeof dbEmoAnswered === 'number'
+    ? dbEmoAnswered
+    : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : (hasOnboardedFlag ? 6 : 0)));
+
   const er_opening_pace = typeof q7Pacing === 'string'
     ? (q7Pacing.includes('Fast') ? 0.8 : 0.4)
     : (typeof q7Pacing === 'number' ? q7Pacing : 0.5);
@@ -244,7 +259,11 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 6. Lifestyle
-  const lifestyleAnswered = deep.budgetPref ? 5 : (isRealMember ? 4 : 0);
+  const dbLifeAnswered = (user as any).trait_lifestyle?.answered;
+  const lifestyleAnswered = typeof dbLifeAnswered === 'number'
+    ? dbLifeAnswered
+    : (deep.budgetPref ? 5 : (hasOnboardedFlag ? 4 : 0));
+
   const lifestyle = {
     user_id: userId,
     budget_band: 2,
@@ -262,7 +281,10 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 7. Experience
-  const expAnswered = q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : (isRealMember ? 4 : 0));
+  const dbExpAnswered = (user as any).trait_experience?.answered;
+  const expAnswered = typeof dbExpAnswered === 'number'
+    ? dbExpAnswered
+    : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : (hasOnboardedFlag ? 4 : 0)));
   const group_size_pref = typeof q3GroupSize === 'string'
     ? (q3GroupSize.includes('1-on-1') ? 0.2 : q3GroupSize.includes('3-4') ? 0.4 : 0.6)
     : (typeof q3GroupSize === 'number' ? q3GroupSize : (groupSizeVal ?? 0.5));

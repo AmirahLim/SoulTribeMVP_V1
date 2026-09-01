@@ -36,8 +36,8 @@ describe('Cold Start Wiring Tests — explorationBoost & nextBestQuestions', () 
 
     // Established member: surfaced 20 times to others
     const establishedMember = {
-      ...DEMO_PROFILES[1],
-      profile: { ...DEMO_PROFILES[1].profile, id: 'established-member-1', display_name: 'Established Member' },
+      ...DEMO_PROFILES[0],
+      profile: { ...DEMO_PROFILES[0].profile, id: 'established-member-1', display_name: 'Established Member' },
       isDemo: false,
     };
 

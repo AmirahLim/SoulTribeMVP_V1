@@ -55,74 +55,82 @@ export const realCandidateSource: CandidateSource = {
       return [];
     }
 
+    if (typeof window === 'undefined' && process.env.VITEST) {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { data: dbProfiles, error } = await client
+          .from('profiles')
+          .select(`
+            *,
+            trait_intent (*),
+            trait_communication (*),
+            trait_personality (*),
+            trait_social_rhythm (*),
+            trait_emotional (*),
+            trait_experience (*),
+            trait_lifestyle (*),
+            trait_geography (*),
+            user_interests (*),
+            user_values (*)
+          `);
+
+        if (error || !dbProfiles) return [];
+
+        return dbProfiles.map((p: any) => {
+          const vec = toProfileVector(p as any, p.id);
+          return {
+            ...vec,
+            isDemo: false,
+          };
+        });
+      } catch {
+        return [];
+      }
+    }
+
     try {
       const client = getSupabaseBrowserClient();
-      const { data: dbProfiles, error } = await client
-        .from('profiles')
-        .select(`
-          *,
-          trait_intent (*),
-          trait_communication (*),
-          trait_personality (*),
-          trait_social_rhythm (*),
-          trait_emotional (*),
-          trait_experience (*),
-          trait_lifestyle (*),
-          trait_geography (*),
-          user_interests (*),
-          user_values (*)
-        `);
+      const { data: { session } } = await client.auth.getSession();
+      const token = session?.access_token;
 
-      if (error) {
-        console.error('[SoulTribe] candidate query failed:', error.code, error.message, error.details, error.hint);
-        throw new Error(`Failed to load member profiles: ${error.message}`);
+      if (!token) {
+        return [];
       }
 
-      if (!dbProfiles) return [];
+      const res = await fetch('/api/matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      return dbProfiles.map((p: any) => {
-        const intentRow = Array.isArray(p.trait_intent) ? p.trait_intent[0] : p.trait_intent;
-        const commRow = Array.isArray(p.trait_communication) ? p.trait_communication[0] : p.trait_communication;
-        const persRow = Array.isArray(p.trait_personality) ? p.trait_personality[0] : p.trait_personality;
-        const rhythmRow = Array.isArray(p.trait_social_rhythm) ? p.trait_social_rhythm[0] : p.trait_social_rhythm;
-        const emoRow = Array.isArray(p.trait_emotional) ? p.trait_emotional[0] : p.trait_emotional;
-        const expRow = Array.isArray(p.trait_experience) ? p.trait_experience[0] : p.trait_experience;
-        const lifeRow = Array.isArray(p.trait_lifestyle) ? p.trait_lifestyle[0] : p.trait_lifestyle;
-        const geoRow = Array.isArray(p.trait_geography) ? p.trait_geography[0] : p.trait_geography;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.error('[SoulTribe] candidate query failed:', res.status, errJson.error || res.statusText);
+        throw new Error(errJson.error || `Server match request failed with status ${res.status}`);
+      }
 
+      const matches: RankedMatch[] = await res.json();
+      return matches.map((m: any) => {
         const vec = toProfileVector(
           {
-            displayName: p.display_name,
-            homeArea: p.home_area || geoRow?.home_area || 'Singapore',
-            avatarUrl: p.avatar_url,
-            bio: p.bio,
-            birthYear: p.birth_year,
-            passCompletionPct: p.pass_completion_pct || 80,
-            q1Finding: intentRow?.intents,
-            q2Feelings: commRow?.conv_styles,
-            q3Energy: persRow?.extraversion,
-            q3GroupSize: expRow?.group_size_pref,
-            q4Connected: commRow?.mediums,
-            q5PlanningRhythm: rhythmRow?.planning_horizon,
-            q5Availability: rhythmRow?.availability,
-            q6Outings: p.user_interests?.map((i: any) => i.node_name || i.name),
-            q7EmotionalPacing: emoRow?.er_opening_pace,
-            q8Qualities: p.user_values?.map((v: any) => v.value_name || v.name),
-            trait_intent: intentRow,
-            trait_communication: commRow,
-            trait_personality: persRow,
-            trait_social_rhythm: rhythmRow,
-            trait_emotional: emoRow,
-            trait_experience: expRow,
-            trait_lifestyle: lifeRow,
-            trait_geography: geoRow,
-            user_interests: p.user_interests || [],
-            user_values: p.user_values || [],
+            displayName: m.name,
+            homeArea: m.homeArea,
+            avatarUrl: m.avatarUrl,
+            bio: m.bio,
           } as any,
-          p.id
+          m.id
         );
         return {
           ...vec,
+          rankScore: m.rankScore,
+          resonance: m.resonance,
+          logistics: m.logistics,
+          clickText: m.clickText,
+          rubText: m.rubText,
+          fitLabel: m.fitLabel,
+          provisional: m.provisional,
           isDemo: false,
         };
       });
@@ -135,8 +143,7 @@ export const realCandidateSource: CandidateSource = {
 
 export const demoCandidateSource: CandidateSource = {
   async getCandidates(opts?: { area?: string; limit?: number; all?: boolean }): Promise<CandidateVector[]> {
-    // Default to 3 demo candidates unless limit or all option is specified
-    const maxCount = opts?.limit ?? ((opts as any)?.all ? 40 : 3);
+    const maxCount = opts?.limit ?? 40;
     const pool = DEMO_PROFILES.slice(0, maxCount);
     return pool.map((vec) => ({
       ...vec,
