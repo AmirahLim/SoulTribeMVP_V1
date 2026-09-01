@@ -36,7 +36,7 @@ export default function LandingPage() {
             </span>
           </div>
 
-          <Link href="/onboarding">
+          <Link href="/auth/signin?next=/onboarding">
             <Button variant="primary" size="sm">
               Find your people
             </Button>
@@ -65,7 +65,7 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-8">
-            <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
+            <Link href="/auth/signin?next=/onboarding" className="inline-block w-full max-w-[320px]">
               <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
                 Your Circle Starts Here <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -101,63 +101,53 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div>
-              <span className="text-[11px] font-bold text-white/70 uppercase">Potential Friction</span>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-white/90">
-                “{sampleExplanation.rub_text}”
+            <div className="border-t border-white/10 pt-3">
+              <span className="text-[11px] font-bold text-amber-300/80 uppercase">Potential Friction</span>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-white/80 italic">
+                “{sampleExplanation.friction_text}”
               </p>
             </div>
           </div>
         </motion.section>
 
-        {/* THREE CORE PRINCIPLES */}
-        <section className="mt-12 flex flex-col gap-6">
-          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
-              01 / Persistent Artifacts
-            </span>
-            <h3 className="mt-1 text-[16px] font-bold text-white">
-              Outings produce Outing Records, not lost chat logs
-            </h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/80">
-              Post-outing feedback forms a persistent memory strip that visibly changes future matching and builds genuine trust.
+        {/* THREE FOUNDATIONAL PRINCIPLES */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="mt-10 flex flex-col gap-4"
+        >
+          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
+            <h3 className="text-[16px] font-bold text-white">01. Persistent Artifacts</h3>
+            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
+              Every outing produces an Outing Record. Every profile produces a Friendship DNA. No ephemeral chats that vanish.
             </p>
           </div>
 
-          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
-              02 / Zero Swiping Or Scoring
-            </span>
-            <h3 className="mt-1 text-[16px] font-bold text-white">
-              Human language and shape, never numbers or hot-or-not
-            </h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/80">
-              We never expose compatibility percentages or red/green human ratings. Every match includes honest click and friction explanations.
+          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
+            <h3 className="text-[16px] font-bold text-white">02. Zero Dating Mechanics</h3>
+            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
+              No swiping, no hot-or-not, no raw compatibility percentage numbers exposed to users.
             </p>
           </div>
 
-          <div className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
-              03 / 6-Person Cap Enforced
-            </span>
-            <h3 className="mt-1 text-[16px] font-bold text-white">
-              Intimate small groups for real adult conversations
-            </h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/80">
-              Free-tier outings are capped strictly at 6 participants including the host, dynamically checked in the matching engine.
+          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
+            <h3 className="text-[16px] font-bold text-white">03. Capped Group Size</h3>
+            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
+              Free-tier outings are capped at 6 participants including the host, enforced in the database and API.
             </p>
           </div>
-        </section>
+        </motion.section>
 
         {/* BOTTOM CTA FOOTER */}
         <footer className="mt-12 text-center">
-          <Link href="/onboarding">
-            <Button variant="primary" size="lg" className="w-full py-4 text-[14.5px] font-bold leading-tight">
-              Create Your Tribal Pass, 8 quick questions →
+          <Link href="/auth/signin?next=/onboarding" className="inline-block w-full max-w-[320px]">
+            <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
+              Join Soul Tribe →
             </Button>
           </Link>
-          <p className="mt-3 text-[12px] text-white/70">
-            Takes ~2 minutes
+          <p className="mt-4 text-[12px] text-white/50">
+            Soul Tribe Singapore · Friendship-First Social Platform
           </p>
         </footer>
       </div>
