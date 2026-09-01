@@ -78,4 +78,26 @@ describe('AuthGuard — Fail Closed Protection Policy', () => {
     expect(res.renderProtectedContent).toBe(true);
     expect(res.stateMessage).toBe('Authenticated');
   });
+
+  it('prevents onboarding form from rendering when Supabase is unconfigured (isSupabaseConfigured: false)', () => {
+    const res = evaluateAuthGuardState({
+      isSupabaseConfigured: false,
+      loading: false,
+      user: null,
+    });
+
+    expect(res.renderProtectedContent).toBe(false);
+    expect(res.stateMessage).toContain('App Configuration Required');
+  });
+
+  it('prevents onboarding form from rendering when there is no signed-in user (user: null)', () => {
+    const res = evaluateAuthGuardState({
+      isSupabaseConfigured: true,
+      loading: false,
+      user: null,
+    });
+
+    expect(res.renderProtectedContent).toBe(false);
+    expect(res.stateMessage).toContain('Sign In Required');
+  });
 });

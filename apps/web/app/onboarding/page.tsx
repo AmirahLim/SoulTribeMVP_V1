@@ -16,20 +16,23 @@ import {
   calculateAge,
 } from '../../lib/userStore';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function OnboardingPage() {
+  return (
+    <AuthGuard>
+      <OnboardingContent />
+    </AuthGuard>
+  );
+}
+
+function OnboardingContent() {
   const router = useRouter();
-  const { user, loading: authLoading, isSupabaseConfigured } = useAuth();
+  const { user, isSupabaseConfigured } = useAuth();
 
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Redirect signed-out visitors to sign-in
-  React.useEffect(() => {
-    if (!authLoading && isSupabaseConfigured && !user) {
-      router.push('/auth/signin?redirect=/onboarding');
-    }
-  }, [user, authLoading, isSupabaseConfigured, router]);
 
   // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
 
