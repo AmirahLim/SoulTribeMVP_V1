@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from './supabase';
+import { runSilentDeeperPassBackfill } from './silentBackfill';
 
 export interface AuthContextType {
   user: User | null;
@@ -54,6 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           setLoading(false);
+
+          if (initialSession?.user?.id) {
+            runSilentDeeperPassBackfill(initialSession.user.id).catch(() => {});
+          }
         }
 
         const { data: { subscription } } = client.auth.onAuthStateChange(
@@ -62,6 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setSession(currentSession);
               setUser(currentSession?.user ?? null);
               setLoading(false);
+
+              if (currentSession?.user?.id) {
+                runSilentDeeperPassBackfill(currentSession.user.id).catch(() => {});
+              }
             }
           }
         );
