@@ -163,7 +163,7 @@ function PeopleListContent() {
                       {/* Candidate's Individual Portrait Image */}
                       <div className="relative h-64 w-full overflow-hidden bg-black/40">
                         <img
-                          src={getGenderAvatarForName(person.name)}
+                          src={person.avatarUrl || getGenderAvatarForName(person.name)}
                           alt={person.name}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />

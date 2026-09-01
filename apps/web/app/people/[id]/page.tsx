@@ -13,6 +13,7 @@ import {
 import { motion } from 'framer-motion';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
+import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 
 function formatInterestLabel(item: any): string {
   if (!item) return '';
@@ -65,7 +66,7 @@ function PersonDetailContent() {
         setIsSmallCommunity(isSmallCommunityMode(realCount));
 
         const matches = await getRankedMatches(user, { limit: 40 });
-        const found = matches.find((m) => {
+        let found = matches.find((m) => {
           const mId = (m.id || '').toLowerCase();
           const mName = (m.name || '').toLowerCase().replace(/\s+/g, '');
           return (
@@ -75,6 +76,38 @@ function PersonDetailContent() {
             (mName && cleanPersonId.includes(mName))
           );
         });
+
+        // Direct Supabase query fallback for real member profiles in the database
+        if (!found && checkIsSupabaseConfigured()) {
+          try {
+            const client = getSupabaseBrowserClient();
+            const { data: dbProfile } = await client
+              .from('profiles')
+              .select('*')
+              .or(`id.eq.${cleanPersonId},handle.ilike.${cleanPersonId}`)
+              .maybeSingle();
+
+            if (dbProfile) {
+              found = {
+                id: dbProfile.id,
+                name: dbProfile.display_name || 'Member',
+                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Member'),
+                homeArea: dbProfile.home_area || 'Singapore',
+                bio: dbProfile.bio || 'Singapore-based member.',
+                rankScore: 0.80,
+                resonance: 0.80,
+                logistics: 0.85,
+                clickText: 'Shared community rhythm and complementary interests.',
+                rubText: 'Different social energy levels — take time to adjust.',
+                fitLabel: 'Natural Resonance',
+                provisional: false,
+                isDemo: false,
+              };
+            }
+          } catch (dbErr) {
+            console.error('Direct Supabase profile lookup error:', dbErr);
+          }
+        }
 
         if (found) {
           setRankedMatch(found);
@@ -103,8 +136,22 @@ function PersonDetailContent() {
       })
     : null;
 
+  const realTargetVec = rankedMatch && !rankedMatch.isDemo
+    ? toProfileVector(
+        {
+          displayName: rankedMatch.name,
+          homeArea: rankedMatch.homeArea,
+          avatarUrl: rankedMatch.avatarUrl,
+          bio: rankedMatch.bio,
+          passCompletionPct: 80,
+        },
+        rankedMatch.id
+      )
+    : null;
+
   const targetVec =
     demoCandidate ||
+    realTargetVec ||
     (rankedMatch
       ? DEMO_PROFILES.find(
           (p) =>
