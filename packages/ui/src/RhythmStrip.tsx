@@ -17,6 +17,20 @@ const TIMES = [
   { key: 'eve', label: 'Eve' },
 ];
 
+function isSlotActive(availability: string[], day: string, timeKey: string): boolean {
+  if (!Array.isArray(availability)) return false;
+  const dayPrefix = day.toLowerCase();
+  return availability.some((slot) => {
+    if (typeof slot !== 'string') return false;
+    const s = slot.toLowerCase();
+    if (!s.startsWith(dayPrefix)) return false;
+    if (timeKey === 'morn') return s.includes('morn');
+    if (timeKey === 'midday') return s.includes('mid') || s.includes('afternoon');
+    if (timeKey === 'eve') return s.includes('eve') || s.includes('night');
+    return false;
+  });
+}
+
 export function RhythmStrip({
   userAvailability = [],
   candidateAvailability = [],
@@ -51,8 +65,8 @@ export function RhythmStrip({
             <div className="flex flex-col gap-1">
               {TIMES.map((time) => {
                 const slotId = `${day.toLowerCase()}_${time.key}`;
-                const hasUser = userAvailability.includes(slotId);
-                const hasCandidate = candidateAvailability.includes(slotId);
+                const hasUser = isSlotActive(userAvailability, day, time.key);
+                const hasCandidate = isSlotActive(candidateAvailability, day, time.key);
                 const isMatch = hasUser && hasCandidate;
 
                 let cellBg = 'bg-[#0D1D15] border border-[#F3F0E9]/15 text-[#A6AAA4]';
@@ -71,7 +85,13 @@ export function RhythmStrip({
                     key={time.key}
                     type="button"
                     disabled={!isInteractive}
-                    onClick={() => isInteractive && onToggleSlot?.(slotId)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isInteractive && onToggleSlot) {
+                        onToggleSlot(slotId);
+                      }
+                    }}
                     className={`rounded-[10px] py-2 text-[11.5px] font-semibold transition-all duration-150 ${cellBg} ${
                       isInteractive
                         ? 'cursor-pointer hover:border-[#F3F0E9]/60 active:scale-95'
