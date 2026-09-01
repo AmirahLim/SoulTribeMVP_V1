@@ -4,16 +4,21 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut
 } from 'lucide-react';
+import { useAuth } from '../../lib/authContext';
 import {
   getUserProfile, setUserProfile, UserProfileData,
   STANDING_LEVELS, calculateTribeStanding, StandingLevel
 } from '../../lib/userStore';
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { user: authUser, signOut } = useAuth();
+
   const [profile, setProfileState] = useState<UserProfileData>({
     displayName: 'You',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
@@ -28,6 +33,11 @@ export default function ProfilePage() {
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
+
+  const handleSignOutAction = async () => {
+    await signOut();
+    router.push('/auth/signin');
+  };
 
   useEffect(() => {
     const loaded = getUserProfile();
@@ -777,6 +787,16 @@ export default function ProfilePage() {
                   <Button variant="primary" size="sm" type="submit" className="w-1/2">
                     Save Changes
                   </Button>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-white/15">
+                  <button
+                    type="button"
+                    onClick={handleSignOutAction}
+                    className="flex items-center justify-center gap-2 w-full rounded-[12px] border border-rose-500/40 bg-rose-500/10 py-2.5 text-[13px] font-bold text-rose-300 hover:bg-rose-500/20 transition-all"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign Out
+                  </button>
                 </div>
               </form>
             </div>

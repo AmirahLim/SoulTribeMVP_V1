@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: 'Six people. One good Saturday. Soul Tribe holds the history of your adult friendships.',
 };
 
+import { AuthProvider } from '../lib/authContext';
+
 export default function RootLayout({
   children,
 }: {
@@ -30,8 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
       <body className="bg-[#0D1D15] text-[#F3F0E9] antialiased selection:bg-[#016401]/30 selection:text-[#F3F0E9]">
-        <main className="min-h-screen pb-20">{children}</main>
-        <Nav />
+        <AuthProvider>
+          <main className="min-h-screen pb-20">{children}</main>
+          <Nav />
+        </AuthProvider>
       </body>
     </html>
   );
