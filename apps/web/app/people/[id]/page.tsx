@@ -71,6 +71,10 @@ function PersonDetailContent() {
     avatarUrl: getGenderAvatarForName(rawFallbackPerson.name),
   };
 
+  const isDemoPerson = rankedMatch
+    ? rankedMatch.isDemo
+    : true; // fallback synthetic candidate
+
   const foundPerson = rankedMatch
     ? {
         id: rankedMatch.id,
@@ -83,14 +87,16 @@ function PersonDetailContent() {
         fitLabel: rankedMatch.fitLabel,
         rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
         interests: fallbackPerson?.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
+        isDemo: rankedMatch.isDemo,
       }
-    : fallbackPerson;
+    : { ...fallbackPerson, isDemo: true };
 
   const firstName = foundPerson.name.split(' ')[0];
   const possessiveFirstName = `${firstName}'s`;
 
   const [connected, setConnected] = useState(false);
   const [starred, setStarred] = useState(false);
+  const [demoActionAlert, setDemoActionAlert] = useState<string | null>(null);
 
   const galleryPhotos = [
     'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
@@ -252,7 +258,25 @@ function PersonDetailContent() {
 
       {/* MAIN CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-6 flex flex-col gap-6">
-        {/* HERO CARD (HERO PORTRAIT + DETAILS + BIO + INTEREST CHIPS + GALLERY THUMBNAILS + STANDING) */}
+        {foundPerson.isDemo && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[20px] border border-amber-400/60 bg-amber-500/20 p-4 text-[13px] text-amber-200 shadow-xl flex items-start gap-3"
+          >
+            <span className="text-[18px]">⚠️</span>
+            <div>
+              <p className="font-extrabold uppercase text-amber-300 tracking-wider text-[11px]">
+                DEMO PROFILE — DISPLAY ONLY
+              </p>
+              <p className="mt-1 text-amber-100/90 leading-relaxed text-[12.5px]">
+                This synthetic candidate is for demonstration purposes only. Demo profiles do not exist in the database and cannot be invited to outings, pitched, or connected with.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* HERO CARD */}
         <div className="overflow-hidden rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl shadow-2xl">
           {/* Candidate Portrait Image Banner */}
           <div className="relative h-64 w-full overflow-hidden bg-black/40">
@@ -263,8 +287,15 @@ function PersonDetailContent() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
-            <div className="absolute top-3.5 left-3.5 rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-              {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
+            <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+              {foundPerson.isDemo && (
+                <span className="rounded-full bg-amber-400 text-black px-3 py-1 text-[10.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300">
+                  ⚠️ Demo Profile — Display Only
+                </span>
+              )}
+              <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
+                {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
+              </span>
             </div>
 
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
@@ -671,7 +702,24 @@ function PersonDetailContent() {
       </div>
 
       {/* FLOATING BOTTOM ACTION BUTTONS */}
-      <div className="fixed bottom-6 left-0 right-0 z-40 flex items-center justify-center">
+      <div className="fixed bottom-6 left-0 right-0 z-40 flex flex-col items-center justify-center gap-3 px-4">
+        {demoActionAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-[400px] rounded-[18px] border border-amber-400/60 bg-black/90 p-3 text-[12.5px] font-medium text-amber-200 shadow-2xl backdrop-blur-xl flex items-center justify-between"
+          >
+            <span>{demoActionAlert}</span>
+            <button
+              type="button"
+              onClick={() => setDemoActionAlert(null)}
+              className="ml-2 font-bold text-white hover:text-amber-300"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+
         <div className="flex items-center justify-center gap-5">
           <button
             type="button"
@@ -684,7 +732,13 @@ function PersonDetailContent() {
 
           <button
             type="button"
-            onClick={() => setStarred(!starred)}
+            onClick={() => {
+              if (foundPerson.isDemo) {
+                setDemoActionAlert('Demo profiles are display-only. Connecting, pitching, and inviting are disabled.');
+                return;
+              }
+              setStarred(!starred);
+            }}
             className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl ${
               starred ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
             }`}
@@ -695,7 +749,13 @@ function PersonDetailContent() {
 
           <button
             type="button"
-            onClick={() => setConnected(!connected)}
+            onClick={() => {
+              if (foundPerson.isDemo) {
+                setDemoActionAlert('Demo profiles are display-only. Connecting, pitching, and inviting are disabled.');
+                return;
+              }
+              setConnected(!connected);
+            }}
             className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl ${
               connected ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
             }`}

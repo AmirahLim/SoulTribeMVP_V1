@@ -132,6 +132,11 @@ function PeopleListContent() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
 
                         <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+                          {person.isDemo && (
+                            <span className="rounded-full bg-amber-400 text-black px-3 py-1 text-[10.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300 flex items-center gap-1">
+                              ⚠️ Demo Profile — Display Only
+                            </span>
+                          )}
                           <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
                             {person.fitLabel} · {Math.round(person.rankScore * 100)}% Resonance
                           </span>
