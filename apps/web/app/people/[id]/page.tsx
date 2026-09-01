@@ -5,14 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, toProfileVector } from '../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
+import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, PHRASES } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AuthGuard } from '../../../components/AuthGuard';
-import { getUserProfile } from '../../../lib/userStore';
+import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
 
 export default function PersonDetailPage() {
   return (
@@ -73,16 +73,19 @@ function PersonDetailContent() {
   const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
   const explanation = demoCandidate && viewerVector ? generateMatchExplanation(viewerVector, demoCandidate) : null;
 
+  // Extract candidate profile vector
+  const targetVec = demoCandidate || (rankedMatch ? DEMO_PROFILES.find((p) => p.profile.id === rankedMatch.id) : null);
+
   const rawFallbackPerson = demoCandidate
     ? {
         id: demoCandidate.profile.id,
         name: demoCandidate.profile.display_name,
         avatarUrl: demoCandidate.profile.avatar_url,
-        homeArea: demoCandidate.profile.home_area,
-        bio: demoCandidate.profile.bio,
-        interests: demoCandidate.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
-        clickText: explanation?.click_text || 'Shared commitment to low-pressure, intentional catch-ups.',
-        rubText: explanation?.friction_text || 'Rhythm schedules touch well across the week.',
+        homeArea: demoCandidate.profile.home_area || 'Singapore',
+        bio: demoCandidate.profile.bio || 'Singapore-based member.',
+        interests: demoCandidate.interests || [],
+        clickText: explanation?.click_text || "There isn't enough in your pass yet to say much — add more and this will sharpen.",
+        rubText: explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
         fitLabel: 'Good Fit',
         rhythmOverlap: Math.round((demoCandidate.profile.confidence || 0.7) * 100),
       }
@@ -106,7 +109,7 @@ function PersonDetailContent() {
         rubText: rankedMatch.rubText,
         fitLabel: rankedMatch.fitLabel,
         rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
-        interests: fallbackPerson?.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
+        interests: targetVec?.interests || fallbackPerson?.interests || [],
         isDemo: rankedMatch.isDemo,
       }
     : fallbackPerson
@@ -122,134 +125,48 @@ function PersonDetailContent() {
   const [starred, setStarred] = useState(false);
   const [demoActionAlert, setDemoActionAlert] = useState<string | null>(null);
 
-  const galleryPhotos = [
-    'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=300&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80',
-  ];
+  // Real Standing Check (only rendered if person has real outings_attended or outings_hosted > 0)
+  const attendedCount = (targetVec?.profile as any)?.outings_attended ?? 0;
+  const hostedCount = (targetVec?.profile as any)?.outings_hosted ?? 0;
+  const standingInfo = (attendedCount > 0 || hostedCount > 0) ? calculateTribeStanding(attendedCount, hostedCount) : null;
 
-  // Bot Standing Level
-  const botStanding = calculateTribeStanding(
-    foundPerson.name === 'Marcus Tan' ? 5 : 2,
-    foundPerson.name === 'Marcus Tan' ? 2 : 0
-  );
+  // Real Traits derived from candidate vector
+  const personalityAnswered = targetVec ? (targetVec.personality?.answered ?? 0) > 0 : false;
+  const commAnswered = targetVec ? (targetVec.communication?.answered ?? 0) > 0 : false;
+  const rhythmAnswered = targetVec ? (targetVec.social_rhythm?.answered ?? 0) > 0 : false;
+  const intentAnswered = targetVec ? (targetVec.intent?.answered ?? 0) > 0 : false;
+  const emotionalAnswered = targetVec ? (targetVec.emotional?.answered ?? 0) > 0 : false;
+  const lifestyleAnswered = targetVec ? (targetVec.lifestyle?.answered ?? 0) > 0 : false;
+  const experienceAnswered = targetVec ? (targetVec.experience?.answered ?? 0) > 0 : false;
 
-  // Candidate Traits for Friendship DNA Bloom
-  const candidateBloomDimensions = [
-    { key: 'p', label: 'Personality', strength: 0.85, confidence: 0.9, sentence: `${foundPerson.name} is thoughtful, analytical, and loves quiet craft.` },
-    { key: 'c', label: 'Communication', strength: 0.9, confidence: 0.95, sentence: 'Prefers deep one-on-one talks and voice notes.' },
-    { key: 'r', label: 'Rhythm', strength: 0.75, confidence: 0.85, sentence: 'Active Saturday afternoons and quiet Sunday coffee mornings.' },
-    { key: 'i', label: 'Intent', strength: 0.95, confidence: 0.95, sentence: 'Seeking 3–4 long-term intentional friends in Singapore.' },
-    { key: 'e', label: 'Emotional', strength: 0.8, confidence: 0.9, sentence: 'Listens first, offers grounded perspective.' },
-    { key: 'int', label: 'Interests', strength: 0.85, confidence: 0.85, sentence: 'Pottery throwing, specialty filter coffee, woodworking.' },
-    { key: 'v', label: 'Values', strength: 0.9, confidence: 0.9, sentence: 'Values honesty, quiet reliability, and continuous learning.' },
-  ];
+  const interestsList = targetVec?.interests || foundPerson.interests || [];
+  const valuesList = targetVec?.values || [];
 
-  // Candidate Traits for Tribal Print
-  const candidateSocialDna = [
-    { key: 'personality', name: 'Personality', score: 85, catNum: 5 },
-    { key: 'communication', name: 'Communication', score: 90, catNum: 2 },
-    { key: 'rhythm', name: 'Social Rhythm', score: 75, catNum: 4 },
-    { key: 'intent', name: 'Friendship Intent', score: 95, catNum: 3 },
-    { key: 'emotional', name: 'Emotional Style', score: 80, catNum: 9 },
-    { key: 'interests', name: 'Interests', score: 85, catNum: 7 },
-    { key: 'values', name: 'Values', score: 90, catNum: 6 },
-    { key: 'lifestyle', name: 'Lifestyle', score: 80, catNum: 8 },
-  ];
+  // Dynamic Friendship DNA Bloom Petals
+  const candidateBloomDimensions = targetVec ? [
+    { key: 'p', label: 'Personality', strength: targetVec.personality?.extraversion ?? 0.5, confidence: targetVec.personality?.confidence ?? 0.7, sentence: PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) },
+    { key: 'c', label: 'Communication', strength: targetVec.communication?.response_speed_self ?? 0.5, confidence: 0.8, sentence: PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) },
+    { key: 'r', label: 'Rhythm', strength: targetVec.social_rhythm?.planning_horizon ?? 0.5, confidence: 0.8, sentence: PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) },
+    { key: 'i', label: 'Intent', strength: Math.min(1, (targetVec.intent?.depth ?? 2) / 4), confidence: 0.9, sentence: PHRASES.depth(targetVec.intent?.depth ?? 2) },
+    { key: 'e', label: 'Emotional', strength: targetVec.emotional?.er_opening_pace ?? 0.5, confidence: 0.8, sentence: PHRASES.openingPace(targetVec.emotional?.er_opening_pace ?? 0.5) },
+    { key: 'int', label: 'Interests', strength: Math.min(1, interestsList.length / 5), confidence: 0.8, sentence: interestsList.length ? interestsList.slice(0, 3).join(', ') : "Hasn't listed interest topics yet" },
+    { key: 'v', label: 'Values', strength: Math.min(1, valuesList.length / 5), confidence: 0.8, sentence: valuesList.length ? valuesList.slice(0, 3).join(', ') : "Hasn't listed core values yet" },
+  ] : [];
 
-  // Custom Bot Specific Responses
-  const botAnswers: Record<string, any> = {
-    'Marcus Tan': {
-      groupSize: '3–4 people',
-      socialVibe: 'Intimate · Calm',
-      socialAtmosphereOpen: 'Give me 3 people around a kitchen table and I can talk about architecture & coffee until 2am.',
-      messagingStyle: 'Voice notes · Memes',
-      supportStyle: 'Listen first',
-      messagingStyleOpen: 'I appreciate voice notes when we can\'t meet, but nothing beats sitting across a table.',
-      friendshipPillars: 'Comfortable silence · Reliability',
-      realFriendOpen: 'We can go weeks without talking and pick right back up without any weirdness.',
-      idealSaturday: 'Filter coffee & Woodworking',
-      spontaneousTrip: 'Convince me',
-      idealSaturdayOpen: 'Morning filter coffee, afternoon throwing clay or woodworking.',
-      selfDescriptionOpen: 'Analytical yet warm, curious about how things are designed and built.',
-      mbti: 'INTJ',
-      sunSign: 'Taurus',
-      moonSign: 'Virgo',
-      risingSign: 'Leo',
-      coreValues: 'Craft · Curiosity · Honesty · Freedom',
-      respectPeopleOpen: 'can stay calm and open-minded during a disagreement.',
-      talkForHoursOpen: 'Japanese woodworking joints, espresso extraction variables, and analog camera lenses.',
-      currentRabbitHoleOpen: 'Restoring a 1970s Olympus OM-1 film camera.',
-      budgetPref: '$20–50',
-      instantYesOutingOpen: 'A quiet 2-hour pottery workshop followed by filter coffee.',
-      likeMeIfPrompt: 'You appreciate quiet coffee walks and design history.',
-      quickestWayPrompt: 'Invite me to a quiet bookstore or specialty roastery.',
-      punctualityPref: 'Essential',
-      cancellationStance: 'Notice Required',
-    },
-    'Maya Lin': {
-      groupSize: '3–4 people',
-      socialVibe: 'Creative & Adventurous',
-      socialAtmosphereOpen: 'Love warm, encouraging settings where people share creative projects.',
-      messagingStyle: 'Check-ins & Memes',
-      supportStyle: 'Reassure & Listen',
-      messagingStyleOpen: 'Casual daily check-ins keep friendships alive.',
-      friendshipPillars: 'Inside jokes · Spontaneous plans',
-      realFriendOpen: 'We can laugh about something stupid for 20 minutes straight.',
-      idealSaturday: 'Botanical walk & Brunch',
-      spontaneousTrip: 'Already packing',
-      idealSaturdayOpen: 'Early walk at Botanic Gardens, followed by sourdough & filter coffee in Katong.',
-      selfDescriptionOpen: 'Optimistic, empathetic, and always looking for new coffee spots.',
-      mbti: 'ENFP',
-      sunSign: 'Libra',
-      moonSign: 'Pisces',
-      risingSign: 'Gemini',
-      coreValues: 'Creativity · Community · Growth',
-      respectPeopleOpen: 'are kind to strangers and servers.',
-      talkForHoursOpen: 'Graphic design, film scores, and urban green spaces in Singapore.',
-      currentRabbitHoleOpen: 'Natural sourdough fermentation and botanical illustration.',
-      budgetPref: '$20–50',
-      instantYesOutingOpen: 'Morning coffee walk through Katong heritage shophouses.',
-      likeMeIfPrompt: 'You love finding hidden coffee spots and art markets.',
-      quickestWayPrompt: 'Propose a weekend cafe crawl in Katong.',
-      punctualityPref: 'Flexible',
-      cancellationStance: 'Context matters',
-    },
-    'Chen Wei': {
-      groupSize: 'One-on-one / 3–4',
-      socialVibe: 'Intellectual & Calm',
-      socialAtmosphereOpen: 'Prefer quiet spaces where we can actually hear each other talk.',
-      messagingStyle: 'Making plans & Calls',
-      supportStyle: 'Listen & Solve it',
-      messagingStyleOpen: 'Direct communication with intentional catch-ups.',
-      friendshipPillars: 'Reliability & Show up',
-      realFriendOpen: 'You show up when it actually matters.',
-      idealSaturday: 'Trail running & Reading',
-      spontaneousTrip: '24 hours notice needed',
-      idealSaturdayOpen: 'Early trail run at MacRitchie, followed by quiet reading at a bookstore.',
-      selfDescriptionOpen: 'Grounded, disciplined, and reflective.',
-      mbti: 'ISTJ',
-      sunSign: 'Capricorn',
-      moonSign: 'Taurus',
-      risingSign: 'Virgo',
-      coreValues: 'Integrity · Discipline · Reliability',
-      respectPeopleOpen: 'keep their word and show up on time.',
-      talkForHoursOpen: 'Marathon training tech, financial independence, and Singapore history.',
-      currentRabbitHoleOpen: 'Ultramarathon pacing strategies and biomechanics.',
-      budgetPref: '$20–50',
-      instantYesOutingOpen: '7am MacRitchie reservoir trail walk and kopi.',
-      likeMeIfPrompt: 'You value punctuality and direct honesty.',
-      quickestWayPrompt: 'Invite me for an early morning trail run.',
-      punctualityPref: 'Essential',
-      cancellationStance: 'Dislike - notice required',
-    },
-  };
+  // Dynamic Tribal Print Categories
+  const candidateSocialDna = targetVec ? [
+    { key: 'personality', name: 'Personality', score: Math.round((targetVec.personality?.extraversion ?? 0.5) * 100), catNum: 5 },
+    { key: 'communication', name: 'Communication', score: Math.round((targetVec.communication?.response_speed_self ?? 0.5) * 100), catNum: 2 },
+    { key: 'rhythm', name: 'Social Rhythm', score: Math.round((targetVec.social_rhythm?.planning_horizon ?? 0.5) * 100), catNum: 4 },
+    { key: 'intent', name: 'Friendship Intent', score: Math.round(((targetVec.intent?.depth ?? 2) / 4) * 100), catNum: 3 },
+    { key: 'emotional', name: 'Emotional Style', score: Math.round((targetVec.emotional?.er_opening_pace ?? 0.5) * 100), catNum: 9 },
+    { key: 'interests', name: 'Interests', score: Math.min(100, interestsList.length * 20), catNum: 7 },
+    { key: 'values', name: 'Values', score: Math.min(100, valuesList.length * 20), catNum: 6 },
+    { key: 'lifestyle', name: 'Lifestyle', score: Math.round((targetVec.lifestyle?.activity_level ?? 0.5) * 100), catNum: 8 },
+  ] : [];
 
-  const currentBotDeep = botAnswers[foundPerson.name] || botAnswers['Marcus Tan'];
-  const coreValuesList = (currentBotDeep.coreValues || 'Craft · Curiosity · Freedom')
-    .split(/·|,/)
-    .map((s: string) => s.trim())
-    .filter(Boolean);
+  // Gallery Photos (Real gallery photos or empty)
+  const galleryPhotos = (targetVec?.profile as any)?.gallery_urls || [];
 
   return (
     <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-32">
@@ -268,7 +185,7 @@ function PersonDetailContent() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20 cursor-pointer"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -335,13 +252,15 @@ function PersonDetailContent() {
                 </span>
               </div>
 
-              {/* Standing Level Badge */}
-              <div className="flex flex-col items-end pb-1">
-                <span className="text-[20px] leading-none">{botStanding.icon}</span>
-                <span className={`mt-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${botStanding.badgeColor}`}>
-                  {botStanding.label}
-                </span>
-              </div>
+              {/* Real Standing Level Badge (if data exists) */}
+              {standingInfo && (
+                <div className="flex flex-col items-end pb-1">
+                  <span className="text-[20px] leading-none">{standingInfo.icon}</span>
+                  <span className={`mt-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${standingInfo.badgeColor}`}>
+                    {standingInfo.label}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -354,37 +273,38 @@ function PersonDetailContent() {
             <div className="mt-4 pt-3 border-t border-white/15">
               <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
               <div className="mt-2 flex flex-wrap gap-2">
-                {(foundPerson.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops']).map((interest, idx) => (
-                  <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                    <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
-                  </span>
-                ))}
+                {interestsList.length > 0 ? (
+                  interestsList.map((interest, idx) => (
+                    <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
+                      <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[12.5px] text-white/50 italic">Hasn't shared interest topics yet</span>
+                )}
               </div>
             </div>
 
-            {/* GALLERY THUMBNAILS (FIXED DIMENSIONS & CONTAINMENT) */}
-            <div className="mt-4 border-t border-white/15 pt-3">
-              <span className="text-[11px] font-bold text-white/70 uppercase">Photo Moments</span>
-              <div className="mt-2 flex items-center gap-2.5 overflow-hidden">
-                {galleryPhotos.map((photo, idx) => (
-                  <div
-                    key={idx}
-                    className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-md"
-                  >
-                    <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
-                    {idx === 2 && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-[12px] font-bold text-white backdrop-blur-xs">
-                        10+
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {/* GALLERY THUMBNAILS */}
+            {galleryPhotos.length > 0 && (
+              <div className="mt-4 border-t border-white/15 pt-3">
+                <span className="text-[11px] font-bold text-white/70 uppercase">Photo Moments</span>
+                <div className="mt-2 flex items-center gap-2.5 overflow-hidden">
+                  {galleryPhotos.map((photo: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-md"
+                    >
+                      <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* RESONANCE READ MATCH EXPLANATION (WHY YOU CLICK & FRICTION) */}
+        {/* RESONANCE READ MATCH EXPLANATION */}
         <section className="rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl p-5 shadow-2xl">
           <div className="flex items-center gap-2 text-white pb-3 border-b border-white/15">
             <Sparkles className="h-4 w-4 text-white" />
@@ -397,32 +317,36 @@ function PersonDetailContent() {
         </section>
 
         {/* SECTION A: FRIENDSHIP DNA BLOOM */}
-        <section className="py-2 border-b border-white/15">
-          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            Friendship DNA Bloom
-          </span>
-          <p className="mt-1 text-[13.5px] text-white/90">
-            Visual trait petals representing {foundPerson.name}'s social energy, rhythm, and values.
-          </p>
+        {candidateBloomDimensions.length > 0 && (
+          <section className="py-2 border-b border-white/15">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+              Friendship DNA Bloom
+            </span>
+            <p className="mt-1 text-[13.5px] text-white/90">
+              Visual trait petals representing {foundPerson.name}'s social energy, rhythm, and values.
+            </p>
 
-          <div className="mt-4 flex justify-center rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <Bloom dimensions={candidateBloomDimensions} size={280} interactive />
-          </div>
-        </section>
+            <div className="mt-4 flex justify-center rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
+              <Bloom dimensions={candidateBloomDimensions} size={280} interactive />
+            </div>
+          </section>
+        )}
 
         {/* SECTION B: TRIBAL PRINT */}
-        <section className="py-2 border-b border-white/15">
-          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            {possessiveFirstName} Tribal Print
-          </span>
-          <p className="mt-1 text-[13.5px] text-white/90">
-            Dynamic trait vectors from {foundPerson.name}'s completed Tribal Pass.
-          </p>
+        {candidateSocialDna.length > 0 && (
+          <section className="py-2 border-b border-white/15">
+            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
+              {possessiveFirstName} Tribal Print
+            </span>
+            <p className="mt-1 text-[13.5px] text-white/90">
+              Dynamic trait vectors from {foundPerson.name}'s completed Tribal Pass.
+            </p>
 
-          <div className="mt-4">
-            <SocialDnaBars categories={candidateSocialDna} title={`${possessiveFirstName} Tribal Print`} />
-          </div>
-        </section>
+            <div className="mt-4">
+              <SocialDnaBars categories={candidateSocialDna} title={`${possessiveFirstName} Tribal Print`} />
+            </div>
+          </section>
+        )}
 
         {/* SECTION C: 10-CATEGORY VISUAL SIGNALS MAP */}
         <section className="py-2 flex flex-col gap-6">
@@ -434,293 +358,153 @@ function PersonDetailContent() {
               {possessiveFirstName} Social Signature
             </h2>
             <p className="mt-1 text-[13.5px] text-white/80">
-              Complete 10-category visual breakdown from {foundPerson.name}'s Deeper Pass.
+              Visual breakdown from {foundPerson.name}'s pass.
             </p>
           </div>
 
-          {/* 1. SOCIAL ENERGY (SVG SPECTRUM RADAR GAUGE) */}
+          {/* 1. SOCIAL ENERGY */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <Smile className="h-4 w-4" />
                 <h3 className="text-[15.5px] font-extrabold">01. Social Energy</h3>
               </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                {currentBotDeep.groupSize}
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-center gap-4 border-t border-white/15 pt-3">
-              <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center">
-                <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                  <path className="text-white/10" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path className="text-white" strokeDasharray="65, 100" strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div className="absolute text-[10px] font-extrabold text-white">65%</div>
-              </div>
-              <div>
-                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[12px] font-semibold text-white">
-                  {currentBotDeep.socialVibe}
+              {experienceAnswered && targetVec && (
+                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
+                  {PHRASES.groupSize(targetVec.experience?.group_size_pref ?? 0.5)}
                 </span>
-                <p className="mt-1 text-[12px] text-white/70">
-                  Optimal setting: Intimate small gatherings over large crowds.
-                </p>
-              </div>
+              )}
             </div>
 
-            {currentBotDeep.socialAtmosphereOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{currentBotDeep.socialAtmosphereOpen}”
-              </p>
+            {personalityAnswered && targetVec ? (
+              <div className="mt-4 flex items-center gap-4 border-t border-white/15 pt-3">
+                <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center">
+                  <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
+                    <path className="text-white/10" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path className="text-white" strokeDasharray={`${Math.round((targetVec.personality?.extraversion ?? 0.5) * 100)}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  </svg>
+                  <div className="absolute text-[10px] font-extrabold text-white">
+                    {Math.round((targetVec.personality?.extraversion ?? 0.5) * 100)}%
+                  </div>
+                </div>
+                <div>
+                  <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[12px] font-semibold text-white">
+                    {PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5)}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared social energy preference yet.</p>
             )}
           </div>
 
-          {/* 2. HOW I CONNECT (SVG VECTOR FLOW GRAPH) */}
+          {/* 2. HOW I CONNECT */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center gap-2 text-white">
               <MessageSquare className="h-4 w-4" />
               <h3 className="text-[15.5px] font-extrabold">02. How I Connect</h3>
             </div>
 
-            <div className="mt-3 flex items-center justify-around py-3 border-y border-white/15 my-2">
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">🎙️</div>
-                <span className="text-[11px] font-semibold text-white/90">Voice Notes</span>
+            {commAnswered && targetVec ? (
+              <div className="mt-3 flex items-center justify-around py-3 border-t border-white/15 my-2">
+                <div className="flex flex-col items-center gap-0.5 text-center">
+                  <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">💬</div>
+                  <span className="text-[11px] font-semibold text-white/90">{PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5)}</span>
+                </div>
+                <div className="flex flex-col items-center gap-0.5 text-center">
+                  <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">☕</div>
+                  <span className="text-[11px] font-semibold text-white/90">{PHRASES.cadenceNeed(targetVec.communication?.contact_frequency_self ?? 0.5)}</span>
+                </div>
               </div>
-              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">💬</div>
-                <span className="text-[11px] font-semibold text-white/90">Memes</span>
-              </div>
-              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">☕</div>
-                <span className="text-[11px] font-semibold text-white/90">{currentBotDeep.supportStyle}</span>
-              </div>
-            </div>
-
-            {currentBotDeep.messagingStyleOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{currentBotDeep.messagingStyleOpen}”
-              </p>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared messaging preferences yet.</p>
             )}
           </div>
 
-          {/* 3. FRIENDSHIP STYLE (DUAL-AXIS VECTOR GRAPH) */}
+          {/* 3. FRIENDSHIP STYLE */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center gap-2 text-white">
               <Heart className="h-4 w-4" />
               <h3 className="text-[15.5px] font-extrabold">03. Friendship Style</h3>
             </div>
 
-            <div className="mt-3 relative h-20 w-full rounded-[16px] border border-white/15 bg-white/5 p-3 flex items-center justify-between">
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] font-bold text-white/60 uppercase">Axis A</span>
-                <span className="text-[13px] font-bold text-white">Comfortable Silence</span>
+            {intentAnswered && targetVec ? (
+              <div className="mt-3 rounded-[16px] border border-white/15 bg-white/5 p-3.5">
+                <span className="text-[10px] font-bold text-white/60 uppercase">Friendship Intent</span>
+                <p className="mt-1 text-[13.5px] font-bold text-white">{PHRASES.depth(targetVec.intent?.depth ?? 2)}</p>
               </div>
-              <div className="h-8 w-0.5 bg-white/20" />
-              <div className="flex flex-col text-right">
-                <span className="text-[10px] font-bold text-white/60 uppercase">Axis B</span>
-                <span className="text-[13px] font-bold text-white">Reliability & Trust</span>
-              </div>
-            </div>
-
-            {currentBotDeep.realFriendOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{currentBotDeep.realFriendOpen}”
-              </p>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared friendship intent yet.</p>
             )}
           </div>
 
-          {/* 4. MY RHYTHM (WEEKLY VECTOR TIMELINE) */}
+          {/* 4. MY RHYTHM */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <Compass className="h-4 w-4" />
                 <h3 className="text-[15.5px] font-extrabold">04. My Rhythm</h3>
               </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                {currentBotDeep.spontaneousTrip}
-              </span>
+              {rhythmAnswered && targetVec && (
+                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
+                  {PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5)}
+                </span>
+              )}
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-1 py-2 border-y border-white/15">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
-                const isPeak = day === 'Sat' || day === 'Sun';
-                return (
-                  <div
-                    key={day}
-                    className={`flex flex-col items-center justify-center rounded-[10px] py-1.5 px-2 text-[11px] font-bold transition-all ${
-                      isPeak
-                        ? 'bg-white text-black font-extrabold shadow-md'
-                        : 'border border-white/15 bg-black/40 text-white/60'
-                    }`}
-                  >
-                    <span>{day}</span>
-                    <span className="text-[9px] mt-0.5">{isPeak ? '★ Peak' : 'Quiet'}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {currentBotDeep.idealSaturdayOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{currentBotDeep.idealSaturdayOpen}”
+            {rhythmAnswered && targetVec ? (
+              <p className="mt-3 text-[13.5px] text-white/90">
+                Planning style: {PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5)}.
               </p>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared planning rhythm yet.</p>
             )}
           </div>
 
-          {/* 5. PERSONALITY SIGNALS (MBTI & ASTROLOGY BIG 3 VECTOR BADGES) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Cpu className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">05. Personality & Astrology</h3>
-              </div>
-              {currentBotDeep.mbti && (
-                <span className="rounded-full border border-white/30 bg-white/20 px-3 py-0.5 text-[11px] font-extrabold text-white">
-                  ✨ MBTI: {currentBotDeep.mbti}
-                </span>
-              )}
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-white/15">
-              {currentBotDeep.sunSign && (
-                <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                  <Sun className="h-3.5 w-3.5 text-white" /> Sun: {currentBotDeep.sunSign}
-                </span>
-              )}
-              {currentBotDeep.moonSign && (
-                <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                  <Moon className="h-3.5 w-3.5 text-white" /> Moon: {currentBotDeep.moonSign}
-                </span>
-              )}
-              {currentBotDeep.risingSign && (
-                <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                  <Sunrise className="h-3.5 w-3.5 text-white" /> Rising: {currentBotDeep.risingSign}
-                </span>
-              )}
-            </div>
-
-            {currentBotDeep.selfDescriptionOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{currentBotDeep.selfDescriptionOpen}”
-              </p>
-            )}
-          </div>
-
-          {/* 6. WHAT MATTERS (VALUES CONSTELLATION ORBIT) */}
+          {/* 5. WHAT MATTERS */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center gap-2 text-white">
               <Sparkles className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">06. What Matters</h3>
+              <h3 className="text-[15.5px] font-extrabold">05. What Matters & Values</h3>
             </div>
 
-            <div className="mt-3 flex flex-wrap justify-center gap-2 py-1">
-              {coreValuesList.map((val: string) => (
-                <span
-                  key={val}
-                  className="rounded-full border border-white/30 bg-gradient-to-r from-white/20 to-white/10 px-3.5 py-1 text-[12.5px] font-bold text-white backdrop-blur-md shadow-md"
-                >
-                  ✨ {val}
-                </span>
-              ))}
-            </div>
-
-            {currentBotDeep.respectPeopleOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “I really respect people who {currentBotDeep.respectPeopleOpen}”
-              </p>
+            {valuesList.length > 0 ? (
+              <div className="mt-3 flex flex-wrap justify-start gap-2 py-1">
+                {valuesList.map((val: string) => (
+                  <span
+                    key={val}
+                    className="rounded-full border border-white/30 bg-gradient-to-r from-white/20 to-white/10 px-3.5 py-1 text-[12.5px] font-bold text-white backdrop-blur-md shadow-md"
+                  >
+                    ✨ {val}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't listed core values yet.</p>
             )}
           </div>
 
-          {/* 7. I'M INTO (CURIOSITY RABBIT HOLE TREE) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Flame className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">07. I'm Into & Rabbit Holes</h3>
-            </div>
-
-            <div className="mt-3 rounded-[16px] border border-white/15 bg-white/10 p-3">
-              <span className="text-[10px] font-bold text-white/70 uppercase">Current Rabbit Hole</span>
-              <p className="mt-1 text-[13px] font-bold text-white">
-                “{currentBotDeep.currentRabbitHoleOpen}”
-              </p>
-            </div>
-
-            {currentBotDeep.talkForHoursOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “Could lose hours talking about {currentBotDeep.talkForHoursOpen}”
-              </p>
-            )}
-          </div>
-
-          {/* 8. OUTING DNA (ACTIVITY & VIBE VECTOR) */}
+          {/* 6. OUTING DNA */}
           <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white">
                 <Layers className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">08. Outing DNA</h3>
+                <h3 className="text-[15.5px] font-extrabold">06. Outing DNA</h3>
               </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                Low-Key & Creative Outings
-              </span>
             </div>
 
-            {currentBotDeep.instantYesOutingOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “Instant Yes Outing: {currentBotDeep.instantYesOutingOpen}”
-              </p>
+            {lifestyleAnswered && targetVec ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-[13px] text-white/90">
+                  <span className="font-semibold text-white">Budget Preference:</span> {PHRASES.budgetBand(targetVec.lifestyle?.budget_band ?? 2)}
+                </p>
+                <p className="text-[13px] text-white/90">
+                  <span className="font-semibold text-white">Activity Style:</span> {PHRASES.activityLevel(targetVec.lifestyle?.activity_level ?? 0.5)}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared outing preferences yet.</p>
             )}
-          </div>
-
-          {/* 9. YOU SHOULD KNOW (PROMPT VOICE CARDS) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl relative overflow-hidden">
-            <Quote className="absolute right-3 top-3 h-16 w-16 opacity-10 text-white pointer-events-none" />
-
-            <div className="flex items-center gap-2 text-white">
-              <User className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">09. You Should Know</h3>
-            </div>
-
-            <div className="mt-3 flex flex-col gap-3">
-              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                <span className="text-[11px] font-bold text-white/70 uppercase">I'll probably like you if:</span>
-                <p className="mt-1 text-[13.5px] text-white">“{currentBotDeep.likeMeIfPrompt}”</p>
-              </div>
-              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                <span className="text-[11px] font-bold text-white/70 uppercase">Quickest way to get me out:</span>
-                <p className="mt-1 text-[13.5px] text-white">“{currentBotDeep.quickestWayPrompt}”</p>
-              </div>
-            </div>
-          </div>
-
-          {/* 10. BOUNDARIES & MATCHING (SECURITY SHIELD VECTOR) */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <ShieldCheck className="h-4 w-4 text-white" />
-                <h3 className="text-[15.5px] font-extrabold">10. Boundaries & Matching</h3>
-              </div>
-              <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-2.5 py-0.5 text-[10.5px] font-bold text-white">
-                <Lock className="h-3 w-3" /> Algorithm Guard
-              </span>
-            </div>
-
-            <div className="mt-3.5 grid grid-cols-2 gap-2.5 text-center">
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Punctuality</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">{currentBotDeep.punctualityPref}</p>
-              </div>
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Cancellation</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">{currentBotDeep.cancellationStance}</p>
-              </div>
-            </div>
           </div>
         </section>
       </div>
@@ -737,7 +521,7 @@ function PersonDetailContent() {
             <button
               type="button"
               onClick={() => setDemoActionAlert(null)}
-              className="ml-2 font-bold text-white hover:text-amber-300"
+              className="ml-2 font-bold text-white hover:text-amber-300 cursor-pointer"
             >
               ✕
             </button>
@@ -748,7 +532,7 @@ function PersonDetailContent() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex h-13 w-13 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl"
+            className="flex h-13 w-13 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
             title="Pass"
           >
             <X className="h-6 w-6" />
@@ -763,7 +547,7 @@ function PersonDetailContent() {
               }
               setStarred(!starred);
             }}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl ${
+            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer ${
               starred ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
             }`}
             title="Star Match"
@@ -780,7 +564,7 @@ function PersonDetailContent() {
               }
               setConnected(!connected);
             }}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl ${
+            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer ${
               connected ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
             }`}
             title="Connect"
