@@ -19,27 +19,20 @@ function PitchComposerContent() {
   const { user: authUser } = useAuth();
 
   // Form State
-  const [title, setTitle] = useState('Saturday Pottery & Filter Coffee');
-  const [pitch, setPitch] = useState(
-    "Let's spend two hours throwing clay at Tiong Bahru Studios, followed by a quiet filter coffee to talk properly."
-  );
+  const [title, setTitle] = useState('');
+  const [pitch, setPitch] = useState('');
   const [area, setArea] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = getUserProfile();
-      return p.homeArea || 'Singapore';
+      return p.homeArea || '';
     }
-    return 'Singapore';
+    return '';
   });
-  const [activityCategory, setActivityCategory] = useState<'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative'>('creative');
+  const [activityCategory, setActivityCategory] = useState<'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative'>('coffee');
   const [budgetBand, setBudgetBand] = useState<number>(2);
   const [orientation, setOrientation] = useState<'conversation_first' | 'activity_first' | 'either'>('conversation_first');
   const [visibility, setVisibility] = useState<'invite_only' | 'requestable'>('requestable');
-  const [startsAt, setStartsAt] = useState<string>(() => {
-    const nextSat = new Date();
-    nextSat.setDate(nextSat.getDate() + ((6 - nextSat.getDay() + 7) % 7 || 7));
-    nextSat.setHours(15, 0, 0, 0);
-    return nextSat.toISOString().slice(0, 16);
-  });
+  const [startsAt, setStartsAt] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
   const [maxParticipants] = useState<number>(6);
 
