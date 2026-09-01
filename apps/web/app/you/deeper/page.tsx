@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button, Chip } from '@soul-tribe/ui';
 import { ArrowLeft, Check, Sparkles, Lock, Globe, CheckCircle2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassCompletion } from '../../../lib/userStore';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getActiveNextBestPrompts } from '../../../lib/dimensionPrompts';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { saveDeeperPassToSupabase } from '../../../lib/supabaseOnboarding';
@@ -22,6 +22,7 @@ export default function DeeperTribalPassPage() {
 }
 
 function DeeperTribalPassContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const catParam = searchParams.get('cat');
 
@@ -135,6 +136,16 @@ function DeeperTribalPassContent() {
     }
 
     setTimeout(() => setSavedMessage(false), 3000);
+  };
+
+  const handleSaveAndReturnToProfile = async () => {
+    await handleSaveCurrentCategory(activeCategoryNum);
+    router.push('/you');
+  };
+
+  const handleSaveAllTenAndReturn = async () => {
+    await handleSaveAllTen();
+    router.push('/you');
   };
 
   const zodiacSigns = [
@@ -669,44 +680,49 @@ function DeeperTribalPassContent() {
             )}
 
             {/* NEXT CATEGORY / SAVE FOOTER BUTTONS */}
-            <div className="mt-8 flex items-center justify-between border-t border-white/15 pt-5">
-              {activeCategoryNum > 1 ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/15 pt-5">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                {activeCategoryNum > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSaveCurrentCategory(activeCategoryNum);
+                      setActiveCategoryNum((prev) => prev - 1);
+                    }}
+                    className="rounded-[14px] border border-white/20 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white hover:bg-white/20 transition-all"
+                  >
+                    ← Previous
+                  </button>
+                )}
+
+                <button
                   type="button"
-                  onClick={() => {
-                    handleSaveCurrentCategory(activeCategoryNum);
-                    setActiveCategoryNum((prev) => prev - 1);
-                  }}
+                  onClick={handleSaveAndReturnToProfile}
+                  className="rounded-[14px] border border-amber-400/40 bg-amber-500/20 px-4 py-2.5 text-[13px] font-bold text-amber-200 hover:bg-amber-500/30 transition-all"
                 >
-                  ← Save & Previous
-                </Button>
-              ) : (
-                <div />
-              )}
+                  Save & Back to Profile
+                </button>
+              </div>
 
               {activeCategoryNum < 10 ? (
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
                   type="button"
                   onClick={() => {
                     handleSaveCurrentCategory(activeCategoryNum);
                     setActiveCategoryNum((prev) => prev + 1);
                   }}
+                  className="w-full sm:w-auto rounded-[14px] bg-[#F3F0E9] px-5 py-2.5 text-[13.5px] font-extrabold text-[#0D1D15] shadow-md hover:bg-white transition-all text-center"
                 >
                   Save Section {activeCategoryNum} & Next →
-                </Button>
+                </button>
               ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
                   type="button"
-                  onClick={() => handleSaveAllTen()}
+                  onClick={handleSaveAllTenAndReturn}
+                  className="w-full sm:w-auto rounded-[14px] bg-gradient-to-r from-amber-300 via-emerald-300 to-amber-200 px-5 py-2.5 text-[13.5px] font-extrabold text-[#0D1D15] shadow-md hover:opacity-95 transition-all text-center"
                 >
-                  Save Section 10 & Reach 100% ✨
-                </Button>
+                  Save All & Finish Pass ✨
+                </button>
               )}
             </div>
           </div>

@@ -52,6 +52,35 @@ function ProfileContent() {
   const [editBio, setEditBio] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
 
+function normalizeInterestList(rawList?: string[]): string[] {
+  if (!Array.isArray(rawList)) return ['Coffee & wandering', 'Board games'];
+  const validSet = new Set(ONBOARDING_INTEREST_OPTIONS);
+  const normalized: string[] = [];
+
+  for (const item of rawList) {
+    if (validSet.has(item)) {
+      normalized.push(item);
+    } else if (typeof item === 'string') {
+      const lower = item.toLowerCase();
+      if (lower.includes('coffee') || lower.includes('cafe')) normalized.push('Coffee & wandering');
+      else if (lower.includes('board') || lower.includes('game')) normalized.push('Board games');
+      else if (lower.includes('music') || lower.includes('gig')) normalized.push('Live music');
+      else if (lower.includes('wine') || lower.includes('drink')) normalized.push('Natural wine');
+      else if (lower.includes('boulder') || lower.includes('climb')) normalized.push('Bouldering / movement');
+      else if (lower.includes('pottery') || lower.includes('ceramic')) normalized.push('Pottery / ceramics');
+      else if (lower.includes('food') || lower.includes('dine') || lower.includes('eat')) normalized.push('Food hunting');
+      else if (lower.includes('outdoor') || lower.includes('nature') || lower.includes('walk')) normalized.push('Outdoor walks & nature');
+      else if (lower.includes('film') || lower.includes('movie') || lower.includes('cinema')) normalized.push('Film & cinema');
+      else if (lower.includes('book') || lower.includes('read')) normalized.push('Bookshops');
+      else if (lower.includes('museum') || lower.includes('art') || lower.includes('gallery')) normalized.push('Museums & galleries');
+      else if (lower.includes('workshop') || lower.includes('craft')) normalized.push('Workshops');
+    }
+  }
+
+  const result = Array.from(new Set(normalized));
+  return result.length > 0 ? result.slice(0, 3) : ['Coffee & wandering', 'Board games'];
+}
+
   const [q1Finding, setQ1Finding] = useState<string[]>([]);
   const [q2Feelings, setQ2Feelings] = useState<string[]>([]);
   const [q3GroupSize, setQ3GroupSize] = useState<string>('3–4 people');
@@ -70,7 +99,7 @@ function ProfileContent() {
       setQ4Connected(profile.q4Connected || ['Voice notes', 'Regular check-ins']);
       setQ5PlanningRhythm(profile.q5PlanningRhythm || 'Flexible');
       setQ5Availability(profile.q5Availability || ['Fri night', 'Sat night']);
-      setQ6Outings(profile.q6Outings || ['Coffee & Cafes', 'Boardgames & Gaming']);
+      setQ6Outings(normalizeInterestList(profile.q6Outings));
       setQ7EmotionalPacing(profile.q7EmotionalPacing || 'Balanced opener');
       setQ8Qualities(profile.q8Qualities || ['Authenticity', 'Reliability']);
     }
@@ -91,7 +120,7 @@ function ProfileContent() {
       q8Qualities,
     });
     setProfileState(updated);
-    setOnboardingSavedMessage(true);
+    setIsOnboardingEditOpen(false);
 
     if (authUser?.id) {
       try {
@@ -117,11 +146,6 @@ function ProfileContent() {
         console.error('Error syncing onboarding edits to Supabase:', err);
       }
     }
-
-    setTimeout(() => {
-      setOnboardingSavedMessage(false);
-      setIsOnboardingEditOpen(false);
-    }, 1200);
   };
 
   const handleSignOutAction = async () => {
