@@ -27,7 +27,7 @@ export default function PersonDetailError({
       </p>
 
       <div className="mt-6 flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => reset()}>
+        <Button variant="secondary" size="sm" onClick={() => reset()}>
           <RefreshCw className="mr-1.5 h-4 w-4" /> Try Again
         </Button>
         <Link href="/people">
