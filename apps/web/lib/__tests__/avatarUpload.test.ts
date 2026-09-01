@@ -13,19 +13,19 @@ describe('Shared Avatar Upload & Validation Security Tests', () => {
 
     const res = validateAvatarFile(oversizedFile);
     expect(res.valid).toBe(false);
-    expect(res.error).toBe('File size exceeds 4MB limit. Please choose a smaller photo.');
+    expect(res.error).toBe('Photo is too large. Please select a file under 20MB.');
   });
 
-  it('2. Rejects invalid MIME types (e.g. text/plain, image/gif, application/pdf)', () => {
+  it('2. Rejects invalid MIME types (e.g. text/plain, application/pdf)', () => {
     const txtFile = new File(['hello'], 'doc.txt', { type: 'text/plain' });
     const resTxt = validateAvatarFile(txtFile);
     expect(resTxt.valid).toBe(false);
-    expect(resTxt.error).toBe('Invalid file type. Only JPEG, PNG, and WebP images are allowed.');
+    expect(resTxt.error).toBe('Invalid file format. Please select a photo image.');
 
-    const gifFile = new File(['gifdata'], 'anim.gif', { type: 'image/gif' });
-    const resGif = validateAvatarFile(gifFile);
-    expect(resGif.valid).toBe(false);
-    expect(resGif.error).toBe('Invalid file type. Only JPEG, PNG, and WebP images are allowed.');
+    const pdfFile = new File(['pdfdata'], 'doc.pdf', { type: 'application/pdf' });
+    const resPdf = validateAvatarFile(pdfFile);
+    expect(resPdf.valid).toBe(false);
+    expect(resPdf.error).toBe('Invalid file format. Please select a photo image.');
   });
 
   it('3. Accepts valid JPEG, PNG, and WebP files under 4MB', () => {

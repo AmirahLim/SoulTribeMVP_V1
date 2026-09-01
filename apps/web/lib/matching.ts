@@ -488,7 +488,7 @@ export async function getRankedMatches(
       name: candVec.profile.display_name,
       avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
       homeArea: user.homeArea || 'Singapore',
-      bio: candVec.profile.bio || 'Singapore-based member.',
+      bio: candVec.profile.bio || 'New member in Singapore building out their Tribal Pass.',
       rankScore: softRes.adjustedScore, // DISPLAYED SCORE UNTOUCHED!
       resonance: matchRes.resonance,
       logistics: matchRes.logistics,

@@ -380,8 +380,12 @@ export function generateMatchExplanation(
   // Fallback if no candidate dimension produced a sentence
   if (frictionParts.length === 0) {
     const weakest = eligibleDims[0];
-    const label = DIM_LABELS[weakest.key] || 'social rhythm';
-    frictionParts.push(`Nothing much to flag — the mildest difference is around ${label}, and it's small.`);
+    if (weakest?.key === 'geography' || eligibleDims.length <= 1) {
+      frictionParts.push(`${nameB} is still completing their Tribal Pass — as more section answers are shared, specific friction flags will sharpen.`);
+    } else {
+      const label = DIM_LABELS[weakest.key] || 'social rhythm';
+      frictionParts.push(`Nothing much to flag — the mildest difference is around ${label}, and it's small.`);
+    }
   }
 
   const friction_text = frictionParts.join(' ');
