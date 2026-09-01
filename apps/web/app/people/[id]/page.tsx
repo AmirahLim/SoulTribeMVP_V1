@@ -5,14 +5,14 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
-import { getCandidatePeopleForCity } from '../../../lib/peopleStore';
 import { DEMO_PROFILES, getGenderAvatarForName } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
-  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
+  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AuthGuard } from '../../../components/AuthGuard';
+import { getUserProfile } from '../../../lib/userStore';
 
 export default function PersonDetailPage() {
   return (
@@ -28,6 +28,7 @@ function PersonDetailContent() {
   const personId = (params?.id as string) || '';
 
   const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadMatch() {
@@ -40,16 +41,33 @@ function PersonDetailContent() {
         }
       } catch (err) {
         console.error('Failed to load match detail:', err);
+      } finally {
+        setLoading(false);
       }
     }
     loadMatch();
   }, [personId]);
 
-  const userProfile = getUserProfile();
-  const activeCity = userProfile.homeArea || 'Singapore';
-  const candidates = getCandidatePeopleForCity(activeCity);
-
   const demoCandidate = DEMO_PROFILES.find((p) => p.profile.id === personId || p.profile.id.includes(personId));
+
+  if (!loading && !rankedMatch && !demoCandidate) {
+    return (
+      <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white border border-white/20 shadow-xl">
+          <AlertCircle className="h-8 w-8 text-amber-300" />
+        </div>
+        <h1 className="mt-4 text-[24px] font-extrabold text-white">Profile Not Found</h1>
+        <p className="mt-2 text-[14px] text-white/75 max-w-[320px] leading-relaxed">
+          This member profile could not be found or is no longer available in your curated batch.
+        </p>
+        <Link href="/people" className="mt-6">
+          <Button variant="primary" size="sm">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Return to People
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   const rawFallbackPerson = demoCandidate
     ? {
@@ -64,16 +82,14 @@ function PersonDetailContent() {
         fitLabel: 'Good Fit',
         rhythmOverlap: Math.round((demoCandidate.profile.confidence || 0.7) * 100),
       }
-    : (candidates.find((p) => p.id === personId || p.id.includes(personId)) || candidates[0]);
+    : null;
 
-  const fallbackPerson = {
-    ...rawFallbackPerson,
-    avatarUrl: getGenderAvatarForName(rawFallbackPerson.name),
-  };
-
-  const isDemoPerson = rankedMatch
-    ? rankedMatch.isDemo
-    : true; // fallback synthetic candidate
+  const fallbackPerson = rawFallbackPerson
+    ? {
+        ...rawFallbackPerson,
+        avatarUrl: getGenderAvatarForName(rawFallbackPerson.name),
+      }
+    : null;
 
   const foundPerson = rankedMatch
     ? {
@@ -89,7 +105,11 @@ function PersonDetailContent() {
         interests: fallbackPerson?.interests || ['Specialty Coffee', 'Ceramics', 'Independent Bookshops'],
         isDemo: rankedMatch.isDemo,
       }
-    : { ...fallbackPerson, isDemo: true };
+    : fallbackPerson
+    ? { ...fallbackPerson, isDemo: true }
+    : null;
+
+  if (!foundPerson) return null;
 
   const firstName = foundPerson.name.split(' ')[0];
   const possessiveFirstName = `${firstName}'s`;

@@ -20,6 +20,7 @@ export default function PeopleListPage() {
 }
 
 function PeopleListContent() {
+  const { user: authUser } = useAuth();
   const [city, setCity] = useState('Singapore');
   const [matches, setMatches] = useState<RankedMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,9 +30,13 @@ function PeopleListContent() {
     let cancelled = false;
     (async () => {
       try {
-        const user = getUserProfile();
-        if (user.homeArea) setCity(user.homeArea);
-        const ranked = await getRankedMatches(user, { limit: 6 });
+        const userProf = getUserProfile();
+        if (userProf.homeArea) setCity(userProf.homeArea);
+        const effectiveUser = {
+          ...userProf,
+          id: authUser?.id || userProf.id,
+        };
+        const ranked = await getRankedMatches(effectiveUser, { limit: 6, userId: authUser?.id });
         if (cancelled) return;
         setMatches(ranked);
         setError(null);

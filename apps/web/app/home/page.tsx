@@ -186,7 +186,7 @@ function HomeContent() {
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              On your<br />radar ({radarOutings.length})
+              On Your<br />Radar ({radarOutings.length})
             </button>
           </div>
         </section>
@@ -550,7 +550,7 @@ function HomeContent() {
                 Curated Recommendations
               </span>
               <h3 className="text-[18px] font-bold text-white leading-tight">
-                On your<br />radar
+                On Your<br />Radar
               </h3>
               <p className="mt-1 text-[13px] text-white/70">
                 Suggested pitches and events suited to your social rhythm & interests.

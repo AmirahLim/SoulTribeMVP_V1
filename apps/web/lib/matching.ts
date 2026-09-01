@@ -138,13 +138,35 @@ export function getFitLabel(rankScore: number): string {
 }
 
 export async function getRankedMatches(
-  user: UserProfileData,
-  opts?: { area?: string; limit?: number; activityCategory?: string }
+  user: UserProfileData & { id?: string },
+  opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
 ): Promise<RankedMatch[]> {
   initTelemetry();
 
+  let viewerId = user.id || opts?.userId;
+  const currentMode = getCandidateMode();
+
+  // If in real mode and viewer ID is not passed, attempt to get it from browser session
+  if (!viewerId && currentMode === 'real' && checkIsSupabaseConfigured() && typeof window !== 'undefined') {
+    try {
+      const client = getSupabaseBrowserClient();
+      const { data: { session } } = await client.auth.getSession();
+      if (session?.user?.id) {
+        viewerId = session.user.id;
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  // SELF-EXCLUSION GUARANTEE: If in real mode and real viewer ID is unavailable, return [] rather than risking showing the user themselves
+  if (currentMode === 'real' && !viewerId && checkIsSupabaseConfigured()) {
+    return [];
+  }
+
+  const effectiveId = viewerId || '00000000-0000-0000-0000-000000000099';
   const limit = opts?.limit ?? 6;
-  const viewerVec = toProfileVector(user);
+  const viewerVec = toProfileVector(user, effectiveId);
   const source = getActiveCandidateSource();
   const candidateVecs = await source.getCandidates({ area: opts?.area, limit });
 
@@ -156,7 +178,10 @@ export async function getRankedMatches(
   let positionCounter = 1;
 
   for (const candVec of candidateVecs) {
+    // SELF-EXCLUSION SAFEGUARD: Never allow viewer to appear in their own matches list
     if (candVec.profile.id === viewerVec.profile.id) continue;
+    if (viewerId && candVec.profile.id === viewerId) continue;
+    if (user.handle && candVec.profile.handle === user.handle.toLowerCase()) continue;
 
     // SAFEGUARD 1: Every demo candidate carries isDemo: true
     const isDemo =

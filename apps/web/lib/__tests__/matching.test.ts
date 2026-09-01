@@ -99,4 +99,19 @@ describe('Part 5 — Matching Service Tests', () => {
     const hasProvisional = matches.some((m) => m.provisional === true);
     assert.strictEqual(hasProvisional, true, 'Thin profile matches must be flagged provisional: true');
   });
+
+  it('11. The signed-in user NEVER appears in their own matches list (self-exclusion)', async () => {
+    const targetDemo = DEMO_PROFILES[0];
+    const userWithId: UserProfileData = {
+      ...fullUser,
+      id: targetDemo.profile.id,
+      handle: targetDemo.profile.handle,
+    };
+
+    const matches = await getRankedMatches(userWithId, { limit: 10 });
+    const containsSelf = matches.some(
+      (m) => m.id === targetDemo.profile.id || m.name === targetDemo.profile.display_name
+    );
+    assert.strictEqual(containsSelf, false, 'Signed-in user must be excluded from their own match results');
+  });
 });
