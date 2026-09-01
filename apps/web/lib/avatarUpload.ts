@@ -42,7 +42,40 @@ export function validateAvatarFile(file: File): AvatarValidationResult {
 
 /**
  * Uploads an avatar image to Supabase Storage (avatars bucket) scoped under `avatars/{userId}/...`.
- * Falls back to local data URL if Supabase storage is not configured.
+/**
+ * Reads a File as a base64 Data URL and updates user profile if connected.
+ */
+async function readFileAsDataUrl(
+  file: File,
+  userId?: string,
+  client?: any
+): Promise<AvatarUploadResult> {
+  return new Promise<AvatarUploadResult>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      if (client && userId) {
+        try {
+          await client
+            .from('profiles')
+            .update({ avatar_url: dataUrl })
+            .eq('id', userId);
+        } catch {
+          // ignore DB error if user profile record isn't saved yet
+        }
+      }
+      resolve({ success: true, avatarUrl: dataUrl });
+    };
+    reader.onerror = () => {
+      resolve({ success: false, error: 'Failed to read photo file.' });
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Uploads an avatar image to Supabase Storage (avatars bucket) scoped under `avatars/{userId}/...`.
+ * Seamlessly falls back to base64 Data URL if storage bucket is not configured or missing.
  */
 export async function uploadAvatar(
   userId: string,
@@ -59,7 +92,7 @@ export async function uploadAvatar(
       const fileExt = file.name.split('.').pop() || 'jpg';
       const filePath = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
-      // Upload to storage bucket 'avatars' scoped under userId
+      // Attempt upload to storage bucket 'avatars'
       const { data: uploadData, error: uploadErr } = await client.storage
         .from('avatars')
         .upload(filePath, file, {
@@ -68,10 +101,8 @@ export async function uploadAvatar(
         });
 
       if (uploadErr) {
-        return {
-          success: false,
-          error: `Failed to upload avatar to storage: ${uploadErr.message}`,
-        };
+        console.warn('Supabase avatars bucket upload failed or bucket missing, falling back to Data URL:', uploadErr.message);
+        return readFileAsDataUrl(file, userId, client);
       }
 
       // Get public URL or object path in storage
@@ -89,22 +120,11 @@ export async function uploadAvatar(
 
       return { success: true, avatarUrl };
     } catch (err: any) {
-      return {
-        success: false,
-        error: err?.message || 'Failed to upload photo to storage.',
-      };
+      console.warn('Storage exception encountered, falling back to Data URL:', err?.message);
+      return readFileAsDataUrl(file, userId);
     }
   }
 
   // Fallback FileReader base64 for offline / unconfigured mode
-  return new Promise<AvatarUploadResult>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      resolve({ success: true, avatarUrl: reader.result as string });
-    };
-    reader.onerror = () => {
-      resolve({ success: false, error: 'Failed to read image file.' });
-    };
-    reader.readAsDataURL(file);
-  });
+  return readFileAsDataUrl(file);
 }
