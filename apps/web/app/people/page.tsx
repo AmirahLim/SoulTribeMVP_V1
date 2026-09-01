@@ -9,7 +9,17 @@ import { getGenderAvatarForName } from '@soul-tribe/core';
 import { MapPin, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function PeopleListPage() {
+  return (
+    <AuthGuard>
+      <PeopleListContent />
+    </AuthGuard>
+  );
+}
+
+function PeopleListContent() {
   const [city, setCity] = useState('Singapore');
   const [matches, setMatches] = useState<RankedMatch[]>([]);
   const [loading, setLoading] = useState(true);

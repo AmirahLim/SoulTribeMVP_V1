@@ -8,7 +8,17 @@ import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
 import { MapPin, Calendar, Clock, ArrowLeft, Check } from 'lucide-react';
 
+import { AuthGuard } from '../../../components/AuthGuard';
+
 export default function OutingDetailPage() {
+  return (
+    <AuthGuard>
+      <OutingDetailContent />
+    </AuthGuard>
+  );
+}
+
+function OutingDetailContent() {
   const router = useRouter();
   const [joined, setJoined] = useState(false);
 

@@ -5,7 +5,17 @@ import Link from 'next/link';
 import { IllustratedGround } from '@soul-tribe/ui';
 import { ArrowLeft, MapPin } from 'lucide-react';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function TimelinePage() {
+  return (
+    <AuthGuard>
+      <TimelineContent />
+    </AuthGuard>
+  );
+}
+
+function TimelineContent() {
   const events = [
     {
       id: 'e1',

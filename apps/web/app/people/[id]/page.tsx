@@ -12,9 +12,17 @@ import {
   Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { calculateTribeStanding, getUserProfile } from '../../../lib/userStore';
+import { AuthGuard } from '../../../components/AuthGuard';
 
 export default function PersonDetailPage() {
+  return (
+    <AuthGuard>
+      <PersonDetailContent />
+    </AuthGuard>
+  );
+}
+
+function PersonDetailContent() {
   const params = useParams();
   const router = useRouter();
   const personId = (params?.id as string) || '';

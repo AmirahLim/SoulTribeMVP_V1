@@ -6,7 +6,17 @@ import { Button, Chip } from '@soul-tribe/ui';
 import { ArrowLeft, Check, Sparkles, Lock, Globe, CheckCircle2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassCompletion } from '../../../lib/userStore';
 
+import { AuthGuard } from '../../../components/AuthGuard';
+
 export default function DeeperTribalPassPage() {
+  return (
+    <AuthGuard>
+      <DeeperTribalPassContent />
+    </AuthGuard>
+  );
+}
+
+function DeeperTribalPassContent() {
   const [activeCategoryNum, setActiveCategoryNum] = useState<number>(1);
   const [savedMessage, setSavedMessage] = useState(false);
   const [completedCats, setCompletedCats] = useState<number[]>([]);

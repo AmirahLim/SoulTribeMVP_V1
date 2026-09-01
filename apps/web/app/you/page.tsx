@@ -15,7 +15,17 @@ import {
   STANDING_LEVELS, calculateTribeStanding, StandingLevel
 } from '../../lib/userStore';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function ProfilePage() {
+  return (
+    <AuthGuard>
+      <ProfileContent />
+    </AuthGuard>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
   const { user: authUser, signOut } = useAuth();
 

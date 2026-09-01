@@ -308,10 +308,14 @@ function PitchComposerContent() {
   );
 }
 
+import { AuthGuard } from '../../../components/AuthGuard';
+
 export default function PitchOutingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0D1D15] p-6 text-[#FFFDF9]">Loading composer...</div>}>
-      <PitchComposerContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<div className="min-h-screen bg-[#0D1D15] p-6 text-[#FFFDF9]">Loading composer...</div>}>
+        <PitchComposerContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

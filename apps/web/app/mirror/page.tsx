@@ -5,7 +5,17 @@ import Link from 'next/link';
 import { IllustratedGround } from '@soul-tribe/ui';
 import { ArrowLeft, Award, CheckCircle2 } from 'lucide-react';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function MirrorProfilePage() {
+  return (
+    <AuthGuard>
+      <MirrorProfileContent />
+    </AuthGuard>
+  );
+}
+
+function MirrorProfileContent() {
   return (
     <IllustratedGround variant="paper" className="min-h-screen pb-24">
       <header className="py-2 border-b border-[#F3F0E9]/12 pb-4">

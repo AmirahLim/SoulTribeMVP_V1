@@ -12,7 +12,17 @@ import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles } from 'lucide-re
 import { getUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
 import { getCandidatePeopleForCity } from '../../lib/peopleStore';
 
+import { AuthGuard } from '../../components/AuthGuard';
+
 export default function HomeDashboardPage() {
+  return (
+    <AuthGuard>
+      <HomeContent />
+    </AuthGuard>
+  );
+}
+
+function HomeContent() {
   const [activeTab, setActiveTab] = useState<'fit' | 'outings' | 'pitches' | 'tribe'>('fit');
   const [profile, setProfileState] = useState<UserProfileData>(DEFAULT_USER_PROFILE);
   const [pitches, setPitchesState] = useState<PitchedOuting[]>(DEFAULT_PITCHES);

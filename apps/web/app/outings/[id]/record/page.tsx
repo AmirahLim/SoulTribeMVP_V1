@@ -7,7 +7,17 @@ import { useRouter } from 'next/navigation';
 import { IllustratedGround, Button, Chip } from '@soul-tribe/ui';
 import { Check, ArrowLeft } from 'lucide-react';
 
+import { AuthGuard } from '../../../../components/AuthGuard';
+
 export default function OutingRecordPage() {
+  return (
+    <AuthGuard>
+      <OutingRecordContent />
+    </AuthGuard>
+  );
+}
+
+function OutingRecordContent() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
 
