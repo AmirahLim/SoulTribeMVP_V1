@@ -281,14 +281,14 @@ function HomeContent() {
                     />
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/15">
-                    <span className="text-[12px] text-white/80">
+                  <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-white/15">
+                    <p className="text-[12.5px] text-white/80 line-clamp-2 flex-1 min-w-0 pr-2">
                       {person.bio}
-                    </span>
+                    </p>
 
-                    <Link href={`/people/${person.id}`}>
-                      <Button variant="secondary" size="sm">
-                        View Full Profile →
+                    <Link href={`/people/${person.id}`} className="shrink-0">
+                      <Button variant="secondary" size="sm" className="whitespace-nowrap">
+                        View Profile →
                       </Button>
                     </Link>
                   </div>
