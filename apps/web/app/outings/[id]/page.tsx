@@ -126,39 +126,13 @@ function OutingDetailContent() {
           setLoading(false);
           return;
         } catch {
-          // fallback
+          setOuting(null);
+          setMembers([]);
         }
       }
 
-      // Fallback local mock outing if offline or non-UUID test ID
-      if (outingId) {
-        const mockOuting: OutingData = {
-          id: outingId,
-          host_id: 'm1',
-          title: 'Saturday Pottery & Filter Coffee',
-          pitch: "Let's spend two hours throwing clay at Tiong Bahru Studios, followed by a quiet filter coffee to talk properly. No loud music, just good conversation.",
-          activity_category: 'creative',
-          area: 'Tiong Bahru',
-          starts_at: '2026-09-14T15:00:00Z',
-          duration_minutes: 150,
-          budget_band: 2,
-          orientation: 'conversation_first',
-          visibility: 'requestable',
-          max_participants: 6,
-          state: 'proposed',
-          hostName: 'Marcus Tan',
-          hostAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-          isHostDemo: true,
-        };
-
-        setOuting(mockOuting);
-        setMembers([
-          { user_id: 'm1', role: 'host', state: 'accepted', display_name: 'Marcus Tan', avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80', home_area: 'Tiong Bahru', isDemo: true },
-          { user_id: 'r2', role: 'guest', state: 'accepted', display_name: 'Chen Wei', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80', home_area: 'Tanjong Pagar', isDemo: true },
-          { user_id: 'r3', role: 'guest', state: 'accepted', display_name: 'Sarah Chen', avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80', home_area: 'River Valley', isDemo: true },
-        ]);
-      }
-
+      setOuting(null);
+      setMembers([]);
       setLoading(false);
     }
 

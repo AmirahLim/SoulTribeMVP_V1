@@ -98,7 +98,7 @@ export const FALLBACK_RADAR_OUTINGS: OutingItem[] = [
 
 export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> {
   if (!checkIsSupabaseConfigured() || !userId) {
-    return FALLBACK_GOING_OUTINGS;
+    return [];
   }
 
   try {
@@ -111,7 +111,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       .neq('role', 'host');
 
     if (error || !memberRows || memberRows.length === 0) {
-      return FALLBACK_GOING_OUTINGS;
+      return [];
     }
 
     return memberRows
@@ -134,13 +134,13 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       })
       .filter(Boolean) as OutingItem[];
   } catch {
-    return FALLBACK_GOING_OUTINGS;
+    return [];
   }
 }
 
 export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> {
   if (!checkIsSupabaseConfigured() || !userId) {
-    return FALLBACK_RADAR_OUTINGS;
+    return [];
   }
 
   try {
@@ -153,7 +153,7 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       .neq('host_id', userId);
 
     if (error || !outingRows || outingRows.length === 0) {
-      return FALLBACK_RADAR_OUTINGS;
+      return [];
     }
 
     return outingRows.map((out: any) => ({
@@ -170,6 +170,6 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       fitBadge: out.fit_badge || 'Recommended Fit',
     }));
   } catch {
-    return FALLBACK_RADAR_OUTINGS;
+    return [];
   }
 }
