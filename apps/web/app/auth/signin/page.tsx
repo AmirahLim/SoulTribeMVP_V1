@@ -82,6 +82,19 @@ function LumaSignInForm() {
     }
   }, [user, authLoading, redirectPath, router]);
 
+  const handleGoogleSignIn = async () => {
+    setErrorMessage(null);
+    setOtpSentSuccess(false);
+    setIsSubmitting(true);
+
+    const { error } = await signInWithGoogle(redirectPath);
+    setIsSubmitting(false);
+
+    if (error) {
+      setErrorMessage(error.message || 'Google sign-in failed. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -226,19 +239,16 @@ function LumaSignInForm() {
                 </div>
               )}
 
-              {/* Google Button */}
+              {/* Google OAuth Button (Active) */}
               <div className="mt-6">
                 <button
                   type="button"
-                  onClick={() => signInWithGoogle(redirectPath)}
-                  disabled
-                  className="flex h-12 w-full items-center justify-center rounded-[16px] border border-white/20 bg-[#18181b] text-[14.5px] font-semibold text-white/50 cursor-not-allowed shadow-sm transition-all"
+                  onClick={handleGoogleSignIn}
+                  disabled={isSubmitting}
+                  className="flex h-12 w-full items-center justify-center rounded-[16px] border border-white/20 bg-[#18181b] hover:bg-[#27272a] active:scale-[0.99] text-[14.5px] font-bold text-white shadow-sm transition-all cursor-pointer"
                 >
                   <GoogleIcon />
                   Continue with Google
-                  <span className="ml-2 text-[10.5px] font-bold text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">
-                    (Coming Soon)
-                  </span>
                 </button>
               </div>
 
