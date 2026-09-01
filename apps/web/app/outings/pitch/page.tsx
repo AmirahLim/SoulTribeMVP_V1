@@ -221,8 +221,8 @@ function PitchComposerContent() {
                         <div>
                           <h4 className="text-[14px] font-bold text-white flex items-center gap-1.5">
                             {candidate.profile.display_name}
-                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase">
-                              ⚠️ Demo Profile
+                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase shrink-0 whitespace-nowrap">
+                              Demo
                             </span>
                           </h4>
                           <span className="text-[11.5px] text-white/70">

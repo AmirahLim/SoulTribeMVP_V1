@@ -533,25 +533,26 @@ function HomeContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/15">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <img
                         src={item.hostAvatar}
                         alt={item.hostName}
-                        className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30"
+                        className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30 shrink-0"
                       />
-                      <span className="text-[12.5px] text-white flex items-center gap-1.5">
-                        Pitched by <strong className="font-bold">{item.hostName}</strong>
-                        {(item.isHostDemo || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(item.hostName)) && (
-                          <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
-                            ⚠️ Demo
+                      <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                        <span className="text-[12px] text-white/80 whitespace-nowrap">Pitched by</span>
+                        <span className="text-[12.5px] font-bold text-white whitespace-nowrap">{item.hostName}</span>
+                        {(item.isHostDemo || ['m1', 'm2', 'r1', 'r2', 'r3'].includes(item.hostId) || ['Marcus Tan', 'Maya Lin', 'Chen Wei', 'Sarah Chen', 'Daniel K.', 'Elena R.'].includes(item.hostName)) && (
+                          <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
+                            Demo
                           </span>
                         )}
-                      </span>
+                      </div>
                     </div>
 
-                    <Link href={`/outings/${item.id}`}>
-                      <Button variant="secondary" size="sm">
+                    <Link href={`/outings/${item.id}`} className="shrink-0">
+                      <Button variant="secondary" size="sm" className="whitespace-nowrap">
                         View Record →
                       </Button>
                     </Link>
@@ -635,26 +636,28 @@ function HomeContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/15">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <img
                         src={item.hostAvatar}
                         alt={item.hostName}
-                        className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30"
+                        className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30 shrink-0"
                       />
-                      <span className="text-[12.5px] text-white flex items-center gap-1.5">
-                        Pitched by <strong className="font-bold">{item.hostName}</strong>
-                        {(item.isHostDemo || ['Marcus Tan', 'Maya Lin', 'Chen Wei'].includes(item.hostName)) && (
-                          <span className="rounded-full bg-amber-400 text-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
-                            ⚠️ Demo
+                      <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                        <span className="text-[12px] text-white/80 whitespace-nowrap">Pitched by</span>
+                        <span className="text-[12.5px] font-bold text-white whitespace-nowrap">{item.hostName}</span>
+                        {(item.isHostDemo || ['m1', 'm2', 'r1', 'r2', 'r3'].includes(item.hostId) || ['Marcus Tan', 'Maya Lin', 'Chen Wei', 'Sarah Chen', 'Daniel K.', 'Elena R.'].includes(item.hostName)) && (
+                          <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
+                            Demo
                           </span>
                         )}
-                      </span>
+                      </div>
                     </div>
 
                     <Button
                       variant={radarJoined[item.id] ? 'secondary' : 'primary'}
                       size="sm"
+                      className="whitespace-nowrap shrink-0"
                       onClick={() => handleToggleRadarJoin(item.id)}
                     >
                       {radarJoined[item.id] ? 'Joined ✓' : 'Join Pitch →'}

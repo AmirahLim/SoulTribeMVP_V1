@@ -169,8 +169,8 @@ function PeopleListContent() {
 
                         <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
                           {person.isDemo && (
-                            <span className="rounded-full bg-amber-400 text-black px-3 py-1 text-[10.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300 flex items-center gap-1">
-                              ⚠️ Demo Profile — Display Only
+                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300">
+                              Demo
                             </span>
                           )}
 

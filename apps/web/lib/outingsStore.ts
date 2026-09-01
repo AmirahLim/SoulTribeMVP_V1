@@ -9,6 +9,7 @@ export interface OutingItem {
   hostId: string;
   hostName: string;
   hostAvatar: string;
+  isHostDemo?: boolean;
   seatsTotal: number;
   seatsFilled: number;
   category?: string;
@@ -29,6 +30,7 @@ export const FALLBACK_GOING_OUTINGS: OutingItem[] = [
     hostId: 'm1',
     hostName: 'Marcus Tan',
     hostAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+    isHostDemo: true,
     seatsTotal: 6,
     seatsFilled: 3,
     cohesionScore: 84,
@@ -42,6 +44,7 @@ export const FALLBACK_GOING_OUTINGS: OutingItem[] = [
     hostId: 'm2',
     hostName: 'Maya Lin',
     hostAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    isHostDemo: true,
     seatsTotal: 6,
     seatsFilled: 4,
     cohesionScore: 78,
@@ -58,9 +61,10 @@ export const FALLBACK_RADAR_OUTINGS: OutingItem[] = [
     hostId: 'r1',
     hostName: 'Sarah Chen',
     hostAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80',
+    isHostDemo: true,
     seatsTotal: 4,
     seatsFilled: 2,
-    fitBadge: '94% Rhythm Fit',
+    fitBadge: 'Natural Resonance',
   },
   {
     id: 'radar-102',
@@ -71,9 +75,10 @@ export const FALLBACK_RADAR_OUTINGS: OutingItem[] = [
     hostId: 'r2',
     hostName: 'Daniel K.',
     hostAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+    isHostDemo: true,
     seatsTotal: 6,
     seatsFilled: 3,
-    fitBadge: '88% Activity Fit',
+    fitBadge: 'Strong Resonance',
   },
   {
     id: 'radar-103',
@@ -84,9 +89,10 @@ export const FALLBACK_RADAR_OUTINGS: OutingItem[] = [
     hostId: 'r3',
     hostName: 'Elena R.',
     hostAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80',
+    isHostDemo: true,
     seatsTotal: 4,
     seatsFilled: 3,
-    fitBadge: '92% Curiosity Fit',
+    fitBadge: 'Rare Resonance',
   },
 ];
 
