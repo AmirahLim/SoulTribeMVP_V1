@@ -180,13 +180,13 @@ function HomeContent() {
             <button
               type="button"
               onClick={() => setActiveTab('radar')}
-              className={`px-3 pb-3 text-[13px] font-semibold transition-all whitespace-nowrap ${
+              className={`px-3 pb-3 text-[13px] font-semibold transition-all text-left leading-tight ${
                 activeTab === 'radar'
                   ? 'text-white border-b-2 border-white font-bold'
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              On Your Radar ({radarOutings.length})
+              On your<br />Radar ({radarOutings.length})
             </button>
           </div>
         </section>
@@ -549,8 +549,8 @@ function HomeContent() {
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
                 Curated Recommendations
               </span>
-              <h3 className="text-[18px] font-bold text-white">
-                On Your Radar
+              <h3 className="text-[18px] font-bold text-white leading-tight">
+                On your<br />Radar
               </h3>
               <p className="mt-1 text-[13px] text-white/70">
                 Suggested pitches and events suited to your social rhythm & interests.
