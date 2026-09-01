@@ -152,6 +152,21 @@ function PitchComposerContent() {
     }
   };
 
+  const parseSafeDate = (dateStr: string): { valid: boolean; iso?: string; error?: string } => {
+    if (!dateStr || !dateStr.trim()) {
+      return { valid: false, error: 'Start date and time are required.' };
+    }
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+      return { valid: false, error: 'Please enter a valid date and time.' };
+    }
+    const yr = d.getFullYear();
+    if (yr < 2024 || yr > 2050) {
+      return { valid: false, error: 'Please select a valid year (e.g. 2026).' };
+    }
+    return { valid: true, iso: d.toISOString() };
+  };
+
   const validateForm = (): string | null => {
     const cleanTitle = title.trim();
     if (cleanTitle.length < 4 || cleanTitle.length > 80) {
@@ -175,8 +190,9 @@ function PitchComposerContent() {
       return 'Free tier outings are capped at 6 participants maximum.';
     }
 
-    if (!startsAt) {
-      return 'Start date and time are required.';
+    const dateCheck = parseSafeDate(startsAt);
+    if (!dateCheck.valid) {
+      return dateCheck.error || 'Please enter a valid date and time.';
     }
 
     return null;
@@ -192,11 +208,18 @@ function PitchComposerContent() {
       return;
     }
 
+    const dateCheck = parseSafeDate(startsAt);
+    if (!dateCheck.valid || !dateCheck.iso) {
+      setErrorMessage(dateCheck.error || 'Please enter a valid date and time.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const profile = getUserProfile();
       let hostId = profile.id || authUser?.id;
+      const startsAtIso = dateCheck.iso;
 
       // 1. Supabase database insert if configured
       if (checkIsSupabaseConfigured()) {
@@ -213,8 +236,6 @@ function PitchComposerContent() {
           setIsSubmitting(false);
           return;
         }
-
-        const startsAtIso = new Date(startsAt).toISOString();
 
         // Insert into outings table
         const { data: newOuting, error: outingError } = await client
