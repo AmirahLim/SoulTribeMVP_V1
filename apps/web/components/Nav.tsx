@@ -22,7 +22,7 @@ export function Nav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center px-4 pb-5 pt-2">
-      <div className="flex w-full max-w-[420px] items-center justify-around rounded-[999px] border border-[#F3F0E9]/15 bg-[#15261C]/95 px-3 py-2 shadow-2xl backdrop-blur-xl">
+      <div className="flex w-full max-w-[420px] items-center justify-around rounded-[999px] border border-white/20 bg-black/85 px-3 py-2 shadow-2xl backdrop-blur-xl">
         {items.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
           const Icon = item.icon;

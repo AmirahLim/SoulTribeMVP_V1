@@ -31,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
-      <body className="bg-[#0D1D15] text-[#F3F0E9] antialiased selection:bg-[#016401]/30 selection:text-[#F3F0E9]">
+      <body className="bg-black text-[#F3F0E9] antialiased selection:bg-white/20 selection:text-white">
         <AuthProvider>
           <main className="min-h-screen pb-20">{children}</main>
           <Nav />
