@@ -62,11 +62,12 @@ export async function saveOnboardingToSupabase(
     }
 
     // 2. Trait Intent Table
-    const intentAnswered = data.q1Finding.length > 0 ? 1 : 0;
+    const intentsArr = data.q1Finding || [];
+    const intentAnswered = intentsArr.length > 0 ? 1 : 0;
     const { error: intentErr } = await supabase.from('trait_intent').upsert(
       {
         user_id: userId,
-        intents: data.q1Finding,
+        intents: intentsArr,
         depth: 2,
         answered: intentAnswered,
       },
@@ -77,12 +78,14 @@ export async function saveOnboardingToSupabase(
     }
 
     // 3. Trait Communication Table
-    const commAnswered = (data.q2Feelings.length > 0 ? 1 : 0) + (data.q4Connected.length > 0 ? 1 : 0);
+    const feelingsArr = data.q2Feelings || [];
+    const connectedArr = data.q4Connected || [];
+    const commAnswered = (feelingsArr.length > 0 ? 1 : 0) + (connectedArr.length > 0 ? 1 : 0);
     const { error: commErr } = await supabase.from('trait_communication').upsert(
       {
         user_id: userId,
-        conv_styles: data.q2Feelings,
-        mediums: data.q4Connected,
+        conv_styles: feelingsArr,
+        mediums: connectedArr,
         answered: commAnswered,
       },
       { onConflict: 'user_id' }
@@ -92,12 +95,16 @@ export async function saveOnboardingToSupabase(
     }
 
     // 4. Trait Personality Table (Extraversion from Q3 Energy slider)
-    const extraversionVal = Math.round((1 - data.q3Energy) * 1000) / 1000;
+    const hasEnergy = typeof data.q3Energy === 'number' && !isNaN(data.q3Energy);
+    const extraversionVal = hasEnergy
+      ? Math.round((1 - data.q3Energy!) * 1000) / 1000
+      : null;
+    const persAnswered = hasEnergy ? 1 : 0;
     const { error: persErr } = await supabase.from('trait_personality').upsert(
       {
         user_id: userId,
         extraversion: extraversionVal,
-        answered: 1,
+        answered: persAnswered,
       },
       { onConflict: 'user_id' }
     );
@@ -106,16 +113,28 @@ export async function saveOnboardingToSupabase(
     }
 
     // 5. Trait Social Rhythm Table
-    const rhythmVal = data.q5PlanningRhythm.includes('Spontaneous')
-      ? 0.2
-      : data.q5PlanningRhythm.includes('Flexible')
-      ? 0.5
-      : 0.8;
-    const rhythmAnswered = (data.q5Availability.length > 0 ? 1 : 0) + (data.q5PlanningRhythm ? 1 : 0);
+    let rhythmVal: number | null = null;
+    let hasRhythm = false;
+    if (data.q5PlanningRhythm && data.q5PlanningRhythm.trim()) {
+      const pText = data.q5PlanningRhythm.trim();
+      if (pText.includes('Spontaneous')) {
+        rhythmVal = 0.2;
+        hasRhythm = true;
+      } else if (pText.includes('Flexible')) {
+        rhythmVal = 0.5;
+        hasRhythm = true;
+      } else if (pText.includes('In advance') || pText.includes('Planned') || pText.includes('ahead')) {
+        rhythmVal = 0.8;
+        hasRhythm = true;
+      }
+    }
+
+    const availArr = data.q5Availability || [];
+    const rhythmAnswered = (availArr.length > 0 ? 1 : 0) + (hasRhythm ? 1 : 0);
     const { error: rhythmErr } = await supabase.from('trait_social_rhythm').upsert(
       {
         user_id: userId,
-        availability: data.q5Availability,
+        availability: availArr,
         planning_horizon: rhythmVal,
         answered: rhythmAnswered,
       },
@@ -126,14 +145,30 @@ export async function saveOnboardingToSupabase(
     }
 
     // 6. Trait Experience Table
-    const groupSizeVal = data.q3GroupSize === '1-on-1' ? 0.0 : data.q3GroupSize === '3-4 people' ? 0.5 : 1.0;
-    const expAnswered = (data.q6Outings.length > 0 ? 1 : 0) + (data.q3GroupSize ? 1 : 0) + (data.q8Qualities.length > 0 ? 1 : 0);
+    let groupSizeVal: number | null = null;
+    let hasGroupSize = false;
+    if (data.q3GroupSize && data.q3GroupSize.trim()) {
+      hasGroupSize = true;
+      if (data.q3GroupSize === '1-on-1') {
+        groupSizeVal = 0.0;
+      } else if (data.q3GroupSize === '3-4 people') {
+        groupSizeVal = 0.5;
+      } else if (data.q3GroupSize === '5-6 people' || data.q3GroupSize === 'Big group') {
+        groupSizeVal = 1.0;
+      } else {
+        hasGroupSize = false;
+      }
+    }
+
+    const outingsArr = data.q6Outings || [];
+    const qualitiesArr = data.q8Qualities || [];
+    const expAnswered = (outingsArr.length > 0 ? 1 : 0) + (hasGroupSize ? 1 : 0) + (qualitiesArr.length > 0 ? 1 : 0);
     const { error: expErr } = await supabase.from('trait_experience').upsert(
       {
         user_id: userId,
-        settings: data.q6Outings,
+        settings: outingsArr,
         group_size_pref: groupSizeVal,
-        orientation: data.q8Qualities,
+        orientation: qualitiesArr,
         answered: expAnswered,
       },
       { onConflict: 'user_id' }
@@ -143,16 +178,27 @@ export async function saveOnboardingToSupabase(
     }
 
     // 7. Trait Emotional Table
-    const paceVal = data.q7EmotionalPacing.includes('Fast')
-      ? 0.9
-      : data.q7EmotionalPacing.includes('Let it unfold')
-      ? 0.5
-      : 0.2;
+    let paceVal: number | null = null;
+    let hasPace = false;
+    if (data.q7EmotionalPacing && data.q7EmotionalPacing.trim()) {
+      const paceText = data.q7EmotionalPacing.trim();
+      if (paceText.includes('Fast')) {
+        paceVal = 0.9;
+        hasPace = true;
+      } else if (paceText.includes('Let it unfold')) {
+        paceVal = 0.5;
+        hasPace = true;
+      } else if (paceText.includes('Slow') || paceText.includes('Cautious')) {
+        paceVal = 0.2;
+        hasPace = true;
+      }
+    }
+    const emoAnswered = hasPace ? 1 : 0;
     const { error: emoErr } = await supabase.from('trait_emotional').upsert(
       {
         user_id: userId,
         er_opening_pace: paceVal,
-        answered: data.q7EmotionalPacing ? 1 : 0,
+        answered: emoAnswered,
       },
       { onConflict: 'user_id' }
     );

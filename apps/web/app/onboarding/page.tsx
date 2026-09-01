@@ -55,36 +55,30 @@ export default function OnboardingPage() {
   };
 
   // Q1: What are you hoping to find here? (Up to 3)
-  const [q1Finding, setQ1Finding] = useState<string[]>(['A close inner circle', 'People who share my interests']);
+  const [q1Finding, setQ1Finding] = useState<string[]>([]);
 
   // Q2: What does a great friendship feel like to you? (Up to 4)
-  const [q2Feelings, setQ2Feelings] = useState<string[]>(['We can talk about anything', 'We can be ourselves without performing']);
+  const [q2Feelings, setQ2Feelings] = useState<string[]>([]);
 
   // Q3: Social Energy (Quiet & intimate <-> Big & energetic spectrum + Preferred group size)
-  const [q3Energy, setQ3Energy] = useState<number>(0.3);
-  const [q3GroupSize, setQ3GroupSize] = useState<string>('3-4 people');
+  const [q3Energy, setQ3Energy] = useState<number | null>(null);
+  const [q3GroupSize, setQ3GroupSize] = useState<string | null>(null);
 
   // Q4: How do you naturally stay connected with friends? (All that apply)
-  const [q4Connected, setQ4Connected] = useState<string[]>(['Random messages throughout the day', 'Mostly talk when we meet']);
+  const [q4Connected, setQ4Connected] = useState<string[]>([]);
 
   // Q5: How do you like making plans? (Planning rhythm & availability)
-  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string>('Flexible - a couple of days ahead');
-  const [q5Availability, setQ5Availability] = useState<string[]>(['sat_midday', 'sun_evening']);
+  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string | null>(null);
+  const [q5Availability, setQ5Availability] = useState<string[]>([]);
 
-  // Q6: Pick the outings you'd actually say yes to (Pick at least 5)
-  const [q6Outings, setQ6Outings] = useState<string[]>([
-    'Coffee & wandering',
-    'Brunch',
-    'Workshops',
-    'Food hunting',
-    'Bookshops',
-  ]);
+  // Q6: Pick the outings you'd actually say yes to
+  const [q6Outings, setQ6Outings] = useState<string[]>([]);
 
   // Q7: When you're getting to know someone, which sounds most like you? (Emotional pacing)
-  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string>('Let it unfold - I open up naturally over time');
+  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string | null>(null);
 
   // Q8: Who would you be excited to meet right now? (Up to 5 qualities)
-  const [q8Qualities, setQ8Qualities] = useState<string[]>(['Curious', 'Warm', 'Thoughtful', 'Grounded', 'Creative']);
+  const [q8Qualities, setQ8Qualities] = useState<string[]>([]);
 
   const [isRevealing, setIsRevealing] = useState(false);
 
@@ -95,11 +89,11 @@ export default function OnboardingPage() {
   const bloomDimensions = [
     { key: 'intent', label: 'Intent', strength: q1Finding.length / 3, confidence, sentence: `Seeking ${q1Finding[0] || 'close friends'}.` },
     { key: 'feeling', label: 'Relational', strength: q2Feelings.length / 4, confidence, sentence: `Values friendships where ${q2Feelings[0] || 'we can be ourselves'}.` },
-    { key: 'energy', label: 'Social Energy', strength: 1 - q3Energy, confidence, sentence: `Thrives in ${q3GroupSize} settings.` },
+    { key: 'energy', label: 'Social Energy', strength: q3Energy !== null ? 1 - q3Energy : 0.5, confidence, sentence: `Thrives in ${q3GroupSize || 'intimate'} settings.` },
     { key: 'contact', label: 'Communication', strength: q4Connected.length / 4, confidence, sentence: `Connects via ${q4Connected[0] || 'thoughtful check-ins'}.` },
-    { key: 'rhythm', label: 'Rhythm', strength: q5Availability.length / 4, confidence, sentence: `Available for ${q5PlanningRhythm.toLowerCase()} meetups.` },
-    { key: 'curiosity', label: 'Interests', strength: q6Outings.length / 8, confidence, sentence: `Enjoys ${q6Outings.slice(0, 2).join(', ')}.` },
-    { key: 'pacing', label: 'Emotional', strength: 0.7, confidence, sentence: `Prefers to ${q7EmotionalPacing.toLowerCase()}.` },
+    { key: 'rhythm', label: 'Rhythm', strength: q5Availability.length / 4, confidence, sentence: `Available for ${q5PlanningRhythm ? q5PlanningRhythm.toLowerCase() : 'flexible'} meetups.` },
+    { key: 'curiosity', label: 'Interests', strength: q6Outings.length / 8, confidence, sentence: `Enjoys ${q6Outings.length > 0 ? q6Outings.slice(0, 2).join(', ') : 'exploring new places'}.` },
+    { key: 'pacing', label: 'Emotional', strength: 0.7, confidence, sentence: `Prefers to ${q7EmotionalPacing ? q7EmotionalPacing.toLowerCase() : 'unfold naturally'}.` },
   ];
 
   const MAX_MB = 4;
@@ -493,6 +487,9 @@ export default function OnboardingPage() {
                     <div>
                       <div className="flex justify-between text-[13px] font-semibold text-white">
                         <span>Quiet & Intimate</span>
+                        <span className="text-[12px] font-normal text-white/70">
+                          {q3Energy === null ? 'Not set (drag to select)' : `${Math.round(q3Energy * 100)}%`}
+                        </span>
                         <span>High-Energy & Lively</span>
                       </div>
                       <input
@@ -500,9 +497,9 @@ export default function OnboardingPage() {
                         min="0"
                         max="1"
                         step="0.05"
-                        value={q3Energy}
+                        value={q3Energy !== null ? q3Energy : 0.5}
                         onChange={(e) => setQ3Energy(parseFloat(e.target.value))}
-                        className="mt-2 w-full accent-white"
+                        className={`mt-2 w-full accent-white ${q3Energy === null ? 'opacity-50' : 'opacity-100'}`}
                       />
                     </div>
 
