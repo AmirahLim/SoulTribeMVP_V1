@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/authContext';
 import { checkUserProfileExists, getUserProfileRecord, checkHandleAvailability } from '../../../lib/supabaseAuth';
+import { saveOnboardingToSupabase } from '../../../lib/supabaseOnboarding';
 import { deriveSuggestedHandle, validateHandle, setUserProfile, getUserProfile } from '../../../lib/userStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertCircle, KeyRound, CheckCircle2, Mail, Key, AtSign, Loader2, ArrowRight, UserCheck } from 'lucide-react';
@@ -138,16 +139,32 @@ function LumaSignInForm() {
   useEffect(() => {
     if (user && !authLoading && !isChooseUsernameStep) {
       checkUserProfileExists(user.id).then((hasProfile) => {
+        const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
         if (hasProfile) {
-          router.push(redirectPath);
+          router.push(targetPath);
         } else {
-          // Check if handle is set in userStore
+          // Check if local profile exists
           const currentProfile = getUserProfile();
-          if (currentProfile.handle && currentProfile.handle !== 'priya_sharma') {
-            router.push('/onboarding');
+          if (currentProfile.hasCompletedOnboarding || (currentProfile.displayName && currentProfile.displayName !== 'You')) {
+            saveOnboardingToSupabase(user.id, {
+              displayName: currentProfile.displayName,
+              handle: currentProfile.handle || deriveSuggestedHandle(currentProfile.displayName),
+              homeArea: currentProfile.homeArea || 'Singapore',
+              birthYear: currentProfile.birthYear || 1995,
+              avatarUrl: currentProfile.avatarUrl,
+              bio: currentProfile.bio,
+              q1Finding: ['A close inner circle'],
+              q2Feelings: ['Deep, meaningful conversations'],
+              q4Connected: ['Thoughtful check-ins'],
+              q5Availability: ['Weekends'],
+              q6Outings: ['Coffee'],
+              q8Qualities: ['Authenticity'],
+            }).then(() => {
+              router.push('/home');
+            });
           } else {
-            // Prompt handle step
-            setIsChooseUsernameStep(true);
+            // Default to home if signing in to an existing account
+            router.push('/home');
           }
         }
       });
@@ -252,17 +269,8 @@ function LumaSignInForm() {
         }
 
         if (loggedInUser) {
-          const profileRec = await getUserProfileRecord(loggedInUser.id);
-          if (profileRec?.hasProfile) {
-            router.push(redirectPath);
-          } else {
-            const currentProfile = getUserProfile();
-            if (currentProfile.handle && currentProfile.handle !== 'priya_sharma') {
-              router.push('/onboarding');
-            } else {
-              setIsChooseUsernameStep(true);
-            }
-          }
+          const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
+          router.push(targetPath);
         }
       } else {
         // Email OTP mode
