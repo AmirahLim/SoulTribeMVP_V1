@@ -34,6 +34,24 @@ function isDimensionAnswered(vec: ProfileVector, key: string): boolean {
   return false;
 }
 
+function formatInterestName(item: any): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object') {
+    return item.node_name || item.node_path || item.name || item.interest_name || '';
+  }
+  return String(item);
+}
+
+function formatValueName(item: any): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object') {
+    return item.value_name || item.name || item.label || '';
+  }
+  return String(item);
+}
+
 const DIM_LABELS: Record<string, string> = {
   personality: 'personality & social energy',
   communication: 'messaging & response pace',
@@ -45,6 +63,19 @@ const DIM_LABELS: Record<string, string> = {
   lifestyle: 'outing budget & activity style',
   experience: 'group size preference',
   geography: 'neighbourhood proximity',
+};
+
+const CLICK_DIM_PRIORITY: Record<string, number> = {
+  interests: 10,
+  values: 9,
+  intent: 8,
+  personality: 7,
+  communication: 6,
+  emotional: 5,
+  lifestyle: 4,
+  experience: 3,
+  social_rhythm: 2,
+  geography: 1,
 };
 
 export function generateMatchExplanation(
@@ -87,8 +118,12 @@ export function generateMatchExplanation(
     };
   }
 
-  // Sort eligible dimensions by score descending (highest alignment score first)
-  eligibleClickDims.sort((a, b) => b.score - a.score);
+  // Sort eligible click dimensions by uniqueness priority + score (favoring interests, values, intent over raw geography)
+  eligibleClickDims.sort((a, b) => {
+    const priorityA = (CLICK_DIM_PRIORITY[a.key] || 1) + a.score;
+    const priorityB = (CLICK_DIM_PRIORITY[b.key] || 1) + b.score;
+    return priorityB - priorityA;
+  });
 
   const clickParts: string[] = [];
   const candidateClickDims = eligibleClickDims.filter((d) => d.score >= 0.50);
@@ -98,19 +133,39 @@ export function generateMatchExplanation(
 
     const isStrong = d.score >= 0.70; // Tier 1 (Strong) vs Tier 2 (Mild)
 
-    if (d.key === 'intent') {
+    if (d.key === 'interests') {
+      const rawInterests = vecB.interests || [];
+      const formattedInterests = rawInterests.map(formatInterestName).filter(Boolean);
+      if (isStrong && formattedInterests.length > 0) {
+        clickParts.push(`Shared curiosity with ${nameB} in ${formattedInterests.slice(0, 2).join(' and ')}.`);
+      } else if (formattedInterests.length > 0) {
+        clickParts.push(`Overlap with ${nameB} in ${formattedInterests[0]}.`);
+      } else {
+        clickParts.push(`There is shared curiosity across several interest topics.`);
+      }
+    } else if (d.key === 'values') {
+      const rawValues = vecB.values || [];
+      const formattedValues = rawValues.map(formatValueName).filter(Boolean);
+      if (isStrong && formattedValues.length > 0) {
+        clickParts.push(`Aligned core values with ${nameB} around ${formattedValues.slice(0, 2).join(' and ')}.`);
+      } else if (formattedValues.length > 0) {
+        clickParts.push(`Shared value focus with ${nameB} on ${formattedValues[0]}.`);
+      } else {
+        clickParts.push(`Steady alignment with ${nameB} on underlying core values.`);
+      }
+    } else if (d.key === 'intent') {
       const valB = vecB.intent?.depth ?? 2;
       if (isStrong) {
         clickParts.push(`You and ${nameB} share strong alignment on friendship intent: ${PHRASES.depth(valB)}.`);
       } else {
         clickParts.push(`You have a comfortable overlap with ${nameB} on friendship intent (${PHRASES.depth(valB)}).`);
       }
-    } else if (d.key === 'social_rhythm') {
-      const valB = vecB.social_rhythm?.planning_horizon ?? 0.5;
+    } else if (d.key === 'personality') {
+      const valB = vecB.personality?.extraversion ?? 0.5;
       if (isStrong) {
-        clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
+        clickParts.push(`Social energy and curiosity align; ${nameB} ${PHRASES.extraversion(valB)}.`);
       } else {
-        clickParts.push(`Planning styles align comfortably; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
+        clickParts.push(`Social energy levels with ${nameB} complement each other comfortably.`);
       }
     } else if (d.key === 'communication') {
       const valB = vecB.communication?.contact_frequency_self ?? 0.5;
@@ -127,31 +182,6 @@ export function generateMatchExplanation(
       } else {
         clickParts.push(`Comfortable opening pace with ${nameB} as you get to know each other.`);
       }
-    } else if (d.key === 'personality') {
-      const valB = vecB.personality?.extraversion ?? 0.5;
-      if (isStrong) {
-        clickParts.push(`Social energy and curiosity align; ${nameB} ${PHRASES.extraversion(valB)}.`);
-      } else {
-        clickParts.push(`Social energy levels with ${nameB} complement each other comfortably.`);
-      }
-    } else if (d.key === 'interests') {
-      const sharedInterests = vecB.interests || [];
-      if (isStrong && sharedInterests.length > 0) {
-        clickParts.push(`Shared curiosity with ${nameB} in ${sharedInterests.slice(0, 2).join(' and ')}.`);
-      } else if (sharedInterests.length > 0) {
-        clickParts.push(`Overlap with ${nameB} in ${sharedInterests[0]}.`);
-      } else {
-        clickParts.push(`There is shared curiosity across several interest topics.`);
-      }
-    } else if (d.key === 'values') {
-      const sharedValues = vecB.values || [];
-      if (isStrong && sharedValues.length > 0) {
-        clickParts.push(`Aligned core values with ${nameB} around ${sharedValues.slice(0, 2).join(' and ')}.`);
-      } else if (sharedValues.length > 0) {
-        clickParts.push(`Shared value focus with ${nameB} on ${sharedValues[0]}.`);
-      } else {
-        clickParts.push(`Steady alignment with ${nameB} on underlying core values.`);
-      }
     } else if (d.key === 'lifestyle') {
       const valB = vecB.lifestyle?.budget_band ?? 2;
       const actB = vecB.lifestyle?.activity_level ?? 0.5;
@@ -166,6 +196,13 @@ export function generateMatchExplanation(
         clickParts.push(`Identical group size preference; ${nameB} ${PHRASES.groupSize(valB)}.`);
       } else {
         clickParts.push(`Group size preferences with ${nameB} match easily (${PHRASES.groupSize(valB)}).`);
+      }
+    } else if (d.key === 'social_rhythm') {
+      const valB = vecB.social_rhythm?.planning_horizon ?? 0.5;
+      if (isStrong) {
+        clickParts.push(`Your schedules touch well; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
+      } else {
+        clickParts.push(`Planning styles align comfortably; ${nameB} ${PHRASES.planningHorizon(valB)}.`);
       }
     } else if (d.key === 'geography') {
       const areaB = vecB.geography?.home_area || 'Singapore';
