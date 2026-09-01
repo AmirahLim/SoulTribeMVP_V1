@@ -57,7 +57,8 @@ export function shrinkToPrior(
   const priorStrength = options?.priorStrength ?? 0.5;
 
   const clampedConf = Math.max(0, Math.min(1, confidence));
-  const weight = clampedConf / (clampedConf + priorStrength);
+  const denom = clampedConf + priorStrength * (1 - clampedConf);
+  const weight = denom > 0 ? clampedConf / denom : 0;
   return weight * raw + (1 - weight) * prior;
 }
 

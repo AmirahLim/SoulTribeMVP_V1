@@ -41,13 +41,14 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     const raw = 0.9;
     const prior = 0.5;
 
-    const atHighConf = shrinkToPrior(raw, 1.0, { prior, priorStrength: 0.5 });
+    const atZeroConf = shrinkToPrior(raw, 0.0, { prior, priorStrength: 0.5 });
     const atLowConf = shrinkToPrior(raw, 0.05, { prior, priorStrength: 0.5 });
     const atMidConf = shrinkToPrior(raw, 0.5, { prior, priorStrength: 0.5 });
+    const atHighConf = shrinkToPrior(raw, 1.0, { prior, priorStrength: 0.5 });
 
-    assert.ok(Math.abs(atHighConf - 0.766) < 0.01, 'High confidence shrinkage');
-    assert.ok(Math.abs(atLowConf - 0.536) < 0.01, 'Low confidence shrinkage');
-    assert.ok(atLowConf < atMidConf && atMidConf < atHighConf, 'Monotonicity check');
+    assert.strictEqual(atZeroConf, 0.5, 'Confidence 0 returns the prior');
+    assert.strictEqual(atHighConf, 0.9, 'Confidence 1.0 returns the raw score');
+    assert.ok(atZeroConf < atLowConf && atLowConf < atMidConf && atMidConf < atHighConf, 'Monotonicity check');
   });
 
   it('2. A result gated for a block stays eligible: false even with high confidence', () => {

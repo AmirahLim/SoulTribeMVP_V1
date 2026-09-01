@@ -270,11 +270,11 @@ function PersonDetailContent() {
                   ⚠️ Demo Profile — Display Only
                 </span>
               )}
-              {!isSmallCommunity && (
+              {!isSmallCommunity && foundPerson.fitLabel ? (
                 <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                  {foundPerson.fitLabel || 'Strong Fit'} · {foundPerson.rhythmOverlap || 88}% Rhythm Overlap
+                  {foundPerson.fitLabel}
                 </span>
-              )}
+              ) : null}
             </div>
 
             <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">

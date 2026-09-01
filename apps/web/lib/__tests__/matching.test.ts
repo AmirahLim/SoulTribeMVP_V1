@@ -8,6 +8,7 @@ import {
   countRealMembers,
   isSmallCommunityMode,
   getSmallCommunityThreshold,
+  getFitLabel,
 } from '../matching';
 import { DEMO_PROFILES } from '@soul-tribe/core';
 
@@ -123,6 +124,21 @@ describe('Part 5 — Matching Service Tests', () => {
   });
 });
 
+describe('New Fit Labels & Resonance Threshold Tests', () => {
+  it('getFitLabel maps score ranges correctly', () => {
+    assert.strictEqual(getFitLabel(0.95), 'Rare Resonance');
+    assert.strictEqual(getFitLabel(0.90), 'Rare Resonance');
+    assert.strictEqual(getFitLabel(0.85), 'Strong Resonance');
+    assert.strictEqual(getFitLabel(0.80), 'Strong Resonance');
+    assert.strictEqual(getFitLabel(0.75), 'Natural Resonance');
+    assert.strictEqual(getFitLabel(0.70), 'Natural Resonance');
+    assert.strictEqual(getFitLabel(0.65), 'Some Resonance');
+    assert.strictEqual(getFitLabel(0.60), 'Some Resonance');
+    assert.strictEqual(getFitLabel(0.59), '', 'Scores below 60% return no label');
+    assert.strictEqual(getFitLabel(0.40), '', 'Scores below 60% return no label');
+  });
+});
+
 describe('Small Community Mode Tests', () => {
   const fullUser: UserProfileData = {
     displayName: 'Priya Sharma',
@@ -130,7 +146,16 @@ describe('Small Community Mode Tests', () => {
     homeArea: 'Singapore',
     bio: 'Loves coffee and craft.',
     passCompletionPct: 80,
-    deepProfile: {},
+    deepProfile: {
+      mbti: 'INFJ',
+      groupSize: '3–4 people',
+      socialVibe: 'Intimate · Calm',
+      messagingStyle: 'Voice notes',
+      supportStyle: 'Listen first',
+      friendshipPillars: 'Reliability',
+      idealSaturday: 'Slow coffee',
+      spontaneousTrip: 'Convince me',
+    },
   };
 
   it('countRealMembers counts real members only (demo profiles never count)', async () => {
@@ -175,7 +200,7 @@ describe('Small Community Mode Tests', () => {
     assert.strictEqual(matches.length, 5, 'All eligible members appear in small community mode (no top-6 truncation)');
   });
 
-  it('With 50 real members (> threshold 30): isSmallCommunityMode is false and top-6 slice returns', async () => {
+  it('With 50 real members (> threshold 30): isSmallCommunityMode is false and candidates below 60% are excluded', async () => {
     process.env.NEXT_PUBLIC_SMALL_COMMUNITY_THRESHOLD = '30';
 
     const mockSource = {
@@ -200,6 +225,9 @@ describe('Small Community Mode Tests', () => {
 
     const matches = await getRankedMatches(fullUser, { limit: 6 });
     assert.strictEqual(matches.length, 6, 'Above threshold, ranked top-6 slice returns');
+    for (const m of matches) {
+      assert.ok(m.rankScore >= 0.60, `Candidate score ${m.rankScore} must be >= 0.60 in main ranked list`);
+    }
   });
 
   it('Gated members (hard gate failure) never appear in either small community mode or ranked mode', async () => {

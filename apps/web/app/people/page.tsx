@@ -175,11 +175,11 @@ function PeopleListContent() {
                           )}
 
                           {/* HIDE fit label and numeric score in Small Community Mode */}
-                          {!isSmallCommunity && (
+                          {!isSmallCommunity && person.fitLabel ? (
                             <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                              {person.fitLabel} · {Math.round(person.rankScore * 100)}% Resonance
+                              {person.fitLabel}
                             </span>
-                          )}
+                          ) : null}
 
                           {person.provisional && (
                             <span className="rounded-full bg-amber-500/80 px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-wide text-black uppercase backdrop-blur-md">

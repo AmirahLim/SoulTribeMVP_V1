@@ -133,9 +133,11 @@ export interface RankedMatch {
 }
 
 export function getFitLabel(rankScore: number): string {
-  if (rankScore >= 0.75) return 'Strong Fit';
-  if (rankScore >= 0.55) return 'Good Fit';
-  return 'Worth Exploring';
+  if (rankScore >= 0.90) return 'Rare Resonance';
+  if (rankScore >= 0.80) return 'Strong Resonance';
+  if (rankScore >= 0.70) return 'Natural Resonance';
+  if (rankScore >= 0.60) return 'Some Resonance';
+  return '';
 }
 
 export function getSmallCommunityThreshold(): number {
@@ -275,10 +277,16 @@ export async function getRankedMatches(
   const realMemberCount = await countRealMembers(opts?.area || user.homeArea);
   const isSmall = isSmallCommunityMode(realMemberCount);
 
-  // Small community mode: show ALL eligible members unless an explicit custom limit (different from default 6) was passed
-  if (isSmall && (opts?.limit === undefined || opts?.limit === 6)) {
-    return results;
+  if (isSmall) {
+    // Small community mode: show ALL eligible members (including below 60%, unlabelled)
+    if (opts?.limit === undefined || opts?.limit === 6) {
+      return results;
+    }
+    return results.slice(0, limit);
   }
 
-  return results.slice(0, limit);
+  // Above small community threshold: filter out candidates below 60% (rankScore < 0.60)
+  const rankedResults = results.filter((m) => m.rankScore >= 0.60);
+
+  return rankedResults.slice(0, limit);
 }
