@@ -49,7 +49,7 @@ export function evaluateGates(
     reasons.push('AGE_PREFERENCE_MISMATCH');
   }
 
-  // 5. Shared availability slot gate
+  // 5. Shared availability slot gate: only evaluate when BOTH have recorded availability
   const availA = new Set(vecA.social_rhythm?.availability || []);
   if (vecA.social_rhythm?.fri_night) availA.add('fri_night');
   if (vecA.social_rhythm?.sat_night) availA.add('sat_night');
@@ -58,15 +58,17 @@ export function evaluateGates(
   if (vecB.social_rhythm?.fri_night) availB.add('fri_night');
   if (vecB.social_rhythm?.sat_night) availB.add('sat_night');
 
-  let hasSharedSlot = false;
-  for (const slot of availA) {
-    if (availB.has(slot)) {
-      hasSharedSlot = true;
-      break;
+  if (availA.size > 0 && availB.size > 0) {
+    let hasSharedSlot = false;
+    for (const slot of availA) {
+      if (availB.has(slot)) {
+        hasSharedSlot = true;
+        break;
+      }
     }
-  }
-  if (!hasSharedSlot) {
-    reasons.push('NO_SHARED_AVAILABILITY_SLOT');
+    if (!hasSharedSlot) {
+      reasons.push('NO_SHARED_AVAILABILITY_SLOT');
+    }
   }
 
   // 6. Geography gate: t > 2 * min(radius) across categories
@@ -93,15 +95,20 @@ export function evaluateGates(
     reasons.push('GEOGRAPHY_TOO_FAR');
   }
 
-  // 7. Dealbreaker gate
+  // 7. Dealbreaker gate: Only gate when target status is explicitly known and violates dealbreaker
   const dealbreakersA = vecA.lifestyle?.dealbreakers || [];
   const dealbreakersB = vecB.lifestyle?.dealbreakers || [];
 
+  const bSmokes = vecB.lifestyle?.smoking && vecB.lifestyle.smoking !== 'none';
+  const aSmokes = vecA.lifestyle?.smoking && vecA.lifestyle.smoking !== 'none';
+  const bDrinksRegularly = vecB.lifestyle?.alcohol === 'regular';
+  const aDrinksRegularly = vecA.lifestyle?.alcohol === 'regular';
+
   if (
-    (dealbreakersA.includes('smoking') && vecB.lifestyle?.smoking !== 'none') ||
-    (dealbreakersB.includes('smoking') && vecA.lifestyle?.smoking !== 'none') ||
-    (dealbreakersA.includes('alcohol_present') && vecB.lifestyle?.alcohol === 'regular') ||
-    (dealbreakersB.includes('alcohol_present') && vecA.lifestyle?.alcohol === 'regular')
+    (dealbreakersA.includes('smoking') && bSmokes) ||
+    (dealbreakersB.includes('smoking') && aSmokes) ||
+    (dealbreakersA.includes('alcohol_present') && bDrinksRegularly) ||
+    (dealbreakersB.includes('alcohol_present') && aDrinksRegularly)
   ) {
     reasons.push('DEALBREAKER_VIOLATED');
   }

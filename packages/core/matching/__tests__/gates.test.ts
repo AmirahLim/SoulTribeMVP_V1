@@ -1,0 +1,41 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert';
+import { evaluateGates } from '../gates.ts';
+import { DEMO_PROFILES } from '../../fixtures/demoProfiles.ts';
+
+describe('Availability & Dealbreaker Gate Evaluation', () => {
+  const baseA = JSON.parse(JSON.stringify(DEMO_PROFILES[0]));
+  const baseB = JSON.parse(JSON.stringify(DEMO_PROFILES[1]));
+
+  it('1. Both have availability with no overlap -> gated (NO_SHARED_AVAILABILITY_SLOT)', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday'], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: ['sun_evening'], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB);
+    assert.ok(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'));
+  });
+
+  it('2. Both have availability with an overlap -> NOT gated for availability', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday', 'sun_midday'] } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: ['sat_midday', 'fri_night'] } };
+
+    const res = evaluateGates(vecA, vecB);
+    assert.strictEqual(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'), false);
+  });
+
+  it('3. One side empty availability -> NOT gated for availability', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday'], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: [], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB);
+    assert.strictEqual(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'), false);
+  });
+
+  it('4. Both sides empty availability -> NOT gated for availability', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: [], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: [], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB);
+    assert.strictEqual(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'), false);
+  });
+});
