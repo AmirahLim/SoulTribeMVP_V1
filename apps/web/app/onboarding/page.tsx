@@ -569,6 +569,7 @@ function OnboardingContent() {
                       <label className="text-[13px] font-semibold text-white">General Availability (Singapore Rhythm)</label>
                       <div className="mt-2">
                         <RhythmStrip
+                          interactive={true}
                           userAvailability={q5Availability}
                           onToggleSlot={(slot) => {
                             if (q5Availability.includes(slot)) {

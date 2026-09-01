@@ -24,19 +24,24 @@ export function RhythmStrip({
   onToggleSlot,
   className = '',
 }: RhythmStripProps) {
+  const isInteractive = interactive || Boolean(onToggleSlot);
   const isComparison = candidateAvailability.length > 0;
 
   return (
-    <div className={`flex flex-col gap-2 rounded-[20px] border border-[#F3F0E9]/12 bg-[#15261C] p-4 shadow-sm ${className}`}>
+    <div className={`flex flex-col gap-2 rounded-[20px] border border-[#F3F0E9]/15 bg-[#15261C] p-4 shadow-sm ${className}`}>
       <div className="flex items-center justify-between text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
         <span>Rhythm Availability Strip</span>
-        {isComparison && (
+        {isComparison ? (
           <span className="flex items-center gap-3 text-[11px] font-medium text-[#A6AAA4]">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-[#F3F0E9]" /> Both
             </span>
           </span>
-        )}
+        ) : isInteractive ? (
+          <span className="text-[10.5px] font-semibold text-emerald-400/90 lowercase tracking-normal">
+            tap to toggle availability
+          </span>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-3 gap-2 mt-1">
@@ -50,25 +55,27 @@ export function RhythmStrip({
                 const hasCandidate = candidateAvailability.includes(slotId);
                 const isMatch = hasUser && hasCandidate;
 
-                let cellBg = 'bg-[#0D1D15] border border-[#F3F0E9]/10 text-[#A6AAA4]';
+                let cellBg = 'bg-[#0D1D15] border border-[#F3F0E9]/15 text-[#A6AAA4]';
                 if (isComparison) {
                   if (isMatch) {
-                    cellBg = 'bg-[#F3F0E9] text-[#0D1D15] font-bold';
+                    cellBg = 'bg-[#F3F0E9] text-[#0D1D15] font-bold border-[#F3F0E9] shadow-sm';
                   } else if (hasUser || hasCandidate) {
-                    cellBg = 'bg-[#1C3325] text-[#F3F0E9]';
+                    cellBg = 'bg-[#1C3325] text-[#F3F0E9] border-[#F3F0E9]/30';
                   }
                 } else if (hasUser) {
-                  cellBg = 'bg-[#F3F0E9] text-[#0D1D15] font-bold';
+                  cellBg = 'bg-[#F3F0E9] text-[#0D1D15] font-extrabold border-[#F3F0E9] shadow-md scale-[1.02]';
                 }
 
                 return (
                   <button
                     key={time.key}
                     type="button"
-                    disabled={!interactive}
-                    onClick={() => interactive && onToggleSlot?.(slotId)}
-                    className={`rounded-[10px] py-1.5 text-[11px] font-medium transition-all ${cellBg} ${
-                      interactive ? 'hover:border-[#F3F0E9]' : ''
+                    disabled={!isInteractive}
+                    onClick={() => isInteractive && onToggleSlot?.(slotId)}
+                    className={`rounded-[10px] py-2 text-[11.5px] font-semibold transition-all duration-150 ${cellBg} ${
+                      isInteractive
+                        ? 'cursor-pointer hover:border-[#F3F0E9]/60 active:scale-95'
+                        : 'cursor-default'
                     }`}
                   >
                     {time.label}
