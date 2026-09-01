@@ -58,6 +58,30 @@ function DeeperTribalPassContent() {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const toggleMultiField = (key: keyof DeepProfileAnswers, opt: string) => {
+    const currentRaw = (formState[key] as string) || '';
+    const currentArr = currentRaw
+      .split(/·|,/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (currentArr.includes(opt)) {
+      const updated = currentArr.filter((i) => i !== opt);
+      updateField(key, updated.join(' · '));
+    } else if (currentArr.length < 3) {
+      const updated = [...currentArr, opt];
+      updateField(key, updated.join(' · '));
+    }
+  };
+
+  const isMultiSelected = (key: keyof DeepProfileAnswers, opt: string): boolean => {
+    const currentRaw = (formState[key] as string) || '';
+    return currentRaw
+      .split(/·|,/)
+      .map((s) => s.trim())
+      .includes(opt);
+  };
+
   const handleSaveCurrentCategory = async (catNum: number) => {
     const updatedCats = Array.from(new Set([...completedCats, catNum]));
     setCompletedCats(updatedCats);
@@ -259,14 +283,14 @@ function DeeperTribalPassContent() {
                 </div>
 
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">Social Vibe</label>
+                  <label className="text-[13.5px] font-bold text-white">Social Vibe (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Intimate', 'Playful-chaotic', 'Intellectual', 'Adventurous', 'Calm', 'High-energy', 'Creative', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.socialVibe === opt}
-                        onClick={() => updateField('socialVibe', opt)}
+                        selected={isMultiSelected('socialVibe', opt)}
+                        onClick={() => toggleMultiField('socialVibe', opt)}
                       />
                     ))}
                   </div>
@@ -294,28 +318,28 @@ function DeeperTribalPassContent() {
             {activeCategoryNum === 2 && (
               <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">Messaging Style</label>
+                  <label className="text-[13.5px] font-bold text-white">Messaging Style (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Random thoughts', 'Memes', 'Check-ins', 'Voice notes', 'Calls', 'Making plans', 'Mostly IRL', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.messagingStyle === opt}
-                        onClick={() => updateField('messagingStyle', opt)}
+                        selected={isMultiSelected('messagingStyle', opt)}
+                        onClick={() => toggleMultiField('messagingStyle', opt)}
                       />
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">When someone is going through a hard time</label>
+                  <label className="text-[13.5px] font-bold text-white">When someone is going through a hard time (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Listen', 'Reassure', 'Make sense of it', 'Advice', 'Solve it', 'Ask me', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.supportStyle === opt}
-                        onClick={() => updateField('supportStyle', opt)}
+                        selected={isMultiSelected('supportStyle', opt)}
+                        onClick={() => toggleMultiField('supportStyle', opt)}
                       />
                     ))}
                   </div>
@@ -343,14 +367,14 @@ function DeeperTribalPassContent() {
             {activeCategoryNum === 3 && (
               <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">Friendship Pillars</label>
+                  <label className="text-[13.5px] font-bold text-white">Friendship Pillars (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['We tell each other everything', 'Inside jokes', 'Spontaneous plans', 'Comfortable silence', 'Show up in hard times', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.friendshipPillars === opt}
-                        onClick={() => updateField('friendshipPillars', opt)}
+                        selected={isMultiSelected('friendshipPillars', opt)}
+                        onClick={() => toggleMultiField('friendshipPillars', opt)}
                       />
                     ))}
                   </div>
@@ -375,14 +399,14 @@ function DeeperTribalPassContent() {
             {activeCategoryNum === 4 && (
               <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">Ideal Free Saturday</label>
+                  <label className="text-[13.5px] font-bold text-white">Ideal Free Saturday (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Slow coffee', 'Outdoors', 'Hobbies', 'Exploring', 'Social all day', 'Dinner-drinks', 'Home', 'Spontaneous', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.idealSaturday === opt}
-                        onClick={() => updateField('idealSaturday', opt)}
+                        selected={isMultiSelected('idealSaturday', opt)}
+                        onClick={() => toggleMultiField('idealSaturday', opt)}
                       />
                     ))}
                   </div>
@@ -497,14 +521,14 @@ function DeeperTribalPassContent() {
             {activeCategoryNum === 6 && (
               <div className="mt-5 flex flex-col gap-5">
                 <div>
-                  <label className="text-[13.5px] font-bold text-white">Life Priorities</label>
+                  <label className="text-[13.5px] font-bold text-white">Life Priorities (Choose up to 3)</label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {['Family', 'Freedom', 'Adventure', 'Community', 'Achievement', 'Creativity', 'Growth', 'Stability', 'Curiosity', 'Prefer not to say'].map((opt) => (
                       <Chip
                         key={opt}
                         label={opt}
-                        selected={formState.coreValues === opt}
-                        onClick={() => updateField('coreValues', opt)}
+                        selected={isMultiSelected('coreValues', opt)}
+                        onClick={() => toggleMultiField('coreValues', opt)}
                       />
                     ))}
                   </div>

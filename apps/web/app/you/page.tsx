@@ -1060,7 +1060,7 @@ function ProfileContent() {
 
                 {/* 2. FRIENDSHIP INTENT (Q1) */}
                 <div className="space-y-2">
-                  <label className="text-[13px] font-bold text-white">Q1: What are you hoping to find?</label>
+                  <label className="text-[13px] font-bold text-white">Q1: What are you hoping to find? (Choose up to 3)</label>
                   <div className="flex flex-wrap gap-1.5">
                     {[
                       'Close 1-on-1 friendships',
@@ -1076,7 +1076,11 @@ function ProfileContent() {
                           label={item}
                           selected={sel}
                           onClick={() => {
-                            setQ1Finding(sel ? q1Finding.filter((s) => s !== item) : [...q1Finding, item]);
+                            if (sel) {
+                              setQ1Finding(q1Finding.filter((s) => s !== item));
+                            } else if (q1Finding.length < 3) {
+                              setQ1Finding([...q1Finding, item]);
+                            }
                           }}
                         />
                       );
@@ -1087,7 +1091,7 @@ function ProfileContent() {
                 {/* 3. COMMUNICATION FEEL & MEDIUMS (Q2 & Q4) */}
                 <div className="space-y-3 border-t border-white/15 pt-4">
                   <div>
-                    <label className="text-[13px] font-bold text-white">Q2: How do you like social connections to feel?</label>
+                    <label className="text-[13px] font-bold text-white">Q2: How do you like social connections to feel? (Choose up to 3)</label>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {['Deep 1-on-1s', 'Chill & relaxed', 'Active & energetic', 'Thoughtful & quiet'].map((feel) => {
                         const sel = q2Feelings.includes(feel);
@@ -1097,7 +1101,11 @@ function ProfileContent() {
                             label={feel}
                             selected={sel}
                             onClick={() => {
-                              setQ2Feelings(sel ? q2Feelings.filter((s) => s !== feel) : [...q2Feelings, feel]);
+                              if (sel) {
+                                setQ2Feelings(q2Feelings.filter((s) => s !== feel));
+                              } else if (q2Feelings.length < 3) {
+                                setQ2Feelings([...q2Feelings, feel]);
+                              }
                             }}
                           />
                         );
@@ -1106,7 +1114,7 @@ function ProfileContent() {
                   </div>
 
                   <div>
-                    <label className="text-[13px] font-bold text-white">Q4: Preferred communication channels</label>
+                    <label className="text-[13px] font-bold text-white">Q4: Preferred communication channels (Choose up to 3)</label>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {['Voice notes', 'Regular check-ins', 'Memes & casual text', 'Spontaneous calls', 'In-person meetup focus'].map((med) => {
                         const sel = q4Connected.includes(med);
@@ -1116,7 +1124,11 @@ function ProfileContent() {
                             label={med}
                             selected={sel}
                             onClick={() => {
-                              setQ4Connected(sel ? q4Connected.filter((s) => s !== med) : [...q4Connected, med]);
+                              if (sel) {
+                                setQ4Connected(q4Connected.filter((s) => s !== med));
+                              } else if (q4Connected.length < 3) {
+                                setQ4Connected([...q4Connected, med]);
+                              }
                             }}
                           />
                         );
@@ -1127,7 +1139,7 @@ function ProfileContent() {
 
                 {/* 4. OUTING DNA & INTERESTS (Q6) */}
                 <div className="space-y-2 border-t border-white/15 pt-4">
-                  <label className="text-[13.5px] font-bold text-white">Q6: Outing DNA & Preferred Activities</label>
+                  <label className="text-[13.5px] font-bold text-white">Q6: Outing DNA & Preferred Activities (Choose up to 3)</label>
                   <div className="flex flex-wrap gap-1.5">
                     {ONBOARDING_INTEREST_OPTIONS.map((opt) => {
                       const sel = q6Outings.includes(opt);
@@ -1137,7 +1149,11 @@ function ProfileContent() {
                           label={opt}
                           selected={sel}
                           onClick={() => {
-                            setQ6Outings(sel ? q6Outings.filter((s) => s !== opt) : [...q6Outings, opt]);
+                            if (sel) {
+                              setQ6Outings(q6Outings.filter((s) => s !== opt));
+                            } else if (q6Outings.length < 3) {
+                              setQ6Outings([...q6Outings, opt]);
+                            }
                           }}
                         />
                       );
@@ -1162,7 +1178,7 @@ function ProfileContent() {
                   </div>
 
                   <div>
-                    <label className="text-[13px] font-bold text-white">Q8: Core values you appreciate in friends</label>
+                    <label className="text-[13px] font-bold text-white">Q8: Core values you appreciate in friends (Choose up to 3)</label>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {['Authenticity', 'Reliability', 'Curiosity', 'Empathy', 'Humor & Playfulness', 'Open-mindedness'].map((val) => {
                         const sel = q8Qualities.includes(val);
@@ -1172,7 +1188,11 @@ function ProfileContent() {
                             label={val}
                             selected={sel}
                             onClick={() => {
-                              setQ8Qualities(sel ? q8Qualities.filter((s) => s !== val) : [...q8Qualities, val]);
+                              if (sel) {
+                                setQ8Qualities(q8Qualities.filter((s) => s !== val));
+                              } else if (q8Qualities.length < 3) {
+                                setQ8Qualities([...q8Qualities, val]);
+                              }
                             }}
                           />
                         );

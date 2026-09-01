@@ -433,29 +433,28 @@ function OnboardingContent() {
               {step === 2 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                    Step 2 of 8: Relational Feeling
+                    Step 2 of 8: Communication Style
                   </span>
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
-                    What does a great friendship feel like to you?
+                    How do you like social connections to feel?
                   </h3>
-                  <p className="mt-1 text-[13px] text-white/80">Select up to 4 that feel most true.</p>
+                  <p className="mt-1 text-[13px] text-white/80">Select up to 3 choices.</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {[
-                      'We can talk about anything without judging',
-                      'We can sit in silence and it feels natural',
-                      'We make spontaneous plans easily',
-                      'We can be ourselves without performing',
-                      'We challenge each other to grow',
-                      'We show up for each other when things get hard',
-                      'We laugh a lot and keep things light',
-                      'We go long periods without talking and pick right back up',
+                      'Deep 1-on-1 conversations',
+                      'Chill & low pressure',
+                      'Active & outdoorsy',
+                      'Playful & banter-heavy',
+                      'Intellectual & idea-driven',
+                      'Creative & collaborative',
+                      'Warm & supportive',
                     ].map((option) => (
                       <Chip
                         key={option}
                         label={option}
                         selected={q2Feelings.includes(option)}
-                        onClick={() => setQ2Feelings(toggleArrayItem(q2Feelings, option, 4))}
+                        onClick={() => setQ2Feelings(toggleArrayItem(q2Feelings, option, 3))}
                       />
                     ))}
                   </div>
@@ -534,7 +533,7 @@ function OnboardingContent() {
                         key={item}
                         label={item}
                         selected={q4Connected.includes(item)}
-                        onClick={() => setQ4Connected(toggleArrayItem(q4Connected, item, 5))}
+                        onClick={() => setQ4Connected(toggleArrayItem(q4Connected, item, 3))}
                       />
                     ))}
                   </div>
@@ -600,7 +599,7 @@ function OnboardingContent() {
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     Pick outings you'd actually say yes to
                   </h3>
-                  <p className="mt-1 text-[13px] text-white/80">Select at least 5.</p>
+                  <p className="mt-1 text-[13px] text-white/80">Select up to 3 choices.</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {ONBOARDING_INTEREST_OPTIONS.map((outing) => (
@@ -608,7 +607,7 @@ function OnboardingContent() {
                         key={outing}
                         label={outing}
                         selected={q6Outings.includes(outing)}
-                        onClick={() => setQ6Outings(toggleArrayItem(q6Outings, outing, 10))}
+                        onClick={() => setQ6Outings(toggleArrayItem(q6Outings, outing, 3))}
                       />
                     ))}
                   </div>
@@ -658,7 +657,7 @@ function OnboardingContent() {
                   <h3 className="mt-1 text-[21px] font-extrabold tracking-tight text-white">
                     Who would you be excited to meet right now?
                   </h3>
-                  <p className="mt-1 text-[13px] text-white/80">Select up to 5 qualities.</p>
+                  <p className="mt-1 text-[13px] text-white/80">Select up to 3 qualities.</p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     {[
@@ -679,7 +678,7 @@ function OnboardingContent() {
                         key={quality}
                         label={quality}
                         selected={q8Qualities.includes(quality)}
-                        onClick={() => setQ8Qualities(toggleArrayItem(q8Qualities, quality, 5))}
+                        onClick={() => setQ8Qualities(toggleArrayItem(q8Qualities, quality, 3))}
                       />
                     ))}
                   </div>

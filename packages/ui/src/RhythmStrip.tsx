@@ -10,7 +10,7 @@ export interface RhythmStripProps {
   className?: string;
 }
 
-const DAYS = ['Fri', 'Sat', 'Sun'];
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const TIMES = [
   { key: 'morn', label: 'Morn' },
   { key: 'midday', label: 'Mid' },
@@ -23,10 +23,22 @@ function isSlotActive(availability: string[], day: string, timeKey: string): boo
   return availability.some((slot) => {
     if (typeof slot !== 'string') return false;
     const s = slot.toLowerCase();
-    if (!s.startsWith(dayPrefix)) return false;
-    if (timeKey === 'morn') return s.includes('morn');
-    if (timeKey === 'midday') return s.includes('mid') || s.includes('afternoon');
-    if (timeKey === 'eve') return s.includes('eve') || s.includes('night');
+
+    // Canonical slot match (e.g. mon_morn, fri_eve)
+    if (s.includes(dayPrefix)) {
+      if (timeKey === 'morn') return s.includes('morn');
+      if (timeKey === 'midday') return s.includes('mid') || s.includes('afternoon') || s.includes('day');
+      if (timeKey === 'eve') return s.includes('eve') || s.includes('night');
+    }
+
+    // Legacy slot fallback match
+    if (s.includes('weekday') && ['mon', 'tue', 'wed', 'thu'].includes(dayPrefix) && timeKey === 'eve') return true;
+    if (s.includes('fri') && s.includes('night') && dayPrefix === 'fri' && timeKey === 'eve') return true;
+    if (s.includes('sat') && (s.includes('day') || s.includes('mid')) && dayPrefix === 'sat' && timeKey === 'midday') return true;
+    if (s.includes('sat') && s.includes('night') && dayPrefix === 'sat' && timeKey === 'eve') return true;
+    if (s.includes('sun') && (s.includes('day') || s.includes('mid')) && dayPrefix === 'sun' && timeKey === 'midday') return true;
+    if (s.includes('sun') && s.includes('night') && dayPrefix === 'sun' && timeKey === 'eve') return true;
+
     return false;
   });
 }
@@ -44,7 +56,7 @@ export function RhythmStrip({
   return (
     <div className={`flex flex-col gap-2 rounded-[20px] border border-[#F3F0E9]/15 bg-[#15261C] p-4 shadow-sm ${className}`}>
       <div className="flex items-center justify-between text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-        <span>Rhythm Availability Strip</span>
+        <span>Weekly Availability Strip</span>
         {isComparison ? (
           <span className="flex items-center gap-3 text-[11px] font-medium text-[#A6AAA4]">
             <span className="flex items-center gap-1">
@@ -53,12 +65,12 @@ export function RhythmStrip({
           </span>
         ) : isInteractive ? (
           <span className="text-[10.5px] font-semibold text-emerald-400/90 lowercase tracking-normal">
-            tap to toggle availability
+            tap to toggle slots
           </span>
         ) : null}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-1">
+      <div className="grid grid-cols-7 gap-1 mt-1 overflow-x-auto min-w-[320px]">
         {DAYS.map((day) => (
           <div key={day} className="flex flex-col gap-1 text-center">
             <span className="text-[11px] font-bold text-[#A6AAA4]">{day}</span>
