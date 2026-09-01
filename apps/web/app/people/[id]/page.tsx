@@ -14,6 +14,24 @@ import { motion } from 'framer-motion';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
 
+function formatInterestLabel(item: any): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object') {
+    return item.node_name || item.node_path || item.name || item.interest_name || '';
+  }
+  return String(item);
+}
+
+function formatValueLabel(item: any): string {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (typeof item === 'object') {
+    return item.value_name || item.name || item.label || '';
+  }
+  return String(item);
+}
+
 export default function PersonDetailPage() {
   return (
     <AuthGuard>
@@ -35,7 +53,12 @@ function PersonDetailContent() {
       try {
         const user = getUserProfile();
         const matches = await getRankedMatches(user, { limit: 40 });
-        const found = matches.find((m) => m.id === personId || m.id.includes(personId));
+        const found = matches.find(
+          (m) =>
+            m.id === personId ||
+            m.id.includes(personId) ||
+            personId.includes(m.id)
+        );
         if (found) {
           setRankedMatch(found);
         }
@@ -48,9 +71,22 @@ function PersonDetailContent() {
     loadMatch();
   }, [personId]);
 
-  const demoCandidate = DEMO_PROFILES.find((p) => p.profile.id === personId || p.profile.id.includes(personId));
+  const demoCandidate = DEMO_PROFILES.find(
+    (p) =>
+      p.profile.id === personId ||
+      p.profile.id.includes(personId) ||
+      personId.includes(p.profile.id) ||
+      p.profile.handle?.toLowerCase() === personId.toLowerCase() ||
+      personId.toLowerCase().includes(p.profile.display_name.toLowerCase().replace(/\s+/g, ''))
+  );
 
-  if (!loading && !rankedMatch && !demoCandidate) {
+  const targetVec = demoCandidate || (rankedMatch ? DEMO_PROFILES.find((p) => p.profile.id === rankedMatch.id) : null);
+
+  const userProfile = getUserProfile();
+  const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
+  const explanation = targetVec && viewerVector ? generateMatchExplanation(viewerVector, targetVec) : null;
+
+  if (!loading && !rankedMatch && !targetVec) {
     return (
       <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white border border-white/20 shadow-xl">
@@ -69,25 +105,24 @@ function PersonDetailContent() {
     );
   }
 
-  const userProfile = getUserProfile();
-  const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
-  const explanation = demoCandidate && viewerVector ? generateMatchExplanation(viewerVector, demoCandidate) : null;
+  const rawInterests = targetVec?.interests || [];
+  const interestsList = rawInterests.map(formatInterestLabel).filter(Boolean);
 
-  // Extract candidate profile vector
-  const targetVec = demoCandidate || (rankedMatch ? DEMO_PROFILES.find((p) => p.profile.id === rankedMatch.id) : null);
+  const rawValues = targetVec?.values || [];
+  const valuesList = rawValues.map(formatValueLabel).filter(Boolean);
 
-  const rawFallbackPerson = demoCandidate
+  const rawFallbackPerson = targetVec
     ? {
-        id: demoCandidate.profile.id,
-        name: demoCandidate.profile.display_name,
-        avatarUrl: demoCandidate.profile.avatar_url,
-        homeArea: demoCandidate.profile.home_area || 'Singapore',
-        bio: demoCandidate.profile.bio || 'Singapore-based member.',
-        interests: demoCandidate.interests || [],
+        id: targetVec.profile.id,
+        name: targetVec.profile.display_name,
+        avatarUrl: targetVec.profile.avatar_url,
+        homeArea: targetVec.profile.home_area || 'Singapore',
+        bio: targetVec.profile.bio || 'Singapore-based member.',
+        interests: interestsList,
         clickText: explanation?.click_text || "There isn't enough in your pass yet to say much — add more and this will sharpen.",
         rubText: explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
         fitLabel: 'Good Fit',
-        rhythmOverlap: Math.round((demoCandidate.profile.confidence || 0.7) * 100),
+        rhythmOverlap: Math.round((targetVec.profile.confidence || 0.7) * 100),
       }
     : null;
 
@@ -105,11 +140,11 @@ function PersonDetailContent() {
         avatarUrl: getGenderAvatarForName(rankedMatch.name),
         homeArea: rankedMatch.homeArea,
         bio: rankedMatch.bio,
-        clickText: rankedMatch.clickText,
-        rubText: rankedMatch.rubText,
+        clickText: rankedMatch.clickText || explanation?.click_text || '',
+        rubText: rankedMatch.rubText || explanation?.friction_text || '',
         fitLabel: rankedMatch.fitLabel,
         rhythmOverlap: Math.round(rankedMatch.rankScore * 100),
-        interests: targetVec?.interests || fallbackPerson?.interests || [],
+        interests: interestsList,
         isDemo: rankedMatch.isDemo,
       }
     : fallbackPerson
@@ -138,9 +173,6 @@ function PersonDetailContent() {
   const emotionalAnswered = targetVec ? (targetVec.emotional?.answered ?? 0) > 0 : false;
   const lifestyleAnswered = targetVec ? (targetVec.lifestyle?.answered ?? 0) > 0 : false;
   const experienceAnswered = targetVec ? (targetVec.experience?.answered ?? 0) > 0 : false;
-
-  const interestsList = targetVec?.interests || foundPerson.interests || [];
-  const valuesList = targetVec?.values || [];
 
   // Dynamic Friendship DNA Bloom Petals
   const candidateBloomDimensions = targetVec ? [
