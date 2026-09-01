@@ -6,7 +6,30 @@ import { useAuth } from '../../../lib/authContext';
 import { checkUserProfileExists } from '../../../lib/supabaseAuth';
 import { Button } from '@soul-tribe/ui';
 import { motion } from 'framer-motion';
-import { Mail, Sparkles, AlertCircle, CheckCircle2, Lock, KeyRound } from 'lucide-react';
+import { Mail, Sparkles, AlertCircle, Lock } from 'lucide-react';
+
+function GoogleIcon() {
+  return (
+    <svg className="h-5 w-5 mr-2.5 shrink-0" viewBox="0 0 24 24">
+      <path
+        fill="#EA4335"
+        d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.6 7.2C.6 9.2 0 10.5 0 12s.6 2.8 1.6 4.8l3.7-2.1z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.3-6.7-5.3L1.6 16C3.5 19.8 7.4 23 12 23z"
+      />
+    </svg>
+  );
+}
 
 function SignInForm() {
   const router = useRouter();
@@ -15,6 +38,7 @@ function SignInForm() {
 
   const {
     signInWithOtp,
+    signInWithGoogle,
     signUpWithPassword,
     signInWithPassword,
     user,
@@ -22,12 +46,13 @@ function SignInForm() {
     isSupabaseConfigured,
   } = useAuth();
 
-  const [authMethod, setAuthMethod] = useState<'magic_link' | 'password'>('magic_link');
+  const [authMethod, setAuthMethod] = useState<'email_link' | 'password'>('email_link');
   const [passwordMode, setPasswordMode] = useState<'signin' | 'signup'>('signin');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [linkSent, setLinkSent] = useState(false);
   const [sentEmail, setSentEmail] = useState('');
@@ -41,7 +66,18 @@ function SignInForm() {
     }
   }, [user, authLoading, redirectPath, router]);
 
-  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
+  const handleGoogleSignIn = async () => {
+    setErrorMessage(null);
+    setIsGoogleSubmitting(true);
+    const { error } = await signInWithGoogle(redirectPath);
+    setIsGoogleSubmitting(false);
+
+    if (error) {
+      setErrorMessage(error.message || 'Google sign-in failed. Please try again or use email login.');
+    }
+  };
+
+  const handleEmailLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -59,14 +95,13 @@ function SignInForm() {
 
     setIsSubmitting(true);
 
-    // Pass destination redirectPath to signInWithOtp
     const { error } = await signInWithOtp(trimmedEmail, redirectPath);
 
     setIsSubmitting(false);
 
     if (error) {
       setErrorMessage(
-        error.message || 'Unable to send magic link right now. Please verify your email and try again.'
+        error.message || 'Unable to send login link right now. Please verify your email and try again.'
       );
       setLinkSent(false);
     } else {
@@ -141,13 +176,13 @@ function SignInForm() {
             <Sparkles className="h-7 w-7" />
           </div>
           <span className="mt-3.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase backdrop-blur-md">
-            Soul Tribe · Sign In
+            Soul Tribe · Log In
           </span>
           <h1 className="mt-3 text-[26px] font-extrabold tracking-tight text-white">
-            Welcome back
+            Welcome to Soul Tribe
           </h1>
           <p className="mt-1.5 text-[14px] text-white/70">
-            Sign in or create your Soul Tribe account.
+            Sign in or create your account to connect.
           </p>
         </div>
 
@@ -160,21 +195,41 @@ function SignInForm() {
           </div>
         )}
 
+        {/* PROMINENT GOOGLE SIGN IN BUTTON */}
+        <div className="mt-6">
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleSubmitting}
+            className="flex h-12 w-full items-center justify-center rounded-[16px] border border-white/20 bg-white/10 px-4 text-[14px] font-bold text-white transition-all hover:bg-white/20 active:scale-[0.99] disabled:opacity-50"
+          >
+            <GoogleIcon />
+            {isGoogleSubmitting ? 'Connecting Google...' : 'Continue with Google'}
+          </button>
+        </div>
+
+        {/* DIVIDER */}
+        <div className="my-5 flex items-center gap-3">
+          <div className="h-[1px] flex-1 bg-white/15" />
+          <span className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">or</span>
+          <div className="h-[1px] flex-1 bg-white/15" />
+        </div>
+
         {/* AUTH METHOD SELECTOR TABS */}
-        <div className="mt-6 flex rounded-[16px] border border-white/15 bg-black/40 p-1">
+        <div className="flex rounded-[16px] border border-white/15 bg-black/40 p-1">
           <button
             type="button"
             onClick={() => {
-              setAuthMethod('magic_link');
+              setAuthMethod('email_link');
               setErrorMessage(null);
             }}
             className={`flex-1 rounded-[12px] py-2 text-[12.5px] font-bold transition-all ${
-              authMethod === 'magic_link'
+              authMethod === 'email_link'
                 ? 'bg-white text-black shadow'
                 : 'text-white/70 hover:text-white'
             }`}
           >
-            Magic Link
+            Email Link
           </button>
           <button
             type="button"
@@ -192,8 +247,8 @@ function SignInForm() {
           </button>
         </div>
 
-        {/* SUCCESS / CHECK YOUR EMAIL STATE FOR MAGIC LINK */}
-        {authMethod === 'magic_link' && linkSent ? (
+        {/* SUCCESS / CHECK YOUR EMAIL STATE FOR EMAIL LINK */}
+        {authMethod === 'email_link' && linkSent ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -204,17 +259,17 @@ function SignInForm() {
             </div>
 
             <h2 className="mt-4 text-[22px] font-extrabold text-white">
-              Check your email
+              Check your email inbox
             </h2>
 
             <p className="mt-2 text-[14px] text-white/80 leading-relaxed">
-              We sent a magic sign-in link to:
+              We sent a secure login link to:
               <br />
               <strong className="text-white font-mono">{sentEmail}</strong>
             </p>
 
             <p className="mt-4 text-[12.5px] text-white/60">
-              Click the link in the email to automatically sign in and continue.
+              Click the link in the email to sign in automatically and continue.
             </p>
 
             <Button
@@ -229,9 +284,9 @@ function SignInForm() {
               Use a different email
             </Button>
           </motion.div>
-        ) : authMethod === 'magic_link' ? (
-          /* MAGIC LINK FORM */
-          <form onSubmit={handleMagicLinkSubmit} className="mt-6 space-y-4">
+        ) : authMethod === 'email_link' ? (
+          /* EMAIL LINK FORM */
+          <form onSubmit={handleEmailLinkSubmit} className="mt-6 space-y-4">
             <div>
               <label htmlFor="email-input" className="block text-[13px] font-semibold text-white">
                 Email Address
@@ -268,7 +323,7 @@ function SignInForm() {
               disabled={isSubmitting}
               className="w-full justify-center py-3.5 text-[14px] font-bold"
             >
-              {isSubmitting ? 'Sending Magic Link...' : 'Send Magic Link ✨'}
+              {isSubmitting ? 'Sending Login Link...' : 'Email Me a Login Link →'}
             </Button>
 
             <p className="text-center text-[12px] text-white/50">
@@ -290,7 +345,7 @@ function SignInForm() {
                   passwordMode === 'signin' ? 'text-white underline underline-offset-4' : 'text-white/50 hover:text-white'
                 }`}
               >
-                Sign In
+                Log In
               </button>
               <span className="text-white/30">|</span>
               <button
@@ -303,7 +358,7 @@ function SignInForm() {
                   passwordMode === 'signup' ? 'text-white underline underline-offset-4' : 'text-white/50 hover:text-white'
                 }`}
               >
-                Create Account (Sign Up)
+                Create Account
               </button>
             </div>
 
@@ -365,10 +420,10 @@ function SignInForm() {
               {isSubmitting
                 ? passwordMode === 'signup'
                   ? 'Creating Account...'
-                  : 'Signing In...'
+                  : 'Logging In...'
                 : passwordMode === 'signup'
                 ? 'Create Account ✨'
-                : 'Sign In →'}
+                : 'Log In →'}
             </Button>
           </form>
         )}
@@ -392,7 +447,7 @@ export default function SignInPage() {
         fallback={
           <div className="relative z-10 flex flex-col items-center justify-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            <p className="text-[13px] text-white/70">Loading sign in...</p>
+            <p className="text-[13px] text-white/70">Loading login...</p>
           </div>
         }
       >

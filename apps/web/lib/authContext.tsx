@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signInWithOtp: (email: string, redirectToPath?: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: (redirectToPath?: string) => Promise<{ error: Error | null }>;
   signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   signOut: () => Promise<void>;
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   error: null,
   signInWithOtp: async () => ({ error: new Error('Auth not initialized') }),
+  signInWithGoogle: async () => ({ error: new Error('Auth not initialized') }),
   signUpWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signInWithPassword: async () => ({ error: new Error('Auth not initialized'), user: null }),
   signOut: async () => {},
@@ -90,6 +92,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (sendErr) {
         return { error: new Error(sendErr.message) };
+      }
+      return { error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
+  };
+
+  const signInWithGoogle = async (redirectToPath?: string): Promise<{ error: Error | null }> => {
+    try {
+      const client = getSupabaseBrowserClient();
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const nextParam = redirectToPath ? encodeURIComponent(redirectToPath) : '%2Fhome';
+      const redirectTo = `${origin}/auth/callback?next=${nextParam}`;
+
+      const { error: oauthErr } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (oauthErr) {
+        return { error: new Error(oauthErr.message) };
       }
       return { error: null };
     } catch (err: any) {
@@ -170,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         error,
         signInWithOtp,
+        signInWithGoogle,
         signUpWithPassword,
         signInWithPassword,
         signOut,
