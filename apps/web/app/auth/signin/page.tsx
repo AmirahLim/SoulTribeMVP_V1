@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/authContext';
 import { checkUserProfileExists } from '../../../lib/supabaseAuth';
 import { Button } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Sparkles, AlertCircle, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Mail, Sparkles, AlertCircle, Lock, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 function GoogleIcon() {
   return (
-    <svg className="h-5 w-5 mr-3 shrink-0" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 mr-3 shrink-0 opacity-60" viewBox="0 0 24 24">
       <path
         fill="#EA4335"
         d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.3 8.9 5 12 5z"
@@ -31,7 +31,7 @@ function GoogleIcon() {
   );
 }
 
-function LumaSignInForm() {
+function WorkingSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('redirect') || '/home';
@@ -47,19 +47,18 @@ function LumaSignInForm() {
     isSupabaseConfigured,
   } = useAuth();
 
-  // Screen steps: 'email_input' | 'verify_code' | 'password_input'
-  const [step, setStep] = useState<'email_input' | 'verify_code' | 'password_input'>('email_input');
-  const [passwordMode, setPasswordMode] = useState<'signin' | 'signup'>('signin');
+  // Primary mode: 'signup' (Create Account) or 'signin' (Sign In)
+  const [mode, setMode] = useState<'signup' | 'signin'>('signup');
 
   const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
   const [password, setPassword] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Auto-redirect signed-in users
+  // Toggle state for secondary notes
+  const [showOtherMethodsNote, setShowOtherMethodsNote] = useState(false);
+
+  // Auto-redirect signed-in users based on profile presence
   React.useEffect(() => {
     if (user && !authLoading) {
       checkUserProfileExists(user.id).then((hasProfile) => {
@@ -68,18 +67,7 @@ function LumaSignInForm() {
     }
   }, [user, authLoading, redirectPath, router]);
 
-  const handleGoogleSignIn = async () => {
-    setErrorMessage(null);
-    setIsGoogleSubmitting(true);
-    const { error } = await signInWithGoogle(redirectPath);
-    setIsGoogleSubmitting(false);
-
-    if (error) {
-      setErrorMessage(error.message || 'Google sign-in failed. Please try again.');
-    }
-  };
-
-  const handleSendEmailCode = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -91,54 +79,7 @@ function LumaSignInForm() {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const { error } = await signInWithOtp(trimmedEmail, redirectPath);
-    setIsSubmitting(false);
-
-    if (error) {
-      setErrorMessage(error.message || 'Unable to send sign-in code. Please try again.');
-    } else {
-      setStep('verify_code');
-      setErrorMessage(null);
-    }
-  };
-
-  const handleVerifyCode = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setErrorMessage(null);
-
-    const code = otpCode.trim();
-    if (code.length < 6) {
-      setErrorMessage('Please enter the full 6-digit code sent to your email.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const { error, user: verifiedUser } = await verifyOtp(email.trim(), code);
-    setIsSubmitting(false);
-
-    if (error) {
-      setErrorMessage(error.message || 'Invalid or expired 6-digit code. Please try again.');
-      return;
-    }
-
-    if (verifiedUser) {
-      const hasProfile = await checkUserProfileExists(verifiedUser.id);
-      router.push(hasProfile ? redirectPath : '/onboarding');
-    }
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setErrorMessage('Please enter your email address.');
+      setErrorMessage('Please enter a valid email address (e.g., name@example.com).');
       return;
     }
 
@@ -149,12 +90,12 @@ function LumaSignInForm() {
 
     setIsSubmitting(true);
 
-    if (passwordMode === 'signup') {
+    if (mode === 'signup') {
       const { error, user: signedUpUser } = await signUpWithPassword(trimmedEmail, password);
       setIsSubmitting(false);
 
       if (error) {
-        setErrorMessage(error.message || 'Failed to create account.');
+        setErrorMessage(error.message || 'Failed to create account. Please check your details.');
         return;
       }
 
@@ -167,7 +108,7 @@ function LumaSignInForm() {
       setIsSubmitting(false);
 
       if (error) {
-        setErrorMessage(error.message || 'Invalid email or password.');
+        setErrorMessage(error.message || 'Invalid email or password. Please try again.');
         return;
       }
 
@@ -179,308 +120,177 @@ function LumaSignInForm() {
   };
 
   return (
-    <div className="relative z-10 w-full max-w-[400px]">
+    <div className="relative z-10 w-full max-w-[420px]">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[32px] border border-white/20 bg-black/80 p-8 backdrop-blur-2xl shadow-2xl"
+        className="rounded-[32px] border border-white/20 bg-black/85 p-8 backdrop-blur-2xl shadow-2xl"
       >
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-inner">
-            <Sparkles className="h-6 w-6" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-inner">
+            <Sparkles className="h-7 w-7 text-amber-300" />
           </div>
-          <h1 className="mt-4 text-[24px] font-extrabold tracking-tight text-white">
-            Welcome to Soul Tribe
+          <span className="mt-3.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[11px] font-bold tracking-wider text-white uppercase backdrop-blur-md">
+            Soul Tribe · Authentication
+          </span>
+          <h1 className="mt-3 text-[26px] font-extrabold tracking-tight text-white">
+            {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
           </h1>
-          <p className="mt-1 text-[13.5px] text-white/70">
-            Log in or sign up to get started.
+          <p className="mt-1.5 text-[13.5px] text-white/75">
+            {mode === 'signup'
+              ? 'Enter your email & password to start onboarding.'
+              : 'Sign in with your email and password.'}
           </p>
         </div>
 
         {!isSupabaseConfigured && (
-          <div className="mt-5 rounded-[16px] border border-amber-400/40 bg-amber-500/10 p-3.5 text-[12.5px] text-amber-200">
-            <p className="font-semibold text-amber-300">Configuration Required</p>
+          <div className="mt-6 rounded-[16px] border border-amber-400/40 bg-amber-500/10 p-4 text-[13px] text-amber-200">
+            <p className="font-semibold text-amber-300">Environment Configuration Required</p>
             <p className="mt-1 text-amber-200/90 leading-relaxed">
               Missing Supabase environment variables (<code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_URL</code> & <code className="text-amber-100 font-mono">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>).
             </p>
           </div>
         )}
 
-        <AnimatePresence mode="wait">
-          {step === 'email_input' && (
+        {/* PRIMARY MODE TABS (CREATE ACCOUNT vs SIGN IN) */}
+        <div className="mt-6 flex rounded-[16px] border border-white/15 bg-black/60 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('signup');
+              setErrorMessage(null);
+            }}
+            className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-bold transition-all ${
+              mode === 'signup'
+                ? 'bg-white text-black shadow-lg'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Create Account
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode('signin');
+              setErrorMessage(null);
+            }}
+            className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-bold transition-all ${
+              mode === 'signin'
+                ? 'bg-white text-black shadow-lg'
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Sign In
+          </button>
+        </div>
+
+        {/* WORKING EMAIL + PASSWORD FORM */}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label htmlFor="auth-email" className="block text-[13px] font-semibold text-white">
+              Email Address
+            </label>
+            <div className="relative mt-2">
+              <Mail className="absolute left-3.5 top-3 h-5 w-5 text-white/50" />
+              <input
+                id="auth-email"
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-11 w-full rounded-[14px] border border-white/20 bg-black/60 pl-11 pr-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="auth-password" className="block text-[13px] font-semibold text-white">
+              Password <span className="text-[11.5px] font-normal text-white/60">(min 8 characters)</span>
+            </label>
+            <div className="relative mt-2">
+              <Lock className="absolute left-3.5 top-3 h-5 w-5 text-white/50" />
+              <input
+                id="auth-password"
+                type="password"
+                required
+                minLength={8}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-11 w-full rounded-[14px] border border-white/20 bg-black/60 pl-11 pr-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+              />
+            </div>
+          </div>
+
+          {errorMessage && (
             <motion.div
-              key="step-email"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              className="mt-6 space-y-4"
-            >
-              {/* GOOGLE SIGN IN (LUMA PRIMARY OPTION) */}
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={isGoogleSubmitting}
-                className="flex h-11 w-full items-center justify-center rounded-[16px] border border-white/20 bg-white/10 px-4 text-[14px] font-bold text-white transition-all hover:bg-white/20 active:scale-[0.99] disabled:opacity-50"
-              >
-                <GoogleIcon />
-                {isGoogleSubmitting ? 'Connecting Google...' : 'Continue with Google'}
-              </button>
-
-              {/* DIVIDER */}
-              <div className="flex items-center gap-3 py-1">
-                <div className="h-[1px] flex-1 bg-white/15" />
-                <span className="text-[12px] font-semibold text-white/40 uppercase tracking-wider">or</span>
-                <div className="h-[1px] flex-1 bg-white/15" />
-              </div>
-
-              {/* EMAIL FORM (LUMA STYLE) */}
-              <form onSubmit={handleSendEmailCode} className="space-y-3.5">
-                <div>
-                  <label htmlFor="luma-email" className="block text-[13px] font-semibold text-white">
-                    Email Address
-                  </label>
-                  <input
-                    id="luma-email"
-                    type="email"
-                    required
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[14px] border border-white/20 bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-                  />
-                </div>
-
-                {errorMessage && (
-                  <div className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3 text-[13px] text-rose-200 flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full justify-center py-3 text-[14px] font-bold"
-                >
-                  {isSubmitting ? 'Sending Code...' : 'Continue with Email →'}
-                </Button>
-              </form>
-
-              {/* BOTTOM SUBTLE PASSWORD OPTION */}
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('password_input');
-                    setErrorMessage(null);
-                  }}
-                  className="text-[12.5px] font-medium text-white/60 hover:text-white transition-all underline underline-offset-4"
-                >
-                  Sign in with password instead
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 'verify_code' && (
-            <motion.div
-              key="step-verify"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="mt-6 space-y-4"
-            >
-              <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-500/20 text-emerald-300">
-                  <Mail className="h-6 w-6" />
-                </div>
-                <h3 className="mt-3 text-[18px] font-extrabold text-white">Check your email</h3>
-                <p className="mt-1 text-[13px] text-white/70 leading-relaxed">
-                  We sent a 6-digit code & sign-in link to:
-                  <br />
-                  <strong className="text-white font-mono">{email}</strong>
-                </p>
-              </div>
-
-              <form onSubmit={handleVerifyCode} className="space-y-3.5">
-                <div>
-                  <label htmlFor="otp-input" className="block text-[13px] font-semibold text-white text-center">
-                    Enter 6-Digit Code
-                  </label>
-                  <input
-                    id="otp-input"
-                    type="text"
-                    maxLength={6}
-                    required
-                    placeholder="123456"
-                    value={otpCode}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                      setOtpCode(val);
-                      if (val.length === 6) {
-                        setIsSubmitting(true);
-                        verifyOtp(email.trim(), val).then(({ error, user: verifiedUser }) => {
-                          setIsSubmitting(false);
-                          if (error) {
-                            setErrorMessage(error.message || 'Invalid code. Please try again.');
-                          } else if (verifiedUser) {
-                            checkUserProfileExists(verifiedUser.id).then((hasProfile) => {
-                              router.push(hasProfile ? redirectPath : '/onboarding');
-                            });
-                          }
-                        });
-                      }
-                    }}
-                    className="mt-2 h-13 w-full rounded-[14px] border border-white/30 bg-black/80 text-center font-mono text-[22px] font-bold tracking-[0.4em] text-white outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-                  />
-                </div>
-
-                {errorMessage && (
-                  <div className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3 text-[13px] text-rose-200 flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={isSubmitting || otpCode.length < 6}
-                  className="w-full justify-center py-3 text-[14px] font-bold"
-                >
-                  {isSubmitting ? 'Verifying Code...' : 'Verify Code & Log In →'}
-                </Button>
-              </form>
-
-              <div className="pt-2 flex flex-col items-center gap-2 text-center">
-                <p className="text-[12px] text-white/50">
-                  Or click the direct sign-in link inside your email.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('email_input');
-                    setErrorMessage(null);
-                  }}
-                  className="text-[12.5px] font-medium text-white/70 hover:text-white transition-all underline underline-offset-4"
-                >
-                  Use a different email address
-                </button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 'password_input' && (
-            <motion.div
-              key="step-password"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mt-6 space-y-4"
+              className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3.5 text-[13px] text-rose-200 flex items-start gap-2.5"
             >
-              <div className="flex justify-center gap-4 text-[13px]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPasswordMode('signin');
-                    setErrorMessage(null);
-                  }}
-                  className={`font-semibold transition-all ${
-                    passwordMode === 'signin' ? 'text-white underline underline-offset-4' : 'text-white/50 hover:text-white'
-                  }`}
-                >
-                  Log In
-                </button>
-                <span className="text-white/30">|</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPasswordMode('signup');
-                    setErrorMessage(null);
-                  }}
-                  className={`font-semibold transition-all ${
-                    passwordMode === 'signup' ? 'text-white underline underline-offset-4' : 'text-white/50 hover:text-white'
-                  }`}
-                >
-                  Create Account
-                </button>
-              </div>
-
-              <form onSubmit={handlePasswordSubmit} className="space-y-3.5">
-                <div>
-                  <label htmlFor="pwd-email" className="block text-[13px] font-semibold text-white">
-                    Email Address
-                  </label>
-                  <input
-                    id="pwd-email"
-                    type="email"
-                    required
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[14px] border border-white/20 bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="pwd-input" className="block text-[13px] font-semibold text-white">
-                    Password <span className="text-[11.5px] font-normal text-white/60">(min 8 characters)</span>
-                  </label>
-                  <input
-                    id="pwd-input"
-                    type="password"
-                    required
-                    minLength={8}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1.5 h-11 w-full rounded-[14px] border border-white/20 bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-                  />
-                </div>
-
-                {errorMessage && (
-                  <div className="rounded-[14px] border border-rose-500/40 bg-rose-500/15 p-3 text-[13px] text-rose-200 flex items-start gap-2">
-                    <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full justify-center py-3 text-[14px] font-bold"
-                >
-                  {isSubmitting
-                    ? passwordMode === 'signup'
-                      ? 'Creating Account...'
-                      : 'Logging In...'
-                    : passwordMode === 'signup'
-                    ? 'Create Account ✨'
-                    : 'Log In →'}
-                </Button>
-              </form>
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('email_input');
-                    setErrorMessage(null);
-                  }}
-                  className="text-[12.5px] font-medium text-white/60 hover:text-white transition-all underline underline-offset-4"
-                >
-                  ← Back to Email & Google sign in
-                </button>
-              </div>
+              <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
             </motion.div>
           )}
-        </AnimatePresence>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={isSubmitting}
+            className="w-full justify-center py-3.5 text-[14px] font-bold"
+          >
+            {isSubmitting
+              ? mode === 'signup'
+                ? 'Creating Account...'
+                : 'Signing In...'
+              : mode === 'signup'
+              ? 'Create Account & Start Onboarding →'
+              : 'Sign In →'}
+          </Button>
+        </form>
+
+        {/* DIVIDER & DISABLED/COMING SOON OPTIONS */}
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-[1px] flex-1 bg-white/15" />
+          <span className="text-[11.5px] font-semibold text-white/35 uppercase tracking-wider">Other Options</span>
+          <div className="h-[1px] flex-1 bg-white/15" />
+        </div>
+
+        {/* DISABLED GOOGLE BUTTON WITH CLEAR NOTE */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            disabled
+            className="flex h-11 w-full items-center justify-center rounded-[16px] border border-white/10 bg-white/5 px-4 text-[13.5px] font-semibold text-white/40 cursor-not-allowed"
+          >
+            <GoogleIcon />
+            Continue with Google <span className="ml-2 text-[11px] font-bold text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded-full">(Coming Soon)</span>
+          </button>
+        </div>
+
+        {/* COLLAPSIBLE NOTE FOR MAGIC LINK / 6-DIGIT CODE */}
+        <div className="mt-4 pt-2 text-center">
+          <button
+            type="button"
+            onClick={() => setShowOtherMethodsNote(!showOtherMethodsNote)}
+            className="text-[12px] text-white/50 hover:text-white/80 transition-all underline underline-offset-4"
+          >
+            {showOtherMethodsNote ? 'Hide note on email links & OTP codes' : 'Why is email link / 6-digit code sign-in disabled?'}
+          </button>
+
+          {showOtherMethodsNote && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-3 rounded-[14px] border border-white/15 bg-white/5 p-3.5 text-[12px] text-white/70 text-left leading-relaxed"
+            >
+              Email magic links and 6-digit OTP codes are currently disabled until custom SMTP provider setup is completed. Please use <strong>Email + Password</strong> above to sign in or create your account.
+            </motion.div>
+          )}
+        </div>
       </motion.div>
     </div>
   );
@@ -501,11 +311,11 @@ export default function SignInPage() {
         fallback={
           <div className="relative z-10 flex flex-col items-center justify-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            <p className="text-[13px] text-white/70">Loading log in...</p>
+            <p className="text-[13px] text-white/70">Loading sign in...</p>
           </div>
         }
       >
-        <LumaSignInForm />
+        <WorkingSignInForm />
       </React.Suspense>
     </div>
   );
