@@ -49,50 +49,54 @@ export function evaluateGates(
     reasons.push('AGE_PREFERENCE_MISMATCH');
   }
 
-  // 5. Shared availability slot gate: only evaluate when BOTH have recorded availability
-  const availA = new Set(vecA.social_rhythm?.availability || []);
-  if (vecA.social_rhythm?.fri_night) availA.add('fri_night');
-  if (vecA.social_rhythm?.sat_night) availA.add('sat_night');
+  // 5. Shared availability slot & geography gates: Skip restrictive filters when pool is small (< 15 users)
+  const isSmallPool = (context?.candidatePoolSize !== undefined) && context.candidatePoolSize < 15;
 
-  const availB = new Set(vecB.social_rhythm?.availability || []);
-  if (vecB.social_rhythm?.fri_night) availB.add('fri_night');
-  if (vecB.social_rhythm?.sat_night) availB.add('sat_night');
+  if (!isSmallPool) {
+    const availA = new Set(vecA.social_rhythm?.availability || []);
+    if (vecA.social_rhythm?.fri_night) availA.add('fri_night');
+    if (vecA.social_rhythm?.sat_night) availA.add('sat_night');
 
-  if (availA.size > 0 && availB.size > 0) {
-    let hasSharedSlot = false;
-    for (const slot of availA) {
-      if (availB.has(slot)) {
-        hasSharedSlot = true;
+    const availB = new Set(vecB.social_rhythm?.availability || []);
+    if (vecB.social_rhythm?.fri_night) availB.add('fri_night');
+    if (vecB.social_rhythm?.sat_night) availB.add('sat_night');
+
+    if (availA.size > 0 && availB.size > 0) {
+      let hasSharedSlot = false;
+      for (const slot of availA) {
+        if (availB.has(slot)) {
+          hasSharedSlot = true;
+          break;
+        }
+      }
+      if (!hasSharedSlot) {
+        reasons.push('NO_SHARED_AVAILABILITY_SLOT');
+      }
+    }
+
+    // 6. Geography gate: t > 2 * min(radius) across categories
+    const travelMins = getTravelTimeMinutes(
+      vecA.geography?.home_area || 'Tiong Bahru',
+      vecB.geography?.home_area || 'Tiong Bahru'
+    );
+
+    const radA = vecA.geography?.radius_minutes || {};
+    const radB = vecB.geography?.radius_minutes || {};
+    const categories = ['coffee', 'dining', 'active', 'cultural', 'nightlife', 'creative'];
+
+    let geoPassed = false;
+    for (const cat of categories) {
+      const rA = radA[cat] ?? 30;
+      const rB = radB[cat] ?? 30;
+      const minRad = Math.min(rA, rB);
+      if (travelMins <= 2 * minRad) {
+        geoPassed = true;
         break;
       }
     }
-    if (!hasSharedSlot) {
-      reasons.push('NO_SHARED_AVAILABILITY_SLOT');
+    if (!geoPassed) {
+      reasons.push('GEOGRAPHY_TOO_FAR');
     }
-  }
-
-  // 6. Geography gate: t > 2 * min(radius) across categories
-  const travelMins = getTravelTimeMinutes(
-    vecA.geography?.home_area || 'Tiong Bahru',
-    vecB.geography?.home_area || 'Tiong Bahru'
-  );
-
-  const radA = vecA.geography?.radius_minutes || {};
-  const radB = vecB.geography?.radius_minutes || {};
-  const categories = ['coffee', 'dining', 'active', 'cultural', 'nightlife', 'creative'];
-
-  let geoPassed = false;
-  for (const cat of categories) {
-    const rA = radA[cat] ?? 30;
-    const rB = radB[cat] ?? 30;
-    const minRad = Math.min(rA, rB);
-    if (travelMins <= 2 * minRad) {
-      geoPassed = true;
-      break;
-    }
-  }
-  if (!geoPassed) {
-    reasons.push('GEOGRAPHY_TOO_FAR');
   }
 
   // 7. Dealbreaker gate: Only gate when target status is explicitly known and violates dealbreaker

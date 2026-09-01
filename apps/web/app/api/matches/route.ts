@@ -82,18 +82,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to verify safety blocks' }, { status: 500 });
     }
 
-    const blockedUserIds = (blocks || []).map((b: any) =>
-      b.blocker_id === authUserId ? b.blocked_id : b.blocker_id
-    );
-    const reportedUserIds = (reports || []).map((r: any) =>
-      r.reporter_id === authUserId ? r.reported_id : r.reporter_id
-    );
-
-    const context: MatchContext = {
-      blockedUserIds,
-      reportedUserIds,
-    };
-
     // Part 4.2: Cap to 200 profiles and select specific columns
     const { data: dbProfiles, error: fetchErr } = await adminClient
       .from('profiles')
@@ -127,6 +115,21 @@ export async function POST(req: NextRequest) {
     if (!dbProfiles || dbProfiles.length === 0) {
       return NextResponse.json([], { status: 200 });
     }
+
+    const blockedUserIds = (blocks || []).map((b: any) =>
+      b.blocker_id === authUserId ? b.blocked_id : b.blocker_id
+    );
+    const reportedUserIds = (reports || []).map((r: any) =>
+      r.reporter_id === authUserId ? r.reported_id : r.reporter_id
+    );
+
+    const candidatesPool = dbProfiles.filter((p) => p.id !== authUserId);
+
+    const context: MatchContext = {
+      blockedUserIds,
+      reportedUserIds,
+      candidatePoolSize: candidatesPool.length,
+    };
 
     // 3. Find viewer profile
     const viewerRow = dbProfiles.find((p) => p.id === authUserId);

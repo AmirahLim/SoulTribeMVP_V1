@@ -154,6 +154,7 @@ export interface MatchContext {
   reportedUserIds?: string[];
   activity_category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative';
   tagged_interest_node?: string;
+  candidatePoolSize?: number;
 }
 
 export interface MatchResult {
