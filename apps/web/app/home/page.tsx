@@ -35,6 +35,8 @@ function HomeContent() {
   const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const [radarJoined, setRadarJoined] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -42,6 +44,8 @@ function HomeContent() {
 
     (async () => {
       try {
+        setLoading(true);
+        setLoadError(null);
         let userProf = getUserProfile();
 
         if (user?.id && isSupabaseConfigured) {
@@ -98,8 +102,11 @@ function HomeContent() {
         setMatches(rankedMatchesData);
         setGoingOutings(goingData);
         setRadarOutings(radarData);
-      } catch (err) {
-        console.error('Failed to load home dashboard data:', err);
+      } catch (err: any) {
+        console.error('[SoulTribe Error] Failed to load home dashboard data:', err);
+        if (!cancelled) {
+          setLoadError("Couldn't load members right now — try again");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -108,7 +115,7 @@ function HomeContent() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, reloadTrigger]);
 
   const handleToggleRadarJoin = (id: string) => {
     setRadarJoined((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -251,6 +258,21 @@ function HomeContent() {
               <div className="p-8 text-center rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent mx-auto" />
                 <p className="mt-3 text-[13px] text-white/70">Calculating matches...</p>
+              </div>
+            ) : loadError ? (
+              <div className="flex flex-col items-center text-center p-8 rounded-[28px] border border-red-500/30 bg-black/70 backdrop-blur-xl shadow-2xl">
+                <AlertCircle className="h-10 w-10 text-red-400" />
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">Couldn't load members right now</h4>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-white/75 max-w-[300px]">
+                  Please check your connection or try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReloadTrigger((prev) => prev + 1)}
+                  className="mt-5 rounded-full bg-white px-5 py-2 text-[13px] font-bold text-black hover:bg-white/90 shadow-md transition-transform hover:scale-105"
+                >
+                  Try Again
+                </button>
               </div>
             ) : matches.length === 0 ? (
               /* REAL EMPTY STATE FOR MATCHES */

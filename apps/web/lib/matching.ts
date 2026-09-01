@@ -74,7 +74,7 @@ export const realCandidateSource: CandidateSource = {
         `);
 
       if (error) {
-        console.error('[SoulTribe Error] Failed to fetch real candidates from Supabase:', error);
+        console.error('[SoulTribe] candidate query failed:', error.code, error.message, error.details, error.hint);
         throw new Error(`Failed to load member profiles: ${error.message}`);
       }
 
@@ -127,7 +127,7 @@ export const realCandidateSource: CandidateSource = {
         };
       });
     } catch (err: any) {
-      console.error('[SoulTribe Error] Exception fetching real candidates:', err);
+      console.error('[SoulTribe] candidate query exception:', err?.message || err);
       throw err;
     }
   },
@@ -147,9 +147,14 @@ export const demoCandidateSource: CandidateSource = {
 
 export const mixedCandidateSource: CandidateSource = {
   async getCandidates(opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
-    const real = await realCandidateSource.getCandidates(opts);
     const demo = await demoCandidateSource.getCandidates(opts);
-    return [...real, ...demo];
+    try {
+      const real = await realCandidateSource.getCandidates(opts);
+      return [...real, ...demo];
+    } catch (err: any) {
+      console.warn('[SoulTribe] real candidate fetch failed in mixed mode, retaining demo candidates:', err?.message || err);
+      return demo;
+    }
   },
 };
 
