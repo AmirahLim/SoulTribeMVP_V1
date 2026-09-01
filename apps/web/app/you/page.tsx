@@ -18,6 +18,7 @@ import {
 import { AuthGuard } from '../../components/AuthGuard';
 import { getActiveNextBestPrompts } from '../../lib/dimensionPrompts';
 import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
+import { getSupabaseBrowserClient } from '../../lib/supabase';
 
 export default function ProfilePage() {
   return (
@@ -60,7 +61,7 @@ function ProfileContent() {
     setEditPhoto(loaded.avatarUrl);
   }, []);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     const updated = setUserProfile({
       displayName: editName.trim() || 'You',
@@ -70,6 +71,23 @@ function ProfileContent() {
     });
     setProfileState(updated);
     setIsSettingsOpen(false);
+
+    if (authUser?.id) {
+      try {
+        const client = getSupabaseBrowserClient();
+        await client
+          .from('profiles')
+          .update({
+            display_name: editName.trim() || 'You',
+            home_area: editArea,
+            bio: editBio,
+            avatar_url: editPhoto,
+          })
+          .eq('id', authUser.id);
+      } catch {
+        // DB update fallback
+      }
+    }
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +100,8 @@ function ProfileContent() {
       return;
     }
 
-    const res = await uploadAvatar(profile.id || 'user', file);
+    const realUserId = authUser?.id || profile.id || 'user';
+    const res = await uploadAvatar(realUserId, file);
     if (res.success && res.avatarUrl) {
       setEditPhoto(res.avatarUrl);
       const updated = setUserProfile({
