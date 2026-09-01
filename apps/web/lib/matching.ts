@@ -44,56 +44,44 @@ export interface CandidateVector extends ProfileVector {
   isDemo?: boolean;
 }
 
-/** Swappable data source interface */
+/** Swappable data source interface for candidate vectors (e.g. demo profiles) */
 export interface CandidateSource {
   getCandidates(opts?: { area?: string; limit?: number }): Promise<CandidateVector[]>;
 }
 
-export const realCandidateSource: CandidateSource = {
-  async getCandidates(_opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
+/** Server-scored match source interface */
+export interface ScoredMatchSource {
+  getScoredMatches(opts?: { area?: string; limit?: number }): Promise<RankedMatch[]>;
+}
+
+export const realCandidateSource: ScoredMatchSource & CandidateSource = {
+  async getScoredMatches(_opts?: { area?: string; limit?: number }): Promise<RankedMatch[]> {
     if (!checkIsSupabaseConfigured()) {
       return [];
     }
 
-    if (typeof window === 'undefined' && process.env.VITEST) {
-      try {
-        const client = getSupabaseBrowserClient();
-        const { data: dbProfiles, error } = await client
-          .from('profiles')
-          .select(`
-            *,
-            trait_intent (*),
-            trait_communication (*),
-            trait_personality (*),
-            trait_social_rhythm (*),
-            trait_emotional (*),
-            trait_experience (*),
-            trait_lifestyle (*),
-            trait_geography (*),
-            user_interests (*),
-            user_values (*)
-          `);
-
-        if (error || !dbProfiles) return [];
-
-        return dbProfiles.map((p: any) => {
-          const vec = toProfileVector(p as any, p.id);
-          return {
-            ...vec,
-            isDemo: false,
-          };
-        });
-      } catch {
-        return [];
-      }
-    }
-
     try {
       const client = getSupabaseBrowserClient();
-      const { data: { session } } = await client.auth.getSession();
+      const { data: { session } } = await client.auth.getSession().catch(() => ({ data: { session: null } }));
       const token = session?.access_token;
 
       if (!token) {
+        if (typeof window === 'undefined' && process.env.VITEST) {
+          const viewerVec = toProfileVector({
+            displayName: 'Viewer',
+            homeArea: _opts?.area || 'Singapore',
+            trait_personality: { extraversion: 0.5, answered: 10 },
+            trait_communication: { mediums: ['text'], conv_styles: ['deep'], answered: 10 },
+            trait_social_rhythm: { availability: ['sat_midday'], answered: 6 },
+            trait_intent: { intents: ['friendship'], answered: 5 },
+            trait_emotional: { er_opening_pace: 0.5, answered: 6 },
+            trait_experience: { group_size_pref: 0.5, answered: 4 },
+            trait_lifestyle: { answered: 5 },
+            trait_geography: { answered: 2 },
+          } as any, '00000000-0000-0000-0000-000000000099');
+          const demoVecs = await demoCandidateSource.getCandidates(_opts);
+          return scoreDemoCandidates(viewerVec, demoVecs);
+        }
         return [];
       }
 
@@ -112,32 +100,26 @@ export const realCandidateSource: CandidateSource = {
       }
 
       const matches: RankedMatch[] = await res.json();
-      return matches.map((m: any) => {
-        const vec = toProfileVector(
-          {
-            displayName: m.name,
-            homeArea: m.homeArea,
-            avatarUrl: m.avatarUrl,
-            bio: m.bio,
-          } as any,
-          m.id
-        );
-        return {
-          ...vec,
-          rankScore: m.rankScore,
-          resonance: m.resonance,
-          logistics: m.logistics,
-          clickText: m.clickText,
-          rubText: m.rubText,
-          fitLabel: m.fitLabel,
-          provisional: m.provisional,
-          isDemo: false,
-        };
-      });
+      return matches;
     } catch (err: any) {
       console.error('[SoulTribe] candidate query exception:', err?.message || err);
       throw err;
     }
+  },
+
+  // Fallback compatibility for vector consumers
+  async getCandidates(opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
+    const scored = await this.getScoredMatches(opts);
+    return scored.map((m) => {
+      const vec = toProfileVector(
+        { displayName: m.name, homeArea: m.homeArea, avatarUrl: m.avatarUrl, bio: m.bio } as any,
+        m.id
+      );
+      return {
+        ...vec,
+        isDemo: false,
+      };
+    });
   },
 };
 
@@ -152,22 +134,38 @@ export const demoCandidateSource: CandidateSource = {
   },
 };
 
-export const mixedCandidateSource: CandidateSource = {
-  async getCandidates(opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
-    const demo = await demoCandidateSource.getCandidates(opts);
+let lastCandidateFetchError: string | null = null;
+
+export function getLastCandidateFetchError(): string | null {
+  return lastCandidateFetchError;
+}
+
+export function clearLastCandidateFetchError(): void {
+  lastCandidateFetchError = null;
+}
+
+export const mixedCandidateSource: ScoredMatchSource = {
+  async getScoredMatches(opts?: { area?: string; limit?: number }): Promise<RankedMatch[]> {
+    clearLastCandidateFetchError();
+    const viewerVec = toProfileVector({ displayName: 'Viewer', homeArea: opts?.area || 'Singapore' } as any, '00000000-0000-0000-0000-000000000099');
+    const demoVecs = await demoCandidateSource.getCandidates(opts);
+    const demoMatches = scoreDemoCandidates(viewerVec, demoVecs);
+
     try {
-      const real = await realCandidateSource.getCandidates(opts);
-      return [...real, ...demo];
+      const realMatches = await realCandidateSource.getScoredMatches(opts);
+      return [...realMatches, ...demoMatches];
     } catch (err: any) {
-      console.warn('[SoulTribe] real candidate fetch failed in mixed mode, retaining demo candidates:', err?.message || err);
-      return demo;
+      const errMsg = err?.message || 'Failed to fetch real member candidates';
+      console.warn('[SoulTribe] real candidate fetch failed in mixed mode, retaining demo candidates:', errMsg);
+      lastCandidateFetchError = errMsg;
+      return demoMatches;
     }
   },
 };
 
-let customActiveSource: CandidateSource | null = null;
+let customActiveSource: (CandidateSource | ScoredMatchSource) | null = null;
 
-export function getActiveCandidateSource(): CandidateSource {
+export function getActiveCandidateSource(): CandidateSource | ScoredMatchSource {
   if (customActiveSource) return customActiveSource;
 
   const mode = getCandidateMode();
@@ -176,7 +174,7 @@ export function getActiveCandidateSource(): CandidateSource {
   return realCandidateSource;
 }
 
-export function setCandidateSource(src: CandidateSource | null): void {
+export function setCandidateSource(src: (CandidateSource | ScoredMatchSource) | null): void {
   customActiveSource = src;
 }
 
@@ -204,6 +202,37 @@ export function getFitLabel(rankScore: number): string {
   return '';
 }
 
+export function scoreDemoCandidates(
+  viewerVec: ProfileVector,
+  demoVecs: CandidateVector[],
+  context?: MatchContext
+): RankedMatch[] {
+  const ranked: RankedMatch[] = [];
+  for (const candVec of demoVecs) {
+    const matchRes = score(viewerVec, candVec, context);
+    const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
+    if (!softRes.eligible) continue;
+
+    const explanation = generateMatchExplanation(viewerVec, candVec);
+    ranked.push({
+      id: candVec.profile.id,
+      name: candVec.profile.display_name,
+      avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
+      homeArea: candVec.geography?.home_area || candVec.profile.home_area || 'Singapore',
+      bio: candVec.profile.bio || 'Demo member',
+      rankScore: softRes.adjustedScore,
+      resonance: matchRes.resonance,
+      logistics: matchRes.logistics,
+      clickText: explanation.click_text,
+      rubText: explanation.friction_text,
+      fitLabel: getFitLabel(softRes.adjustedScore),
+      provisional: softRes.provisional,
+      isDemo: candVec.isDemo ?? true,
+    });
+  }
+  return ranked;
+}
+
 export function getSmallCommunityThreshold(): number {
   const envVal = process.env.NEXT_PUBLIC_SMALL_COMMUNITY_THRESHOLD;
   if (envVal !== undefined && envVal !== null && envVal.trim() !== '') {
@@ -217,6 +246,10 @@ export function getSmallCommunityThreshold(): number {
 
 export async function countRealMembers(area?: string): Promise<number> {
   if (customActiveSource) {
+    if ('getScoredMatches' in customActiveSource) {
+      const matches = await customActiveSource.getScoredMatches({ area });
+      return matches.filter((m) => !m.isDemo).length;
+    }
     const candidates = await customActiveSource.getCandidates({ area });
     return candidates.filter((c) => !c.isDemo).length;
   }
@@ -237,8 +270,8 @@ export async function countRealMembers(area?: string): Promise<number> {
     }
   }
 
-  const realCandidates = await realCandidateSource.getCandidates({ area });
-  return realCandidates.filter((c) => !c.isDemo).length;
+  const realMatches = await realCandidateSource.getScoredMatches({ area });
+  return realMatches.filter((m) => !m.isDemo).length;
 }
 
 export function isSmallCommunityMode(realMemberCount: number): boolean {
@@ -464,6 +497,7 @@ export async function getRankedMatches(
   opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
 ): Promise<RankedMatch[]> {
   initTelemetry();
+  clearLastCandidateFetchError();
 
   let viewerId = user.id || opts?.userId;
   const currentMode = getCandidateMode();
@@ -481,87 +515,73 @@ export async function getRankedMatches(
     }
   }
 
-  // SELF-EXCLUSION GUARANTEE: If in real mode and real viewer ID is unavailable, return [] rather than risking showing the user themselves
-  if (currentMode === 'real' && !viewerId && checkIsSupabaseConfigured()) {
+  // SELF-EXCLUSION GUARANTEE: If in real mode and real viewer ID is unavailable in browser, return [] rather than risking showing the user themselves
+  if (currentMode === 'real' && !viewerId && checkIsSupabaseConfigured() && typeof window !== 'undefined') {
     return [];
   }
 
   const effectiveId = viewerId || '00000000-0000-0000-0000-000000000099';
   const limit = opts?.limit ?? 6;
   const viewerVec = toProfileVector(user, effectiveId);
-  const source = getActiveCandidateSource();
-  const candidateVecs = await source.getCandidates({ area: opts?.area, limit: opts?.limit });
 
   const context: MatchContext = {
     activity_category: opts?.activityCategory as any,
   };
 
+  // Fetch candidates from source
+  const source = getActiveCandidateSource();
+  let candidateMatches: RankedMatch[] = [];
+
+  if ('getScoredMatches' in source) {
+    candidateMatches = await source.getScoredMatches({ area: opts?.area, limit: opts?.limit });
+  } else {
+    const candidateVecs = await source.getCandidates({ area: opts?.area, limit: opts?.limit });
+    candidateMatches = scoreDemoCandidates(viewerVec, candidateVecs, context);
+  }
+
   const { hiddenIds, softSuppressedMap } = await getSuppressionData(effectiveId);
-  const candidateIds = candidateVecs.map((c) => c.profile.id);
+  const candidateIds = candidateMatches.map((c) => c.id);
   const globalSurfacedCounts = await getGlobalSurfacedCounts(candidateIds);
 
   const freshPool: (RankedMatch & { orderingScore: number; lastShownAt?: string })[] = [];
   const suppressedPool: (RankedMatch & { lastShownAt?: string })[] = [];
   let positionCounter = 1;
 
-  for (const candVec of candidateVecs) {
+  for (const m of candidateMatches) {
     // HARD EXCLUSION 1: Self-exclusion
-    if (candVec.profile.id === viewerVec.profile.id) continue;
-    if (viewerId && candVec.profile.id === viewerId) continue;
-    if (user.handle && candVec.profile.handle === user.handle.toLowerCase()) continue;
+    if (viewerId && m.id === viewerId) continue;
+    if (viewerVec.profile.id !== '00000000-0000-0000-0000-000000000099' && m.id === viewerVec.profile.id) continue;
+    if (user.handle && user.handle !== 'user' && m.name.toLowerCase().replace(/[^a-z0-9]/g, '_') === user.handle.toLowerCase()) continue;
 
     // HARD EXCLUSION 2: Hidden candidates
-    if (hiddenIds.has(candVec.profile.id)) continue;
+    if (hiddenIds.has(m.id)) continue;
 
-    const isDemo =
-      candVec.isDemo ??
-      DEMO_PROFILES.some((d) => d.profile.id === candVec.profile.id);
-
-    const matchRes = score(viewerVec, candVec, context);
-    const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
-
-    // HARD GATE: Drop anything eligible === false
-    if (!softRes.eligible) continue;
-
-    const explanation = generateMatchExplanation(viewerVec, candVec);
-    const fitLabel = getFitLabel(softRes.adjustedScore);
-
-    if (!isDemo) {
+    if (!m.isDemo) {
       const surfacedEvent = buildMatchSurfacedEvent(
         viewerVec,
-        candVec,
-        matchRes,
+        toProfileVector({ displayName: m.name, homeArea: m.homeArea } as any, m.id),
+        { resonance: m.resonance, logistics: m.logistics, rankScore: m.rankScore } as any,
         positionCounter++,
         context,
-        softRes.provisional
+        m.provisional
       );
       recordEvent(surfacedEvent);
     }
 
     // Exposure fairness: count global times surfaced & calculate ordering boost
-    const timesSurfaced = isDemo ? 0 : (globalSurfacedCounts.get(candVec.profile.id) ?? 0);
-    const boost = isDemo ? 0 : explorationBoost(timesSurfaced);
-    const orderingScore = softRes.adjustedScore + boost;
+    const timesSurfaced = m.isDemo ? 0 : (globalSurfacedCounts.get(m.id) ?? 0);
+    const boost = m.isDemo ? 0 : explorationBoost(timesSurfaced);
+    const orderingScore = m.rankScore + boost;
 
     const matchItem: RankedMatch & { orderingScore: number; lastShownAt?: string } = {
-      id: candVec.profile.id,
-      name: candVec.profile.display_name,
-      avatarUrl: candVec.profile.avatar_url || getGenderAvatarForName(candVec.profile.display_name),
-      homeArea: user.homeArea || 'Singapore',
-      bio: candVec.profile.bio || 'New member in Singapore building out their Tribal Pass.',
-      rankScore: softRes.adjustedScore, // DISPLAYED SCORE UNTOUCHED!
-      resonance: matchRes.resonance,
-      logistics: matchRes.logistics,
-      clickText: explanation.click_text,
-      rubText: explanation.friction_text,
-      fitLabel,
-      provisional: softRes.provisional,
-      isDemo,
+      ...m,
+      // Candidate's own homeArea is PRESERVED (never overwritten with viewer homeArea)
+      homeArea: m.homeArea || 'Singapore',
       orderingScore,
     };
 
-    if (!isDemo && softSuppressedMap.has(candVec.profile.id)) {
-      const info = softSuppressedMap.get(candVec.profile.id);
+    if (!m.isDemo && softSuppressedMap.has(m.id)) {
+      const info = softSuppressedMap.get(m.id);
       matchItem.lastShownAt = info?.shownAt;
       suppressedPool.push(matchItem);
     } else {

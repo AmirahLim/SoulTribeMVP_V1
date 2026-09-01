@@ -129,21 +129,11 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const q6Outings = rawQ6;
   const q8Qualities = rawQ8;
 
-  const isThinUser = Boolean(
-    (user as any).displayName === 'Empty User' ||
-    (user as any).display_name === 'Empty User' ||
-    (user as any).displayName === 'Thin User' ||
-    (user as any).display_name === 'Thin User' ||
-    (user.passCompletionPct !== undefined && user.passCompletionPct !== null && user.passCompletionPct < 35)
-  );
-
-  const hasOnboardedFlag = !isThinUser;
-
   // 1. Personality
-  const dbPersAnswered = (user as any).trait_personality?.answered;
+  const dbPersAnswered = (user as any).trait_personality?.answered ?? (user as any).personality?.answered;
   const personalityAnswered = typeof dbPersAnswered === 'number'
     ? dbPersAnswered
-    : ((q2.length > 0 || typeof q3Energy === 'number') ? 8 : (mbtiMap ? 10 : (hasOnboardedFlag ? 6 : 0)));
+    : ((q2.length > 0 || typeof q3Energy === 'number') ? 8 : (mbtiMap ? 10 : 0));
 
   const serious_playful = q2.some((f: string) => f.includes('Deep') || f.includes('meaningful')) ? 0.7 
     : q2.some((f: string) => f.includes('Chill') || f.includes('relaxed')) ? 0.4 
@@ -170,10 +160,10 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 2. Communication
-  const dbCommAnswered = (user as any).trait_communication?.answered;
+  const dbCommAnswered = (user as any).trait_communication?.answered ?? (user as any).communication?.answered;
   const commAnswered = typeof dbCommAnswered === 'number'
     ? dbCommAnswered
-    : (q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : (hasOnboardedFlag ? 6 : 0))));
+    : (q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : 0)));
 
   const communication = {
     user_id: userId,
@@ -186,16 +176,16 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     message_length: messagingVal?.message_length ?? 0.5,
     direct_diplomatic: 0.5,
     high_context_literal: 0.5,
-    mediums: q4.length > 0 ? q4 : ['text'],
-    conv_styles: q2.length > 0 ? q2 : ['deep'],
+    mediums: q4.length > 0 ? q4 : [],
+    conv_styles: q2.length > 0 ? q2 : [],
     answered: Math.min(10, commAnswered),
   };
 
   // 3. Social Rhythm
-  const dbRhythmAnswered = (user as any).trait_social_rhythm?.answered;
+  const dbRhythmAnswered = (user as any).trait_social_rhythm?.answered ?? (user as any).social_rhythm?.answered;
   const rhythmAnswered = typeof dbRhythmAnswered === 'number'
     ? dbRhythmAnswered
-    : (q5Avail.length > 0 || q5Rhythm ? 6 : ((saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : (hasOnboardedFlag ? 6 : 0))));
+    : (q5Avail.length > 0 || q5Rhythm ? 6 : ((saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : 0)));
 
   const planning_horizon = typeof q5Rhythm === 'string'
     ? (q5Rhythm.includes('Spontaneous') ? 0.2 : 0.8)
@@ -204,8 +194,8 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const social_rhythm = {
     user_id: userId,
     availability: q5Avail.length > 0 ? q5Avail : [],
-    fri_night: Boolean((user as any).trait_social_rhythm?.fri_night ?? (user as any).fri_night),
-    sat_night: Boolean((user as any).trait_social_rhythm?.sat_night ?? (user as any).sat_night),
+    fri_night: Boolean((user as any).trait_social_rhythm?.fri_night ?? (user as any).social_rhythm?.fri_night ?? (user as any).fri_night),
+    sat_night: Boolean((user as any).trait_social_rhythm?.sat_night ?? (user as any).social_rhythm?.sat_night ?? (user as any).sat_night),
     planning_horizon,
     social_freq_self: 0.5,
     social_freq_expect: 0.5,
@@ -215,24 +205,24 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 4. Intent
-  const dbIntentAnswered = (user as any).trait_intent?.answered;
+  const dbIntentAnswered = (user as any).trait_intent?.answered ?? (user as any).intent?.answered;
   const intentAnswered = typeof dbIntentAnswered === 'number'
     ? dbIntentAnswered
-    : (q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : (hasOnboardedFlag ? 5 : 0)));
+    : (q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : 0));
 
   const intent = {
     user_id: userId,
-    intents: q1.length > 0 ? q1 : ['friendship'],
+    intents: q1.length > 0 ? q1 : [],
     depth: q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : 2,
     open_to_hosting: false,
     answered: intentAnswered,
   };
 
   // 5. Emotional
-  const dbEmoAnswered = (user as any).trait_emotional?.answered;
+  const dbEmoAnswered = (user as any).trait_emotional?.answered ?? (user as any).emotional?.answered;
   const emotionalAnswered = typeof dbEmoAnswered === 'number'
     ? dbEmoAnswered
-    : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : (hasOnboardedFlag ? 6 : 0)));
+    : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : 0));
 
   const er_opening_pace = typeof q7Pacing === 'string'
     ? (q7Pacing.includes('Fast') ? 0.8 : 0.4)
@@ -259,10 +249,10 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 6. Lifestyle
-  const dbLifeAnswered = (user as any).trait_lifestyle?.answered;
+  const dbLifeAnswered = (user as any).trait_lifestyle?.answered ?? (user as any).lifestyle?.answered;
   const lifestyleAnswered = typeof dbLifeAnswered === 'number'
     ? dbLifeAnswered
-    : (deep.budgetPref ? 5 : (hasOnboardedFlag ? 4 : 0));
+    : (deep.budgetPref ? 5 : 0);
 
   const lifestyle = {
     user_id: userId,
@@ -281,17 +271,17 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 7. Experience
-  const dbExpAnswered = (user as any).trait_experience?.answered;
+  const dbExpAnswered = (user as any).trait_experience?.answered ?? (user as any).experience?.answered;
   const expAnswered = typeof dbExpAnswered === 'number'
     ? dbExpAnswered
-    : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : (hasOnboardedFlag ? 4 : 0)));
+    : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : 0));
   const group_size_pref = typeof q3GroupSize === 'string'
     ? (q3GroupSize.includes('1-on-1') ? 0.2 : q3GroupSize.includes('3-4') ? 0.4 : 0.6)
     : (typeof q3GroupSize === 'number' ? q3GroupSize : (groupSizeVal ?? 0.5));
 
   const experience = {
     user_id: userId,
-    settings: q6Outings.length > 0 ? q6Outings : ['cafe'],
+    settings: q6Outings.length > 0 ? q6Outings : [],
     group_size_pref,
     orientation: ['conversation_first'],
     novelty: saturdayVal?.novelty ?? 0.5,
@@ -299,11 +289,12 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 8. Geography
+  const dbGeoAnswered = (user as any).trait_geography?.answered;
   const geography = {
     user_id: userId,
-    home_area: user.homeArea || 'Singapore',
+    home_area: user.homeArea || (user as any).home_area || 'Singapore',
     radius_minutes: { coffee: 30, dining: 45 },
-    answered: 2,
+    answered: typeof dbGeoAnswered === 'number' ? dbGeoAnswered : (user.homeArea || (user as any).home_area ? 2 : 0),
   };
 
   // 9. Interests (from Q6 Outings)
@@ -319,18 +310,22 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     importance: 0.8,
   }));
 
+  const birthYear = (user as any).birth_year ?? (user as any).birthYear ?? 1995;
+  const agePrefMin = (user as any).age_pref_min ?? (user as any).agePrefMin;
+  const agePrefMax = (user as any).age_pref_max ?? (user as any).agePrefMax;
+
   const rawVec: ProfileVector = {
     profile: {
       id: userId,
-      handle: (user.displayName || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_'),
-      display_name: user.displayName || 'User',
-      avatar_url: user.avatarUrl,
-      bio: user.bio,
-      home_area: user.homeArea || 'Singapore',
-      birth_year: 1995,
-      age_pref_min: 18,
-      age_pref_max: 99,
-      profile_version: user.version || 6,
+      handle: (user.displayName || (user as any).display_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_'),
+      display_name: user.displayName || (user as any).display_name || 'User',
+      avatar_url: user.avatarUrl || (user as any).avatar_url,
+      bio: user.bio || (user as any).bio,
+      home_area: user.homeArea || (user as any).home_area || 'Singapore',
+      birth_year: birthYear,
+      age_pref_min: agePrefMin,
+      age_pref_max: agePrefMax,
+      profile_version: user.version || (user as any).profile_version || 6,
       confidence: 0.5,
       tier: 'free',
       status: 'active',
@@ -347,8 +342,14 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     geography,
   };
 
-  const confidence = completenessConfidence(rawVec);
-  rawVec.profile.confidence = confidence;
+  let confidence = completenessConfidence(rawVec);
+  if (typeof (user as any).passCompletionPct === 'number' && (user as any).passCompletionPct > 0) {
+    confidence = Math.max(confidence, (user as any).passCompletionPct / 100);
+  }
+  if (typeof (user as any).confidence === 'number') {
+    confidence = (user as any).confidence;
+  }
+  rawVec.profile.confidence = Math.max(0, Math.min(1.0, confidence));
 
   return rawVec;
 }

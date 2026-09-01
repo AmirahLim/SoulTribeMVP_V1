@@ -5,7 +5,10 @@ import {
   softGate,
   generateMatchExplanation,
   getGenderAvatarForName,
+  buildMatchSurfacedEvent,
+  recordEvent,
 } from '@soul-tribe/core';
+import type { MatchContext } from '@soul-tribe/core';
 import { toProfileVector } from '../../../lib/profileAdapter';
 
 export const runtime = 'nodejs';
@@ -28,12 +31,17 @@ export async function POST(req: NextRequest) {
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !anonKey || !secretKey) {
+  const missingEnv: string[] = [];
+  if (!supabaseUrl) missingEnv.push('NEXT_PUBLIC_SUPABASE_URL');
+  if (!publishableKey) missingEnv.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+  if (!secretKey) missingEnv.push('SUPABASE_SECRET_KEY');
+
+  if (missingEnv.length > 0) {
     return NextResponse.json(
-      { error: 'Server matching is unconfigured: SUPABASE_SECRET_KEY is required' },
+      { error: `Server matching is unconfigured: missing ${missingEnv.join(', ')}` },
       { status: 500 }
     );
   }
@@ -41,7 +49,7 @@ export async function POST(req: NextRequest) {
   let authUserId: string | null = null;
 
   if (token) {
-    const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const authClient = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false } });
     const { data: { user }, error: authErr } = await authClient.auth.getUser(token);
     if (!authErr && user) {
       authUserId = user.id;
@@ -58,10 +66,45 @@ export async function POST(req: NextRequest) {
       auth: { persistSession: false },
     });
 
+    // Part 3: Load viewer's blocks and reports in both directions
+    const { data: blocks, error: blockErr } = await adminClient
+      .from('blocks')
+      .select('blocker_id, blocked_id')
+      .or(`blocker_id.eq.${authUserId},blocked_id.eq.${authUserId}`);
+
+    const { data: reports, error: reportErr } = await adminClient
+      .from('reports')
+      .select('reporter_id, reported_id')
+      .or(`reporter_id.eq.${authUserId},reported_id.eq.${authUserId}`);
+
+    if (blockErr || reportErr) {
+      console.error('[SoulTribe API] Failed to load blocks/reports:', blockErr || reportErr);
+      return NextResponse.json({ error: 'Failed to verify safety blocks' }, { status: 500 });
+    }
+
+    const blockedUserIds = (blocks || []).map((b: any) =>
+      b.blocker_id === authUserId ? b.blocked_id : b.blocker_id
+    );
+    const reportedUserIds = (reports || []).map((r: any) =>
+      r.reporter_id === authUserId ? r.reported_id : r.reporter_id
+    );
+
+    const context: MatchContext = {
+      blockedUserIds,
+      reportedUserIds,
+    };
+
+    // Part 4.2: Cap to 200 profiles and select specific columns
     const { data: dbProfiles, error: fetchErr } = await adminClient
       .from('profiles')
       .select(`
-        *,
+        id,
+        display_name,
+        avatar_url,
+        home_area,
+        bio,
+        birth_year,
+        status,
         trait_intent (*),
         trait_communication (*),
         trait_personality (*),
@@ -72,7 +115,9 @@ export async function POST(req: NextRequest) {
         trait_geography (*),
         user_interests (*, interest_nodes (name)),
         user_values (*)
-      `);
+      `)
+      .eq('status', 'active')
+      .limit(200);
 
     if (fetchErr) {
       console.error('[SoulTribe API] Database query error:', fetchErr);
@@ -113,6 +158,8 @@ export async function POST(req: NextRequest) {
     // 4. Candidate Scoring & Explanation
     const candidates = dbProfiles.filter((p) => p.id !== authUserId);
     const rankedMatches = [];
+    const candidateVecMap = new Map();
+    const matchResMap = new Map();
 
     for (const candRow of candidates) {
       const intentRow = Array.isArray(candRow.trait_intent) ? candRow.trait_intent[0] : candRow.trait_intent;
@@ -163,11 +210,14 @@ export async function POST(req: NextRequest) {
         candRow.id
       );
 
-      const matchRes = score(viewerVec, candVec);
+      const matchRes = score(viewerVec, candVec, context);
       const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
       if (!softRes.eligible) continue;
 
       const explanation = generateMatchExplanation(viewerVec, candVec);
+
+      candidateVecMap.set(candRow.id, candVec);
+      matchResMap.set(candRow.id, matchRes);
 
       // SAFE DISCLOSURE: Return ONLY RankedMatch public fields
       rankedMatches.push({
@@ -189,9 +239,27 @@ export async function POST(req: NextRequest) {
 
     rankedMatches.sort((a, b) => b.rankScore - a.rankScore);
 
+    // Part 1.5: Emit match surfaced events on server for real candidates
+    let positionCounter = 1;
+    for (const item of rankedMatches) {
+      const candVec = candidateVecMap.get(item.id);
+      const matchRes = matchResMap.get(item.id);
+      if (candVec && matchRes) {
+        const surfacedEvent = buildMatchSurfacedEvent(
+          viewerVec,
+          candVec,
+          matchRes,
+          positionCounter++,
+          context,
+          item.provisional
+        );
+        recordEvent(surfacedEvent);
+      }
+    }
+
     return NextResponse.json(rankedMatches, { status: 200 });
   } catch (err: any) {
     console.error('[SoulTribe API] Exception during match scoring:', err);
-    return NextResponse.json({ error: err?.message || 'Failed to process matches' }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -44,11 +44,40 @@ function PitchComposerContent() {
   useEffect(() => {
     async function loadCandidates() {
       const source = getActiveCandidateSource();
-      const list = await source.getCandidates({ limit: 10 });
-      setCandidates(list);
+      const list = 'getCandidates' in source 
+        ? await source.getCandidates({ limit: 10 })
+        : (await source.getScoredMatches({ limit: 10 })).map((m: any) => ({
+            profile: {
+              id: m.id,
+              handle: m.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+              display_name: m.name,
+              avatar_url: m.avatarUrl,
+              bio: m.bio,
+              home_area: m.homeArea,
+              birth_year: 1995,
+              age_pref_min: 18,
+              age_pref_max: 99,
+              profile_version: 6,
+              confidence: 0.8,
+              tier: 'free' as const,
+              status: 'active' as const,
+            },
+            personality: {} as any,
+            communication: {} as any,
+            social_rhythm: {} as any,
+            intent: {} as any,
+            emotional: {} as any,
+            values: [],
+            interests: [],
+            lifestyle: {} as any,
+            experience: {} as any,
+            geography: {} as any,
+            isDemo: false,
+          }));
+      setCandidates(list as CandidateVector[]);
 
       if (initialInviteId) {
-        const match = list.find((c) => c.profile.id === initialInviteId);
+        const match = list.find((c: any) => c.profile.id === initialInviteId);
         if (match) setSelectedGuests([match]);
       } else if (list.length >= 2) {
         setSelectedGuests([list[0], list[1]]);
