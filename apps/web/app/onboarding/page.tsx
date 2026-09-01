@@ -5,16 +5,39 @@ import { useRouter } from 'next/navigation';
 import { Bloom, RhythmStrip, Button, Chip } from '@soul-tribe/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, User, CheckCircle2 } from 'lucide-react';
-import { getUserProfile, setUserProfile } from '../../lib/userStore';
+import {
+  getUserProfile,
+  setUserProfile,
+  validateHandle,
+  deriveSuggestedHandle,
+  validateDateOfBirth,
+  calculateAge,
+} from '../../lib/userStore';
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
-  // USER CUSTOM NAME, PHOTO & CITY STATE
+  // USER CUSTOM NAME, HANDLE, DOB, PHOTO & CITY STATE
   const [userName, setUserName] = useState('');
+  const [userHandle, setUserHandle] = useState('');
+  const [handleEdited, setHandleEdited] = useState(false);
+  const [userDob, setUserDob] = useState('');
   const [userPhoto, setUserPhoto] = useState<string>('');
   const [userCity, setUserCity] = useState<string>('Singapore');
+  const [step1Error, setStep1Error] = useState<string | null>(null);
+
+  const handleNameChange = (name: string) => {
+    setUserName(name);
+    if (!handleEdited) {
+      setUserHandle(deriveSuggestedHandle(name));
+    }
+  };
+
+  const handleHandleChange = (handleVal: string) => {
+    setHandleEdited(true);
+    setUserHandle(handleVal);
+  };
 
   // Q1: What are you hoping to find here? (Up to 3)
   const [q1Finding, setQ1Finding] = useState<string[]>(['A close inner circle', 'People who share my interests']);
@@ -87,13 +110,35 @@ export default function OnboardingPage() {
   };
 
   const handleNextStep = () => {
+    if (step === 1) {
+      if (!userName.trim()) {
+        setStep1Error('Please enter your display name.');
+        return;
+      }
+      const hCheck = validateHandle(userHandle);
+      if (!hCheck.valid) {
+        setStep1Error(hCheck.error || 'Invalid username handle.');
+        return;
+      }
+      const dobCheck = validateDateOfBirth(userDob);
+      if (!dobCheck.valid) {
+        setStep1Error(dobCheck.error || 'Date of birth is required.');
+        return;
+      }
+      setStep1Error(null);
+    }
+
     if (step < 8) {
       setStep(step + 1);
     } else {
       setIsRevealing(true);
-      // Onboarding 8 questions complete -> set hasCompletedOnboarding to true, 0 deeper sections completed -> 10% Tribal Pass completion
+      const computedAge = calculateAge(userDob);
+      const bYear = computedAge !== null ? new Date(userDob).getFullYear() : undefined;
       setUserProfile({
         displayName: userName.trim() || 'You',
+        handle: userHandle.trim().toLowerCase(),
+        dateOfBirth: userDob,
+        birthYear: bYear,
         avatarUrl: userPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
         homeArea: userCity,
         hasCompletedOnboarding: true,
@@ -210,7 +255,7 @@ export default function OnboardingPage() {
               transition={{ duration: 0.2 }}
               className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl"
             >
-              {/* STEP 1: NAME, PHOTO & FRIENDSHIP INTENT */}
+              {/* STEP 1: NAME, HANDLE, DOB, PHOTO & FRIENDSHIP INTENT */}
               {step === 1 && (
                 <div>
                   <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
@@ -220,6 +265,12 @@ export default function OnboardingPage() {
                     Who are you & what are you hoping to find?
                   </h3>
 
+                  {step1Error && (
+                    <div className="mt-3 rounded-[12px] border border-rose-500/50 bg-rose-500/10 p-3 text-[13px] font-semibold text-rose-200">
+                      {step1Error}
+                    </div>
+                  )}
+
                   <div className="mt-4 flex flex-col gap-4">
                     {/* User Custom Name Field */}
                     <div>
@@ -227,11 +278,55 @@ export default function OnboardingPage() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. John"
+                        placeholder="e.g. Priya Sharma"
                         value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
+                        onChange={(e) => handleNameChange(e.target.value)}
                         className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
                       />
+                    </div>
+
+                    {/* Username / Handle Field */}
+                    <div>
+                      <label className="text-[13px] font-semibold text-white">Username (Handle) *</label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-4 top-3 text-[14px] font-medium text-white/50">@</span>
+                        <input
+                          type="text"
+                          required
+                          placeholder="priya_sharma"
+                          value={userHandle}
+                          onChange={(e) => handleHandleChange(e.target.value)}
+                          className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 pl-8 pr-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
+                        />
+                      </div>
+                      <p className="mt-1 text-[11.5px] text-white/60">
+                        3–20 characters: lowercase letters, numbers, and underscores. Must be unique.
+                      </p>
+                      {userHandle && !validateHandle(userHandle).valid && (
+                        <p className="mt-1 text-[12px] font-medium text-rose-400">
+                          {validateHandle(userHandle).error}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Date of Birth Field */}
+                    <div>
+                      <label className="text-[13px] font-semibold text-white">Date of Birth *</label>
+                      <input
+                        type="date"
+                        required
+                        value={userDob}
+                        onChange={(e) => setUserDob(e.target.value)}
+                        className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] font-medium text-white outline-none transition-all focus:border-white"
+                      />
+                      <p className="mt-1 text-[11.5px] text-white/60">
+                        Soul Tribe is strictly for adults aged 18 and above.
+                      </p>
+                      {userDob && !validateDateOfBirth(userDob).valid && (
+                        <p className="mt-1 text-[12px] font-medium text-rose-400">
+                          {validateDateOfBirth(userDob).error}
+                        </p>
+                      )}
                     </div>
 
                     {/* Optional Photo Upload */}

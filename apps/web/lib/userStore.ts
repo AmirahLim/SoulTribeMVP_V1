@@ -119,6 +119,9 @@ export const STANDING_LEVELS: StandingLevel[] = [
 export interface UserProfileData {
   version?: number;
   displayName: string;
+  handle?: string;
+  dateOfBirth?: string;
+  birthYear?: number;
   avatarUrl: string;
   homeArea: string;
   bio: string;
@@ -129,6 +132,68 @@ export interface UserProfileData {
   outingsHosted?: number;
   standingKey?: string;
   deepProfile?: DeepProfileAnswers;
+}
+
+export const HANDLE_REGEX = /^[a-z0-9_]{3,20}$/;
+
+export function validateHandle(handle: string): { valid: boolean; error?: string } {
+  const trimmed = (handle || '').trim();
+  if (!trimmed) {
+    return { valid: false, error: 'Username (handle) is required.' };
+  }
+  if (trimmed.length < 3) {
+    return { valid: false, error: 'Username must be at least 3 characters long.' };
+  }
+  if (trimmed.length > 20) {
+    return { valid: false, error: 'Username must be 20 characters or fewer.' };
+  }
+  if (!HANDLE_REGEX.test(trimmed)) {
+    return { valid: false, error: 'Username must contain only lowercase letters, numbers, and underscores.' };
+  }
+  return { valid: true };
+}
+
+export function deriveSuggestedHandle(displayName: string): string {
+  const cleaned = (displayName || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  if (!cleaned) return '';
+  if (cleaned.length < 3) {
+    return (cleaned + '_user').slice(0, 20);
+  }
+  return cleaned.slice(0, 20);
+}
+
+export function calculateAge(dobString: string): number | null {
+  if (!dobString) return null;
+  const dob = new Date(dobString);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+export function validateDateOfBirth(dobString: string): { valid: boolean; age: number | null; birthYear: number | null; error?: string } {
+  if (!dobString) {
+    return { valid: false, age: null, birthYear: null, error: 'Date of birth is required.' };
+  }
+  const dob = new Date(dobString);
+  if (isNaN(dob.getTime())) {
+    return { valid: false, age: null, birthYear: null, error: 'Please enter a valid date of birth.' };
+  }
+  const age = calculateAge(dobString);
+  if (age === null || age < 18) {
+    return { valid: false, age, birthYear: dob.getFullYear(), error: 'Soul Tribe is strictly for adults aged 18 and above.' };
+  }
+  return { valid: true, age, birthYear: dob.getFullYear() };
 }
 
 export interface JoinedGuest {
@@ -187,6 +252,9 @@ export function calculateTribeStanding(outingsAttended: number = 0, outingsHoste
 export const DEFAULT_USER_PROFILE: UserProfileData = {
   version: 10,
   displayName: 'Priya Sharma',
+  handle: 'priya_sharma',
+  dateOfBirth: '1995-06-15',
+  birthYear: 1995,
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Singapore',
   bio: 'Loves specialty coffee, ceramic craft, and analog film.',
