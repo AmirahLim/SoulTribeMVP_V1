@@ -136,7 +136,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const intensity_easygoing = q2.some((f: string) => f.includes('Active') || f.includes('energetic')) ? 0.8 
     : (socialVibeVal?.intensity_easygoing);
   const extraversion = typeof q3Energy === 'number' 
-    ? (q3Energy > 1 ? q3Energy / 100 : Math.max(0.1, Math.min(0.9, 1 - q3Energy))) 
+    ? (q3Energy > 1 ? q3Energy / 100 : Math.max(0.1, Math.min(0.9, q3Energy))) 
     : (mbtiMap?.extraversion);
 
   const personalityAnswered = persObj !== undefined
@@ -224,7 +224,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : 0));
 
   const er_opening_pace = typeof q7Pacing === 'string'
-    ? (q7Pacing.includes('Fast') ? 0.8 : 0.4)
+    ? (q7Pacing.toLowerCase().includes('open book') || q7Pacing.toLowerCase().includes('fast') ? 0.8 : 0.4)
     : (typeof q7Pacing === 'number' ? q7Pacing : undefined);
 
   const emotional = emotionalAnswered > 0 ? {
@@ -275,7 +275,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     ? (expObj?.answered ?? 0)
     : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : 0));
   const group_size_pref = typeof q3GroupSize === 'string'
-    ? (q3GroupSize.includes('1-on-1') ? 0.2 : q3GroupSize.includes('3-4') ? 0.4 : 0.6)
+    ? (q3GroupSize.toLowerCase().includes('1-on-1') || q3GroupSize.toLowerCase().includes('1-2') || q3GroupSize.toLowerCase().includes('one') ? 0.2 : q3GroupSize.toLowerCase().includes('3-4') ? 0.4 : 0.6)
     : (typeof q3GroupSize === 'number' ? q3GroupSize : groupSizeVal);
 
   const experience = expAnswered > 0 ? {

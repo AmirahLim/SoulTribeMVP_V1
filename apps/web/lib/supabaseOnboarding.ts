@@ -123,7 +123,7 @@ export async function saveOnboardingToSupabase(
     // 4. Trait Personality Table (Extraversion from Q3 Energy slider)
     const hasEnergy = typeof data.q3Energy === 'number' && !isNaN(data.q3Energy);
     const extraversionVal = hasEnergy
-      ? Math.round((1 - data.q3Energy!) * 1000) / 1000
+      ? Math.round(data.q3Energy! * 1000) / 1000
       : null;
     const { error: persErr } = await mergeAndUpsertTraitTable(supabase, 'trait_personality', userId, {
       extraversion: extraversionVal,
