@@ -33,7 +33,7 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
   const cat = (category || '').toLowerCase();
   const combined = `${t} ${a} ${cat}`;
 
-  // 1. Hyper-Specific Location & Landmark Matching (Distinct, accurate SG landmarks)
+  // 1. Hyper-Specific Location & Landmark Matching
   if (combined.includes('fort canning') || combined.includes('canning')) {
     return 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=1080&auto=format&fit=crop&q=85';
   }
@@ -128,7 +128,6 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
   const localJoinedIds = new Set(getJoinedOutingsLocal());
 
   if (!checkIsSupabaseConfigured() || !userId) {
-    // If signed in with real userId, filter out any demo item
     const localPitches = getUserPitches();
     return localPitches
       .filter((p) => localJoinedIds.has(p.id) && (!userId || !(p as any).isDemo))
@@ -155,7 +154,6 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       outing_id,
       state,
       role,
-      is_demo,
       outings (
         id,
         host_id,
@@ -165,14 +163,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         area,
         starts_at,
         max_participants,
-        is_demo,
-        cover_image_url,
-        cover_image_thumb_url,
-        cover_image_alt,
-        cover_photographer_name,
-        cover_photographer_url,
-        cover_download_location,
-        profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
+        profiles!outings_host_id_fkey (display_name, avatar_url),
         outing_members (user_id, state)
       )
     `)
@@ -195,7 +186,6 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
 
   const dbItems: OutingItem[] = (memberRows || [])
     .filter((row: any) => {
-      // Hard demo rule: filter out any demo outing when userId is present
       const out = row.outings;
       if (!out) return false;
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
@@ -276,14 +266,7 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       max_participants,
       visibility,
       state,
-      is_demo,
-      cover_image_url,
-      cover_image_thumb_url,
-      cover_image_alt,
-      cover_photographer_name,
-      cover_photographer_url,
-      cover_download_location,
-      profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
+      profiles!outings_host_id_fkey (display_name, avatar_url),
       outing_members (user_id, state)
     `)
     .eq('state', 'open');
@@ -403,14 +386,7 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
       max_participants,
       visibility,
       state,
-      is_demo,
-      cover_image_url,
-      cover_image_thumb_url,
-      cover_image_alt,
-      cover_photographer_name,
-      cover_photographer_url,
-      cover_download_location,
-      profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
+      profiles!outings_host_id_fkey (display_name, avatar_url),
       outing_members (user_id, state)
     `)
     .eq('host_id', userId);
