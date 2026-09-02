@@ -51,11 +51,17 @@ export interface CandidateSource {
 
 /** Server-scored match source interface */
 export interface ScoredMatchSource {
-  getScoredMatches(opts?: { area?: string; limit?: number }): Promise<RankedMatch[]>;
+  getScoredMatches(
+    viewerVec: ProfileVector,
+    opts?: { area?: string; limit?: number }
+  ): Promise<RankedMatch[]>;
 }
 
-export const realCandidateSource: ScoredMatchSource & CandidateSource = {
-  async getScoredMatches(_opts?: { area?: string; limit?: number }): Promise<RankedMatch[]> {
+export const realCandidateSource: ScoredMatchSource = {
+  async getScoredMatches(
+    _viewerVec: ProfileVector,
+    _opts?: { area?: string; limit?: number }
+  ): Promise<RankedMatch[]> {
     if (!checkIsSupabaseConfigured()) {
       return [];
     }
@@ -67,20 +73,8 @@ export const realCandidateSource: ScoredMatchSource & CandidateSource = {
 
       if (!token) {
         if (typeof window === 'undefined' && process.env.VITEST) {
-          const viewerVec = toProfileVector({
-            displayName: 'Viewer',
-            homeArea: _opts?.area || 'Singapore',
-            trait_personality: { extraversion: 0.5, answered: 10 },
-            trait_communication: { mediums: ['text'], conv_styles: ['deep'], answered: 10 },
-            trait_social_rhythm: { availability: ['sat_midday'], answered: 6 },
-            trait_intent: { intents: ['friendship'], answered: 5 },
-            trait_emotional: { er_opening_pace: 0.5, answered: 6 },
-            trait_experience: { group_size_pref: 0.5, answered: 4 },
-            trait_lifestyle: { answered: 5 },
-            trait_geography: { answered: 2 },
-          } as any, '00000000-0000-0000-0000-000000000099');
           const demoVecs = await demoCandidateSource.getCandidates(_opts);
-          return scoreDemoCandidates(viewerVec, demoVecs);
+          return scoreDemoCandidates(_viewerVec, demoVecs);
         }
         return [];
       }
@@ -106,21 +100,6 @@ export const realCandidateSource: ScoredMatchSource & CandidateSource = {
       throw err;
     }
   },
-
-  // Fallback compatibility for vector consumers
-  async getCandidates(opts?: { area?: string; limit?: number }): Promise<CandidateVector[]> {
-    const scored = await this.getScoredMatches(opts);
-    return scored.map((m) => {
-      const vec = toProfileVector(
-        { displayName: m.name, homeArea: m.homeArea, avatarUrl: m.avatarUrl, bio: m.bio } as any,
-        m.id
-      );
-      return {
-        ...vec,
-        isDemo: false,
-      };
-    });
-  },
 };
 
 export const demoCandidateSource: CandidateSource = {
@@ -145,14 +124,16 @@ export function clearLastCandidateFetchError(): void {
 }
 
 export const mixedCandidateSource: ScoredMatchSource = {
-  async getScoredMatches(opts?: { area?: string; limit?: number }): Promise<RankedMatch[]> {
+  async getScoredMatches(
+    viewerVec: ProfileVector,
+    opts?: { area?: string; limit?: number }
+  ): Promise<RankedMatch[]> {
     clearLastCandidateFetchError();
-    const viewerVec = toProfileVector({ displayName: 'Viewer', homeArea: opts?.area || 'Singapore' } as any, '00000000-0000-0000-0000-000000000099');
     const demoVecs = await demoCandidateSource.getCandidates(opts);
     const demoMatches = scoreDemoCandidates(viewerVec, demoVecs);
 
     try {
-      const realMatches = await realCandidateSource.getScoredMatches(opts);
+      const realMatches = await realCandidateSource.getScoredMatches(viewerVec, opts);
       return [...realMatches, ...demoMatches];
     } catch (err: any) {
       const errMsg = err?.message || 'Failed to fetch real member candidates';
@@ -244,10 +225,11 @@ export function getSmallCommunityThreshold(): number {
   return 30;
 }
 
-export async function countRealMembers(area?: string): Promise<number> {
+export async function countRealMembers(area?: string, viewerVec?: ProfileVector): Promise<number> {
   if (customActiveSource) {
     if ('getScoredMatches' in customActiveSource) {
-      const matches = await customActiveSource.getScoredMatches({ area });
+      const fallbackViewerVec = viewerVec || toProfileVector({ displayName: 'Viewer', homeArea: area || 'Singapore' } as any, '00000000-0000-0000-0000-000000000099');
+      const matches = await customActiveSource.getScoredMatches(fallbackViewerVec, { area });
       return matches.filter((m) => !m.isDemo).length;
     }
     const candidates = await customActiveSource.getCandidates({ area });
@@ -257,7 +239,7 @@ export async function countRealMembers(area?: string): Promise<number> {
   if (checkIsSupabaseConfigured()) {
     try {
       const client = getSupabaseBrowserClient();
-      let query = client.from('profiles').select('id', { count: 'exact', head: true });
+      let query = client.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'active');
       if (area) {
         query = query.eq('home_area', area);
       }
@@ -270,7 +252,8 @@ export async function countRealMembers(area?: string): Promise<number> {
     }
   }
 
-  const realMatches = await realCandidateSource.getScoredMatches({ area });
+  const fallbackViewerVec = viewerVec || toProfileVector({ displayName: 'Viewer', homeArea: area || 'Singapore' } as any, '00000000-0000-0000-0000-000000000099');
+  const realMatches = await realCandidateSource.getScoredMatches(fallbackViewerVec, { area });
   return realMatches.filter((m) => !m.isDemo).length;
 }
 
@@ -500,19 +483,23 @@ export async function getRankedMatches(
   clearLastCandidateFetchError();
 
   let viewerId = user.id || opts?.userId;
+  let isAuthenticatedRealMember = false;
   const currentMode = getCandidateMode();
 
   // If in real mode and viewer ID is not passed, attempt to get it from browser session
-  if (!viewerId && currentMode === 'real' && checkIsSupabaseConfigured() && typeof window !== 'undefined') {
+  if (!viewerId && checkIsSupabaseConfigured() && typeof window !== 'undefined') {
     try {
       const client = getSupabaseBrowserClient();
       const { data: { session } } = await client.auth.getSession();
       if (session?.user?.id) {
         viewerId = session.user.id;
+        isAuthenticatedRealMember = true;
       }
     } catch {
       // fallback
     }
+  } else if (viewerId && viewerId !== '00000000-0000-0000-0000-000000000099') {
+    isAuthenticatedRealMember = true;
   }
 
   // SELF-EXCLUSION GUARANTEE: If in real mode and real viewer ID is unavailable in browser, return [] rather than risking showing the user themselves
@@ -533,10 +520,15 @@ export async function getRankedMatches(
   let candidateMatches: RankedMatch[] = [];
 
   if ('getScoredMatches' in source) {
-    candidateMatches = await source.getScoredMatches({ area: opts?.area, limit: opts?.limit });
+    candidateMatches = await source.getScoredMatches(viewerVec, { area: opts?.area, limit: opts?.limit });
   } else {
     const candidateVecs = await source.getCandidates({ area: opts?.area, limit: opts?.limit });
     candidateMatches = scoreDemoCandidates(viewerVec, candidateVecs, context);
+  }
+
+  // PART A GUARD: An authenticated real member must NEVER see a demo profile, whatever NEXT_PUBLIC_CANDIDATE_MODE says.
+  if (isAuthenticatedRealMember) {
+    candidateMatches = candidateMatches.filter((m) => !m.isDemo);
   }
 
   const { hiddenIds, softSuppressedMap } = await getSuppressionData(effectiveId);

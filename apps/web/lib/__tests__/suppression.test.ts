@@ -149,7 +149,8 @@ describe('Repeat Suppression & Freshness Service Tests', () => {
     clearMockSuppressionData();
     setCandidateSource(demoCandidateSource);
 
-    const matches = await getRankedMatches(viewerUser, { limit: 5 });
+    const anonUser = { ...viewerUser, id: undefined };
+    const matches = await getRankedMatches(anonUser, { limit: 5 });
     assert.ok(matches.length > 0, 'Demo matches returned for demo source');
 
     // recordSurfacedMatches must filter out demo matches

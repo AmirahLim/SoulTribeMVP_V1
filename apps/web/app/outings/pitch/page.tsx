@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@soul-tribe/ui';
 import { Check, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
 import { getUserProfile, PitchedOuting, JoinedGuest, addUserPitch } from '../../../lib/userStore';
-import { getActiveCandidateSource, CandidateVector } from '../../../lib/matching';
+import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/authContext';
 import { AuthGuard } from '../../../components/AuthGuard';
@@ -37,8 +37,8 @@ function PitchComposerContent() {
   const [maxParticipants] = useState<number>(6);
   const [setting, setSetting] = useState<string>('General');
 
-  const [candidates, setCandidates] = useState<CandidateVector[]>([]);
-  const [selectedGuests, setSelectedGuests] = useState<CandidateVector[]>([]);
+  const [candidates, setCandidates] = useState<RankedMatch[]>([]);
+  const [selectedGuests, setSelectedGuests] = useState<RankedMatch[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -96,41 +96,12 @@ function PitchComposerContent() {
 
   useEffect(() => {
     async function loadCandidates() {
-      const source = getActiveCandidateSource();
-      const list = 'getCandidates' in source 
-        ? await source.getCandidates({ limit: 30 })
-        : (await source.getScoredMatches({ limit: 30 })).map((m: any) => ({
-            profile: {
-              id: m.id,
-              handle: m.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-              display_name: m.name,
-              avatar_url: m.avatarUrl,
-              bio: m.bio,
-              home_area: m.homeArea,
-              birth_year: 1995,
-              age_pref_min: 18,
-              age_pref_max: 99,
-              profile_version: 6,
-              confidence: 0.8,
-              tier: 'free' as const,
-              status: 'active' as const,
-            },
-            personality: {} as any,
-            communication: {} as any,
-            social_rhythm: {} as any,
-            intent: {} as any,
-            emotional: {} as any,
-            values: [],
-            interests: [],
-            lifestyle: {} as any,
-            experience: {} as any,
-            geography: {} as any,
-            isDemo: false,
-          }));
-      setCandidates(list as CandidateVector[]);
+      const userProfile = getUserProfile();
+      const list = await getRankedMatches(userProfile, { limit: 30 });
+      setCandidates(list);
 
       if (initialInviteId) {
-        const match = list.find((c: any) => c.profile.id === initialInviteId);
+        const match = list.find((m) => m.id === initialInviteId);
         if (match) setSelectedGuests([match]);
       } else if (list.length > 0) {
         const maxGuests = maxParticipants - 1;
@@ -140,9 +111,9 @@ function PitchComposerContent() {
     loadCandidates();
   }, [initialInviteId]);
 
-  const toggleGuest = (candidate: CandidateVector) => {
-    if (selectedGuests.some((g) => g.profile.id === candidate.profile.id)) {
-      setSelectedGuests(selectedGuests.filter((g) => g.profile.id !== candidate.profile.id));
+  const toggleGuest = (candidate: RankedMatch) => {
+    if (selectedGuests.some((g) => g.id === candidate.id)) {
+      setSelectedGuests(selectedGuests.filter((g) => g.id !== candidate.id));
     } else {
       if (selectedGuests.length + 1 >= maxParticipants) {
         alert(`Free tier outings are capped at ${maxParticipants} total participants including host.`);
@@ -282,10 +253,10 @@ function PitchComposerContent() {
 
         // Insert invited guests into outing_members if any
         for (const guest of selectedGuests) {
-          if (guest.profile.id && !guest.isDemo) {
+          if (guest.id && !guest.isDemo) {
             await client.from('outing_members').insert({
               outing_id: newOuting.id,
-              user_id: guest.profile.id,
+              user_id: guest.id,
               role: 'guest',
               state: 'invited',
             });
@@ -300,10 +271,10 @@ function PitchComposerContent() {
       // 2. Fallback local store if Supabase not configured
       const fallbackId = `pitch-${Date.now()}`;
       const joinedGuestsList: JoinedGuest[] = selectedGuests.map((g) => ({
-        id: g.profile.id,
-        name: g.profile.display_name,
-        avatarUrl: g.profile.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-        homeArea: g.profile.home_area,
+        id: g.id,
+        name: g.name,
+        avatarUrl: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        homeArea: g.homeArea,
         status: 'Pending',
         isDemo: g.isDemo,
       }));
@@ -551,11 +522,11 @@ function PitchComposerContent() {
 
             <div className="mt-4 flex flex-col gap-3 max-h-[360px] overflow-y-auto pr-1">
               {candidates.map((candidate) => {
-                const isSelected = selectedGuests.some((g) => g.profile.id === candidate.profile.id);
+                const isSelected = selectedGuests.some((g) => g.id === candidate.id);
 
                 return (
                   <button
-                    key={candidate.profile.id}
+                    key={candidate.id}
                     type="button"
                     onClick={() => toggleGuest(candidate)}
                     className={`flex items-center justify-between rounded-[16px] border p-3 text-left transition-all ${
@@ -566,13 +537,13 @@ function PitchComposerContent() {
                   >
                     <div className="flex items-center gap-3">
                       <img
-                        src={candidate.profile.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
-                        alt={candidate.profile.display_name}
+                        src={candidate.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                        alt={candidate.name}
                         className="h-10 w-10 rounded-full object-cover"
                       />
                       <div>
                         <h4 className="text-[14px] font-bold text-white flex items-center gap-1.5">
-                          {candidate.profile.display_name}
+                          {candidate.name}
                           {candidate.isDemo && (
                             <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9px] font-extrabold uppercase shrink-0 whitespace-nowrap">
                               Demo
@@ -580,7 +551,7 @@ function PitchComposerContent() {
                           )}
                         </h4>
                         <span className="text-[11.5px] text-white/70">
-                          {candidate.profile.home_area}
+                          {candidate.homeArea}
                         </span>
                       </div>
                     </div>

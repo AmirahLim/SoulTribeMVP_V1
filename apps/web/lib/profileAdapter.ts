@@ -310,7 +310,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     importance: 0.8,
   }));
 
-  const birthYear = user.birthYear ?? (user as any).birth_year ?? 1995;
+  const birthYear = user.birthYear ?? (user as any).birth_year;
   const agePrefMin = user.agePrefMin ?? (user as any).age_pref_min;
   const agePrefMax = user.agePrefMax ?? (user as any).age_pref_max;
 

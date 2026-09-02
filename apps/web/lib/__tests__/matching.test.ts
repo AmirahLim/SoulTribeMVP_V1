@@ -5,6 +5,7 @@ import {
   getRankedMatches,
   setCandidateSource,
   demoCandidateSource,
+  mixedCandidateSource,
   countRealMembers,
   isSmallCommunityMode,
   getSmallCommunityThreshold,
@@ -305,7 +306,55 @@ describe('Small Community Mode Tests', () => {
     const containsGated = matches.some((m) => m.id === gatedId);
     assert.strictEqual(containsGated, false, 'Gated members must never appear in either mode');
 
-    // Reset candidate source
+    setCandidateSource(demoCandidateSource);
+  });
+
+  it('Two viewers with different onboarding answers score differently against the same demo pool', async () => {
+    setCandidateSource(mixedCandidateSource);
+
+    const viewerA: UserProfileData = {
+      displayName: 'Viewer A',
+      homeArea: 'Singapore',
+      avatarUrl: '',
+      bio: 'Bio A',
+      passCompletionPct: 10,
+      q1Finding: ['Close 1-on-1 friendships'],
+      q2Feelings: ['Deep 1-on-1s', 'Chill & relaxed'],
+      q4Connected: ['Voice notes'],
+      q5PlanningRhythm: 'Spontaneous',
+      q6Outings: ['Coffee & wandering', 'Board games'],
+      q7EmotionalPacing: 'Fast opener',
+      q8Qualities: ['Authenticity', 'Reliability'],
+    };
+
+    const viewerB: UserProfileData = {
+      displayName: 'Viewer B',
+      homeArea: 'Singapore',
+      avatarUrl: '',
+      bio: 'Bio B',
+      passCompletionPct: 10,
+      q1Finding: ['Activity partners'],
+      q2Feelings: ['Active & energetic', 'Light banter'],
+      q4Connected: ['Quick texts'],
+      q5PlanningRhythm: 'Planned in advance',
+      q6Outings: ['Active & sports', 'Nightlife & drinks'],
+      q7EmotionalPacing: 'Slow opener',
+      q8Qualities: ['Humor & wit', 'Ambition'],
+    };
+
+    const matchesA = await getRankedMatches(viewerA, { limit: 5 });
+    const matchesB = await getRankedMatches(viewerB, { limit: 5 });
+
+    assert.ok(matchesA.length > 0, 'Viewer A should get matches');
+    assert.ok(matchesB.length > 0, 'Viewer B should get matches');
+
+    const differs = matchesA.some((mA) => {
+      const mB = matchesB.find((b) => b.id === mA.id);
+      return mB && (mA.clickText !== mB.clickText || mA.rankScore !== mB.rankScore);
+    });
+
+    assert.ok(differs, 'Two viewers with different onboarding answers must produce different clickText or rankScore');
+
     setCandidateSource(demoCandidateSource);
   });
 });
