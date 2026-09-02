@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
 import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles, Edit3, Plus, X, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
-import { getUserProfile, removeUserPitchLocal, removeJoinedOutingLocal, getUserPitches } from '../../../lib/userStore';
+import { getUserProfile, removeUserPitchLocal, addJoinedOutingLocal, removeJoinedOutingLocal, getUserPitches } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { getOutingCategoryImage } from '../../../lib/outingsStore';
@@ -531,6 +531,8 @@ function OutingDetailContent() {
       return;
     }
 
+    addJoinedOutingLocal(outingId);
+
     if (checkIsSupabaseConfigured()) {
       try {
         const client = getSupabaseBrowserClient();
@@ -547,8 +549,10 @@ function OutingDetailContent() {
           // Catch 6-person cap trigger failure
           if (error.message.includes('cap') || error.message.includes('exceed') || error.code === 'P0001') {
             setErrorMessage('This outing is full (capped at 6 participants).');
+            removeJoinedOutingLocal(outingId);
           } else {
             setErrorMessage(error.message);
+            removeJoinedOutingLocal(outingId);
           }
           return;
         }
@@ -568,6 +572,7 @@ function OutingDetailContent() {
         return;
       } catch (err: any) {
         setErrorMessage(err?.message || 'Failed to send join request');
+        removeJoinedOutingLocal(outingId);
         return;
       }
     }
@@ -591,6 +596,7 @@ function OutingDetailContent() {
   const handleLeaveOuting = async () => {
     setErrorMessage('');
     setActionMessage('');
+    removeJoinedOutingLocal(outingId);
 
     if (checkIsSupabaseConfigured()) {
       try {

@@ -152,25 +152,32 @@ import { getUserPitches, getJoinedOutingsLocal } from './userStore';
  */
 export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> {
   const localJoinedIds = new Set(getJoinedOutingsLocal());
+  const localPitches = getUserPitches();
+  const localJoinedItems: OutingItem[] = localPitches
+    .filter((p) => localJoinedIds.has(p.id) && (!userId || !(p as any).isDemo))
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      pitch: p.pitch,
+      area: p.area,
+      dateTime: p.dateTime,
+      hostId: p.hostId || 'host',
+      hostName: p.hostName,
+      hostAvatar: p.hostAvatar,
+      seatsTotal: p.seatsTotal,
+      seatsFilled: p.seatsFilled,
+      state: 'requested',
+      category: (p as any).category,
+      cover_image_url: p.cover_image_url,
+      cover_image_thumb_url: p.cover_image_thumb_url,
+      cover_image_alt: p.cover_image_alt,
+      cover_photographer_name: p.cover_photographer_name,
+      cover_photographer_url: p.cover_photographer_url,
+      cover_download_location: p.cover_download_location,
+    }));
 
   if (!checkIsSupabaseConfigured() || !userId) {
-    const localPitches = getUserPitches();
-    return localPitches
-      .filter((p) => localJoinedIds.has(p.id) && (!userId || !(p as any).isDemo))
-      .map((p) => ({
-        id: p.id,
-        title: p.title,
-        pitch: p.pitch,
-        area: p.area,
-        dateTime: p.dateTime,
-        hostId: p.hostId || 'host',
-        hostName: p.hostName,
-        hostAvatar: p.hostAvatar,
-        seatsTotal: p.seatsTotal,
-        seatsFilled: p.seatsFilled,
-        state: 'requested',
-        category: (p as any).category,
-      }));
+    return localJoinedItems;
   }
 
   const client = getSupabaseBrowserClient();
@@ -204,10 +211,6 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       hint: error.hint,
     });
     throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
-  }
-
-  if (!memberRows || memberRows.length === 0) {
-    return [];
   }
 
   const dbItems: OutingItem[] = (memberRows || [])
@@ -265,7 +268,83 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
     })
     .filter(Boolean) as OutingItem[];
 
-  return dbItems;
+  const dbIds = new Set(dbItems.map((i) => i.id));
+  const missingJoinedIds = Array.from(localJoinedIds).filter((id) => !dbIds.has(id));
+
+  if (missingJoinedIds.length > 0) {
+    try {
+      const { data: missingOutings } = await client
+        .from('outings')
+        .select(`
+          id,
+          host_id,
+          title,
+          pitch,
+          activity_category,
+          area,
+          starts_at,
+          max_participants,
+          visibility,
+          state,
+          profiles!outings_host_id_fkey (display_name, avatar_url),
+          outing_members (user_id, state)
+        `)
+        .in('id', missingJoinedIds);
+
+      if (missingOutings && missingOutings.length > 0) {
+        missingOutings.forEach((out: any) => {
+          const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
+          const hostName = hostProfile?.display_name || '';
+          const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');
+          const members = Array.isArray(out.outing_members) ? out.outing_members : [];
+          const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
+
+          let dateTimeStr = '';
+          if (out.starts_at) {
+            const d = new Date(out.starts_at);
+            if (!isNaN(d.getTime())) {
+              dateTimeStr = d.toLocaleDateString('en-SG', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+            }
+          }
+
+          dbItems.push({
+            id: out.id,
+            title: out.title,
+            pitch: out.pitch || '',
+            area: out.area || 'Singapore',
+            category: out.activity_category || 'coffee',
+            dateTime: dateTimeStr,
+            hostId: out.host_id,
+            hostName,
+            hostAvatar,
+            isHostDemo: false,
+            seatsTotal: out.max_participants || 6,
+            seatsFilled,
+            state: 'requested',
+            cover_image_url: out.cover_image_url,
+            cover_image_thumb_url: out.cover_image_thumb_url,
+            cover_image_alt: out.cover_image_alt,
+            cover_photographer_name: out.cover_photographer_name,
+            cover_photographer_url: out.cover_photographer_url,
+            cover_download_location: out.cover_download_location,
+          });
+        });
+      }
+    } catch {
+      // Fallthrough to localJoinedItems
+    }
+  }
+
+  const finalDbIds = new Set(dbItems.map((i) => i.id));
+  const uniqueLocalJoined = localJoinedItems.filter((i) => !finalDbIds.has(i.id));
+
+  return [...dbItems, ...uniqueLocalJoined];
 }
 
 /**
