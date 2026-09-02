@@ -9,7 +9,6 @@ import {
   calculateTribeStanding
 } from '../../lib/userStore';
 import { AuthGuard } from '../../components/AuthGuard';
-import { getActiveNextBestPrompts } from '../../lib/threadPrompts';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 
@@ -23,13 +22,6 @@ import { SocialInstincts, InstinctItem } from '../../components/profile/SocialIn
 import { ValuesConstellationCanvas } from '../../components/profile/ValuesConstellationCanvas';
 import { InterestGraphCanvas } from '../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
-
-function sanitizeOpenAnswer(raw?: string): string {
-  if (!raw) return '';
-  return raw
-    .replace(/^(I really respect people who|I feel most connected when|I'm looking for|What earns my trust is|I respect people who)\s*/i, '')
-    .trim();
-}
 
 export default function ProfilePage() {
   return (
@@ -48,8 +40,8 @@ function ProfileContent() {
     handle: 'mimeooo',
     homeArea: 'Singapore',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 10,
+    bio: '',
+    passCompletionPct: 100,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -73,7 +65,7 @@ function ProfileContent() {
     setProfileState(loaded);
     setEditName(loaded.displayName || 'Mimeo');
     setEditArea(loaded.homeArea || 'Singapore');
-    setEditBio(loaded.bio || 'Loves specialty coffee, ceramic craft, and analog film.');
+    setEditBio(loaded.bio || '');
     setEditPhoto(loaded.avatarUrl || '');
 
     if (authUser?.id) {
@@ -97,7 +89,7 @@ function ProfileContent() {
               setProfileState(merged);
               setEditName(merged.displayName);
               setEditArea(merged.homeArea);
-              setEditBio(merged.bio);
+              setEditBio(merged.bio || '');
               setEditPhoto(merged.avatarUrl);
             }
           });
@@ -137,17 +129,10 @@ function ProfileContent() {
   };
 
   const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
-  const completedCats = profile.completedCategoryNums || [2, 3, 4, 5, 6, 7];
+  const passCompletionPct = profile.passCompletionPct !== undefined ? profile.passCompletionPct : 100;
+  const confidenceValue = 0.95;
 
-  const confidenceValue = 0.42;
-
-  const nextPrompts = getActiveNextBestPrompts(profile, 2).map((p) => ({
-    thread: p.thread,
-    question: p.label,
-    prompt: p.copy,
-  }));
-
-  // 10 Petals for Bloom (ghost outlines for unexplored threads)
+  // 10 Petals for Bloom
   const bloomThreads = [
     { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Four people is where you stop scanning the room and start noticing one person.' },
     { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'You surface in bursts. A quiet fortnight does not read as distance.' },
@@ -155,9 +140,9 @@ function ProfileContent() {
     { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.' },
     { key: 'emotional', label: 'Emotional Connection', strength: 0.8, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
     { key: 'interests', label: 'Interests', strength: 0.85, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
-    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: 'Unexplored thread' },
+    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Curiosity sits at the centre of most of your answers — the others orbit it.' },
     { key: 'lifestyle', label: 'Play & Humour', strength: 0.8, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
-    { key: 'experience', label: 'Conversation', strength: 0, confidence: 0, sentence: 'Unexplored thread' },
+    { key: 'experience', label: 'Conversation', strength: 0.7, confidence: confidenceValue, sentence: 'Conversations start somewhere ordinary and end up somewhere neither planned.' },
     { key: 'logistics', label: 'Availability', strength: 0.65, confidence: confidenceValue, sentence: 'Available weekday evenings and Saturday mornings.' },
   ];
 
@@ -276,19 +261,20 @@ function ProfileContent() {
 
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-        {/* 1. Profile Hero (Reference Screenshot Top Layout) */}
+        {/* 1. Profile Hero with Top Social Summary, Tribe Standing & Connector Card */}
         <ProfileHero
           displayName={profile.displayName || 'Mimeo'}
           handle={profile.handle || 'mimeooo'}
           homeArea={profile.homeArea || 'Singapore'}
-          bio={profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
+          bio={profile.bio}
           avatarUrl={profile.avatarUrl}
-          tier="Member"
+          passCompletionPct={passCompletionPct}
           standingText={currentStanding.label}
-          confidence={confidenceValue}
-          nextQuestions={nextPrompts}
+          instinctType={primaryInstinct.type}
+          instinctDescription={primaryInstinct.description}
+          summaryHeadline={tribalReadData.headline}
+          summaryText={tribalReadData.summary}
           onEditProfile={() => setIsSettingsOpen(true)}
-          onExploreThread={(key) => router.push('/you/deeper')}
           onDeepenPass={() => router.push('/you/deeper')}
         />
 
@@ -427,7 +413,7 @@ function ProfileContent() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#5BD99A] py-2.5 font-bold text-[#070908]"
+                  className="flex-1 rounded-xl bg-[#2D523E] py-2.5 font-bold text-[#F5F2EA]"
                 >
                   Save Changes
                 </button>
