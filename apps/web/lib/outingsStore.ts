@@ -27,21 +27,21 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
   const cat = (category || '').toLowerCase();
   const combined = `${t} ${a} ${cat}`;
 
-  // 1. Hyper-Specific Location & Landmark Matching
+  // 1. Hyper-Specific Location & Landmark Matching (Distinct, accurate SG landmarks)
   if (combined.includes('fort canning') || combined.includes('canning')) {
-    // Fort Canning Park green tree tunnel & lush heritage park
-    return 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=1080&auto=format&fit=crop&q=85';
+    // Lush green heritage park trees & sunlit botanical lawn (Fort Canning Park)
+    return 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=1080&auto=format&fit=crop&q=85';
   }
   if (combined.includes('ubin') || combined.includes('pulau ubin')) {
-    // Pulau Ubin granite quarry lake & rustic Singapore nature trail
-    return 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1080&auto=format&fit=crop&q=85';
+    // Serene tropical forest & rustic quarry lake waters (Pulau Ubin)
+    return 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1080&auto=format&fit=crop&q=85';
   }
   if (combined.includes('gardens by the bay') || combined.includes('supertree')) {
-    // Gardens by the Bay Supertrees & Flower Dome
+    // Gardens by the Bay Supertree Grove (Singapore)
     return 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1080&auto=format&fit=crop&q=85';
   }
   if (combined.includes('sentosa') || combined.includes('tanjong') || combined.includes('siloso')) {
-    // Sentosa island tropical beach
+    // Sentosa island tropical beach & palm trees
     return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1080&auto=format&fit=crop&q=85';
   }
   if (combined.includes('marina bay') || combined.includes('mbs') || combined.includes('bayfront')) {
@@ -49,7 +49,7 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
   }
 
-  // 2. Dating Apps / Mobile App Discussions vs Cozy Romance
+  // 2. Dating Apps / Mobile App Discussions vs Romance
   if (
     combined.includes('dating app') ||
     combined.includes('online dating') ||
@@ -60,7 +60,7 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     combined.includes('bumble') ||
     combined.includes('hinge')
   ) {
-    // Smartphone in hand displaying modern mobile dating app UI
+    // Smartphone in hand displaying mobile app UI
     return 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1080&auto=format&fit=crop&q=85';
   }
   if (
@@ -71,14 +71,14 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     combined.includes('relationship') ||
     combined.includes('speed date')
   ) {
-    // Cozy candlelit lounge dating atmosphere
-    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1080&auto=format&fit=crop&q=85';
+    // Intimate lounge seating for dating discussions
+    return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
   }
 
   // 3. Iconic Singapore City Skyline (Default for "Singapore" / "SG")
   if (combined.includes('singapore') || combined.includes('sg') || combined.includes('cbd') || combined.includes('city')) {
-    // Iconic Singapore skyline & Marina Bay Sands night view
-    return 'https://images.unsplash.com/photo-1565967511849-76a4597470b8?w=1080&auto=format&fit=crop&q=85';
+    // Iconic Singapore skyline waterfront view
+    return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
   }
 
   // 4. Activity Specific High-Resolution Photography
@@ -107,16 +107,16 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     return 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1080&auto=format&fit=crop&q=85';
   }
 
-  // 5. Category Fallbacks with Ultra High-Res Photography
+  // 5. Category Fallbacks with Distinct Photography
   if (cat.includes('coffee')) return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('dining') || cat.includes('food')) return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('active') || cat.includes('outdoor')) return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('intellectual')) return 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1080&auto=format&fit=crop&q=85';
-  if (cat.includes('cultural') || cat.includes('art')) return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('cultural') || cat.includes('art')) return 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('nightlife') || cat.includes('drinks')) return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('creative') || cat.includes('craft')) return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=1080&auto=format&fit=crop&q=85';
 
-  return 'https://images.unsplash.com/photo-1565967511849-76a4597470b8?w=1080&auto=format&fit=crop&q=85';
+  return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
 }
 
 import { getUserPitches, getJoinedOutingsLocal } from './userStore';
