@@ -1,0 +1,270 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { toProfileVector } from '../../../lib/profileAdapter';
+import {
+  score,
+  softGate,
+  generateMatchExplanation,
+  nextBestQuestions,
+  BASELINE_WEIGHTS,
+  ProfileVector,
+} from '@soul-tribe/core';
+
+export const runtime = 'nodejs';
+
+function isDimAnswered(vec: ProfileVector, key: string): boolean {
+  if (!vec) return false;
+  if (key === 'personality') return (vec.personality?.answered ?? 0) > 0;
+  if (key === 'communication') return (vec.communication?.answered ?? 0) > 0;
+  if (key === 'social_rhythm') return (vec.social_rhythm?.answered ?? 0) > 0;
+  if (key === 'intent') return (vec.intent?.answered ?? 0) > 0;
+  if (key === 'emotional') return (vec.emotional?.answered ?? 0) > 0;
+  if (key === 'interests') return (vec.interests?.length ?? 0) > 0;
+  if (key === 'values') return (vec.values?.length ?? 0) > 0;
+  if (key === 'lifestyle') return (vec.lifestyle?.answered ?? 0) > 0;
+  if (key === 'experience') return (vec.experience?.answered ?? 0) > 0;
+  if (key === 'geography') return (vec.geography?.answered ?? 0) > 0;
+  return false;
+}
+
+const DIM_PHRASES: Record<string, { high: string; mid: string; low: string }> = {
+  personality: {
+    high: 'High alignment in social energy and interaction pace.',
+    mid: 'Balanced contrast between introverted and extroverted rhythms.',
+    low: 'Opposite energy preferences that require conscious pacing.',
+  },
+  communication: {
+    high: 'Matching messaging styles and expectations for response speed.',
+    mid: 'Complementary text vs call preferences with workable rhythm.',
+    low: 'Different expectations around reply frequency and message length.',
+  },
+  intent: {
+    high: 'Shared goals for friendship depth and commitment.',
+    mid: 'Compatible openness to new connections and shared activities.',
+    low: 'Varying expectations around how quickly to build closeness.',
+  },
+  emotional: {
+    high: 'Identical comfort levels with vulnerability and deep topics.',
+    mid: 'Gradual, mutual opening pace as trust builds over time.',
+    low: 'Different comfort thresholds for sharing personal feelings early on.',
+  },
+  values: {
+    high: 'Strong alignment on core life principles and mutual respect.',
+    mid: 'Shared appreciation for authenticity and clear boundaries.',
+    low: 'Different priority focus on personal goals vs community.',
+  },
+  interests: {
+    high: 'Rich overlap in shared hobbies and outing preferences.',
+    mid: 'Mutual curiosity in trying new activities together.',
+    low: 'Distinct interests with opportunity for new discoveries.',
+  },
+  social_rhythm: {
+    high: 'Synchronized weekend availability and planning style.',
+    mid: 'Flexible schedule overlap on weekends and weekday evenings.',
+    low: 'Different planning horizons that require advance scheduling.',
+  },
+  lifestyle: {
+    high: 'Harmonious budget and social setting choices.',
+    mid: 'Compatible coffee and dining preferences.',
+    low: 'Varying setting and activity budget preferences.',
+  },
+  experience: {
+    high: 'Shared preference for intimate small-group outings.',
+    mid: 'Flexible comfort with both 1-on-1s and small groups.',
+    low: 'Different group size and environment preferences.',
+  },
+  geography: {
+    high: 'Close neighbourhood proximity in Singapore.',
+    mid: 'Convenient central MRT travel distance.',
+    low: 'Across-town location requiring intentional meetup spots.',
+  },
+};
+
+function getDimensionPhrase(key: string, alignment: number): string {
+  const bank = DIM_PHRASES[key] || {
+    high: 'Strong alignment in this dimension.',
+    mid: 'Balanced resonance in this dimension.',
+    low: 'Complementary difference in this dimension.',
+  };
+  if (alignment >= 0.75) return bank.high;
+  if (alignment >= 0.50) return bank.mid;
+  return bank.low;
+}
+
+const QUESTION_MAP: Record<string, { prompt: string; href: string }> = {
+  personality: { prompt: 'Share your social energy style and MBTI type', href: '/you/deeper?cat=1' },
+  communication: { prompt: 'Clarify your preferred messaging mediums & reply pace', href: '/you/deeper?cat=2' },
+  social_rhythm: { prompt: 'Set your weekend availability & planning rhythm', href: '/you/deeper?cat=3' },
+  intent: { prompt: 'Specify what depth of friendship you are looking for', href: '/you/deeper?cat=4' },
+  emotional: { prompt: 'Define your opening pace for personal conversations', href: '/you/deeper?cat=5' },
+  interests: { prompt: 'Tag your favorite weekend activities & hobbies', href: '/onboarding' },
+  values: { prompt: 'Pick the core character traits you value most in friends', href: '/onboarding' },
+  lifestyle: { prompt: 'Add your coffee, dining, and weekend lifestyle habits', href: '/you/deeper?cat=6' },
+  experience: { prompt: 'Share your preferred group size & outing vibe', href: '/you/deeper?cat=7' },
+  geography: { prompt: 'Set your preferred Singapore neighbourhoods', href: '/profile' },
+};
+
+function adaptRowToUserData(row: any): any {
+  return {
+    displayName: row.display_name,
+    homeArea: row.home_area || 'Singapore',
+    avatarUrl: row.avatar_url,
+    bio: row.bio,
+    birthYear: row.birth_year,
+    agePrefMin: row.age_pref_min,
+    agePrefMax: row.age_pref_max,
+    trait_intent: Array.isArray(row.trait_intent) ? row.trait_intent[0] : row.trait_intent,
+    trait_communication: Array.isArray(row.trait_communication) ? row.trait_communication[0] : row.trait_communication,
+    trait_personality: Array.isArray(row.trait_personality) ? row.trait_personality[0] : row.trait_personality,
+    trait_social_rhythm: Array.isArray(row.trait_social_rhythm) ? row.trait_social_rhythm[0] : row.trait_social_rhythm,
+    trait_emotional: Array.isArray(row.trait_emotional) ? row.trait_emotional[0] : row.trait_emotional,
+    trait_experience: Array.isArray(row.trait_experience) ? row.trait_experience[0] : row.trait_experience,
+    trait_lifestyle: Array.isArray(row.trait_lifestyle) ? row.trait_lifestyle[0] : row.trait_lifestyle,
+    trait_geography: Array.isArray(row.trait_geography) ? row.trait_geography[0] : row.trait_geography,
+    user_interests: row.user_interests || [],
+    user_values: row.user_values || [],
+  };
+}
+
+export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : null;
+
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'mock-pub-key';
+  const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'mock-secret-key';
+
+  let authUserId: string | null = null;
+
+  if (token) {
+    const authClient = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false } });
+    const { data: { user }, error } = await authClient.auth.getUser(token);
+    if (!error && user) {
+      authUserId = user.id;
+    }
+  }
+
+  if (!authUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const adminClient = createClient(supabaseUrl, secretKey, { auth: { persistSession: false } });
+
+  // 2. Parse request body
+  const body = await req.json().catch(() => ({}));
+  const candidateId = body.candidateId;
+
+  if (!candidateId || typeof candidateId !== 'string') {
+    return NextResponse.json({ error: 'candidateId is required' }, { status: 400 });
+  }
+
+  // 3. Fetch profiles from database bypassing RLS
+  const { data: dbProfiles, error: fetchErr } = await adminClient
+    .from('profiles')
+    .select(`
+      id,
+      display_name,
+      avatar_url,
+      home_area,
+      bio,
+      birth_year,
+      age_pref_min,
+      age_pref_max,
+      status,
+      trait_intent (*),
+      trait_communication (*),
+      trait_personality (*),
+      trait_social_rhythm (*),
+      trait_emotional (*),
+      trait_experience (*),
+      trait_lifestyle (*),
+      trait_geography (*),
+      user_interests (*, interest_nodes (name)),
+      user_values (*)
+    `)
+    .in('id', [authUserId, candidateId]);
+
+  if (fetchErr || !dbProfiles) {
+    return NextResponse.json({ error: 'Failed to fetch profile data' }, { status: 500 });
+  }
+
+  const viewerRow = dbProfiles.find((p: any) => p.id === authUserId);
+  const candRow = dbProfiles.find((p: any) => p.id === candidateId);
+
+  if (!viewerRow || !candRow) {
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+  }
+
+  // Build ProfileVectors
+  const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
+  const candVec = toProfileVector(adaptRowToUserData(candRow), candidateId);
+
+  const matchRes = score(viewerVec, candVec);
+  const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
+  const explanation = generateMatchExplanation(viewerVec, candVec);
+
+  const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
+
+  const dimKeys = [
+    'personality',
+    'communication',
+    'intent',
+    'emotional',
+    'values',
+    'interests',
+    'social_rhythm',
+    'lifestyle',
+    'experience',
+    'geography',
+  ];
+
+  const dimensions = dimKeys.map((key) => {
+    const isAnsweredA = isDimAnswered(viewerVec, key);
+    const isAnsweredB = isDimAnswered(candVec, key);
+    const isKnown = isAnsweredA && isAnsweredB;
+    const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
+
+    if (!isKnown) {
+      return {
+        key,
+        status: 'unknown' as const,
+        weight,
+      };
+    }
+
+    const alignment = matchRes.contributions[key] ?? 0.5;
+    const phrase = getDimensionPhrase(key, alignment);
+
+    return {
+      key,
+      status: 'known' as const,
+      alignment,
+      weight,
+      phrase,
+    };
+  });
+
+  const nextQuestions = nextBestQuestions(viewerVec, 3);
+  const sharpen = nextQuestions.map((qId) => ({
+    questionId: qId,
+    prompt: QUESTION_MAP[qId]?.prompt || `Answer questions on ${qId} to refine match precision`,
+    href: QUESTION_MAP[qId]?.href || '/you/deeper',
+  }));
+
+  return NextResponse.json({
+    overall: {
+      rankScore: softRes.adjustedScore,
+      resonance: matchRes.resonance,
+      logistics: matchRes.logistics,
+      confidence: minConfidence,
+      provisional: softRes.provisional,
+    },
+    dimensions,
+    rubText: explanation.friction_text,
+    sharpen,
+  });
+}

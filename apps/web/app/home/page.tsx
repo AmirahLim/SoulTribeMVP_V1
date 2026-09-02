@@ -356,11 +356,18 @@ function HomeContent() {
                       {person.bio}
                     </p>
 
-                    <Link href={`/people/${person.id}`} className="shrink-0">
-                      <Button variant="secondary" size="sm" className="whitespace-nowrap">
-                        View Profile →
-                      </Button>
-                    </Link>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link href={`/people/${person.id}/bond`}>
+                        <Button variant="ghost" size="sm" className="whitespace-nowrap text-emerald-300 border border-emerald-400/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-[11.5px] px-2.5">
+                          View Bond
+                        </Button>
+                      </Link>
+                      <Link href={`/people/${person.id}`}>
+                        <Button variant="secondary" size="sm" className="whitespace-nowrap text-[11.5px] px-2.5">
+                          View Profile →
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </motion.div>
               ))

@@ -160,9 +160,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 2. Communication
-  const dbCommAnswered = (user as any).trait_communication?.answered ?? (user as any).communication?.answered;
-  const commAnswered = typeof dbCommAnswered === 'number'
-    ? dbCommAnswered
+  const commObj = (user as any).trait_communication !== undefined ? (user as any).trait_communication : (user as any).communication;
+  const commAnswered = commObj !== undefined
+    ? (commObj?.answered ?? 0)
     : (q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : 0)));
 
   const communication = {
@@ -182,9 +182,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 3. Social Rhythm
-  const dbRhythmAnswered = (user as any).trait_social_rhythm?.answered ?? (user as any).social_rhythm?.answered;
-  const rhythmAnswered = typeof dbRhythmAnswered === 'number'
-    ? dbRhythmAnswered
+  const rhythmObj = (user as any).trait_social_rhythm !== undefined ? (user as any).trait_social_rhythm : (user as any).social_rhythm;
+  const rhythmAnswered = rhythmObj !== undefined
+    ? (rhythmObj?.answered ?? 0)
     : (q5Avail.length > 0 || q5Rhythm ? 6 : ((saturdayVal ? 3 : 0) + (tripVal !== null ? 2 : 0)));
 
   const planning_horizon = typeof q5Rhythm === 'string'
@@ -205,9 +205,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 4. Intent
-  const dbIntentAnswered = (user as any).trait_intent?.answered ?? (user as any).intent?.answered;
-  const intentAnswered = typeof dbIntentAnswered === 'number'
-    ? dbIntentAnswered
+  const intentObj = (user as any).trait_intent !== undefined ? (user as any).trait_intent : (user as any).intent;
+  const intentAnswered = intentObj !== undefined
+    ? (intentObj?.answered ?? 0)
     : (q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : 0));
 
   const intent = {
@@ -219,9 +219,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 5. Emotional
-  const dbEmoAnswered = (user as any).trait_emotional?.answered ?? (user as any).emotional?.answered;
-  const emotionalAnswered = typeof dbEmoAnswered === 'number'
-    ? dbEmoAnswered
+  const emoObj = (user as any).trait_emotional !== undefined ? (user as any).trait_emotional : (user as any).emotional;
+  const emotionalAnswered = emoObj !== undefined
+    ? (emoObj?.answered ?? 0)
     : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : 0));
 
   const er_opening_pace = typeof q7Pacing === 'string'
@@ -249,9 +249,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 6. Lifestyle
-  const dbLifeAnswered = (user as any).trait_lifestyle?.answered ?? (user as any).lifestyle?.answered;
-  const lifestyleAnswered = typeof dbLifeAnswered === 'number'
-    ? dbLifeAnswered
+  const lifeObj = (user as any).trait_lifestyle !== undefined ? (user as any).trait_lifestyle : (user as any).lifestyle;
+  const lifestyleAnswered = lifeObj !== undefined
+    ? (lifeObj?.answered ?? 0)
     : (deep.budgetPref ? 5 : 0);
 
   const lifestyle = {
@@ -271,9 +271,9 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 7. Experience
-  const dbExpAnswered = (user as any).trait_experience?.answered ?? (user as any).experience?.answered;
-  const expAnswered = typeof dbExpAnswered === 'number'
-    ? dbExpAnswered
+  const expObj = (user as any).trait_experience !== undefined ? (user as any).trait_experience : (user as any).experience;
+  const expAnswered = expObj !== undefined
+    ? (expObj?.answered ?? 0)
     : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : 0));
   const group_size_pref = typeof q3GroupSize === 'string'
     ? (q3GroupSize.includes('1-on-1') ? 0.2 : q3GroupSize.includes('3-4') ? 0.4 : 0.6)
@@ -289,12 +289,15 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   };
 
   // 8. Geography
-  const dbGeoAnswered = (user as any).trait_geography?.answered;
+  const geoObj = (user as any).trait_geography !== undefined ? (user as any).trait_geography : (user as any).geography;
+  const geographyAnswered = geoObj !== undefined
+    ? (geoObj?.answered ?? 0)
+    : (user.homeArea || (user as any).home_area ? 2 : 0);
   const geography = {
     user_id: userId,
     home_area: user.homeArea || (user as any).home_area || 'Singapore',
     radius_minutes: { coffee: 30, dining: 45 },
-    answered: typeof dbGeoAnswered === 'number' ? dbGeoAnswered : (user.homeArea || (user as any).home_area ? 2 : 0),
+    answered: geographyAnswered,
   };
 
   // 9. Interests (from Q6 Outings)
