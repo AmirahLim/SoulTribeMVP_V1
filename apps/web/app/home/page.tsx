@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
-import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage, DEFAULT_GOING_OUTINGS, DEFAULT_RADAR_OUTINGS } from '../../lib/outingsStore';
+import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle, Edit3, Trash2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE, getJoinedOutingsLocal, addJoinedOutingLocal, removeJoinedOutingLocal, removeUserPitchLocal } from '../../lib/userStore';
@@ -47,6 +47,9 @@ function HomeContent() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [pitchesError, setPitchesError] = useState<string | null>(null);
+  const [goingError, setGoingError] = useState<string | null>(null);
+  const [radarError, setRadarError] = useState<string | null>(null);
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
   const [radarJoined, setRadarJoined] = useState<Record<string, boolean>>({});
 
@@ -57,6 +60,10 @@ function HomeContent() {
       try {
         setLoading(true);
         setLoadError(null);
+        setPitchesError(null);
+        setGoingError(null);
+        setRadarError(null);
+
         let userProf = getUserProfile();
 
         if (user?.id && isSupabaseConfigured) {
@@ -77,16 +84,6 @@ function HomeContent() {
                 bio: remoteProfile.bio || userProf.bio,
                 handle: remoteProfile.handle || userProf.handle,
               });
-            } else if (userProf.avatarUrl) {
-              await client
-                .from('profiles')
-                .update({
-                  display_name: userProf.displayName,
-                  home_area: userProf.homeArea,
-                  bio: userProf.bio,
-                  avatar_url: userProf.avatarUrl,
-                })
-                .eq('id', user.id);
             }
           } catch {
             // Ignore DB sync errors
@@ -95,63 +92,80 @@ function HomeContent() {
 
         setProfileState(userProf);
 
-        const userPitchesData = await fetchUserPitches(user?.id);
-        const localPitchesList = getUserPitches();
-        const formattedPitches: PitchedOuting[] = userPitchesData.map((p) => {
-          const matchLocal = localPitchesList.find((lp) => lp.id === p.id);
-          return {
-            id: p.id,
-            title: p.title,
-            pitch: p.pitch,
-            area: p.area,
-            dateTime: p.dateTime,
-            hostName: p.hostName,
-            hostAvatar: p.hostAvatar,
-            seatsTotal: p.seatsTotal,
-            seatsFilled: p.seatsFilled,
-            cohesionScore: 85,
-            joinedGuests: matchLocal?.joinedGuests || [],
-            createdAt: matchLocal?.createdAt || '',
-            cover_image_url: p.cover_image_url || matchLocal?.cover_image_url,
-            cover_image_thumb_url: p.cover_image_thumb_url || matchLocal?.cover_image_thumb_url,
-            cover_image_alt: p.cover_image_alt || matchLocal?.cover_image_alt,
-            cover_photographer_name: p.cover_photographer_name || matchLocal?.cover_photographer_name,
-            cover_photographer_url: p.cover_photographer_url || matchLocal?.cover_photographer_url,
-            cover_download_location: p.cover_download_location || matchLocal?.cover_download_location,
-            category: p.category || (matchLocal as any)?.category,
-          };
-        });
-        setPitches(formattedPitches);
+        // 1. Pitches query
+        try {
+          const userPitchesData = await fetchUserPitches(user?.id);
+          const localPitchesList = getUserPitches();
+          const formattedPitches: PitchedOuting[] = userPitchesData.map((p) => {
+            const matchLocal = localPitchesList.find((lp) => lp.id === p.id);
+            return {
+              id: p.id,
+              title: p.title,
+              pitch: p.pitch,
+              area: p.area,
+              dateTime: p.dateTime,
+              hostName: p.hostName,
+              hostAvatar: p.hostAvatar,
+              seatsTotal: p.seatsTotal,
+              seatsFilled: p.seatsFilled,
+              cohesionScore: 85,
+              joinedGuests: matchLocal?.joinedGuests || [],
+              createdAt: matchLocal?.createdAt || '',
+              cover_image_url: p.cover_image_url || matchLocal?.cover_image_url,
+              cover_image_thumb_url: p.cover_image_thumb_url || matchLocal?.cover_image_thumb_url,
+              cover_image_alt: p.cover_image_alt || matchLocal?.cover_image_alt,
+              cover_photographer_name: p.cover_photographer_name || matchLocal?.cover_photographer_name,
+              cover_photographer_url: p.cover_photographer_url || matchLocal?.cover_photographer_url,
+              cover_download_location: p.cover_download_location || matchLocal?.cover_download_location,
+              category: p.category || (matchLocal as any)?.category,
+            };
+          });
+          if (!cancelled) setPitches(formattedPitches);
+        } catch (err: any) {
+          if (!cancelled) setPitchesError(err?.message || 'Failed to fetch user pitches');
+        }
 
-        const realCount = await countRealMembers(userProf.homeArea || 'Singapore');
-        const smallMode = isSmallCommunityMode(realCount);
+        // 2. Matches query
+        try {
+          const realCount = await countRealMembers(userProf.homeArea || 'Singapore');
+          const smallMode = isSmallCommunityMode(realCount);
+          if (!cancelled) setIsSmallCommunity(smallMode);
 
-        const [rankedMatchesData, goingData, radarData] = await Promise.all([
-          getRankedMatches(userProf).catch(() => []),
-          fetchGoingOutings(user?.id).catch(() => DEFAULT_GOING_OUTINGS),
-          fetchRadarOutings(user?.id).catch(() => DEFAULT_RADAR_OUTINGS),
-        ]);
+          const rankedMatchesData = await getRankedMatches(userProf);
+          if (!cancelled) setMatches(rankedMatchesData);
+        } catch (err: any) {
+          if (!cancelled) setLoadError(err?.message || "Couldn't load matches right now");
+        }
 
-        if (cancelled) return;
+        // 3. Going query
+        try {
+          const goingData = await fetchGoingOutings(user?.id);
+          if (!cancelled) setGoingOutings(goingData);
 
-        setIsSmallCommunity(smallMode);
-        setMatches(rankedMatchesData);
-        setGoingOutings(goingData);
-        setRadarOutings(radarData);
+          const initialJoinedMap: Record<string, boolean> = {};
+          const localJoinedList = getJoinedOutingsLocal();
+          localJoinedList.forEach((id) => {
+            initialJoinedMap[id] = true;
+          });
+          goingData.forEach((g) => {
+            initialJoinedMap[g.id] = true;
+          });
+          if (!cancelled) setRadarJoined(initialJoinedMap);
+        } catch (err: any) {
+          if (!cancelled) setGoingError(err?.message || 'Failed to fetch attending outings');
+        }
 
-        const initialJoinedMap: Record<string, boolean> = {};
-        const localJoinedList = getJoinedOutingsLocal();
-        localJoinedList.forEach((id) => {
-          initialJoinedMap[id] = true;
-        });
-        goingData.forEach((g) => {
-          initialJoinedMap[g.id] = true;
-        });
-        setRadarJoined(initialJoinedMap);
+        // 4. Radar query
+        try {
+          const radarData = await fetchRadarOutings(user?.id);
+          if (!cancelled) setRadarOutings(radarData);
+        } catch (err: any) {
+          if (!cancelled) setRadarError(err?.message || 'Failed to fetch radar outings');
+        }
       } catch (err: any) {
         console.error('[SoulTribe Error] Failed to load home dashboard data:', err);
         if (!cancelled) {
-          setLoadError("Couldn't load members right now - try again");
+          setLoadError(err?.message || "Couldn't load dashboard data right now");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -516,7 +530,22 @@ function HomeContent() {
               </Link>
             </div>
 
-            {pitches.length === 0 ? (
+            {pitchesError ? (
+              <div className="flex flex-col items-center text-center p-8 rounded-[28px] border border-red-500/30 bg-black/70 backdrop-blur-xl shadow-2xl">
+                <AlertCircle className="h-10 w-10 text-red-400" />
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">Failed to load pitches</h4>
+                <p className="mt-2 text-[13px] text-red-200 font-mono bg-red-950/60 p-2 rounded-lg max-w-sm">
+                  {pitchesError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReloadTrigger((prev) => prev + 1)}
+                  className="mt-5 rounded-full bg-white px-5 py-2 text-[13px] font-bold text-black hover:bg-white/90 shadow-md"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : pitches.length === 0 ? (
               /* REAL EMPTY STATE FOR YOUR PITCHES */
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -609,56 +638,51 @@ function HomeContent() {
                           <img
                             src={item.hostAvatar}
                             alt={item.hostName}
-                            className="h-9 w-9 rounded-full object-cover ring-1 ring-white/30"
+                            className="h-8 w-8 rounded-full object-cover ring-1 ring-white/30 shrink-0"
                           />
                           <div>
-                            <h4 className="text-[13.5px] font-bold text-white flex items-center gap-1.5">
-                              {item.hostName}
-                              <span className="rounded-full bg-white text-black text-[9.5px] font-extrabold px-1.5 py-0.5 uppercase">You (Host)</span>
-                            </h4>
-                            <span className="text-[11px] text-white/70">{profile.homeArea} · Organizer</span>
+                            <span className="text-[13px] font-bold text-white block">
+                              {item.hostName} (You)
+                            </span>
+                            <span className="text-[11px] text-white/70 block">Host</span>
                           </div>
                         </div>
-                        <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-white" /> Confirmed
+                        <span className="rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 text-[10px] font-bold">
+                          Host
                         </span>
                       </div>
 
-                      {/* Guest Items */}
-                      {(item.joinedGuests || []).map((guest) => {
-                        const isGuestDemo = Boolean(guest.isDemo);
-                        return (
-                          <div
-                            key={guest.id}
-                            className="flex items-center justify-between rounded-[16px] border border-white/15 bg-black/40 p-2.5"
-                          >
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={guest.avatarUrl}
-                                alt={guest.name}
-                                className="h-9 w-9 rounded-full object-cover"
-                              />
-                              <div>
-                                <h4 className="text-[13.5px] font-bold text-white flex items-center gap-1.5">
-                                  {guest.name}
-                                  {isGuestDemo && (
-                                    <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
-                                      Demo
-                                    </span>
-                                  )}
-                                </h4>
-                                <span className="text-[11px] text-white/70">
-                                  {guest.homeArea} · Joined
-                                </span>
-                              </div>
+                      {item.joinedGuests?.map((guest) => (
+                        <div
+                          key={guest.id || guest.name}
+                          className="flex items-center justify-between rounded-[16px] border border-white/15 bg-white/5 p-2.5"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={guest.avatarUrl}
+                              alt={guest.name}
+                              className="h-8 w-8 rounded-full object-cover ring-1 ring-white/20 shrink-0"
+                            />
+                            <div>
+                              <span className="text-[13px] font-bold text-white block">
+                                {guest.name}
+                              </span>
+                              <span className="text-[11px] text-white/70 block">
+                                {guest.homeArea || 'Singapore'}
+                              </span>
                             </div>
-
-                            <span className="text-[11px] font-bold text-white flex items-center gap-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-white/80" /> {guest.status}
-                            </span>
                           </div>
-                        );
-                      })}
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
+                              guest.status === 'Confirmed'
+                                ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/40'
+                                : 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+                            }`}
+                          >
+                            {guest.status}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -708,7 +732,22 @@ function HomeContent() {
               </p>
             </div>
 
-            {goingOutings.length === 0 ? (
+            {goingError ? (
+              <div className="flex flex-col items-center text-center p-8 rounded-[28px] border border-red-500/30 bg-black/70 backdrop-blur-xl shadow-2xl">
+                <AlertCircle className="h-10 w-10 text-red-400" />
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">Failed to load attending outings</h4>
+                <p className="mt-2 text-[13px] text-red-200 font-mono bg-red-950/60 p-2 rounded-lg max-w-sm">
+                  {goingError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReloadTrigger((prev) => prev + 1)}
+                  className="mt-5 rounded-full bg-white px-5 py-2 text-[13px] font-bold text-black hover:bg-white/90 shadow-md"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : goingOutings.length === 0 ? (
               /* REAL EMPTY STATE FOR GOING */
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -790,11 +829,6 @@ function HomeContent() {
                       <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                         <span className="text-[12px] text-white/80 whitespace-nowrap">Pitched by</span>
                         <span className="text-[12.5px] font-bold text-white whitespace-nowrap">{item.hostName}</span>
-                        {Boolean(item.isHostDemo) && (
-                          <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
-                            Demo
-                          </span>
-                        )}
                       </div>
                     </div>
 
@@ -825,8 +859,23 @@ function HomeContent() {
               </p>
             </div>
 
-            {radarOutings.length === 0 ? (
-              /* REAL EMPTY STATE FOR RADAR */
+            {radarError ? (
+              <div className="flex flex-col items-center text-center p-8 rounded-[28px] border border-red-500/30 bg-black/70 backdrop-blur-xl shadow-2xl">
+                <AlertCircle className="h-10 w-10 text-red-400" />
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">Failed to load radar outings</h4>
+                <p className="mt-2 text-[13px] text-red-200 font-mono bg-red-950/60 p-2 rounded-lg max-w-sm">
+                  {radarError}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReloadTrigger((prev) => prev + 1)}
+                  className="mt-5 rounded-full bg-white px-5 py-2 text-[13px] font-bold text-black hover:bg-white/90 shadow-md"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : radarOutings.length === 0 ? (
+              /* REAL HONEST EMPTY STATE FOR RADAR */
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -835,7 +884,7 @@ function HomeContent() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white border border-white/20">
                   <Compass className="h-7 w-7" />
                 </div>
-                <h4 className="mt-4 text-[18px] font-extrabold text-white">Nothing On Your Radar Right Now</h4>
+                <h4 className="mt-4 text-[18px] font-extrabold text-white">No Outings On Your Radar Yet</h4>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-white/75 max-w-[300px]">
                   New outings pitched by members in Singapore will appear here when posted.
                 </p>
@@ -855,9 +904,15 @@ function HomeContent() {
                   className="rounded-[28px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-3 py-1 text-[11px] font-bold text-amber-300 backdrop-blur-md flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5" /> {item.fitBadge || 'Recommended Fit'}
-                    </span>
+                    {item.fitBadge ? (
+                      <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-3 py-1 text-[11px] font-bold text-amber-300 backdrop-blur-md flex items-center gap-1">
+                        <Sparkles className="h-3.5 w-3.5" /> {item.fitBadge}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold tracking-widest text-white/60 uppercase">
+                        {item.area} · {item.category || 'Outing'}
+                      </span>
+                    )}
                     <span className="text-[11.5px] font-bold text-white/70">
                       {item.seatsFilled} / {item.seatsTotal} Seats
                     </span>
