@@ -96,7 +96,7 @@ describe('Fix Friction & Click Explanations — generator.test.ts', () => {
     const explanation = generateMatchExplanation(thinA, thinB);
     assert.strictEqual(
       explanation.friction_text,
-      "Marcus Tan is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared."
+      "From what you've both shared so far, there isn't a meaningful mismatch we'd flag. Your profiles are still developing, so this may sharpen as you answer more of your Tribal Pass."
     );
   });
 

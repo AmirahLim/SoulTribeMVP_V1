@@ -29,6 +29,11 @@ export interface ExplanationText {
   dyadic_statements?: DyadicStatement[];
 }
 
+export const HONEST_EMPTY_FRICTION = {
+  headline: 'No obvious friction yet',
+  text: "From what you've both shared so far, there isn't a meaningful mismatch we'd flag. Your profiles are still developing, so this may sharpen as you answer more of your Tribal Pass.",
+};
+
 function isThreadAnswered(vec: ProfileVector, key: string): boolean {
   if (!vec) return false;
   if (key === 'personality') return (vec.personality?.answered ?? 0) > 0;
@@ -124,11 +129,21 @@ export function generateMatchExplanation(
 
   const hasRawAnswers = (vecA.answers && Object.keys(vecA.answers).length > 0) || (vecB.answers && Object.keys(vecB.answers).length > 0);
 
+  // Track threads used in click/alignment to prevent thread contradiction
+  const clickThreadsUsed = new Set<string>();
+
   // PREFERENTIAL DYADIC OUTPUT ASSEMBLY FOR RAW ANSWERS
   let click_text = '';
   if (hasRawAnswers && (clickStatements.length > 0 || convStatements.length > 0 || pathStatements.length > 0)) {
     const combined = [...clickStatements, ...convStatements, ...pathStatements];
     click_text = Array.from(new Set(combined.map((s) => s.text))).join(' ');
+
+    combined.forEach((stmt) => {
+      stmt.sources.forEach((src) => {
+        const thread = src.split('.')[0];
+        if (thread) clickThreadsUsed.add(thread);
+      });
+    });
   }
 
   let friction_text = '';
@@ -175,6 +190,7 @@ export function generateMatchExplanation(
         if (clickParts.length >= 2) break;
 
         const isStrong = d.score >= 0.70;
+        clickThreadsUsed.add(d.key);
 
         if (d.key === 'interests') {
           const rawInterests = vecB.interests || [];
@@ -244,14 +260,15 @@ export function generateMatchExplanation(
   }
 
   if (!friction_text) {
+    // FILTER OUT threads that were already cited as click alignment to prevent contradiction!
     const eligibleThreads = evaluated.filter(
-      (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key)
+      (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key) && !clickThreadsUsed.has(d.key)
     );
 
     eligibleThreads.sort((a, b) => a.score - b.score);
 
     const frictionParts: string[] = [];
-    const candidateFrictionThreads = eligibleThreads.filter((d) => d.score < 0.75);
+    const candidateFrictionThreads = eligibleThreads.filter((d) => d.score < 0.40);
 
     for (const d of candidateFrictionThreads) {
       if (frictionParts.length >= 2) break;
@@ -266,13 +283,6 @@ export function generateMatchExplanation(
           const extA = PHRASES_YOU.extraversion(valA);
           const extB = PHRASES.extraversion(valB);
           frictionParts.push(`${nameB} ${extB}, ${contrast} ${extA}.`);
-        } else {
-          const valA = vecA.personality?.conscientiousness ?? 0.5;
-          const valB = vecB.personality?.conscientiousness ?? 0.5;
-          if (PHRASES.extraversion(valA) === PHRASES.extraversion(valB)) continue;
-          const consA = PHRASES_YOU.extraversion(valA);
-          const consB = PHRASES.extraversion(valB);
-          frictionParts.push(`In day-to-day structure, ${nameB} ${consB}, while you ${consA}.`);
         }
       } else if (d.key === 'communication') {
         const valA = vecA.communication?.contact_frequency_self ?? 0.5;
@@ -283,8 +293,6 @@ export function generateMatchExplanation(
         const cadenceB = PHRASES.cadenceNeed(valB);
         if (isClearFriction) {
           frictionParts.push(`On contact cadence, ${nameB} ${cadenceB}, ${contrast} ${cadenceA}.`);
-        } else {
-          frictionParts.push(`In message pacing, ${nameB} ${cadenceB}, while you ${cadenceA}.`);
         }
       } else if (d.key === 'social_rhythm') {
         const valA = vecA.social_rhythm?.planning_horizon ?? 0.5;
@@ -295,8 +303,6 @@ export function generateMatchExplanation(
         const planB = PHRASES.planningHorizon(valB);
         if (isClearFriction) {
           frictionParts.push(`On planning outings, ${nameB} ${planB}, ${contrast} ${planA}.`);
-        } else {
-          frictionParts.push(`In planning rhythm, ${nameB} ${planB}, while you ${planA}.`);
         }
       } else if (d.key === 'emotional') {
         const valA = vecA.emotional?.er_opening_pace ?? 0.5;
@@ -307,8 +313,6 @@ export function generateMatchExplanation(
         const paceB = PHRASES.openingPace(valB);
         if (isClearFriction) {
           frictionParts.push(`On emotional opening pace, ${nameB} ${paceB}, ${contrast} ${paceA}.`);
-        } else {
-          frictionParts.push(`In sharing personal details, ${nameB} ${paceB}, while you ${paceA}.`);
         }
       } else if (d.key === 'intent') {
         const valA = vecA.intent?.depth ?? 2;
@@ -319,8 +323,6 @@ export function generateMatchExplanation(
         const depthB = PHRASES.depth(valB);
         if (isClearFriction) {
           frictionParts.push(`On friendship depth, ${nameB} ${depthB}, ${contrast} ${depthA}.`);
-        } else {
-          frictionParts.push(`In friendship intent, ${nameB} ${depthB}, while you ${depthA}.`);
         }
       } else if (d.key === 'lifestyle') {
         const contrast = frictionParts.length > 0 ? 'while you' : 'whereas you';
@@ -332,38 +334,13 @@ export function generateMatchExplanation(
             const budgetB = PHRASES.budgetBand(valB);
             frictionParts.push(`${nameB} ${budgetB}, ${contrast} ${budgetA}.`);
           }
-        } else {
-          const valA = vecA.lifestyle?.activity_level ?? 0.5;
-          const valB = vecB.lifestyle?.activity_level ?? 0.5;
-          if (PHRASES.activityLevel(valA) !== PHRASES.activityLevel(valB)) {
-            const actA = PHRASES_YOU.activityLevel(valA);
-            const actB = PHRASES.activityLevel(valB);
-            frictionParts.push(`In activity style, ${nameB} ${actB}, while you ${actA}.`);
-          }
-        }
-      } else if (d.key === 'interests') {
-        if (isClearFriction) {
-          frictionParts.push(`You have different core interest focus areas, which may require exploring new shared topics.`);
-        } else {
-          frictionParts.push(`Your interests overlap only moderately, so outing themes might take a little extra alignment.`);
-        }
-      } else if (d.key === 'values') {
-        if (isClearFriction) {
-          frictionParts.push(`You have different core value priorities, so some worldviews may contrast.`);
-        } else {
-          frictionParts.push(`Your underlying value stances have slight nuance differences.`);
         }
       }
     }
 
+    // HONEST EMPTY STATE — NO MANUFACTURED WEAKEST THREAD FRICTION
     if (frictionParts.length === 0) {
-      const weakest = eligibleThreads.filter((d) => d.key !== 'geography')[0];
-      if (!weakest || eligibleThreads.length <= 1) {
-        frictionParts.push(`${nameB} is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared.`);
-      } else {
-        const label = THREAD_LABELS[weakest.key] || 'social rhythm';
-        frictionParts.push(`Nothing much to flag - the mildest difference is around ${label}, and it's small.`);
-      }
+      frictionParts.push(HONEST_EMPTY_FRICTION.text);
     }
 
     friction_text = frictionParts.join(' ');
@@ -371,7 +348,11 @@ export function generateMatchExplanation(
 
   // Headline (Dual phrase pair without percentages)
   const clickHeadline = clickStatements[0]?.headline || convStatements[0]?.headline || 'Conversational resonance';
-  const frictionHeadline = frictionStatements[0]?.headline || 'Harmonious social rhythm';
+  const isHonestEmpty = friction_text.startsWith("From what you've both shared");
+  const frictionHeadline = isHonestEmpty
+    ? HONEST_EMPTY_FRICTION.headline
+    : (frictionStatements[0]?.headline || 'Harmonious social rhythm');
+
   const headline = `${clickHeadline} · ${frictionHeadline}`;
 
   // Assert Level 5 blocklist on all output strings
