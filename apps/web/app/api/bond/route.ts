@@ -186,12 +186,46 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  const nextQuestions = nextBestQuestions(viewerVec, 3);
-  const sharpen = nextQuestions.map((qId) => ({
-    questionId: qId,
-    prompt: QUESTION_MAP[qId]?.prompt || `Answer questions on ${qId} to refine match precision`,
-    href: QUESTION_MAP[qId]?.href || '/you/deeper',
-  }));
+  const DIM_LABELS: Record<string, string> = {
+    personality: 'personality',
+    communication: 'communication style',
+    social_rhythm: 'social rhythm & availability',
+    intent: 'friendship intent',
+    emotional: 'emotional pacing',
+    interests: 'interests & hobbies',
+    values: 'core values',
+    lifestyle: 'lifestyle habits',
+    experience: 'outing preferences',
+    geography: 'preferred neighbourhoods',
+  };
+
+  const viewerGaps: { questionId: string; prompt: string; href: string }[] = [];
+  const candidateGaps: { questionId: string; prompt: string; href: string }[] = [];
+
+  for (const key of dimKeys) {
+    const viewerAns = isDimAnswered(viewerVec, key);
+    const candAns = isDimAnswered(candVec, key);
+
+    if (!viewerAns) {
+      viewerGaps.push({
+        questionId: key,
+        prompt: QUESTION_MAP[key]?.prompt || `Answer questions on ${key} to refine match precision`,
+        href: QUESTION_MAP[key]?.href || '/you/deeper',
+      });
+    } else if (!candAns) {
+      const label = DIM_LABELS[key] || key.replace('_', ' ');
+      candidateGaps.push({
+        questionId: key,
+        prompt: `${candVec.profile.display_name} hasn't shared their ${label} yet — this part sharpens when they do.`,
+        href: '',
+      });
+    }
+  }
+
+  const sharpen = [...viewerGaps.slice(0, 3)];
+  if (sharpen.length < 3) {
+    sharpen.push(...candidateGaps.slice(0, 3 - sharpen.length));
+  }
 
   return NextResponse.json({
     overall: {
