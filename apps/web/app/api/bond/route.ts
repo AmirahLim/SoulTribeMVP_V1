@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       weight,
       phrase,
       mechanism: mech.mechanism.toLowerCase() as 'alignment' | 'complementarity' | 'friction' | 'context',
-      frictionClass: mech.frictionLevel,
+      frictionClass: mech.severity || mech.frictionType,
       outputState: mech.outputState,
     };
   });

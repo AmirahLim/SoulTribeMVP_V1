@@ -74,7 +74,7 @@ describe('Engine baseline — post-6e golden snapshot', () => {
       'Overlap with Marcus Tan in Specialty Coffee. Aligned core values with Marcus Tan around growth and community.'
     );
     expect(e.friction_text).toBe(
-      'On friendship depth, Marcus Tan is looking for easy, low-pressure friendships, whereas you are looking for people to do specific things with. Your interests overlap only moderately, so outing themes might take a little extra alignment.'
+      'On friendship depth, Marcus Tan is looking for easy, low-pressure friendships, whereas you are looking for people to do specific things with. On contact cadence, Marcus Tan likes being in touch most weeks, while you are happy going long stretches without contact and pick up where things left off.'
     );
   });
 });
