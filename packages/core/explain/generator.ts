@@ -237,7 +237,7 @@ export function generateMatchExplanation(
   if (eligibleThreads.length === 0) {
     return {
       click_text,
-      friction_text: "There isn't enough in your pass yet to flag friction honestly - add more and this will sharpen.",
+      friction_text: `${nameB} is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared.`,
       generated_by: 'deterministic_template',
     };
   }
