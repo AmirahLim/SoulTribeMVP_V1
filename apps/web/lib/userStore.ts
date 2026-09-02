@@ -46,6 +46,26 @@ export interface DeepProfileAnswers {
   // 10. Boundaries & Matching
   punctualityPref?: string;
   cancellationStance?: string;
+
+  // Stage B Questions (Tribal Pass — 8 questions)
+  reliabilitySelf?: number;
+  reliabilityExpect?: number;
+  initiationSelf?: number;
+  initiationExpect?: number;
+  responseSpeedSelf?: number;
+  contactFreqExpect?: number;
+  seriousPlayful?: number;
+  intensityEasygoing?: number;
+
+  // Stage C Questions (Sharpen — 8 questions)
+  conflictApproach?: number;
+  recoveryTime?: number;
+  vulnerabilityComfort?: number;
+  expressiveness?: number;
+  noveltySeeking?: number;
+  experienceNovelty?: number;
+  socialFreqSelf?: number;
+  preferredDuration?: number;
 }
 
 export interface StandingLevel {

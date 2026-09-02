@@ -154,6 +154,86 @@ Introduce the section honestly:
 
 ---
 
+## 4.1. Stage B — Tribal Pass Questions (8 questions)
+
+### Reliability
+**B-R1 — Reliability (self).** *"When a plan falls through last minute, what do you usually do?"*
+→ `trait_emotional.reliability_self`
+`I roll with it and reschedule easily` (0.4) · `I make sure to follow through or give early notice` (0.8) · `I take commitments very seriously and expect the same` (0.95)
+
+**B-R2 — Reliability (expectation).** *"And what level of reliability do you look for in friends?"*
+→ `trait_emotional.reliability_expect`
+`Easygoing — cancellations happen, no big deal` (0.3) · `Generally reliable — advance notice when plans change` (0.7) · `High reliability — keeping plans is essential to trust` (0.95)
+
+### Initiation Preference
+**B-I1 — Initiation (self).** *"In your friendships, who usually suggests getting together?"*
+→ `trait_communication.initiation_self`
+`I'm usually the one initiating and bringing people together` (0.85) · `It's balanced — I initiate as often as I accept` (0.5) · `I'd rather be invited or go with the flow` (0.2)
+
+**B-I2 — Initiation (expectation).** *"How do you feel if you're always the one initiating?"*
+→ `trait_communication.initiation_expect`
+`Doesn't bother me — I enjoy organizing` (0.2) · `Fine for a while, but I like mutual effort` (0.6) · `Draining — I need the other person to initiate too` (0.9)
+
+### Communication Pace
+**B-C1 — Response speed (self).** *"When you receive a text from a friend, how fast do you usually reply?"*
+→ `trait_communication.response_speed_self`
+`Within minutes or hours` (0.85) · `Same day when I get a moment` (0.6) · `Over a few days — I reply when I have head space` (0.25)
+
+**B-C2 — Contact frequency (expectation).** *"How often do you expect or hope to hear from close friends?"*
+→ `trait_communication.contact_frequency_expect`
+`Near daily check-ins` (0.9) · `A few times a week` (0.65) · `Weekly or bi-weekly is great` (0.4) · `Occasional catch-ups — weeks between is fine` (0.2)
+
+### Humour & Playfulness
+**B-P1 — Playfulness.** *"In social conversations, your natural vibe is..."*
+→ `trait_personality.serious_playful`
+`Playful, banter-filled, and lighthearted` (0.85) · `A mix of casual fun and genuine depth` (0.5) · `Thoughtful, serious, and focused on substance` (0.15)
+
+**B-P2 — Social intensity.** *"When engaging in activities or discussions, your style is..."*
+→ `trait_personality.intensity_easygoing`
+`Easygoing, relaxed, low-pressure` (0.2) · `Balanced — engaged without overwhelming` (0.5) · `Intense, passionate, and deeply engaged` (0.85)
+
+---
+
+## 4.2. Stage C — Unlocked After First Outing / Sharpen List (8 questions)
+
+### Conflict Style
+**C-CF1 — Conflict approach.** *"Something a friend did bothered you. What usually happens?"*
+→ `trait_emotional.er_conflict_approach`
+`I let it go and let it fade` (0.2) · `I sit with it and bring it up if it happens again` (0.5) · `I'd rather address tension directly and early` (0.85)
+
+**C-CF2 — Recovery time.** *"After a big social outing or intense interaction, what do you need?"*
+→ `trait_emotional.er_recovery_time`
+`Ready for the next thing immediately` (0.1) · `An evening of quiet downtime` (0.5) · `A day or two of alone time to recharge` (0.85)
+
+### Vulnerability
+**C-V1 — Vulnerability comfort.** *"How comfortable are you going deep into personal struggles with friends?"*
+→ `trait_emotional.vulnerability_comfort`
+`I prefer keeping things light and positive` (0.2) · `I open up gradually over time with trusted people` (0.6) · `I'm comfortable being deeply vulnerable early on` (0.9)
+
+**C-V2 — Expressiveness.** *"How openly do you express your emotions to friends?"*
+→ `trait_emotional.expressiveness`
+`I keep my feelings private and contained` (0.2) · `I express how I feel when asked or relevant` (0.6) · `I'm an open book — very expressive` (0.9)
+
+### Novelty Seeking
+**C-N1 — Novelty seeking.** *"When picking an activity for the weekend, you prefer..."*
+→ `trait_personality.novelty_seeking`
+`Tried-and-true spots and familiar rituals` (0.2) · `A blend of familiar favorites and new spots` (0.55) · `Exploring completely new places and unusual ideas` (0.9)
+
+**C-N2 — Experience novelty.** *"How often do you seek out entirely new social or cultural experiences?"*
+→ `trait_experience.novelty`
+`Rarely — I stick to what I know I like` (0.2) · `Occasionally — open when invited` (0.5) · `Constantly — seeking fresh horizons` (0.85)
+
+### Social Frequency & Duration
+**C-SF1 — Social frequency.** *"How frequently do you like meeting up with close friends?"*
+→ `trait_social_rhythm.social_freq_self`
+`A few times a week` (0.85) · `Weekly` (0.65) · `Every couple of weeks` (0.4) · `Monthly or less` (0.2)
+
+**C-SF2 — Preferred duration.** *"What's the right length for a catch-up?"*
+→ `trait_social_rhythm.preferred_duration`
+`1 hour quick coffee` (60) · `2-3 hours relaxed meal/hang` (150) · `Half a day (4-5 hours)` (270) · `Whole day activity` (480)
+
+---
+
 ## 5. Deepening C — Interests (ongoing)
 
 Search-and-add against the interest tree. For each added interest, one tap sets affinity:

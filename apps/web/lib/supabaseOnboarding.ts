@@ -346,57 +346,97 @@ export async function saveDeeperPassToSupabase(
 
     // 3. Trait Communication (Section 2)
     const messagingVal = ANSWER_MAP.messagingStyle(deepProfile.messagingStyle);
-    if (messagingVal || deepProfile.messagingStyleOpen) {
+    if (
+      messagingVal ||
+      deepProfile.messagingStyleOpen ||
+      deepProfile.initiationSelf !== undefined ||
+      deepProfile.initiationExpect !== undefined ||
+      deepProfile.responseSpeedSelf !== undefined ||
+      deepProfile.contactFreqExpect !== undefined
+    ) {
       await mergeAndUpsertTraitTable(supabase, 'trait_communication', userId, {
         contact_frequency_self: messagingVal?.contact_frequency_self,
-        contact_frequency_expect: messagingVal?.contact_frequency_self,
-        response_speed_self: messagingVal?.response_speed_self,
+        contact_frequency_expect: deepProfile.contactFreqExpect ?? messagingVal?.contact_frequency_self,
+        response_speed_self: deepProfile.responseSpeedSelf ?? messagingVal?.response_speed_self,
         response_speed_expect: messagingVal?.response_speed_self,
+        initiation_self: deepProfile.initiationSelf,
+        initiation_expect: deepProfile.initiationExpect,
         message_length: messagingVal?.message_length,
         conv_styles: deepProfile.messagingStyleOpen ? [deepProfile.messagingStyleOpen] : undefined,
       });
     }
 
-    // 4. Trait Personality (Section 5) — Omit invented defaults! Write ONLY derived values!
+    // 4. Trait Personality (Section 5) — Direct behavioural answer takes precedence over MBTI!
     const mbtiMap = ANSWER_MAP.mbti(deepProfile.mbti);
     const socialVibeVal = ANSWER_MAP.socialVibe(deepProfile.socialVibe);
     const saturdayVal = ANSWER_MAP.idealSaturday(deepProfile.idealSaturday);
     const tripVal = ANSWER_MAP.spontaneousTrip(deepProfile.spontaneousTrip);
 
-    if (mbtiMap || socialVibeVal || saturdayVal || tripVal !== null || deepProfile.sunSign) {
+    if (
+      mbtiMap ||
+      socialVibeVal ||
+      saturdayVal ||
+      tripVal !== null ||
+      deepProfile.sunSign ||
+      deepProfile.seriousPlayful !== undefined ||
+      deepProfile.intensityEasygoing !== undefined ||
+      deepProfile.noveltySeeking !== undefined
+    ) {
       await mergeAndUpsertTraitTable(supabase, 'trait_personality', userId, {
         openness: mbtiMap?.openness,
         conscientiousness: mbtiMap?.conscientiousness,
         extraversion: mbtiMap?.extraversion,
         agreeableness: mbtiMap?.agreeableness,
-        serious_playful: socialVibeVal?.serious_playful,
-        intensity_easygoing: socialVibeVal?.intensity_easygoing,
-        novelty_seeking: mbtiMap?.novelty_seeking ?? saturdayVal?.novelty ?? (tripVal !== null ? tripVal : undefined),
+        serious_playful: deepProfile.seriousPlayful ?? socialVibeVal?.serious_playful,
+        intensity_easygoing: deepProfile.intensityEasygoing ?? socialVibeVal?.intensity_easygoing,
+        novelty_seeking: deepProfile.noveltySeeking ?? mbtiMap?.novelty_seeking ?? saturdayVal?.novelty ?? (tripVal !== null ? tripVal : undefined),
       });
     }
 
     // 5. Trait Social Rhythm (Section 4)
-    if (saturdayVal || tripVal !== null) {
+    if (
+      saturdayVal ||
+      tripVal !== null ||
+      deepProfile.socialFreqSelf !== undefined ||
+      deepProfile.preferredDuration !== undefined
+    ) {
       await mergeAndUpsertTraitTable(supabase, 'trait_social_rhythm', userId, {
         planning_horizon: saturdayVal?.planning_horizon,
+        social_freq_self: deepProfile.socialFreqSelf,
+        preferred_duration: deepProfile.preferredDuration,
       });
     }
 
     // 6. Trait Emotional (Section 9)
     const supportVal = ANSWER_MAP.supportStyle(deepProfile.supportStyle);
-    if (supportVal !== null || deepProfile.likeMeIfPrompt) {
+    if (
+      supportVal !== null ||
+      deepProfile.likeMeIfPrompt ||
+      deepProfile.reliabilitySelf !== undefined ||
+      deepProfile.reliabilityExpect !== undefined ||
+      deepProfile.conflictApproach !== undefined ||
+      deepProfile.recoveryTime !== undefined ||
+      deepProfile.vulnerabilityComfort !== undefined ||
+      deepProfile.expressiveness !== undefined
+    ) {
       await mergeAndUpsertTraitTable(supabase, 'trait_emotional', userId, {
         advice_vs_listening_self: supportVal !== null ? supportVal : undefined,
         advice_vs_listening_expect: supportVal !== null ? supportVal : undefined,
+        reliability_self: deepProfile.reliabilitySelf,
+        reliability_expect: deepProfile.reliabilityExpect,
+        er_conflict_approach: deepProfile.conflictApproach,
+        er_recovery_time: deepProfile.recoveryTime,
+        vulnerability_comfort: deepProfile.vulnerabilityComfort,
+        expressiveness: deepProfile.expressiveness,
       });
     }
 
     // 7. Trait Lifestyle & Experience (Sections 8 & 10)
     const groupSizeVal = ANSWER_MAP.groupSize(deepProfile.groupSize);
-    if (groupSizeVal !== null || saturdayVal) {
+    if (groupSizeVal !== null || saturdayVal || deepProfile.experienceNovelty !== undefined) {
       await mergeAndUpsertTraitTable(supabase, 'trait_experience', userId, {
         group_size_pref: groupSizeVal !== null ? groupSizeVal : undefined,
-        novelty: saturdayVal?.novelty,
+        novelty: deepProfile.experienceNovelty ?? saturdayVal?.novelty,
       });
     }
 
