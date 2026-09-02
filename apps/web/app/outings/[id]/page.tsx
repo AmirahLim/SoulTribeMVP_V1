@@ -57,7 +57,7 @@ function OutingDetailContent() {
 
   const { user: authUser } = useAuth();
   const profile = getUserProfile();
-  const viewerId = profile.id || authUser?.id || '00000000-0000-0000-0000-000000000099';
+  const viewerId = authUser?.id || profile.id || '00000000-0000-0000-0000-000000000099';
 
   const [outing, setOuting] = useState<OutingData | null>(null);
   const [members, setMembers] = useState<OutingMember[]>([]);
@@ -263,15 +263,19 @@ function OutingDetailContent() {
             .eq('outing_id', outingId);
 
           if (dbMembers) {
-            const formattedMembers: OutingMember[] = dbMembers.map((m: any) => ({
-              user_id: m.user_id,
-              role: m.role,
-              state: m.state,
-              display_name: m.profiles?.display_name || 'Member',
-              avatar_url: m.profiles?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-              home_area: m.profiles?.home_area || 'Singapore',
-              isDemo: Boolean(m.is_demo || m.profiles?.is_demo),
-            }));
+            const formattedMembers: OutingMember[] = dbMembers.map((m: any) => {
+              const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+              const isViewer = m.user_id === viewerId;
+              return {
+                user_id: m.user_id,
+                role: m.role,
+                state: m.state,
+                display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
+                avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
+                isDemo: Boolean(m.is_demo || p?.is_demo),
+              };
+            });
             setMembers(formattedMembers);
           }
 

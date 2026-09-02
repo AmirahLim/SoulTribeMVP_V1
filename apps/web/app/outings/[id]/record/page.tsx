@@ -42,7 +42,7 @@ function OutingRecordContent() {
 
   const { user: authUser } = useAuth();
   const profile = getUserProfile();
-  const authorId = profile.id || authUser?.id || '';
+  const authorId = authUser?.id || profile.id || '';
 
   // Data Loading State
   const [loading, setLoading] = useState(true);

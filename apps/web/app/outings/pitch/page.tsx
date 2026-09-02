@@ -190,7 +190,7 @@ function PitchComposerContent() {
 
     try {
       const profile = getUserProfile();
-      let hostId = profile.id || authUser?.id;
+      let hostId = authUser?.id || profile.id;
       const startsAtIso = dateCheck.iso;
 
       // 1. Supabase database insert if configured
