@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@soul-tribe/ui';
-import { Check, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
+import { Check, AlertTriangle, ArrowLeft, Plus, Clock, Calendar } from 'lucide-react';
 import { getUserProfile, PitchedOuting, JoinedGuest, addUserPitch } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { getGenderAvatarForName } from '@soul-tribe/core';
@@ -29,11 +29,12 @@ function PitchComposerContent() {
     }
     return '';
   });
-  const [activityCategory, setActivityCategory] = useState<'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative'>('coffee');
+  const [activityCategory, setActivityCategory] = useState<'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative' | 'intellectual'>('coffee');
   const [budgetBand, setBudgetBand] = useState<number>(2);
   const [orientation, setOrientation] = useState<'conversation_first' | 'activity_first' | 'either'>('conversation_first');
   const [visibility, setVisibility] = useState<'invite_only' | 'requestable'>('requestable');
-  const [startsAt, setStartsAt] = useState<string>('');
+  const [pitchDate, setPitchDate] = useState<string>('');
+  const [pitchTime, setPitchTime] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
   const [maxParticipants] = useState<number>(6);
   const [setting, setSetting] = useState<string>('General');
@@ -48,9 +49,13 @@ function PitchComposerContent() {
     const now = new Date();
     const suggestions = [];
 
-    const toLocalIso = (d: Date) => {
+    const toLocalDateStr = (d: Date) => {
       const pad = (n: number) => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+    const toLocalTimeStr = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
 
     // Fri Eve (7:30 PM)
@@ -60,7 +65,8 @@ function PitchComposerContent() {
     fri.setHours(19, 30, 0, 0);
     suggestions.push({
       label: `${fri.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 7:30 PM`,
-      isoValue: toLocalIso(fri),
+      dateVal: toLocalDateStr(fri),
+      timeVal: toLocalTimeStr(fri),
     });
 
     // Sat Midday (3:00 PM)
@@ -70,7 +76,8 @@ function PitchComposerContent() {
     satMid.setHours(15, 0, 0, 0);
     suggestions.push({
       label: `${satMid.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 3:00 PM`,
-      isoValue: toLocalIso(satMid),
+      dateVal: toLocalDateStr(satMid),
+      timeVal: toLocalTimeStr(satMid),
     });
 
     // Sat Eve (7:30 PM)
@@ -79,7 +86,8 @@ function PitchComposerContent() {
     satEve.setHours(19, 30, 0, 0);
     suggestions.push({
       label: `${satEve.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 7:30 PM`,
-      isoValue: toLocalIso(satEve),
+      dateVal: toLocalDateStr(satEve),
+      timeVal: toLocalTimeStr(satEve),
     });
 
     // Sun Midday (2:00 PM)
@@ -89,7 +97,8 @@ function PitchComposerContent() {
     sunMid.setHours(14, 0, 0, 0);
     suggestions.push({
       label: `${sunMid.toLocaleDateString('en-SG', { weekday: 'short', month: 'short', day: 'numeric' })} · 2:00 PM`,
-      isoValue: toLocalIso(sunMid),
+      dateVal: toLocalDateStr(sunMid),
+      timeVal: toLocalTimeStr(sunMid),
     });
 
     return suggestions;
@@ -162,7 +171,11 @@ function PitchComposerContent() {
       return 'Free tier outings are capped at 6 participants maximum.';
     }
 
-    const dateCheck = parseSafeDate(startsAt);
+    if (!pitchDate || !pitchTime) {
+      return 'Please select both a Date and Time for your outing.';
+    }
+
+    const dateCheck = parseSafeDate(`${pitchDate}T${pitchTime}`);
     if (!dateCheck.valid) {
       return dateCheck.error || 'Please enter a valid date and time.';
     }
@@ -180,7 +193,8 @@ function PitchComposerContent() {
       return;
     }
 
-    const dateCheck = parseSafeDate(startsAt);
+    const combinedDateTime = `${pitchDate}T${pitchTime}`;
+    const dateCheck = parseSafeDate(combinedDateTime);
     if (!dateCheck.valid || !dateCheck.iso) {
       setErrorMessage(dateCheck.error || 'Please enter a valid date and time.');
       return;
@@ -309,7 +323,7 @@ function PitchComposerContent() {
         title: title.trim(),
         pitch: pitch.trim(),
         area: area.trim(),
-        dateTime: new Date(startsAt).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
+        dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
         hostName: profile.displayName || 'You',
         hostAvatar: profile.avatarUrl || getGenderAvatarForName(profile.displayName || 'You'),
         seatsTotal: maxParticipants,
@@ -409,12 +423,13 @@ function PitchComposerContent() {
                   onChange={(e) => setActivityCategory(e.target.value as any)}
                   className="mt-1 h-11 w-full min-w-0 rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13px] text-white outline-none focus:border-white/50"
                 >
-                  <option value="coffee">Coffee</option>
-                  <option value="dining">Dining</option>
-                  <option value="creative">Creative</option>
-                  <option value="cultural">Cultural</option>
-                  <option value="active">Active</option>
-                  <option value="nightlife">Nightlife</option>
+                  <option value="coffee">Coffee & Cafe</option>
+                  <option value="dining">Dining & Food</option>
+                  <option value="intellectual">Intellectual & Deep Talk</option>
+                  <option value="cultural">Cultural & Arts</option>
+                  <option value="creative">Creative & Craft</option>
+                  <option value="active">Active & Outdoor</option>
+                  <option value="nightlife">Nightlife & Drinks</option>
                 </select>
               </div>
 
@@ -430,34 +445,60 @@ function PitchComposerContent() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-white">Date & Time (Calendar Format)</label>
-              <input
-                type="datetime-local"
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
-                className="mt-1 h-11 w-full min-w-0 max-w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13px] text-white outline-none focus:border-white/50"
-              />
+            {/* SEPARATE DATE & TIME SECTIONS */}
+            <div className="space-y-3 pt-2 border-t border-white/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="text-[13px] font-semibold text-white flex items-center gap-1.5 mb-1">
+                    <Calendar className="h-3.5 w-3.5 text-amber-300" /> Outing Date
+                  </label>
+                  <input
+                    type="date"
+                    value={pitchDate}
+                    onChange={(e) => setPitchDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13.5px] text-white outline-none focus:border-white/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[13px] font-semibold text-white flex items-center gap-1.5 mb-1">
+                    <Clock className="h-3.5 w-3.5 text-amber-300" /> Outing Time
+                  </label>
+                  <input
+                    type="time"
+                    value={pitchTime}
+                    onChange={(e) => setPitchTime(e.target.value)}
+                    className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13.5px] text-white outline-none focus:border-white/50"
+                  />
+                </div>
+              </div>
 
               <div className="pt-1">
                 <span className="text-[11.5px] font-semibold text-amber-300/90 block mb-1.5">
-                  Suggested Upcoming Date & Time Slots:
+                  Suggested Date & Time Slots:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {suggestedDates.map((sug) => (
-                    <button
-                      key={sug.isoValue}
-                      type="button"
-                      onClick={() => setStartsAt(sug.isoValue)}
-                      className={`rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
-                        startsAt === sug.isoValue
-                          ? 'border-amber-300 bg-amber-400/25 text-amber-200 shadow-md ring-1 ring-amber-300/40'
-                          : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40 hover:bg-white/10'
-                      }`}
-                    >
-                      {sug.label}
-                    </button>
-                  ))}
+                  {suggestedDates.map((sug) => {
+                    const isSelected = pitchDate === sug.dateVal && pitchTime === sug.timeVal;
+                    return (
+                      <button
+                        key={sug.label}
+                        type="button"
+                        onClick={() => {
+                          setPitchDate(sug.dateVal);
+                          setPitchTime(sug.timeVal);
+                        }}
+                        className={`rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all ${
+                          isSelected
+                            ? 'border-amber-300 bg-amber-400/25 text-amber-200 shadow-md ring-1 ring-amber-300/40'
+                            : 'border-white/20 bg-black/40 text-white/80 hover:border-white/40 hover:bg-white/10'
+                        }`}
+                      >
+                        {sug.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -21,6 +21,34 @@ export interface OutingItem {
   fitBadge?: string;
 }
 
+export function getOutingCategoryImage(category?: string, title?: string): string {
+  const cat = (category || '').toLowerCase();
+  const t = (title || '').toLowerCase();
+
+  if (cat.includes('coffee') || t.includes('coffee') || t.includes('cafe') || t.includes('latte') || t.includes('espresso')) {
+    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('dining') || cat.includes('food') || t.includes('dinner') || t.includes('food') || t.includes('ramen') || t.includes('brunch') || t.includes('eat')) {
+    return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('active') || cat.includes('outdoor') || t.includes('hike') || t.includes('walk') || t.includes('run') || t.includes('climb') || t.includes('park')) {
+    return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('intellectual') || t.includes('book') || t.includes('read') || t.includes('talk') || t.includes('philosophy') || t.includes('debate') || t.includes('discuss')) {
+    return 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('cultural') || cat.includes('art') || t.includes('museum') || t.includes('gallery') || t.includes('exhibition') || t.includes('theatre')) {
+    return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('nightlife') || cat.includes('drinks') || t.includes('cocktail') || t.includes('bar') || t.includes('pub') || t.includes('wine')) {
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&auto=format&fit=crop&q=80';
+  }
+  if (cat.includes('creative') || cat.includes('craft') || t.includes('pottery') || t.includes('paint') || t.includes('draw') || t.includes('craft')) {
+    return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80';
+}
+
 import { getUserPitches, getJoinedOutingsLocal } from './userStore';
 
 export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> {

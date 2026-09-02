@@ -152,7 +152,7 @@ export interface ProfileVector {
 export interface MatchContext {
   blockedUserIds?: string[];
   reportedUserIds?: string[];
-  activity_category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative';
+  activity_category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative' | 'intellectual';
   tagged_interest_node?: string;
   candidatePoolSize?: number;
 }
@@ -176,7 +176,7 @@ export interface Outing {
   host_id: string;
   title: string;
   pitch: string;
-  activity_category: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative';
+  activity_category: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative' | 'intellectual';
   interest_node_id?: number;
   area: string;
   starts_at: string;

@@ -25,7 +25,7 @@ export const BASE_WEIGHTS: ThreadWeights = {
 };
 
 export function getOutingContextualWeights(
-  category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative',
+  category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative' | 'intellectual',
   hasInterestMatch?: boolean
 ): ThreadWeights {
   if (!category) return BASE_WEIGHTS;
@@ -37,6 +37,7 @@ export function getOutingContextualWeights(
     cultural: { geography: 1.5, lifestyle: 1.0, experience: 3.0, communication: 1.0, social_rhythm: 1.0 },
     nightlife: { geography: 1.5, lifestyle: 3.0, experience: 3.0, communication: 0.8, social_rhythm: 1.5 },
     creative: { geography: 1.5, lifestyle: 1.5, experience: 2.5, communication: 1.0, social_rhythm: 1.0 },
+    intellectual: { geography: 1.5, lifestyle: 1.5, experience: 2.5, communication: 1.5, values: 1.5 },
   };
 
   const mult = multipliers[category] || {};

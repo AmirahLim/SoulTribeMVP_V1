@@ -3,14 +3,15 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
-import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles, Edit3, Plus, X } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles, Edit3, Plus, X, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
-import { getUserProfile } from '../../../lib/userStore';
+import { getUserProfile, removeUserPitchLocal, removeJoinedOutingLocal } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
+import { getOutingCategoryImage } from '../../../lib/outingsStore';
 import { AuthGuard } from '../../../components/AuthGuard';
 
 export default function OutingDetailPage() {
@@ -34,26 +35,29 @@ interface OutingMember {
 interface OutingData {
   id: string;
   host_id: string;
+  hostName: string;
+  hostAvatar: string;
+  isHostDemo?: boolean;
   title: string;
   pitch: string;
-  activity_category: string;
   area: string;
+  activity_category: string;
   starts_at: string;
   duration_minutes: number;
   budget_band: number;
   orientation: string;
-  visibility: string;
+  setting: string;
+  visibility?: string;
   max_participants: number;
   state: string;
-  hostName: string;
-  hostAvatar: string;
-  isHostDemo?: boolean;
 }
 
 function OutingDetailContent() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const outingId = params?.id as string;
+  const shouldOpenEdit = searchParams?.get('edit') === 'true';
 
   const { user: authUser } = useAuth();
   const profile = getUserProfile();
@@ -70,8 +74,13 @@ function OutingDetailContent() {
   const [editTitle, setEditTitle] = useState('');
   const [editPitch, setEditPitch] = useState('');
   const [editArea, setEditArea] = useState('');
-  const [editStartsAt, setEditStartsAt] = useState('');
+  const [editCategory, setEditCategory] = useState<string>('coffee');
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
   const [editMaxParticipants, setEditMaxParticipants] = useState<number>(6);
+
+  // Host Delete Confirmation State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Host Add User State
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -83,7 +92,17 @@ function OutingDetailContent() {
     setEditTitle(outing.title);
     setEditPitch(outing.pitch);
     setEditArea(outing.area);
-    setEditStartsAt(outing.starts_at ? new Date(outing.starts_at).toISOString().slice(0, 16) : '');
+    setEditCategory(outing.activity_category || 'coffee');
+
+    if (outing.starts_at) {
+      const d = new Date(outing.starts_at);
+      if (!isNaN(d.getTime())) {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        setEditDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+        setEditTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+      }
+    }
+
     setEditMaxParticipants(outing.max_participants || 6);
     setIsEditing(true);
   };
@@ -109,7 +128,13 @@ function OutingDetailContent() {
       return;
     }
 
-    const isoDate = editStartsAt ? new Date(editStartsAt).toISOString() : outing.starts_at;
+    let isoDate = outing.starts_at;
+    if (editDate && editTime) {
+      const parsed = new Date(`${editDate}T${editTime}`);
+      if (!isNaN(parsed.getTime())) {
+        isoDate = parsed.toISOString();
+      }
+    }
 
     if (checkIsSupabaseConfigured()) {
       try {
@@ -120,6 +145,7 @@ function OutingDetailContent() {
             title: cleanTitle,
             pitch: cleanPitch,
             area: cleanArea,
+            activity_category: editCategory,
             starts_at: isoDate,
             max_participants: editMaxParticipants,
           })
@@ -142,6 +168,7 @@ function OutingDetailContent() {
             title: cleanTitle,
             pitch: cleanPitch,
             area: cleanArea,
+            activity_category: editCategory,
             starts_at: isoDate,
             max_participants: editMaxParticipants,
           }
@@ -150,6 +177,26 @@ function OutingDetailContent() {
 
     setIsEditing(false);
     setActionMessage('Pitch details updated successfully!');
+  };
+
+  const handleDeleteOuting = async () => {
+    setErrorMessage('');
+    setActionMessage('');
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        await client.from('outing_members').delete().eq('outing_id', outingId);
+        await client.from('outings').delete().eq('id', outingId);
+      } catch (err: any) {
+        console.error('[SoulTribe Error] Failed to delete outing from DB:', err);
+      }
+    }
+
+    removeUserPitchLocal(outingId);
+    removeJoinedOutingLocal(outingId);
+
+    router.push('/home');
   };
 
   const openAddUserModal = async () => {
@@ -294,6 +341,12 @@ function OutingDetailContent() {
 
     loadOutingDetails();
   }, [outingId]);
+
+  useEffect(() => {
+    if (shouldOpenEdit && outing && !loading) {
+      startEditing();
+    }
+  }, [shouldOpenEdit, outing, loading]);
 
   if (loading) {
     return (
@@ -541,13 +594,15 @@ function OutingDetailContent() {
       {/* Top Location Header */}
       <div className="relative h-44 w-full overflow-hidden rounded-[24px] bg-[#15261C] border border-[#F3F0E9]/12 shadow-lg">
         <img
-          src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80"
+          src={getOutingCategoryImage(outing.activity_category, outing.title)}
           alt={outing.title}
           className="h-full w-full object-cover opacity-70"
         />
 
-        <div className="absolute top-4 left-4 rounded-full bg-[#0D1D15]/90 px-3 py-1 text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm">
-          {outing.area}
+        <div className="absolute top-4 left-4 rounded-full bg-[#0D1D15]/90 px-3 py-1 text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm flex items-center gap-1.5">
+          <span>{outing.area}</span>
+          <span>·</span>
+          <span className="capitalize">{outing.activity_category}</span>
         </div>
 
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
@@ -580,7 +635,7 @@ function OutingDetailContent() {
 
         {/* 2. REAL HOST & TITLE */}
         <div className="border-b border-[#F3F0E9]/12 pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-[12px] font-semibold text-[#A6AAA4] flex items-center gap-1.5">
               Pitched by <strong className="text-[#F3F0E9]">{outing.hostName}</strong>
               {outing.isHostDemo && (
@@ -590,13 +645,23 @@ function OutingDetailContent() {
               )}
             </span>
             {isHost && (
-              <button
-                type="button"
-                onClick={startEditing}
-                className="text-[12px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1"
-              >
-                <Edit3 className="h-3.5 w-3.5" /> Edit Pitch
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={startEditing}
+                  className="text-[12px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1"
+                >
+                  <Edit3 className="h-3.5 w-3.5" /> Edit Pitch
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  className="text-[12px] font-bold text-red-300 hover:text-red-200 flex items-center gap-1 rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete Pitch
+                </button>
+              </div>
             )}
           </div>
           <h1 className="mt-2 text-[26px] font-bold tracking-tight text-[#F3F0E9]">
@@ -835,6 +900,25 @@ function OutingDetailContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    Activity Category
+                  </label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="coffee">Coffee & Cafe</option>
+                    <option value="dining">Dining & Food</option>
+                    <option value="intellectual">Intellectual & Deep Talk</option>
+                    <option value="cultural">Cultural & Arts</option>
+                    <option value="creative">Creative & Craft</option>
+                    <option value="active">Active & Outdoor</option>
+                    <option value="nightlife">Nightlife & Drinks</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
                     Neighbourhood / Area
                   </label>
                   <input
@@ -845,32 +929,47 @@ function OutingDetailContent() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* SEPARATE DATE & TIME INPUTS */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    Outing Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                    Max Participants (Cap 6)
+                    Outing Time
                   </label>
                   <input
-                    type="number"
-                    min={2}
-                    max={6}
-                    value={editMaxParticipants}
-                    onChange={(e) => setEditMaxParticipants(Math.min(6, Math.max(2, parseInt(e.target.value) || 6)))}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
-                    required
+                    type="time"
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                  Date & Time
+                  Max Participants (Cap 6)
                 </label>
                 <input
-                  type="datetime-local"
-                  value={editStartsAt}
-                  onChange={(e) => setEditStartsAt(e.target.value)}
+                  type="number"
+                  min={2}
+                  max={6}
+                  value={editMaxParticipants}
+                  onChange={(e) => setEditMaxParticipants(Math.min(6, Math.max(2, parseInt(e.target.value) || 6)))}
                   className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                  required
                 />
               </div>
 
@@ -883,6 +982,42 @@ function OutingDetailContent() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE PITCH CONFIRMATION MODAL */}
+      {isDeleteConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-[28px] border border-red-500/30 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
+            <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-[17px] font-bold text-[#F3F0E9]">Delete Outing Pitch?</h3>
+                <p className="text-[12px] text-[#A6AAA4]">This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <p className="text-[13.5px] text-[#F3F0E9] leading-relaxed">
+              Are you sure you want to cancel and delete <strong className="text-white">“{outing.title}”</strong>? It will be removed from member feeds and your pitched outings.
+            </p>
+
+            <div className="pt-2 flex justify-end gap-2.5">
+              <Button type="button" variant="secondary" size="md" onClick={() => setIsDeleteConfirmOpen(false)}>
+                Keep Pitch
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                className="bg-red-600 hover:bg-red-700 border-red-500 text-white"
+                onClick={handleDeleteOuting}
+              >
+                Delete Pitch
+              </Button>
+            </div>
           </div>
         </div>
       )}

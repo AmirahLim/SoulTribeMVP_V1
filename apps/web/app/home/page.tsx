@@ -6,10 +6,10 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
-import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem } from '../../lib/outingsStore';
+import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
-import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
-import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE, getJoinedOutingsLocal, addJoinedOutingLocal, removeJoinedOutingLocal } from '../../lib/userStore';
+import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle, Edit3, Trash2 } from 'lucide-react';
+import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE, getJoinedOutingsLocal, addJoinedOutingLocal, removeJoinedOutingLocal, removeUserPitchLocal } from '../../lib/userStore';
 import { useAuth } from '../../lib/authContext';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
@@ -192,6 +192,29 @@ function HomeContent() {
       }
     }
 
+    const updatedGoing = await fetchGoingOutings(targetUserId);
+    setGoingOutings(updatedGoing);
+  };
+
+  const handleDeletePitch = async (outingId: string) => {
+    if (!confirm('Are you sure you want to delete this pitched outing?')) return;
+
+    const targetUserId = user?.id || profile.id;
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        await client.from('outing_members').delete().eq('outing_id', outingId);
+        await client.from('outings').delete().eq('id', outingId);
+      } catch (err) {
+        console.error('[SoulTribe Error] Failed to delete pitch from Supabase:', err);
+      }
+    }
+
+    removeUserPitchLocal(outingId);
+    removeJoinedOutingLocal(outingId);
+
+    setPitches((prev) => prev.filter((p) => p.id !== outingId));
     const updatedGoing = await fetchGoingOutings(targetUserId);
     setGoingOutings(updatedGoing);
   };
@@ -603,6 +626,32 @@ function HomeContent() {
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Pitch Host Controls */}
+                  <div className="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-white/15">
+                    <div className="flex items-center gap-2">
+                      <Link href={`/outings/${item.id}?edit=true`}>
+                        <Button variant="ghost" size="sm" className="whitespace-nowrap text-amber-300 border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 text-[11.5px] px-2.5">
+                          <Edit3 className="mr-1 h-3.5 w-3.5" /> Edit Pitch
+                        </Button>
+                      </Link>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="whitespace-nowrap text-red-300 border border-red-400/30 bg-red-500/10 hover:bg-red-500/20 text-[11.5px] px-2.5"
+                        onClick={() => handleDeletePitch(item.id)}
+                      >
+                        <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
+                      </Button>
+                    </div>
+
+                    <Link href={`/outings/${item.id}`}>
+                      <Button variant="secondary" size="sm" className="whitespace-nowrap text-[11.5px] px-3">
+                        View Outing →
+                      </Button>
+                    </Link>
                   </div>
                 </motion.div>
               ))

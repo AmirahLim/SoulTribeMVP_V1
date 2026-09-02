@@ -439,6 +439,19 @@ export function addUserPitch(newPitch: PitchedOuting): PitchedOuting[] {
   return updated;
 }
 
+export function removeUserPitchLocal(outingId: string): PitchedOuting[] {
+  const current = getUserPitches();
+  const updated = current.filter((p) => p.id !== outingId);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('soul_tribe_user_pitches', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to remove user pitch', e);
+    }
+  }
+  return updated;
+}
+
 export function getJoinedOutingsLocal(): string[] {
   if (typeof window === 'undefined') return [];
   try {
