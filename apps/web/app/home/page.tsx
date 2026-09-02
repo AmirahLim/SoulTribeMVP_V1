@@ -9,7 +9,7 @@ import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, 
 import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
-import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
+import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE, getJoinedOutingsLocal, addJoinedOutingLocal, removeJoinedOutingLocal } from '../../lib/userStore';
 import { useAuth } from '../../lib/authContext';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
@@ -118,6 +118,10 @@ function HomeContent() {
         setRadarOutings(radarData);
 
         const initialJoinedMap: Record<string, boolean> = {};
+        const localJoinedList = getJoinedOutingsLocal();
+        localJoinedList.forEach((id) => {
+          initialJoinedMap[id] = true;
+        });
         goingData.forEach((g) => {
           initialJoinedMap[g.id] = true;
         });
@@ -139,32 +143,56 @@ function HomeContent() {
 
   const handleToggleRadarJoin = async (outingId: string) => {
     const isCurrentlyJoined = Boolean(radarJoined[outingId]);
+    const targetUserId = user?.id || profile.id;
 
+    // Optimistic UI update
     setRadarJoined((prev) => ({ ...prev, [outingId]: !isCurrentlyJoined }));
 
-    if (checkIsSupabaseConfigured() && user?.id) {
+    if (!isCurrentlyJoined) {
+      addJoinedOutingLocal(outingId);
+    } else {
+      removeJoinedOutingLocal(outingId);
+    }
+
+    if (checkIsSupabaseConfigured()) {
       try {
         const client = getSupabaseBrowserClient();
-        if (!isCurrentlyJoined) {
-          await client.from('outing_members').insert({
-            outing_id: outingId,
-            user_id: user.id,
-            role: 'guest',
-            state: 'requested',
-          });
-        } else {
-          await client
-            .from('outing_members')
-            .delete()
-            .eq('outing_id', outingId)
-            .eq('user_id', user.id);
+        let dbUserId = user?.id;
+
+        if (!dbUserId) {
+          const { data: { session } } = await client.auth.getSession();
+          dbUserId = session?.user?.id;
+        }
+
+        if (!dbUserId) {
+          dbUserId = targetUserId;
+        }
+
+        if (dbUserId) {
+          if (!isCurrentlyJoined) {
+            const { error } = await client.from('outing_members').insert({
+              outing_id: outingId,
+              user_id: dbUserId,
+              role: 'guest',
+              state: 'requested',
+            });
+            if (error && !error.message.includes('duplicate')) {
+              console.error('[SoulTribe Error] Failed to insert radar join:', error.message);
+            }
+          } else {
+            await client
+              .from('outing_members')
+              .delete()
+              .eq('outing_id', outingId)
+              .eq('user_id', dbUserId);
+          }
         }
       } catch (err) {
         console.error('[SoulTribe Error] Failed to update radar join status:', err);
       }
     }
 
-    const updatedGoing = await fetchGoingOutings(user?.id);
+    const updatedGoing = await fetchGoingOutings(targetUserId);
     setGoingOutings(updatedGoing);
   };
 

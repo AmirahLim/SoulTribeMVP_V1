@@ -438,3 +438,44 @@ export function addUserPitch(newPitch: PitchedOuting): PitchedOuting[] {
   }
   return updated;
 }
+
+export function getJoinedOutingsLocal(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('soul_tribe_joined_outings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to read joined outings', e);
+  }
+  return [];
+}
+
+export function addJoinedOutingLocal(outingId: string): string[] {
+  const current = getJoinedOutingsLocal();
+  if (current.includes(outingId)) return current;
+  const updated = [...current, outingId];
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('soul_tribe_joined_outings', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save joined outing', e);
+    }
+  }
+  return updated;
+}
+
+export function removeJoinedOutingLocal(outingId: string): string[] {
+  const current = getJoinedOutingsLocal();
+  const updated = current.filter((id) => id !== outingId);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('soul_tribe_joined_outings', JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to remove joined outing', e);
+    }
+  }
+  return updated;
+}
