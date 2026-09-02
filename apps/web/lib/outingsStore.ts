@@ -297,6 +297,43 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           });
         });
       }
+
+      // Also merge any locally joined demo radar items or local pitches
+      const currentIds = new Set(dbItems.map((item) => item.id));
+      missingJoinedIds.forEach((id) => {
+        if (currentIds.has(id)) return;
+        const demoMatch = DEFAULT_RADAR_OUTINGS.find((d) => d.id === id);
+        if (demoMatch) {
+          dbItems.push({
+            ...demoMatch,
+            state: 'requested',
+          });
+        } else {
+          const localPitch = getUserPitches().find((p) => p.id === id);
+          if (localPitch) {
+            dbItems.push({
+              id: localPitch.id,
+              title: localPitch.title,
+              pitch: localPitch.pitch,
+              area: localPitch.area,
+              dateTime: localPitch.dateTime,
+              hostId: localPitch.hostId || 'host',
+              hostName: localPitch.hostName,
+              hostAvatar: localPitch.hostAvatar,
+              seatsTotal: localPitch.seatsTotal,
+              seatsFilled: localPitch.seatsFilled,
+              state: 'requested',
+              category: (localPitch as any).category,
+              cover_image_url: localPitch.cover_image_url,
+              cover_image_thumb_url: localPitch.cover_image_thumb_url,
+              cover_image_alt: localPitch.cover_image_alt,
+              cover_photographer_name: localPitch.cover_photographer_name,
+              cover_photographer_url: localPitch.cover_photographer_url,
+              cover_download_location: localPitch.cover_download_location,
+            });
+          }
+        }
+      });
     }
 
     return dbItems;
@@ -305,9 +342,57 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
   }
 }
 
+export const DEFAULT_RADAR_OUTINGS: OutingItem[] = [
+  {
+    id: 'demo-outing-1',
+    title: 'Saturday Pottery & Filter Coffee',
+    pitch: 'Hand-building ceramic mugs in a quiet Tiong Bahru studio followed by pour-over coffee.',
+    area: 'Tiong Bahru',
+    category: 'creative',
+    dateTime: 'Sat, 5 Sep · 3:00 PM',
+    hostId: '00000000-0000-0000-0000-000000000002',
+    hostName: 'Marcus Lim',
+    hostAvatar: getGenderAvatarForName('Marcus Lim'),
+    isHostDemo: true,
+    seatsTotal: 6,
+    seatsFilled: 3,
+    fitBadge: '92% Resonance Fit',
+  },
+  {
+    id: 'demo-outing-2',
+    title: 'Fort Canning Botanical Walk & Tea',
+    pitch: 'Morning walk through Fort Canning Park tree tunnel followed by quiet herbal tea.',
+    area: 'Fort Canning',
+    category: 'active',
+    dateTime: 'Sun, 6 Sep · 9:30 AM',
+    hostId: '00000000-0000-0000-0000-000000000003',
+    hostName: 'Chloe Tan',
+    hostAvatar: getGenderAvatarForName('Chloe Tan'),
+    isHostDemo: true,
+    seatsTotal: 6,
+    seatsFilled: 4,
+    fitBadge: 'High Values Cohesion',
+  },
+  {
+    id: 'demo-outing-3',
+    title: 'Indie Bookshop Crawl & Deep Talk',
+    pitch: 'Exploring secondhand bookshops around Bras Basah and discussing Japanese architecture over matcha.',
+    area: 'Bras Basah',
+    category: 'intellectual',
+    dateTime: 'Sat, 12 Sep · 2:00 PM',
+    hostId: '00000000-0000-0000-0000-000000000004',
+    hostName: 'Samuel Tan',
+    hostAvatar: getGenderAvatarForName('Samuel Tan'),
+    isHostDemo: true,
+    seatsTotal: 6,
+    seatsFilled: 2,
+    fitBadge: 'Curiosity Match',
+  },
+];
+
 export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> {
-  if (!checkIsSupabaseConfigured() || !userId) {
-    return [];
+  if (!checkIsSupabaseConfigured()) {
+    return DEFAULT_RADAR_OUTINGS;
   }
 
   try {
@@ -335,17 +420,14 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
         outing_members (user_id, state)
       `)
       .eq('state', 'open');
-    if (userId) {
-      // Exclude own outings from radar
-    }
 
     const filteredRows = (outingRows || []).filter((out: any) => out.host_id !== userId);
 
     if (error || filteredRows.length === 0) {
-      return [];
+      return DEFAULT_RADAR_OUTINGS;
     }
 
-    return filteredRows.map((out: any) => {
+    const dbItems: OutingItem[] = filteredRows.map((out: any) => {
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
       const hostName = hostProfile?.display_name || '';
       const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');
@@ -387,8 +469,12 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
         fitBadge: undefined,
       };
     });
+
+    const dbIds = new Set(dbItems.map((i) => i.id));
+    const fallbackRadar = DEFAULT_RADAR_OUTINGS.filter((item) => !dbIds.has(item.id));
+    return [...dbItems, ...fallbackRadar];
   } catch {
-    return [];
+    return DEFAULT_RADAR_OUTINGS;
   }
 }
 

@@ -96,20 +96,31 @@ function HomeContent() {
         setProfileState(userProf);
 
         const userPitchesData = await fetchUserPitches(user?.id);
-        const formattedPitches: PitchedOuting[] = userPitchesData.map((p) => ({
-          id: p.id,
-          title: p.title,
-          pitch: p.pitch,
-          area: p.area,
-          dateTime: p.dateTime,
-          hostName: p.hostName,
-          hostAvatar: p.hostAvatar,
-          seatsTotal: p.seatsTotal,
-          seatsFilled: p.seatsFilled,
-          cohesionScore: 85,
-          joinedGuests: [],
-          createdAt: '',
-        }));
+        const localPitchesList = getUserPitches();
+        const formattedPitches: PitchedOuting[] = userPitchesData.map((p) => {
+          const matchLocal = localPitchesList.find((lp) => lp.id === p.id);
+          return {
+            id: p.id,
+            title: p.title,
+            pitch: p.pitch,
+            area: p.area,
+            dateTime: p.dateTime,
+            hostName: p.hostName,
+            hostAvatar: p.hostAvatar,
+            seatsTotal: p.seatsTotal,
+            seatsFilled: p.seatsFilled,
+            cohesionScore: 85,
+            joinedGuests: matchLocal?.joinedGuests || [],
+            createdAt: matchLocal?.createdAt || '',
+            cover_image_url: p.cover_image_url || matchLocal?.cover_image_url,
+            cover_image_thumb_url: p.cover_image_thumb_url || matchLocal?.cover_image_thumb_url,
+            cover_image_alt: p.cover_image_alt || matchLocal?.cover_image_alt,
+            cover_photographer_name: p.cover_photographer_name || matchLocal?.cover_photographer_name,
+            cover_photographer_url: p.cover_photographer_url || matchLocal?.cover_photographer_url,
+            cover_download_location: p.cover_download_location || matchLocal?.cover_download_location,
+            category: p.category || (matchLocal as any)?.category,
+          };
+        });
         setPitches(formattedPitches);
 
         const realCount = await countRealMembers(userProf.homeArea || 'Singapore');
