@@ -264,6 +264,30 @@ function PitchComposerContent() {
           }
         }
 
+        const newPitchObj: PitchedOuting = {
+          id: newOuting.id,
+          title: title.trim(),
+          pitch: pitch.trim(),
+          area: area.trim(),
+          dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
+          hostName: profile.displayName || 'You',
+          hostAvatar: profile.avatarUrl || getGenderAvatarForName(profile.displayName || 'You'),
+          seatsTotal: maxParticipants,
+          seatsFilled: 1 + selectedGuests.length,
+          cohesionScore: 85,
+          joinedGuests: selectedGuests.map((g) => ({
+            id: g.id,
+            name: g.name,
+            avatarUrl: g.avatarUrl || getGenderAvatarForName(g.name),
+            homeArea: g.homeArea,
+            status: 'Pending',
+            isDemo: g.isDemo,
+          })),
+          createdAt: new Date().toISOString(),
+        };
+
+        addUserPitch(newPitchObj);
+
         // Route to the created outing's detail page using real id!
         router.push(`/outings/${newOuting.id}`);
         return;

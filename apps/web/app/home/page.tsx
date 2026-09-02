@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
-import { fetchGoingOutings, fetchRadarOutings, OutingItem } from '../../lib/outingsStore';
+import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
@@ -84,8 +84,22 @@ function HomeContent() {
 
         setProfileState(userProf);
 
-        const userPitchesData = getUserPitches();
-        setPitches(userPitchesData);
+        const userPitchesData = await fetchUserPitches(user?.id);
+        const formattedPitches: PitchedOuting[] = userPitchesData.map((p) => ({
+          id: p.id,
+          title: p.title,
+          pitch: p.pitch,
+          area: p.area,
+          dateTime: p.dateTime,
+          hostName: p.hostName,
+          hostAvatar: p.hostAvatar,
+          seatsTotal: p.seatsTotal,
+          seatsFilled: p.seatsFilled,
+          cohesionScore: 85,
+          joinedGuests: [],
+          createdAt: '',
+        }));
+        setPitches(formattedPitches);
 
         const realCount = await countRealMembers(userProf.homeArea || 'Singapore');
         const smallMode = isSmallCommunityMode(realCount);

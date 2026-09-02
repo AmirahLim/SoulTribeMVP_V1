@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
   Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut, Calendar, Check
+  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut, Calendar, Check, Plus
 } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 import {
@@ -21,6 +21,7 @@ import { AuthGuard } from '../../components/AuthGuard';
 import { getActiveNextBestPrompts } from '../../lib/threadPrompts';
 import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
+import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 
 export default function ProfilePage() {
   return (
@@ -51,6 +52,16 @@ function ProfileContent() {
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
+
+  const [userPitches, setUserPitches] = useState<OutingItem[]>([]);
+
+  useEffect(() => {
+    async function loadPitches() {
+      const list = await fetchUserPitches(authUser?.id || profile.id);
+      setUserPitches(list);
+    }
+    loadPitches();
+  }, [authUser?.id, profile.id]);
 
 function normalizeInterestList(rawList?: string[]): string[] {
   if (!Array.isArray(rawList)) return [];
@@ -448,6 +459,49 @@ function normalizeInterestList(rawList?: string[]): string[] {
           <div className="mt-4">
             <SocialDnaBars categories={socialDnaCategories} />
           </div>
+        </section>
+
+        {/* SECTION: YOUR PITCHED OUTINGS */}
+        <section className="py-6 border-b border-white/15">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold tracking-widest text-amber-300 uppercase flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-amber-400" /> Pitches & Hosted Outings ({userPitches.length})
+            </span>
+            <Link href="/outings/pitch" className="text-[12px] font-extrabold text-emerald-300 hover:underline">
+              + Pitch Outing
+            </Link>
+          </div>
+
+          {userPitches.length === 0 ? (
+            <div className="mt-3 rounded-[20px] border border-dashed border-white/20 bg-black/40 p-5 text-center">
+              <p className="text-[13.5px] text-white/90 font-medium">You haven't pitched any outings yet.</p>
+              <p className="mt-1 text-[12px] text-white/70">Pitch a quiet coffee walk, pottery session, or indie bookshop crawl.</p>
+              <Link href="/outings/pitch" className="mt-4 inline-flex items-center rounded-full bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-[12px] font-extrabold text-black transition-all">
+                <Plus className="mr-1 h-3.5 w-3.5" /> Pitch an Outing
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3.5 flex flex-col gap-3">
+              {userPitches.map((item) => (
+                <div key={item.id} className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-4 shadow-xl text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
+                      Your Pitch
+                    </span>
+                    <span className="text-[11px] font-medium text-white/70">{item.area}</span>
+                  </div>
+                  <h4 className="mt-2 text-[16px] font-extrabold text-white tracking-tight">{item.title}</h4>
+                  <p className="mt-1 text-[13px] text-white/90 italic font-medium">“{item.pitch}”</p>
+                  <div className="mt-3 flex items-center justify-between text-[12px] text-white/70 pt-3 border-t border-white/10">
+                    <span>{item.dateTime || 'Flexible timing'}</span>
+                    <Link href={`/outings/${item.id}`} className="font-extrabold text-emerald-300 hover:underline">
+                      View Outing →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* SECTION C: 10-CATEGORY CREATIVE VISUAL DIAGRAM MAP */}

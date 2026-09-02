@@ -8,12 +8,13 @@ import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSma
 import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, PHRASES } from '@soul-tribe/core';
 import {
   ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
-  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle
+  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle, Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
+import { fetchUserPitches, OutingItem } from '../../../lib/outingsStore';
 
 function formatInterestLabel(item: any): string {
   if (!item) return '';
@@ -52,6 +53,16 @@ function PersonDetailContent() {
   const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
   const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+  const [memberPitches, setMemberPitches] = useState<OutingItem[]>([]);
+
+  useEffect(() => {
+    async function loadMemberPitches() {
+      if (!cleanPersonId) return;
+      const pitches = await fetchUserPitches(cleanPersonId);
+      setMemberPitches(pitches);
+    }
+    loadMemberPitches();
+  }, [cleanPersonId]);
 
   useEffect(() => {
     async function loadMatch() {
@@ -530,6 +541,42 @@ function PersonDetailContent() {
             </div>
           </section>
         )}
+
+        {/* SECTION: MEMBER PITCHES */}
+        <section className="py-6 border-b border-white/15">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold tracking-widest text-amber-300 uppercase flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-amber-400" /> Outings Pitched by {foundPerson.name} ({memberPitches.length})
+            </span>
+          </div>
+
+          {memberPitches.length === 0 ? (
+            <div className="mt-3 rounded-[20px] border border-dashed border-white/20 bg-black/40 p-4 text-center">
+              <p className="text-[13px] text-white/80">{foundPerson.name} hasn't pitched any outings yet.</p>
+            </div>
+          ) : (
+            <div className="mt-3.5 flex flex-col gap-3">
+              {memberPitches.map((item) => (
+                <div key={item.id} className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-4 shadow-xl text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/30 px-2.5 py-0.5 rounded-full">
+                      Pitched Outing
+                    </span>
+                    <span className="text-[11px] font-medium text-white/70">{item.area}</span>
+                  </div>
+                  <h4 className="mt-2 text-[16px] font-extrabold text-white tracking-tight">{item.title}</h4>
+                  <p className="mt-1 text-[13px] text-white/90 italic font-medium">“{item.pitch}”</p>
+                  <div className="mt-3 flex items-center justify-between text-[12px] text-white/70 pt-3 border-t border-white/10">
+                    <span>{item.dateTime || 'Flexible timing'}</span>
+                    <Link href={`/outings/${item.id}`} className="font-extrabold text-emerald-300 hover:underline">
+                      View Outing →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* SECTION C: 10-CATEGORY VISUAL SIGNALS MAP */}
         <section className="py-2 flex flex-col gap-6">
