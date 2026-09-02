@@ -2,26 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bloom, SocialDnaBars, Button, Chip, RhythmStrip } from '@soul-tribe/ui';
+import { useRouter } from 'next/navigation';
+import { Bloom } from '@soul-tribe/ui';
 import { ONBOARDING_INTEREST_OPTIONS } from '@soul-tribe/core';
 import { saveOnboardingToSupabase } from '../../lib/supabaseOnboarding';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import {
-  Settings, X, MessageSquare, Heart, Compass, Sparkles, User, Coffee, Smile, Radio,
-  Quote, ShieldCheck, Cpu, Flame, Layers, Clock, Globe, Lock, ArrowUpRight, Edit3, Sun, Moon, Sunrise, Info, Award, CheckCircle2, PawPrint, LogOut, Calendar, Check, Plus
-} from 'lucide-react';
+import { Settings, Info, Award, Calendar, Sparkles, ArrowUpRight } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 import {
   getUserProfile, setUserProfile, UserProfileData,
-  STANDING_LEVELS, calculateTribeStanding, StandingLevel
+  calculateTribeStanding
 } from '../../lib/userStore';
-
 import { AuthGuard } from '../../components/AuthGuard';
 import { getActiveNextBestPrompts } from '../../lib/threadPrompts';
 import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
+import { getThreadColor, THREAD_COLORS } from '@soul-tribe/tokens';
+
+import { ProfileHero } from '../../components/profile/ProfileHero';
+import { ReadDepthIndicator } from '../../components/profile/ReadDepthIndicator';
+import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
+import { WhatStandsOut } from '../../components/profile/WhatStandsOut';
+import { RealWorldSocialSelf } from '../../components/profile/RealWorldSocialSelf';
+import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
+import { TribalRead } from '../../components/profile/TribalRead';
+import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
+import { ConnectionNotes, NoteItem } from '../../components/profile/ConnectionNotes';
+import { SocialInstincts, InstinctItem } from '../../components/profile/SocialInstincts';
 
 export default function ProfilePage() {
   return (
@@ -40,13 +47,12 @@ function ProfileContent() {
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     homeArea: 'Singapore',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 10,
+    passCompletionPct: 42,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStandingGuideOpen, setIsStandingGuideOpen] = useState(false);
   const [isOnboardingEditOpen, setIsOnboardingEditOpen] = useState(false);
-  const [onboardingSavedMessage, setOnboardingSavedMessage] = useState(false);
 
   const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
@@ -62,107 +68,6 @@ function ProfileContent() {
     }
     loadPitches();
   }, [authUser?.id, profile.id]);
-
-function normalizeInterestList(rawList?: string[]): string[] {
-  if (!Array.isArray(rawList)) return [];
-  const validSet = new Set(ONBOARDING_INTEREST_OPTIONS);
-  const normalized: string[] = [];
-
-  for (const item of rawList) {
-    if (validSet.has(item)) {
-      normalized.push(item);
-    } else if (typeof item === 'string') {
-      const lower = item.toLowerCase();
-      if (lower.includes('coffee') || lower.includes('cafe')) normalized.push('Coffee & wandering');
-      else if (lower.includes('board') || lower.includes('game')) normalized.push('Board games');
-      else if (lower.includes('music') || lower.includes('gig')) normalized.push('Live music');
-      else if (lower.includes('wine') || lower.includes('drink')) normalized.push('Natural wine');
-      else if (lower.includes('boulder') || lower.includes('climb')) normalized.push('Bouldering / movement');
-      else if (lower.includes('pottery') || lower.includes('ceramic')) normalized.push('Pottery / ceramics');
-      else if (lower.includes('food') || lower.includes('dine') || lower.includes('eat')) normalized.push('Food hunting');
-      else if (lower.includes('outdoor') || lower.includes('nature') || lower.includes('walk')) normalized.push('Outdoor walks & nature');
-      else if (lower.includes('film') || lower.includes('movie') || lower.includes('cinema')) normalized.push('Film & cinema');
-      else if (lower.includes('book') || lower.includes('read')) normalized.push('Bookshops');
-      else if (lower.includes('museum') || lower.includes('art') || lower.includes('gallery')) normalized.push('Museums & galleries');
-      else if (lower.includes('workshop') || lower.includes('craft')) normalized.push('Workshops');
-    }
-  }
-
-  const result = Array.from(new Set(normalized));
-  return result.slice(0, 3);
-}
-
-  const [q1Finding, setQ1Finding] = useState<string[]>([]);
-  const [q2Feelings, setQ2Feelings] = useState<string[]>([]);
-  const [q3GroupSize, setQ3GroupSize] = useState<string>('');
-  const [q4Connected, setQ4Connected] = useState<string[]>([]);
-  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string>('');
-  const [q5Availability, setQ5Availability] = useState<string[]>([]);
-  const [q6Outings, setQ6Outings] = useState<string[]>([]);
-  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string>('');
-  const [q8Qualities, setQ8Qualities] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (isOnboardingEditOpen) {
-      setQ1Finding(profile.q1Finding || []);
-      setQ2Feelings(profile.q2Feelings || []);
-      setQ3GroupSize(profile.q3GroupSize || '');
-      setQ4Connected(profile.q4Connected || []);
-      setQ5PlanningRhythm(profile.q5PlanningRhythm || '');
-      setQ5Availability(profile.q5Availability || []);
-      setQ6Outings(normalizeInterestList(profile.q6Outings));
-      setQ7EmotionalPacing(profile.q7EmotionalPacing || '');
-      setQ8Qualities(profile.q8Qualities || []);
-    }
-  }, [isOnboardingEditOpen, profile]);
-
-  const handleSaveOnboardingAnswers = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const updated = setUserProfile({
-      ...profile,
-      q1Finding,
-      q2Feelings,
-      q3GroupSize,
-      q4Connected,
-      q5PlanningRhythm,
-      q5Availability,
-      q6Outings,
-      q7EmotionalPacing,
-      q8Qualities,
-    });
-    setProfileState(updated);
-    setIsOnboardingEditOpen(false);
-
-    if (authUser?.id) {
-      try {
-        await saveOnboardingToSupabase(authUser.id, {
-          displayName: profile.displayName,
-          handle: profile.handle || profile.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-          homeArea: profile.homeArea,
-          birthYear: profile.birthYear,
-          avatarUrl: profile.avatarUrl,
-          bio: profile.bio,
-          q1Finding,
-          q2Feelings,
-          q3Energy: profile.q3Energy,
-          q3GroupSize,
-          q4Connected,
-          q5PlanningRhythm,
-          q5Availability,
-          q6Outings,
-          q7EmotionalPacing,
-          q8Qualities,
-        });
-      } catch (err) {
-        console.error('Error syncing onboarding edits to Supabase:', err);
-      }
-    }
-  };
-
-  const handleSignOutAction = async () => {
-    await signOut();
-    router.push('/auth/signin');
-  };
 
   useEffect(() => {
     let loaded = getUserProfile();
@@ -195,20 +100,10 @@ function normalizeInterestList(rawList?: string[]): string[] {
               setEditArea(merged.homeArea);
               setEditBio(merged.bio);
               setEditPhoto(merged.avatarUrl);
-            } else if (loaded.avatarUrl) {
-              client
-                .from('profiles')
-                .update({
-                  display_name: loaded.displayName,
-                  home_area: loaded.homeArea,
-                  bio: loaded.bio,
-                  avatar_url: loaded.avatarUrl,
-                })
-                .eq('id', authUser.id);
             }
           });
       } catch {
-        // DB sync fallback
+        // Fallback
       }
     }
   }, [authUser?.id]);
@@ -237,1061 +132,287 @@ function normalizeInterestList(rawList?: string[]): string[] {
           })
           .eq('id', authUser.id);
       } catch {
-        // DB update fallback
+        // Fallback
       }
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateAvatarFile(file);
-    if (!validation.valid) {
-      alert(validation.error);
-      return;
-    }
-
-    const realUserId = authUser?.id || profile.id || 'user';
-    const res = await uploadAvatar(realUserId, file);
-    if (res.success && res.avatarUrl) {
-      setEditPhoto(res.avatarUrl);
-      const updated = setUserProfile({
-        ...profile,
-        avatarUrl: res.avatarUrl,
-      });
-      setProfileState(updated);
-    } else if (res.error) {
-      alert(res.error);
-    }
-  };
-
-  const deep = profile.deepProfile || {};
   const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
-
-  const completedCats = profile.completedCategoryNums || [];
+  const completedCats = profile.completedCategoryNums || [2, 3, 4, 5, 6, 7];
   const isCatDone = (num: number) => completedCats.includes(num);
 
+  // Confidence derived from signal counts
+  const confidenceValue = Math.min(0.95, Math.max(0.1, (completedCats.length * 12) / 100));
+  const totalSignalsCount = completedCats.length * 7 + 8;
+
+  // Next best questions phrased as value
+  const nextPrompts = getActiveNextBestPrompts(profile, 2).map((p) => ({
+    thread: p.thread,
+    question: p.label,
+    prompt: p.copy,
+  }));
+
+  // Bloom threads
   const bloomThreads = [
-    { key: 'p', label: 'Personality', strength: isCatDone(5) ? 0.85 : 0, confidence: isCatDone(5) ? 0.9 : 0, sentence: isCatDone(5) ? (deep.selfDescriptionOpen || 'Curious, reflective, and independent.') : 'Unlock by completing Section 5 in Deeper Pass' },
-    { key: 'c', label: 'Communication', strength: isCatDone(2) ? 0.9 : 0, confidence: isCatDone(2) ? 0.95 : 0, sentence: isCatDone(2) ? (deep.messagingStyleOpen || 'Prefers intentional messages & voice notes.') : 'Unlock by completing Section 2 in Deeper Pass' },
-    { key: 'r', label: 'Rhythm', strength: isCatDone(4) ? 0.75 : 0, confidence: isCatDone(4) ? 0.85 : 0, sentence: isCatDone(4) ? (deep.idealSaturdayOpen || 'Slow mornings, afternoons for exploring.') : 'Unlock by completing Section 4 in Deeper Pass' },
-    { key: 'i', label: 'Intent', strength: isCatDone(3) ? 0.95 : 0, confidence: isCatDone(3) ? 0.95 : 0, sentence: isCatDone(3) ? (deep.realFriendOpen || 'Looking for a small, regular inner circle.') : 'Unlock by completing Section 3 in Deeper Pass' },
-    { key: 'e', label: 'Emotional', strength: isCatDone(9) ? 0.8 : 0, confidence: isCatDone(9) ? 0.9 : 0, sentence: isCatDone(9) ? (deep.likeMeIfPrompt || 'Listen first. Advice once understood.') : 'Unlock by completing Section 9 in Deeper Pass' },
-    { key: 'int', label: 'Interests', strength: isCatDone(7) ? 0.85 : 0, confidence: isCatDone(7) ? 0.85 : 0, sentence: isCatDone(7) ? (deep.talkForHoursOpen || 'Art, ceramics, psychology, travel.') : 'Unlock by completing Section 7 in Deeper Pass' },
-    { key: 'v', label: 'Values', strength: isCatDone(6) ? 0.9 : 0, confidence: isCatDone(6) ? 0.9 : 0, sentence: isCatDone(6) ? (deep.respectPeopleOpen || 'Respects people who change their mind.') : 'Unlock by completing Section 6 in Deeper Pass' },
-    { key: 'l', label: 'Lifestyle', strength: isCatDone(8) ? 0.8 : 0, confidence: isCatDone(8) ? 0.8 : 0, sentence: isCatDone(8) ? (deep.instantYesOutingOpen || 'Enjoys low-key coffee and craft meetups.') : 'Unlock by completing Section 8 in Deeper Pass' },
+    { key: 'personality', label: 'Social Energy', strength: isCatDone(5) ? 0.85 : 0.2, confidence: confidenceValue, sentence: 'Thrives in quiet, intentional 1-on-1s and small groups.' },
+    { key: 'communication', label: 'Communication', strength: isCatDone(2) ? 0.9 : 0.2, confidence: confidenceValue, sentence: 'Prefers low-pressure, async messaging.' },
+    { key: 'social_rhythm', label: 'Social Rhythm', strength: isCatDone(4) ? 0.75 : 0.2, confidence: confidenceValue, sentence: 'Values planned dates locked in advance.' },
+    { key: 'intent', label: 'Friendship Style', strength: isCatDone(3) ? 0.95 : 0.2, confidence: confidenceValue, sentence: 'Seeks a small, enduring inner circle.' },
+    { key: 'emotional', label: 'Emotional Connection', strength: isCatDone(9) ? 0.8 : 0.2, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
+    { key: 'interests', label: 'Interests', strength: isCatDone(7) ? 0.85 : 0.2, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
+    { key: 'values', label: 'Values', strength: isCatDone(6) ? 0.9 : 0.2, confidence: confidenceValue, sentence: 'Prioritizes authenticity, growth, and community.' },
+    { key: 'lifestyle', label: 'Play & Humour', strength: isCatDone(8) ? 0.8 : 0.2, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
   ];
 
-  const socialDnaCategories = [
-    { key: 'personality', name: 'Personality', score: isCatDone(5) ? 85 : 0, catNum: 5 },
-    { key: 'communication', name: 'Communication', score: isCatDone(2) ? 90 : 0, catNum: 2 },
-    { key: 'rhythm', name: 'Social Rhythm', score: isCatDone(4) ? 75 : 0, catNum: 4 },
-    { key: 'intent', name: 'Friendship Intent', score: isCatDone(3) ? 95 : 0, catNum: 3 },
-    { key: 'emotional', name: 'Emotional Style', score: isCatDone(9) ? 80 : 0, catNum: 9 },
-    { key: 'interests', name: 'Interests', score: isCatDone(7) ? 85 : 0, catNum: 7 },
-    { key: 'values', name: 'Values', score: isCatDone(6) ? 90 : 0, catNum: 6 },
-    { key: 'lifestyle', name: 'Lifestyle', score: isCatDone(8) ? 80 : 0, catNum: 8 },
+  // Connection Threads list
+  const connectionThreadsList: ThreadData[] = [
+    {
+      key: 'personality',
+      name: 'Social Energy',
+      heroDescriptor: ['Intimate', 'Selective', 'Calm'],
+      strength: 0.85,
+      confidence: confidenceValue,
+      naturalSetting: 'Low-noise coffee spots, quiet studios, 1-on-1 tea catch-ups.',
+      socialMeaning: 'You recharge through focused conversations rather than bustling crowds.',
+      thriveWhen: 'Settings have minimal background noise and predictable party sizes.',
+      potentialFriction: 'May feel drained in loud, open-ended networking mixers.',
+      signals: [
+        { key: 'q3', label: 'Prefers 1-on-1 or 3-4 people', evidenceLevel: 'DIRECT' },
+        { key: 'p_ext', label: 'Low extraversion score', evidenceLevel: 'SUPPORTED INFERENCE' },
+      ],
+    },
+    {
+      key: 'communication',
+      name: 'Communication',
+      heroDescriptor: ['Asynchronous', 'Low-pressure', 'Intentional'],
+      strength: 0.9,
+      confidence: confidenceValue,
+      naturalSetting: 'Thoughtful text threads, voice notes, and unhurried replies.',
+      socialMeaning: 'You communicate deeply without expecting immediate instant-reply speed.',
+      thriveWhen: 'Friends share asynchronous digital touchpoints.',
+      potentialFriction: 'High-frequency daily check-in expectations.',
+      signals: [
+        { key: 'q4', label: 'Low-maintenance reply pace', evidenceLevel: 'DIRECT' },
+      ],
+    },
+    {
+      key: 'social_rhythm',
+      name: 'Social Rhythm',
+      heroDescriptor: ['Structured', 'Advance-planned', 'Predictable'],
+      strength: 0.75,
+      confidence: confidenceValue,
+      naturalSetting: 'Meetups confirmed 1–2 weeks in advance.',
+      socialMeaning: 'Knowing plans ahead of time lets you allocate energy effortlessly.',
+      thriveWhen: 'Calendars are settled early without last-minute scrambling.',
+      potentialFriction: 'Same-day last-minute plans.',
+      signals: [
+        { key: 'q5', label: 'Planned 1-2 weeks in advance', evidenceLevel: 'DIRECT' },
+      ],
+    },
   ];
 
-  const coreValuesList = (deep.coreValues || 'Curiosity · Freedom · Growth · Community')
-    .split(/·|,/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  // Stage B Synthesis Data (Only populated when signal threshold met)
+  const tribalReadData = completedCats.length >= 4 ? {
+    headline: 'Selective, curious & quietly adventurous',
+    summary: 'You tend to build connection through smaller settings, shared experiences, and conversations that gradually become more meaningful.',
+    pills: ['Small-circle energy', 'Depth over frequency', 'Novelty-seeking'],
+    topThreads: ['personality', 'interests'] as [string, string],
+    sections: [
+      { title: 'Who you are socially', content: 'You protect your social energy for high-quality, focused meetups where real conversation can happen.', markerCount: 3 },
+      { title: 'You connect through', content: 'Hands-on shared activities, craft workshops, and quiet coffee walks that provide an easy anchor.', markerCount: 2 },
+      { title: "You're at your best with", content: 'Friends who respect your unhurried response pace and value planned dates locked in early.', markerCount: 3 },
+    ],
+  } : undefined;
+
+  const contradictionTension = completedCats.length >= 5 ? {
+    headline: 'Adventurous, but not chaotic.',
+    explanation: "You actively seek unfamiliar experiences, but prefer knowing they're happening ahead of time. Novelty energizes you; logistical uncertainty doesn't.",
+    threadsInvolved: ['interests', 'social_rhythm'],
+  } : undefined;
+
+  const connectionNotesList: NoteItem[] = completedCats.length >= 3 ? [
+    {
+      id: 'note-1',
+      hook: 'How to become friends with me',
+      statement: 'Invite me to low-key, focused activities first',
+      explanation: 'I feel most comfortable when there is a shared activity or quiet setting to ground our conversation.',
+      whatItLooksLike: 'A specialty coffee walk or ceramic workshop works better than a noisy lounge.',
+      sourceThreads: ['personality', 'interests'],
+    },
+    {
+      id: 'note-2',
+      hook: 'What makes me feel close',
+      statement: 'Thoughtful catch-ups without digital reply pressure',
+      explanation: 'Taking time to reply to messages is normal for me, and I appreciate friends who hold zero pressure around reply speed.',
+      whatItLooksLike: 'Picking up a text thread days later without awkwardness.',
+      sourceThreads: ['communication'],
+    },
+  ] : [];
+
+  const primaryInstinct: InstinctItem | undefined = completedCats.length >= 3 ? {
+    type: 'Connector',
+    description: 'bringing people together around shared crafts and quiet, quality experiences',
+  } : undefined;
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
-      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED ARTISTIC PAINTER EASEL PHOTO */}
-      <img
-        src="/user-you-bg.jpg"
-        alt="You Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
-      />
-
-      {/* Dark Ambient Vignette Overlay for Readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
-
-      {/* PAGE CONTENT CONTAINER */}
-      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
-        {/* Top Bar Header */}
-        <header className="flex items-center justify-between pb-6 border-b border-white/15">
-          <div className="flex items-center gap-3">
-            <img
-              src={profile.avatarUrl}
-              alt={profile.displayName}
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-white/30"
-            />
-            <div>
-              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Tribal Pass · {profile.passCompletionPct}% Complete
-              </span>
-              <h1 className="text-[22px] font-extrabold text-white tracking-tight drop-shadow-md">
-                {profile.displayName}
-              </h1>
-            </div>
-          </div>
-
+    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#F3F0E9] pb-24">
+      <div className="mx-auto max-w-3xl px-4 py-8 flex flex-col gap-8">
+        {/* Read Depth Indicator Header */}
+        <div className="flex items-center justify-between">
+          <ReadDepthIndicator signalCount={totalSignalsCount} />
           <button
-            type="button"
             onClick={() => setIsSettingsOpen(true)}
-            className="rounded-full border border-white/20 bg-black/50 p-2.5 text-white hover:bg-black/70 backdrop-blur-md"
-            title="Edit Profile & Settings"
+            className="rounded-full border border-[#F3F0E9]/20 bg-[#15261C] p-2 text-[#F3F0E9] hover:bg-[#2D523E]"
+            title="Settings"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-4 w-4" />
           </button>
-        </header>
+        </div>
 
-        {/* REPUTATION & STANDING METRIC */}
-        <section className="py-6 border-b border-white/15">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Tribe Standing
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsStandingGuideOpen(true)}
-              className="flex items-center gap-1 text-[11.5px] font-semibold text-white/80 hover:text-white underline"
-            >
-              <Info className="h-3.5 w-3.5" /> How Standing Works
-            </button>
+        {/* 2.1 Profile Hero */}
+        <ProfileHero
+          displayName={profile.displayName}
+          handle={profile.handle || 'you'}
+          homeArea={profile.homeArea}
+          bio={profile.bio}
+          avatarUrl={profile.avatarUrl}
+          tier="Member"
+          standingText={currentStanding.label}
+          confidence={confidenceValue}
+          nextQuestions={nextPrompts}
+          onEditProfile={() => setIsSettingsOpen(true)}
+          onExploreThread={(thread) => router.push('/you/deeper')}
+        />
+
+        {/* 2.4 Your Social Signature (Tribal Bloom) */}
+        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-6 shadow-xl text-center">
+          <h2 className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Your Social Signature (Tribal Bloom)
+          </h2>
+          <p className="mt-1 text-xs text-[#A6AAA4]">
+            An organic visual signature generated from your active Connection Threads.
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <Bloom threads={bloomThreads} size={260} interactive />
           </div>
+        </div>
 
-          {/* NEXT BEST QUESTIONS PROMPT BANNER */}
-          {getActiveNextBestPrompts(profile, 2).length > 0 && (
-            <div className="mt-4 space-y-2.5">
-              <span className="text-[11px] font-bold tracking-widest text-amber-300/90 uppercase flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Sharpen Your Matches
-              </span>
-              {getActiveNextBestPrompts(profile, 2).map((prompt) => (
-                <Link key={prompt.thread} href={prompt.href} className="block">
-                  <div className="rounded-[20px] border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 p-4 transition shadow-lg backdrop-blur-md flex items-center justify-between gap-3 group">
-                    <div className="space-y-1">
-                      <h4 className="text-[14px] font-extrabold text-amber-200 flex items-center gap-2">
-                        {prompt.label}
-                      </h4>
-                      <p className="text-[12.5px] text-white/80 leading-relaxed">
-                        {prompt.copy}
-                      </p>
-                    </div>
-                    <ArrowUpRight className="h-5 w-5 text-amber-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform shrink-0" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+        {/* 3.1 Stage B: Your Tribal Read (Only if evidence threshold met) */}
+        <TribalRead data={tribalReadData} />
 
-          {/* Current Status Badge Display */}
-          <div className="mt-3 flex items-center justify-between rounded-[20px] border border-white/20 bg-black/60 p-3.5 shadow-xl backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="text-[24px] leading-none">{currentStanding.icon}</div>
+        {/* 3.2 Stage B: The Interesting Part (Only if genuine cross-thread tension detected) */}
+        <TheInterestingPart tension={contradictionTension} />
+
+        {/* 2.5 What Stands Out */}
+        <WhatStandsOut
+          standouts={[
+            { trait: 'Socially selective', description: 'You consistently favour smaller, higher-quality interactions over crowded mixers.' },
+            { trait: 'High curiosity', description: 'Novel ideas and unfamiliar environments appear repeatedly across your Pass.' },
+          ]}
+        />
+
+        {/* 2.3 Connection Threads */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+            Connection Threads
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {connectionThreadsList.map((t) => (
+              <ThreadCard key={t.key} thread={t} />
+            ))}
+          </div>
+        </div>
+
+        {/* 3.3 Stage B: Connection Notes */}
+        <ConnectionNotes notes={connectionNotesList} />
+
+        {/* 3.4 Stage B: Social Instincts */}
+        <SocialInstincts primaryInstinct={primaryInstinct} />
+
+        {/* 2.6 Real-world Social Self */}
+        <RealWorldSocialSelf
+          interests={[
+            { name: 'Specialty Coffee', isRabbitHole: true },
+            { name: 'Ceramics & Craft' },
+            { name: 'Analog Film' },
+            { name: 'Architecture Walks' },
+          ]}
+          outingDna={{
+            descriptors: ['Low-key', 'Creative', 'Exploratory'],
+            instantYes: 'Specialty coffee walk & ceramic studio visit',
+            usuallyYes: ['Quiet museum visits', 'Acoustic live music'],
+            convinceMe: ['Rooftop cocktail mixers'],
+          }}
+          youShouldKnow={[
+            'Prefers 1-on-1 or small group meetups (3-4 max)',
+            'Plans dates 1-2 weeks in advance',
+            'Enjoys quiet cafes over noisy venues',
+          ]}
+          availabilityText="Generally available weekday evenings and Saturday mornings for coffee or craft hangouts."
+          hostedOutingsCount={profile.outingsHosted || 1}
+        />
+
+        {/* 2.7 Boundaries & Matching */}
+        <BoundariesMatching />
+      </div>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1D15]/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-[24px] border border-[#F3F0E9]/20 bg-[#15261C] p-6 text-[#F3F0E9]">
+            <h3 className="text-lg font-bold">Edit Profile & Settings</h3>
+
+            <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[15px] font-extrabold text-white">{currentStanding.label}</span>
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase ${currentStanding.badgeColor}`}>
-                    Active Level
-                  </span>
-                </div>
-                <p className="text-[12px] text-white/80">{currentStanding.meaning}</p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsStandingGuideOpen(true)}
-              className="rounded-full border border-white/20 bg-white/10 p-2 text-white hover:bg-white/20"
-            >
-              <Award className="h-4 w-4" />
-            </button>
-          </div>
-
-          <p className="mt-3 text-[13.5px] leading-relaxed text-white/90">
-            {profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
-          </p>
-
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-[12.5px] text-white/80">
-              <strong className="text-white font-semibold">{profile.homeArea}</strong>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsOnboardingEditOpen(true)}
-                className="rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-white/20 transition-all backdrop-blur-md flex items-center gap-1.5 shadow-md"
-              >
-                <Calendar className="h-3.5 w-3.5 text-amber-300" /> Edit Availability & Answers
-              </button>
-              <Link href="/you/deeper">
-                <Button variant="secondary" size="sm">
-                  Deepen Pass →
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION A: FRIENDSHIP DNA BLOOM */}
-        <section className="py-6 border-b border-white/15">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Friendship DNA Bloom
-            </span>
-          </div>
-
-          <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/90">
-            A dynamic visual representation of your social energy, rhythm, and values.
-          </p>
-
-          <div className="mt-6 flex justify-center rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <Bloom threads={bloomThreads} size={280} interactive />
-          </div>
-        </section>
-
-        {/* SECTION B: SOCIAL DNA METRIC BARS */}
-        <section className="py-6 border-b border-white/15">
-          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            Your Tribal Print
-          </span>
-          <p className="mt-1 text-[13.5px] text-white/90">
-            Trait vectors calculated dynamically from your completed questionnaire sections.
-          </p>
-
-          <div className="mt-4">
-            <SocialDnaBars categories={socialDnaCategories} />
-          </div>
-        </section>
-
-        {/* SECTION: YOUR PITCHED OUTINGS */}
-        <section className="py-6 border-b border-white/15">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold tracking-widest text-amber-300 uppercase flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-amber-400" /> Pitches & Hosted Outings ({userPitches.length})
-            </span>
-            <Link href="/outings/pitch" className="text-[12px] font-extrabold text-emerald-300 hover:underline">
-              + Pitch Outing
-            </Link>
-          </div>
-
-          {userPitches.length === 0 ? (
-            <div className="mt-3 rounded-[20px] border border-dashed border-white/20 bg-black/40 p-5 text-center">
-              <p className="text-[13.5px] text-white/90 font-medium">You haven't pitched any outings yet.</p>
-              <p className="mt-1 text-[12px] text-white/70">Pitch a quiet coffee walk, pottery session, or indie bookshop crawl.</p>
-              <Link href="/outings/pitch" className="mt-4 inline-flex items-center rounded-full bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-[12px] font-extrabold text-black transition-all">
-                <Plus className="mr-1 h-3.5 w-3.5" /> Pitch an Outing
-              </Link>
-            </div>
-          ) : (
-            <div className="mt-3.5 flex flex-col gap-3">
-              {userPitches.map((item) => (
-                <div key={item.id} className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-4 shadow-xl text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
-                      Your Pitch
-                    </span>
-                    <span className="text-[11px] font-medium text-white/70">{item.area}</span>
-                  </div>
-                  <h4 className="mt-2 text-[16px] font-extrabold text-white tracking-tight">{item.title}</h4>
-                  <p className="mt-1 text-[13px] text-white/90 italic font-medium">“{item.pitch}”</p>
-                  <div className="mt-3 flex items-center justify-between text-[12px] text-white/70 pt-3 border-t border-white/10">
-                    <span>{item.dateTime || 'Flexible timing'}</span>
-                    <Link href={`/outings/${item.id}`} className="font-extrabold text-emerald-300 hover:underline">
-                      View Outing →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* SECTION C: 10-CATEGORY CREATIVE VISUAL DIAGRAM MAP */}
-        <section className="py-6 flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                Social Signature
-              </span>
-
-              <Link href="/you/deeper">
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 rounded-full border border-white/30 bg-black/70 px-4 py-1.5 text-[12.5px] font-bold text-white shadow-md hover:bg-white/20 backdrop-blur-md transition-all"
-                >
-                  <Edit3 className="h-3.5 w-3.5" /> Edit Pass
-                </button>
-              </Link>
-            </div>
-
-            <h2 className="text-[20px] font-bold text-white">
-              Your Social Signature
-            </h2>
-            <p className="text-[13.5px] text-white/80">
-              Visual radar map representing all 10 categories of your Deeper Tribal Pass.
-            </p>
-          </div>
-
-          {/* 1. SOCIAL ENERGY (SVG SPECTRUM RADAR GAUGE) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Smile className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">01. Social Energy</h3>
-              </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                {deep.groupSize || '3–4 people'}
-              </span>
-            </div>
-
-            {/* Creative SVG Vector Radar Dial */}
-            <div className="mt-4 flex items-center gap-4 border-t border-white/15 pt-3">
-              <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center">
-                <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                  <path
-                    className="text-white/10"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-white"
-                    strokeDasharray="65, 100"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute text-[10px] font-extrabold text-white">
-                  65%
-                </div>
+                <label className="font-semibold text-[#A6AAA4]">Display Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                />
               </div>
 
               <div>
-                <div className="flex items-center gap-2 text-[12px] font-semibold text-white">
-                  <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-white">
-                    {deep.socialVibe || 'Playful-chaotic & Calm'}
-                  </span>
-                </div>
-                <p className="mt-1 text-[12px] text-white/70">
-                  Optimal setting: Intimate small gatherings over large crowds.
-                </p>
+                <label className="font-semibold text-[#A6AAA4]">Home Area</label>
+                <input
+                  type="text"
+                  value={editArea}
+                  onChange={(e) => setEditArea(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                />
               </div>
-            </div>
 
-            {(deep.socialAtmosphereOpen || (deep as any).socialEnergyOpen) && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.socialAtmosphereOpen || (deep as any).socialEnergyOpen || 'I usually find one person I click with before I open up to the room.'}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 2. HOW I CONNECT (SVG VECTOR FLOW GRAPH) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">02. How I Connect</h3>
-            </div>
-
-            {/* SVG Vector Flow Diagram */}
-            <div className="mt-3 flex items-center justify-around py-3 border-y border-white/15 my-2">
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
-                  🎙️
-                </div>
-                <span className="text-[11px] font-semibold text-white/90">Voice Notes</span>
-              </div>
-              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
-                  💬
-                </div>
-                <span className="text-[11px] font-semibold text-white/90">Memes</span>
-              </div>
-              <svg className="h-4 w-8 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M5 12h14M13 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className="flex flex-col items-center gap-0.5 text-center">
-                <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">
-                  ☕
-                </div>
-                <span className="text-[11px] font-semibold text-white/90">Listen First</span>
-              </div>
-            </div>
-
-            {deep.messagingStyleOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.messagingStyleOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 3. FRIENDSHIP STYLE (DUAL-AXIS VECTOR GRAPH) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center gap-2 text-white">
-              <Heart className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">03. Friendship Style</h3>
-            </div>
-
-            {/* 2D Vector Axis Graphic */}
-            <div className="mt-3 relative h-20 w-full rounded-[16px] border border-white/15 bg-white/5 p-3 flex items-center justify-between">
-              <div className="flex flex-col text-left">
-                <span className="text-[10px] font-bold text-white/60 uppercase">Axis A</span>
-                <span className="text-[13px] font-bold text-white">Comfortable Silence</span>
-              </div>
-              <div className="h-8 w-0.5 bg-white/20" />
-              <div className="flex flex-col text-right">
-                <span className="text-[10px] font-bold text-white/60 uppercase">Axis B</span>
-                <span className="text-[13px] font-bold text-white">Reliability & Trust</span>
-              </div>
-            </div>
-
-            {deep.realFriendOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.realFriendOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 4. MY RHYTHM (WEEKLY VECTOR TIMELINE) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Compass className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">04. My Rhythm</h3>
-              </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                {deep.spontaneousTrip || 'Convince me'}
-              </span>
-            </div>
-
-            {/* Visual 7-Day Calendar Strip */}
-            <div className="mt-3 flex items-center justify-between gap-1 py-2 border-y border-white/15">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
-                const isPeak = day === 'Sat' || day === 'Sun';
-                return (
-                  <div
-                    key={day}
-                    className={`flex flex-col items-center justify-center rounded-[10px] py-1.5 px-2 text-[11px] font-bold transition-all ${
-                      isPeak
-                        ? 'bg-white text-black font-extrabold shadow-md'
-                        : 'border border-white/15 bg-black/40 text-white/60'
-                    }`}
-                  >
-                    <span>{day}</span>
-                    <span className="text-[9px] mt-0.5">{isPeak ? '★ Peak' : 'Quiet'}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {deep.idealSaturdayOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.idealSaturdayOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 5. PERSONALITY SIGNALS (MBTI & ASTROLOGY BIG 3 VECTOR BADGES) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Cpu className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">05. Personality & Astrology</h3>
-              </div>
-              {deep.mbti && (
-                <span className="rounded-full border border-white/30 bg-white/20 px-3 py-0.5 text-[11px] font-extrabold text-white">
-                  ✨ MBTI: {deep.mbti}
-                </span>
-              )}
-            </div>
-
-            {/* Astrology Big Three Badges */}
-            {(deep.sunSign || deep.moonSign || deep.risingSign) && (
-              <div className="mt-3 flex flex-wrap gap-2 pt-2 border-t border-white/15">
-                {deep.sunSign && (
-                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                    <Sun className="h-3.5 w-3.5 text-white" /> Sun: {deep.sunSign}
-                  </span>
-                )}
-                {deep.moonSign && (
-                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                    <Moon className="h-3.5 w-3.5 text-white" /> Moon: {deep.moonSign}
-                  </span>
-                )}
-                {deep.risingSign && (
-                  <span className="flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[12px] font-bold text-white">
-                    <Sunrise className="h-3.5 w-3.5 text-white" /> Rising: {deep.risingSign}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className="mt-3 flex flex-col gap-2 pt-2">
               <div>
-                <div className="flex justify-between text-[11.5px] font-semibold text-white">
-                  <span>Reflective Curiosity</span>
-                  <span>90% Confidence</span>
-                </div>
-                <div className="mt-1 h-2 w-full rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-white w-[90%] rounded-full" />
-                </div>
-              </div>
-            </div>
-
-            {deep.selfDescriptionOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “{deep.selfDescriptionOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 6. WHAT MATTERS (VALUES CONSTELLATION ORBIT) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center gap-2 text-white">
-              <Sparkles className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">06. What Matters</h3>
-            </div>
-
-            {/* Glowing Value Cloud */}
-            <div className="mt-3 flex flex-wrap justify-center gap-2 py-1">
-              {coreValuesList.map((val) => (
-                <span
-                  key={val}
-                  className="rounded-full border border-white/30 bg-gradient-to-r from-white/20 to-white/10 px-3.5 py-1 text-[12.5px] font-bold text-white backdrop-blur-md shadow-md"
-                >
-                  ✨ {val}
-                </span>
-              ))}
-            </div>
-
-            {deep.respectPeopleOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “I really respect people who {deep.respectPeopleOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 7. I'M INTO (CURIOSITY RABBIT HOLE TREE) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center gap-2 text-white">
-              <Flame className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">07. I'm Into & Rabbit Holes</h3>
-            </div>
-
-            <div className="mt-3 rounded-[16px] border border-white/15 bg-white/10 p-3">
-              <span className="text-[10px] font-bold text-white/70 uppercase">Current Rabbit Hole</span>
-              <p className="mt-1 text-[13px] font-bold text-white">
-                “{deep.currentRabbitHoleOpen || 'Japanese woodworking joints & specialty filter coffee roast notes.'}”
-              </p>
-            </div>
-
-            {deep.talkForHoursOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “Could lose hours talking about {deep.talkForHoursOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 8. OUTING DNA (ACTIVITY & VIBE VECTOR) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Layers className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">08. Outing DNA</h3>
-              </div>
-              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                Low-Key & Creative Outings
-              </span>
-            </div>
-
-            {deep.instantYesOutingOpen && (
-              <p className="mt-3.5 text-[13.5px] italic text-white/90 border-l-2 border-white/40 pl-3">
-                “Instant Yes Outing: {deep.instantYesOutingOpen}”
-              </p>
-            )}
-          </motion.div>
-
-          {/* 9. YOU SHOULD KNOW (PROMPT VOICE CARDS) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl relative overflow-hidden"
-          >
-            <Quote className="absolute right-3 top-3 h-16 w-16 opacity-10 text-white pointer-events-none" />
-
-            <div className="flex items-center gap-2 text-white">
-              <User className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">09. You Should Know</h3>
-            </div>
-
-            <div className="mt-3 flex flex-col gap-3">
-              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                <span className="text-[11px] font-bold text-white/70 uppercase">I'll probably like you if:</span>
-                <p className="mt-1 text-[13.5px] text-white">“{deep.likeMeIfPrompt || 'You can switch from silly memes to deep topics in 5 mins.'}”</p>
-              </div>
-              <div className="rounded-[16px] border border-white/15 bg-black/40 p-3">
-                <span className="text-[11px] font-bold text-white/70 uppercase">Quickest way to get me out:</span>
-                <p className="mt-1 text-[13.5px] text-white">“{deep.quickestWayPrompt || 'Mention a quiet coffee walk or an invitation to a bookstore.'}”</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* 10. BOUNDARIES & MATCHING (SECURITY SHIELD VECTOR) */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <ShieldCheck className="h-4 w-4 text-white" />
-                <h3 className="text-[15.5px] font-extrabold">10. Boundaries & Matching</h3>
-              </div>
-              <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-2.5 py-0.5 text-[10.5px] font-bold text-white">
-                <Lock className="h-3 w-3" /> Algorithm Guard
-              </span>
-            </div>
-
-            <div className="mt-3.5 grid grid-cols-2 gap-2.5 text-center">
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Punctuality</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">{deep.punctualityPref || 'Essential'}</p>
-              </div>
-              <div className="rounded-[16px] border border-white/15 bg-white/10 p-2.5">
-                <span className="text-[10px] font-bold text-white/70 uppercase">Cancellation</span>
-                <p className="mt-0.5 text-[12.5px] font-bold text-white">{deep.cancellationStance || 'Notice Required'}</p>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* TRIBE STANDING GUIDE MODAL */}
-        {isStandingGuideOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-            <div className="relative w-full max-w-[420px] max-h-[85vh] overflow-y-auto rounded-[28px] border border-white/20 bg-black/90 p-6 text-white shadow-2xl backdrop-blur-xl scrollbar-none">
-              <div className="flex items-center justify-between pb-4 border-b border-white/15">
-                <div className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-white" />
-                  <h2 className="text-[18px] font-extrabold">Tribe Standing System</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsStandingGuideOpen(false)}
-                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <label className="font-semibold text-[#A6AAA4]">Bio</label>
+                <textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  rows={3}
+                />
               </div>
 
-              <p className="mt-3 text-[13px] text-white/80 leading-relaxed">
-                Tribe Standing is earned through authentic IRL participation, hosting reliability, and positive community history.
-              </p>
-
-              <div className="mt-5 flex flex-col gap-3">
-                {STANDING_LEVELS.map((level) => {
-                  const isCurrent = level.key === currentStanding.key;
-                  return (
-                    <div
-                      key={level.key}
-                      className={`rounded-[20px] border p-4 transition-all ${
-                        isCurrent
-                          ? 'border-white bg-white/15 shadow-xl ring-1 ring-white/40'
-                          : 'border-white/15 bg-black/50 opacity-80'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-[22px] leading-none">{level.icon}</span>
-                          <div>
-                            <span className="text-[15px] font-extrabold text-white">{level.label}</span>
-                            {isCurrent && (
-                              <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-[9.5px] font-bold text-white uppercase border border-white/30">
-                                Your Current Status
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-2.5 flex flex-col gap-1 text-[12.5px]">
-                        <div>
-                          <strong className="text-white/90">What it means:</strong>{' '}
-                          <span className="text-white/80">{level.meaning}</span>
-                        </div>
-                        <div>
-                          <strong className="text-white/90">How it's earned:</strong>{' '}
-                          <span className="text-white/70">{level.howEarned}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-white/15">
-                <Button variant="primary" size="sm" onClick={() => setIsStandingGuideOpen(false)} className="w-full">
-                  Got It
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* EDIT PROFILE SETTINGS MODAL */}
-        {isSettingsOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-            <div className="relative w-full max-w-[400px] rounded-[28px] border border-white/20 bg-black/80 p-6 text-white shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center justify-between pb-4 border-b border-white/15">
-                <h2 className="text-[18px] font-bold">Edit Profile Settings</h2>
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen(false)}
-                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                  className="flex-1 rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] py-2.5 font-bold"
                 >
-                  <X className="h-5 w-5" />
+                  Cancel
                 </button>
-              </div>
-
-              <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4">
-                {/* Photo Preview & Custom Upload */}
-                <div className="flex items-center gap-4">
-                  <img
-                    src={editPhoto}
-                    alt="Preview"
-                    className="h-16 w-16 rounded-full object-cover ring-2 ring-white/30"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <label className="cursor-pointer text-[12.5px] font-bold text-white underline">
-                      Upload Custom Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <span className="text-[11px] text-white/60">
-                      Upload any photo from your device
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[12.5px] font-semibold text-white/80">Display Name</label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[14px] text-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[12.5px] font-semibold text-white/80">Home Area</label>
-                  <input
-                    type="text"
-                    value={editArea}
-                    onChange={(e) => setEditArea(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[14px] text-white outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[12.5px] font-semibold text-white/80">Bio</label>
-                  <textarea
-                    rows={2}
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value)}
-                    className="mt-1 w-full rounded-[12px] border border-white/20 bg-black/60 p-2.5 text-[13.5px] text-white outline-none"
-                  />
-                </div>
-
-                <div className="mt-2 flex gap-3 pt-2 border-t border-white/15">
-                  <Button variant="secondary" size="sm" type="button" onClick={() => setIsSettingsOpen(false)} className="w-1/2">
-                    Cancel
-                  </Button>
-                  <Button variant="primary" size="sm" type="submit" className="w-1/2">
-                    Save Changes
-                  </Button>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-white/15">
-                  <button
-                    type="button"
-                    onClick={handleSignOutAction}
-                    className="flex items-center justify-center gap-2 w-full rounded-[12px] border border-rose-500/40 bg-rose-500/10 py-2.5 text-[13px] font-bold text-rose-300 hover:bg-rose-500/20 transition-all"
-                  >
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* EDIT ONBOARDING & AVAILABILITY CALENDAR MODAL */}
-        {isOnboardingEditOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-            <div className="relative w-full max-w-[460px] max-h-[85vh] overflow-y-auto rounded-[28px] border border-white/20 bg-black/90 p-6 text-white shadow-2xl backdrop-blur-xl scrollbar-none">
-              <div className="flex items-center justify-between pb-4 border-b border-white/15">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-amber-300" />
-                  <h2 className="text-[18px] font-bold">Edit Availability & Onboarding</h2>
-                </div>
                 <button
-                  type="button"
-                  onClick={() => setIsOnboardingEditOpen(false)}
-                  className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                  type="submit"
+                  className="flex-1 rounded-xl bg-[#2D523E] py-2.5 font-bold text-[#F3F0E9]"
                 >
-                  <X className="h-5 w-5" />
+                  Save Changes
                 </button>
               </div>
-
-              {onboardingSavedMessage && (
-                <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-emerald-400/40 bg-emerald-500/20 p-3 text-[13px] font-bold text-emerald-200">
-                  <Check className="h-4 w-4 text-emerald-300" />
-                  <span>Onboarding answers & availability updated successfully!</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSaveOnboardingAnswers} className="mt-4 flex flex-col gap-6">
-                {/* 1. WEEKLY AVAILABILITY CALENDAR (Q5) */}
-                <div className="rounded-[20px] border border-white/15 bg-white/5 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[13px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4 text-amber-300" /> Weekly Availability Calendar
-                    </label>
-                    <span className="text-[11px] text-white/70">Tap to toggle slots</span>
-                  </div>
-
-                  <RhythmStrip
-                    interactive={true}
-                    userAvailability={q5Availability}
-                    onToggleSlot={(slot) => {
-                      if (q5Availability.includes(slot)) {
-                        setQ5Availability(q5Availability.filter((s) => s !== slot));
-                      } else {
-                        setQ5Availability([...q5Availability, slot]);
-                      }
-                    }}
-                  />
-
-                  <div className="pt-2">
-                    <label className="text-[12px] font-semibold text-white/80">Planning Horizon</label>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {['Spontaneous', 'Plan in advance', 'Flexible'].map((rhythm) => (
-                        <Chip
-                          key={rhythm}
-                          label={rhythm}
-                          selected={q5PlanningRhythm === rhythm}
-                          onClick={() => setQ5PlanningRhythm(rhythm)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. FRIENDSHIP INTENT (Q1) */}
-                <div className="space-y-2">
-                  <label className="text-[13px] font-bold text-white">Q1: What are you hoping to find? (Choose up to 3)</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      'Close 1-on-1 friendships',
-                      'Activity & outing buddies',
-                      'Small inner circle',
-                      'Casual social events',
-                      'Networking & career chats'
-                    ].map((item) => {
-                      const sel = q1Finding.includes(item);
-                      return (
-                        <Chip
-                          key={item}
-                          label={item}
-                          selected={sel}
-                          onClick={() => {
-                            if (sel) {
-                              setQ1Finding(q1Finding.filter((s) => s !== item));
-                            } else if (q1Finding.length < 3) {
-                              setQ1Finding([...q1Finding, item]);
-                            }
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 3. COMMUNICATION FEEL & MEDIUMS (Q2 & Q4) */}
-                <div className="space-y-3 border-t border-white/15 pt-4">
-                  <div>
-                    <label className="text-[13px] font-bold text-white">Q2: How do you like social connections to feel? (Choose up to 3)</label>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {['Deep 1-on-1s', 'Chill & relaxed', 'Active & energetic', 'Thoughtful & quiet'].map((feel) => {
-                        const sel = q2Feelings.includes(feel);
-                        return (
-                          <Chip
-                            key={feel}
-                            label={feel}
-                            selected={sel}
-                            onClick={() => {
-                              if (sel) {
-                                setQ2Feelings(q2Feelings.filter((s) => s !== feel));
-                              } else if (q2Feelings.length < 3) {
-                                setQ2Feelings([...q2Feelings, feel]);
-                              }
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[13px] font-bold text-white">Q4: Preferred communication channels (Choose up to 3)</label>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {['Voice notes', 'Regular check-ins', 'Memes & casual text', 'Spontaneous calls', 'In-person meetup focus'].map((med) => {
-                        const sel = q4Connected.includes(med);
-                        return (
-                          <Chip
-                            key={med}
-                            label={med}
-                            selected={sel}
-                            onClick={() => {
-                              if (sel) {
-                                setQ4Connected(q4Connected.filter((s) => s !== med));
-                              } else if (q4Connected.length < 3) {
-                                setQ4Connected([...q4Connected, med]);
-                              }
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. OUTING DNA & INTERESTS (Q6) */}
-                <div className="space-y-2 border-t border-white/15 pt-4">
-                  <label className="text-[13.5px] font-bold text-white">Q6: Outing DNA & Preferred Activities (Choose up to 3)</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ONBOARDING_INTEREST_OPTIONS.map((opt) => {
-                      const sel = q6Outings.includes(opt);
-                      return (
-                        <Chip
-                          key={opt}
-                          label={opt}
-                          selected={sel}
-                          onClick={() => {
-                            if (sel) {
-                              setQ6Outings(q6Outings.filter((s) => s !== opt));
-                            } else if (q6Outings.length < 3) {
-                              setQ6Outings([...q6Outings, opt]);
-                            }
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 5. EMOTIONAL PACING & CORE VALUES (Q7 & Q8) */}
-                <div className="space-y-3 border-t border-white/15 pt-4">
-                  <div>
-                    <label className="text-[13px] font-bold text-white">Q7: Emotional opening pace</label>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {['Fast opener', 'Balanced opener', 'Slow burn'].map((pace) => (
-                        <Chip
-                          key={pace}
-                          label={pace}
-                          selected={q7EmotionalPacing === pace}
-                          onClick={() => setQ7EmotionalPacing(pace)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[13px] font-bold text-white">Q8: Core values you appreciate in friends (Choose up to 3)</label>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {['Authenticity', 'Reliability', 'Curiosity', 'Empathy', 'Humor & Playfulness', 'Open-mindedness'].map((val) => {
-                        const sel = q8Qualities.includes(val);
-                        return (
-                          <Chip
-                            key={val}
-                            label={val}
-                            selected={sel}
-                            onClick={() => {
-                              if (sel) {
-                                setQ8Qualities(q8Qualities.filter((s) => s !== val));
-                              } else if (q8Qualities.length < 3) {
-                                setQ8Qualities([...q8Qualities, val]);
-                              }
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-2 flex gap-3 pt-3 border-t border-white/15">
-                  <Button variant="secondary" size="sm" type="button" onClick={() => setIsOnboardingEditOpen(false)} className="w-1/2">
-                    Cancel
-                  </Button>
-                  <Button variant="primary" size="sm" type="submit" className="w-1/2">
-                    Save Onboarding & Availability
-                  </Button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
