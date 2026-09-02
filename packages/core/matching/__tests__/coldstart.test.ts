@@ -197,20 +197,104 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     assert.strictEqual(res6.provisional, false);
   });
 
-  it('9. A member who completes every question Soul Tribe asks reaches 100% completeness (confidence 1.0)', () => {
+  it('9. Signal-based confidence accurately measures filled signals vs target signals', () => {
     const vec = createMockVector('full_user', 'Full User');
-    vec.personality.answered = 4;
-    vec.communication.answered = 5;
-    vec.social_rhythm.answered = 4;
-    vec.intent.answered = 2;
-    vec.emotional.answered = 7;
-    vec.interests = [{ user_id: 'full_user', node_id: 1, affinity: 'love' }, { user_id: 'full_user', node_id: 2, affinity: 'love' }, { user_id: 'full_user', node_id: 3, affinity: 'love' }];
-    vec.values = [{ user_id: 'full_user', value_key: 'authenticity', stance: 0.8, importance: 0.8, visibility: 'matching_only' }, { user_id: 'full_user', value_key: 'reliability', stance: 0.8, importance: 0.8, visibility: 'matching_only' }, { user_id: 'full_user', value_key: 'curiosity', stance: 0.8, importance: 0.8, visibility: 'matching_only' }];
-    vec.lifestyle.answered = 2;
-    vec.experience.answered = 3;
-    vec.geography.answered = 2;
+
+    // Populate all target signals across threads
+    vec.personality = {
+      answered: 10,
+      extraversion: 0.5,
+      openness: 0.5,
+      conscientiousness: 0.5,
+      agreeableness: 0.5,
+      emotional_stability: 0.5,
+      intellectual_curiosity: 0.5,
+      serious_playful: 0.5,
+      intensity_easygoing: 0.5,
+      assertive_accommodating: 0.5,
+      novelty_seeking: 0.5,
+    };
+    vec.communication = {
+      answered: 10,
+      contact_frequency_self: 0.5,
+      response_speed_self: 0.5,
+      contact_frequency_expect: 0.5,
+      response_speed_expect: 0.5,
+      initiation_self: 0.5,
+      initiation_expect: 0.5,
+      direct_diplomatic: 0.5,
+      high_context_literal: 0.5,
+      mediums: ['text'],
+      conv_styles: ['deep'],
+    };
+    vec.social_rhythm = {
+      answered: 6,
+      planning_horizon: 0.5,
+      spontaneous_trip: 0.5,
+      social_freq_self: 0.5,
+      social_freq_expect: 0.5,
+      ideal_saturday: 'coffee',
+      availability_slots: ['sat_pm'],
+    };
+    vec.intent = {
+      answered: 4,
+      depth: 2,
+      open_to_hosting: true,
+      commitment_level: 0.5,
+      group_size_ideal: 4,
+    };
+    vec.emotional = {
+      answered: 8,
+      er_opening_pace: 0.5,
+      er_vulnerability: 0.5,
+      er_conflict_approach: 0.5,
+      er_recovery_time: 0.5,
+      er_reassurance_need: 0.5,
+      er_reassurance_offer: 0.5,
+      er_cadence_need: 0.5,
+      er_cadence_expect: 0.5,
+    };
+    vec.interests = [
+      { user_id: 'full_user', node_id: 1, affinity: 'love' },
+      { user_id: 'full_user', node_id: 2, affinity: 'love' },
+      { user_id: 'full_user', node_id: 3, affinity: 'love' },
+      { user_id: 'full_user', node_id: 4, affinity: 'love' },
+      { user_id: 'full_user', node_id: 5, affinity: 'love' },
+      { user_id: 'full_user', node_id: 6, affinity: 'love' },
+    ];
+    vec.values = [
+      { user_id: 'full_user', value_key: 'authenticity', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+      { user_id: 'full_user', value_key: 'reliability', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+      { user_id: 'full_user', value_key: 'curiosity', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+      { user_id: 'full_user', value_key: 'community', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+      { user_id: 'full_user', value_key: 'growth', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+      { user_id: 'full_user', value_key: 'kindness', stance: 0.8, importance: 0.8, visibility: 'matching_only' },
+    ];
+    vec.lifestyle = {
+      answered: 4,
+      budget_band: 2,
+      activity_level: 0.5,
+      punctuality_pref: 'on_time',
+      cancellation_stance: '24h',
+    };
+    vec.experience = {
+      answered: 4,
+      group_size_pref: 0.5,
+      social_vibe: 'intimate',
+      atmosphere_pref: 'calm',
+      venue_pref: 'indoor',
+    };
+    vec.geography = {
+      answered: 6,
+      home_area: 'Singapore',
+      lat: 1.3521,
+      lng: 103.8198,
+      travel_radius_km: 15,
+      preferred_areas: ['Central'],
+      transport_mode: 'mrt',
+    };
 
     const conf = confidenceFromCompleteness(vec);
-    assert.strictEqual(conf, 1.0, 'Completing all asked questions reaches 1.0 confidence');
+    assert.strictEqual(conf, 1.0, 'Completing all 64 target signals reaches 1.0 confidence');
   });
 });

@@ -13,6 +13,8 @@ export * from './geo/matrix.ts';
 export * from './matching/grouping.ts';
 export * from './matching/evaluation.ts';
 export * from './matching/coldstart.ts';
+export * from './matching/mechanisms.ts';
+export * from './matching/asymmetric.ts';
 export * from './telemetry/events.ts';
 export * from './telemetry/sink.ts';
 export * from './telemetry/version.ts';

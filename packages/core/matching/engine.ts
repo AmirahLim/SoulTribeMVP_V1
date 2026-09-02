@@ -13,6 +13,7 @@ import {
 } from './threads.ts';
 import { evaluateGates } from './gates.ts';
 import { getOutingContextualWeights } from './reweighting.ts';
+import { calculateAsymmetricFit } from './asymmetric.ts';
 
 export function score(
   vecA: ProfileVector,
@@ -78,12 +79,14 @@ export function score(
   }
   const logistics = logWeightTotal > 0 ? logSum / logWeightTotal : null;
 
+  const asymmetric = calculateAsymmetricFit(vecA, vecB, resonance);
+
   // Geometric rank score R^0.6 * L^0.4
   let baseRank = 0;
   if (resonance !== null && logistics !== null) {
-    baseRank = Math.pow(resonance, 0.6) * Math.pow(logistics, 0.4);
+    baseRank = Math.pow(asymmetric.penalizedResonance ?? resonance, 0.6) * Math.pow(logistics, 0.4);
   } else if (resonance !== null) {
-    baseRank = resonance;
+    baseRank = asymmetric.penalizedResonance ?? resonance;
   } else if (logistics !== null) {
     baseRank = logistics;
   } else {
@@ -112,5 +115,8 @@ export function score(
     contributions,
     confidence_a: vecA.profile.confidence,
     confidence_b: vecB.profile.confidence,
+    fit_a_to_b: asymmetric.fitAtoB,
+    fit_b_to_a: asymmetric.fitBtoA,
+    imbalance_penalty: asymmetric.imbalance,
   };
 }

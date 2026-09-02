@@ -166,6 +166,9 @@ export interface MatchResult {
   contributions: Record<string, number>;
   confidence_a: number;
   confidence_b: number;
+  fit_a_to_b?: number | null;
+  fit_b_to_a?: number | null;
+  imbalance_penalty?: number;
 }
 
 export interface Outing {

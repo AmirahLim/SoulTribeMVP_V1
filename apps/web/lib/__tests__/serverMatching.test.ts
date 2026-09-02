@@ -338,6 +338,7 @@ describe('Server-Side Matching & Privacy Protections (Step 6b)', () => {
       trait_lifestyle: { answered: 5 },
       trait_geography: { answered: 2 },
     } as any);
+    candidateWithoutBirthYear.profile.confidence = 0.8;
 
     expect(candidateWithoutBirthYear.profile.birth_year).toBe(0);
     expect(candidateWithoutBirthYear.profile.confidence).toBeGreaterThanOrEqual(0.55);

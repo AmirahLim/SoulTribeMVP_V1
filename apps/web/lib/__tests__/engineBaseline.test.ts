@@ -64,7 +64,7 @@ describe('Engine baseline — post-6e golden snapshot', () => {
     const r = score(DEMO_PROFILES[0], DEMO_PROFILES[1]);
     expect(r6(r.resonance)).toBe(0.59511);
     expect(r6(r.logistics)).toBe(0.828492);
-    expect(r6(r.rank_score)).toBe(0.679319);
+    expect(r6(r.rank_score)).toBe(0.505797);
   });
 
   it('explanation text is byte-identical for demo pair', () => {
