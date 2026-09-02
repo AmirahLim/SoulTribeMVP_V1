@@ -94,6 +94,10 @@ export const realCandidateSource: ScoredMatchSource = {
       }
 
       const matches: RankedMatch[] = await res.json();
+      if (matches.length === 0) {
+        const demoVecs = await demoCandidateSource.getCandidates(_opts);
+        return scoreDemoCandidates(_viewerVec, demoVecs);
+      }
       return matches;
     } catch (err: any) {
       console.error('[SoulTribe] candidate query exception:', err?.message || err);

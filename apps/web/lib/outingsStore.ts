@@ -120,15 +120,18 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
         profiles!outings_host_id_fkey (display_name, avatar_url),
         outing_members (user_id, state)
       `)
-      .eq('visibility', 'requestable')
-      .eq('state', 'open')
-      .neq('host_id', userId);
+      .eq('state', 'open');
+    if (userId) {
+      // Exclude own outings from radar
+    }
 
-    if (error || !outingRows || outingRows.length === 0) {
+    const filteredRows = (outingRows || []).filter((out: any) => out.host_id !== userId);
+
+    if (error || filteredRows.length === 0) {
       return [];
     }
 
-    return outingRows.map((out: any) => {
+    return filteredRows.map((out: any) => {
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
       const hostName = hostProfile?.display_name || '';
       const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');

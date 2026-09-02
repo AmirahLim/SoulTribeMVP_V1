@@ -6,9 +6,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
-import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles, Edit3, Plus, X } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
 import { getUserProfile } from '../../../lib/userStore';
+import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { AuthGuard } from '../../../components/AuthGuard';
 
@@ -63,6 +64,157 @@ function OutingDetailContent() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [actionMessage, setActionMessage] = useState('');
+
+  // Host Edit Pitch State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPitch, setEditPitch] = useState('');
+  const [editArea, setEditArea] = useState('');
+  const [editStartsAt, setEditStartsAt] = useState('');
+  const [editMaxParticipants, setEditMaxParticipants] = useState<number>(6);
+
+  // Host Add User State
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [candidateList, setCandidateList] = useState<RankedMatch[]>([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+
+  const startEditing = () => {
+    if (!outing) return;
+    setEditTitle(outing.title);
+    setEditPitch(outing.pitch);
+    setEditArea(outing.area);
+    setEditStartsAt(outing.starts_at ? new Date(outing.starts_at).toISOString().slice(0, 16) : '');
+    setEditMaxParticipants(outing.max_participants || 6);
+    setIsEditing(true);
+  };
+
+  const handleSavePitchEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!outing) return;
+
+    const cleanTitle = editTitle.trim();
+    const cleanPitch = editPitch.trim();
+    const cleanArea = editArea.trim();
+
+    if (cleanTitle.length < 4 || cleanTitle.length > 80) {
+      setErrorMessage('Outing title must be between 4 and 80 characters.');
+      return;
+    }
+    if (cleanPitch.length < 20 || cleanPitch.length > 600) {
+      setErrorMessage('Pitch description must be between 20 and 600 characters.');
+      return;
+    }
+    if (editMaxParticipants > 6) {
+      setErrorMessage('Free tier outings are capped at 6 participants maximum.');
+      return;
+    }
+
+    const isoDate = editStartsAt ? new Date(editStartsAt).toISOString() : outing.starts_at;
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { error } = await client
+          .from('outings')
+          .update({
+            title: cleanTitle,
+            pitch: cleanPitch,
+            area: cleanArea,
+            starts_at: isoDate,
+            max_participants: editMaxParticipants,
+          })
+          .eq('id', outingId);
+
+        if (error) {
+          setErrorMessage(error.message);
+          return;
+        }
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'Failed to update pitch details');
+        return;
+      }
+    }
+
+    setOuting((prev) =>
+      prev
+        ? {
+            ...prev,
+            title: cleanTitle,
+            pitch: cleanPitch,
+            area: cleanArea,
+            starts_at: isoDate,
+            max_participants: editMaxParticipants,
+          }
+        : null
+    );
+
+    setIsEditing(false);
+    setActionMessage('Pitch details updated successfully!');
+  };
+
+  const openAddUserModal = async () => {
+    setIsAddUserOpen(true);
+    setLoadingCandidates(true);
+    try {
+      const userProf = getUserProfile();
+      const list = await getRankedMatches(userProf, { limit: 30 });
+      setCandidateList(list);
+    } catch {
+      setCandidateList([]);
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const handleAddMemberLater = async (cand: RankedMatch) => {
+    setErrorMessage('');
+    setActionMessage('');
+
+    if (members.filter((m) => m.state === 'accepted').length >= (outing?.max_participants || 6)) {
+      setErrorMessage('Cannot add member: Outing is full (capped at 6 participants).');
+      return;
+    }
+
+    if (checkIsSupabaseConfigured() && cand.id && !cand.isDemo) {
+      try {
+        const client = getSupabaseBrowserClient();
+        const { error } = await client
+          .from('outing_members')
+          .insert({
+            outing_id: outingId,
+            user_id: cand.id,
+            role: 'guest',
+            state: 'accepted',
+          });
+
+        if (error) {
+          if (error.message.includes('cap') || error.message.includes('exceed') || error.code === 'P0001') {
+            setErrorMessage('Cannot add member: Outing is full (capped at 6 participants).');
+          } else {
+            setErrorMessage(error.message);
+          }
+          return;
+        }
+      } catch (err: any) {
+        setErrorMessage(err?.message || 'Failed to add member');
+        return;
+      }
+    }
+
+    const newMember: OutingMember = {
+      user_id: cand.id,
+      role: 'guest',
+      state: 'accepted',
+      display_name: cand.name,
+      avatar_url: cand.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+      home_area: cand.homeArea || 'Singapore',
+      isDemo: cand.isDemo,
+    };
+
+    setMembers((prev) => [...prev.filter((m) => m.user_id !== cand.id), newMember]);
+    setActionMessage(`${cand.name} added to outing!`);
+    setIsAddUserOpen(false);
+  };
 
   useEffect(() => {
     async function loadOutingDetails() {
@@ -418,15 +570,26 @@ function OutingDetailContent() {
 
         {/* 2. REAL HOST & TITLE */}
         <div className="border-b border-[#F3F0E9]/12 pb-4">
-          <span className="text-[12px] font-semibold text-[#A6AAA4] flex items-center gap-1.5">
-            Pitched by <strong className="text-[#F3F0E9]">{outing.hostName}</strong>
-            {outing.isHostDemo && (
-              <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
-                Demo
-              </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-semibold text-[#A6AAA4] flex items-center gap-1.5">
+              Pitched by <strong className="text-[#F3F0E9]">{outing.hostName}</strong>
+              {outing.isHostDemo && (
+                <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold uppercase shrink-0 whitespace-nowrap">
+                  Demo
+                </span>
+              )}
+            </span>
+            {isHost && (
+              <button
+                type="button"
+                onClick={startEditing}
+                className="text-[12px] font-bold text-amber-300 hover:text-amber-200 flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1"
+              >
+                <Edit3 className="h-3.5 w-3.5" /> Edit Pitch
+              </button>
             )}
-          </span>
-          <h1 className="mt-1 text-[26px] font-bold tracking-tight text-[#F3F0E9]">
+          </div>
+          <h1 className="mt-2 text-[26px] font-bold tracking-tight text-[#F3F0E9]">
             {outing.title}
           </h1>
         </div>
@@ -446,9 +609,20 @@ function OutingDetailContent() {
 
         {/* HOST PITCH */}
         <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
-            Host Pitch
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+              Host Pitch
+            </span>
+            {isHost && (
+              <button
+                type="button"
+                onClick={startEditing}
+                className="text-[11px] font-semibold text-amber-300 hover:underline"
+              >
+                Edit Proposal
+              </button>
+            )}
+          </div>
           <p className="mt-2 text-[14px] leading-relaxed text-[#F3F0E9]">
             “{outing.pitch}”
           </p>
@@ -460,9 +634,20 @@ function OutingDetailContent() {
             <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
               Seat Roster (Max {outing.max_participants})
             </span>
-            <span className="text-[12px] font-bold text-[#F3F0E9]">
-              {filledCount} / {outing.max_participants} Seats Filled
-            </span>
+            <div className="flex items-center gap-3">
+              {isHost && !isFull && (
+                <button
+                  type="button"
+                  onClick={openAddUserModal}
+                  className="text-[11.5px] font-extrabold text-emerald-300 hover:text-emerald-200 flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-0.5"
+                >
+                  <UserPlus className="h-3.5 w-3.5" /> + Add Member
+                </button>
+              )}
+              <span className="text-[12px] font-bold text-[#F3F0E9]">
+                {filledCount} / {outing.max_participants} Seats Filled
+              </span>
+            </div>
           </div>
 
           <SeatRow seatsTotal={outing.max_participants} seatsFilled={filledCount} />
@@ -592,6 +777,165 @@ function OutingDetailContent() {
           </div>
         )}
       </div>
+
+      {/* EDIT PITCH MODAL */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-lg rounded-[28px] border border-white/20 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
+                <Edit3 className="h-5 w-5 text-amber-400" /> Edit Outing Pitch
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="rounded-full bg-white/10 p-1.5 text-white/70 hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePitchEdit} className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                  Outing Title
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                  Pitch Description
+                </label>
+                <textarea
+                  rows={4}
+                  value={editPitch}
+                  onChange={(e) => setEditPitch(e.target.value)}
+                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    Neighbourhood / Area
+                  </label>
+                  <input
+                    type="text"
+                    value={editArea}
+                    onChange={(e) => setEditArea(e.target.value)}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    Max Participants (Cap 6)
+                  </label>
+                  <input
+                    type="number"
+                    min={2}
+                    max={6}
+                    value={editMaxParticipants}
+                    onChange={(e) => setEditMaxParticipants(Math.min(6, Math.max(2, parseInt(e.target.value) || 6)))}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                  Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editStartsAt}
+                  onChange={(e) => setEditStartsAt(e.target.value)}
+                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button type="button" variant="secondary" size="md" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="md">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ADD MEMBER MODAL */}
+      {isAddUserOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="w-full max-w-lg rounded-[28px] border border-white/20 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-emerald-400" /> Add Member to Outing
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddUserOpen(false)}
+                className="rounded-full bg-white/10 p-1.5 text-white/70 hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="text-[13px] text-[#A6AAA4]">
+              Select a community member or match to invite directly into your seat roster:
+            </p>
+
+            {loadingCandidates ? (
+              <div className="p-6 text-center text-[13.5px] text-[#F3F0E9]">
+                Loading community members...
+              </div>
+            ) : candidateList.filter((c) => !members.some((m) => m.user_id === c.id)).length === 0 ? (
+              <div className="p-6 text-center text-[13px] text-[#A6AAA4]">
+                All matches are already added or no additional candidates found.
+              </div>
+            ) : (
+              <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                {candidateList
+                  .filter((c) => !members.some((m) => m.user_id === c.id))
+                  .map((cand) => (
+                    <div
+                      key={cand.id}
+                      className="flex items-center justify-between rounded-[16px] border border-white/10 bg-[#0D1D15] p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={cand.avatarUrl}
+                          alt={cand.name}
+                          className="h-9 w-9 rounded-full object-cover"
+                        />
+                        <div>
+                          <span className="text-[14px] font-bold text-[#F3F0E9] block">{cand.name}</span>
+                          <span className="text-[11.5px] text-[#A6AAA4]">{cand.homeArea}</span>
+                        </div>
+                      </div>
+                      <Button variant="primary" size="sm" onClick={() => handleAddMemberLater(cand)}>
+                        Add Member
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </IllustratedGround>
   );
 }
