@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bloom } from '@soul-tribe/ui';
-import { Settings } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 import {
   getUserProfile, setUserProfile, UserProfileData,
@@ -16,9 +14,7 @@ import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 
 import { ProfileHero } from '../../components/profile/ProfileHero';
-import { PassArcCanvas } from '../../components/profile/PassArcCanvas';
 import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
-import { WhatStandsOut } from '../../components/profile/WhatStandsOut';
 import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
 import { TribalRead } from '../../components/profile/TribalRead';
 import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
@@ -28,9 +24,6 @@ import { ValuesConstellationCanvas } from '../../components/profile/ValuesConste
 import { InterestGraphCanvas } from '../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
 
-/**
- * Fix 1: Strip prompt stems from open answers to prevent double-prefixing.
- */
 function sanitizeOpenAnswer(raw?: string): string {
   if (!raw) return '';
   return raw
@@ -56,7 +49,7 @@ function ProfileContent() {
     homeArea: 'Singapore',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 42,
+    passCompletionPct: 10,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -146,17 +139,15 @@ function ProfileContent() {
   const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
   const completedCats = profile.completedCategoryNums || [2, 3, 4, 5, 6, 7];
 
-  // Engine confidence derived from answered thread signals (no passCompletionPct)
-  const confidenceValue = Math.min(0.95, Math.max(0.1, (completedCats.length * 12) / 100));
+  const confidenceValue = 0.42;
 
-  // Next best questions phrased as value (Fix 4: Progressive depth instead of wall of zeroes)
   const nextPrompts = getActiveNextBestPrompts(profile, 2).map((p) => ({
     thread: p.thread,
     question: p.label,
     prompt: p.copy,
   }));
 
-  // Bloom threads (10 petals always)
+  // 10 Petals for Bloom (ghost outlines for unexplored threads)
   const bloomThreads = [
     { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Four people is where you stop scanning the room and start noticing one person.' },
     { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'You surface in bursts. A quiet fortnight does not read as distance.' },
@@ -164,9 +155,9 @@ function ProfileContent() {
     { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.' },
     { key: 'emotional', label: 'Emotional Connection', strength: 0.8, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
     { key: 'interests', label: 'Interests', strength: 0.85, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
-    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Curiosity sits at the centre of most of your answers — the others orbit it.' },
+    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: 'Unexplored thread' },
     { key: 'lifestyle', label: 'Play & Humour', strength: 0.8, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
-    { key: 'experience', label: 'Conversation', strength: 0.7, confidence: confidenceValue, sentence: 'Conversations start somewhere ordinary and end up somewhere neither planned.' },
+    { key: 'experience', label: 'Conversation', strength: 0, confidence: 0, sentence: 'Unexplored thread' },
     { key: 'logistics', label: 'Availability', strength: 0.65, confidence: confidenceValue, sentence: 'Available weekday evenings and Saturday mornings.' },
   ];
 
@@ -208,7 +199,7 @@ function ProfileContent() {
       note: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.',
       naturalSetting: 'Small inner circle with deep mutual trust.',
       thriveWhen: 'Friendships allow long quiet stretches without guilt.',
-      extraVisualData: { mapX: 34, mapY: 36 }, // Close & Few quadrant
+      extraVisualData: { mapX: 34, mapY: 36 },
       signals: [
         { key: 'q7', label: 'Observant first trust pacing', evidenceLevel: 'DIRECT' },
       ],
@@ -229,7 +220,6 @@ function ProfileContent() {
     },
   ];
 
-  // Stage B Synthesis Data
   const tribalReadData = {
     headline: 'Selective, curious & quietly adventurous',
     summary: 'You build connection through smaller settings and shared experience — conversations that start somewhere ordinary and end up somewhere neither of you planned.',
@@ -273,7 +263,7 @@ function ProfileContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -286,7 +276,7 @@ function ProfileContent() {
 
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-        {/* Profile Header */}
+        {/* 1. Profile Hero (Reference Screenshot Top Layout) */}
         <ProfileHero
           displayName={profile.displayName || 'Mimeo'}
           handle={profile.handle || 'mimeooo'}
@@ -298,27 +288,31 @@ function ProfileContent() {
           confidence={confidenceValue}
           nextQuestions={nextPrompts}
           onEditProfile={() => setIsSettingsOpen(true)}
-          onExploreThread={() => router.push('/you/deeper')}
+          onExploreThread={(key) => router.push('/you/deeper')}
+          onDeepenPass={() => router.push('/you/deeper')}
         />
 
-        {/* Tribal Pass Arc Progress */}
-        <PassArcCanvas exploredPct={confidenceValue} signalsText={`Developing read · 34 signals`} />
-
-        {/* Tribal Bloom (10 Petals Canvas) */}
-        <div className="flex flex-col items-center py-2 text-center">
+        {/* 2. Friendship DNA Bloom Header & Bloom Canvas */}
+        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-6">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-1">
+            FRIENDSHIP DNA BLOOM
+          </p>
+          <p className="text-xs text-[rgba(245,242,234,0.70)] max-w-xs leading-relaxed mb-4">
+            A dynamic visual representation of your social energy, rhythm, and values.
+          </p>
           <Bloom threads={bloomThreads} size={280} interactive />
           <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-2">
             Ten threads · six explored · <span className="text-[#EFB94E]">tap a petal</span>
           </p>
         </div>
 
-        {/* Your Tribal Read */}
+        {/* 3. Your Tribal Read */}
         <TribalRead data={tribalReadData} />
 
-        {/* The Interesting Part (Cross-thread Tension) */}
+        {/* 4. The Interesting Part (Cross-thread Tension) */}
         <TheInterestingPart tension={contradictionTension} />
 
-        {/* Connection Threads (Drawn Objects) */}
+        {/* 5. Connection Threads (Drawn Objects) */}
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between px-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
@@ -334,13 +328,13 @@ function ProfileContent() {
           ))}
         </div>
 
-        {/* What Matters (Values Constellation Canvas) */}
+        {/* 6. What Matters (Values Constellation Canvas) */}
         <ValuesConstellationCanvas />
 
-        {/* I'm Into (Interest Graph Canvas) */}
+        {/* 7. I'm Into (Interest Graph Canvas) */}
         <InterestGraphCanvas />
 
-        {/* Outing DNA (Triad Radar Canvas) */}
+        {/* 8. Outing DNA (Triad Radar Canvas) */}
         <OutingTriadCanvas
           descriptors={['Low-key', 'Creative', 'Exploratory']}
           values={[0.85, 0.78, 0.72]}
@@ -349,11 +343,11 @@ function ProfileContent() {
           convinceMe={['Rooftop mixers']}
         />
 
-        {/* Connection Notes & Social Instincts */}
+        {/* 9. Connection Notes & Social Instincts */}
         <ConnectionNotes notes={connectionNotesList} />
         <SocialInstincts primaryInstinct={primaryInstinct} />
 
-        {/* Hosted Pitches List (Fix 2: Distinct Pitch Title & Body) */}
+        {/* 10. Hosted Pitches List */}
         {userPitches.length > 0 && (
           <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.11)] shadow-xl">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
@@ -376,10 +370,10 @@ function ProfileContent() {
           </div>
         )}
 
-        {/* Boundaries & Matching */}
+        {/* 11. Boundaries & Privacy */}
         <BoundariesMatching />
 
-        {/* Footer */}
+        {/* 12. Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
           Visual profile · your background, your brand colours<br />
           Content is illustrative — the engine supplies the words.
@@ -390,7 +384,7 @@ function ProfileContent() {
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(7,9,8,0.85)] p-4 backdrop-blur-md">
           <div className="w-full max-w-md rounded-[26px] border border-[rgba(245,242,234,0.20)] bg-[#0A0C0B] p-6 text-[#F5F2EA]">
-            <h3 className="text-lg font-bold">Edit Profile & Settings</h3>
+            <h3 className="text-lg font-bold">Edit Profile &amp; Settings</h3>
 
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
               <div>

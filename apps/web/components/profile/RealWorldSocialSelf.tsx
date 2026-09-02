@@ -39,15 +39,26 @@ export function RealWorldSocialSelf({
     <div className={`flex flex-col gap-6 ${className}`}>
       {/* I'm Into Interest Constellation */}
       {interests.length > 0 && (
-        <div className="rounded-[26px] border border-white/12 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl">
-          <h3 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
-            I'm Into
-          </h3>
+        <div
+          className="rounded-[26px] p-5 backdrop-blur-xl transition-all"
+          style={{
+            backgroundColor: 'rgba(10,12,11,0.62)',
+            border: '1px solid rgba(245,242,234,0.11)',
+            boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[10px] font-bold tracking-widest text-[rgba(245,242,234,0.44)] uppercase">
+              I'm Into
+            </h3>
+            <span className="text-[10px] font-bold tracking-widest text-[#EFB94E] uppercase">
+              Rabbit Hole
+            </span>
+          </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {rabbitHole && (
-              <div className="rounded-2xl border border-[#D9E4D2]/40 bg-[#2D523E] px-4 py-2 text-xs font-bold text-[#F3F0E9] shadow-lg">
-                <span className="text-[10px] uppercase text-[#D9E4D2] block font-medium">Current Rabbit Hole</span>
+              <div className="rounded-xl border border-[rgba(239,185,78,0.34)] bg-[rgba(239,185,78,0.13)] px-3.5 py-1.5 text-xs font-bold text-[#EFB94E]">
                 {rabbitHole.name}
               </div>
             )}
@@ -55,7 +66,7 @@ export function RealWorldSocialSelf({
             {otherInterests.map((item, idx) => (
               <span
                 key={idx}
-                className="rounded-xl border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-[#F3F0E9] backdrop-blur-md"
+                className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.045)] px-3 py-1.5 text-xs font-medium text-[rgba(245,242,234,0.70)]"
               >
                 {item.name}
               </span>
@@ -64,65 +75,25 @@ export function RealWorldSocialSelf({
         </div>
       )}
 
-      {/* Outing DNA */}
-      {outingDna && (
-        <div className="rounded-[26px] border border-white/12 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl">
-          <h3 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
-            Outing DNA
-          </h3>
-
-          {/* Descriptors pill */}
-          <div className="mt-2.5 flex items-center gap-2">
-            <span className="text-base font-extrabold tracking-wide text-[#D9E4D2]">
-              {outingDna.descriptors.join(' × ')}
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 text-xs md:grid-cols-2">
-            {outingDna.instantYes && (
-              <div className="rounded-2xl border border-[#D9E4D2]/30 bg-[#D9E4D2]/10 p-4 backdrop-blur-md">
-                <p className="text-[10px] font-bold text-[#D9E4D2] uppercase">Your Instant Yes</p>
-                <p className="mt-1 font-bold text-[#F3F0E9]">{outingDna.instantYes}</p>
-              </div>
-            )}
-
-            {outingDna.usuallyYes && outingDna.usuallyYes.length > 0 && (
-              <div className="rounded-2xl border border-white/12 bg-white/5 p-4 backdrop-blur-md">
-                <p className="text-[10px] font-bold text-[#A6AAA4] uppercase">Usually Yes</p>
-                <p className="mt-1 font-medium text-[#F3F0E9]">{outingDna.usuallyYes.join(', ')}</p>
-              </div>
-            )}
-
-            {outingDna.convinceMe && outingDna.convinceMe.length > 0 && (
-              <div className="rounded-2xl border border-white/12 bg-white/5 p-4 backdrop-blur-md">
-                <p className="text-[10px] font-bold text-[#A6AAA4] uppercase">Convince Me</p>
-                <p className="mt-1 font-medium text-[#F3F0E9]">{outingDna.convinceMe.join(', ')}</p>
-              </div>
-            )}
-
-            {/* Renders ONLY if explicitly supplied by member */}
-            {outingDna.probablyNot && outingDna.probablyNot.length > 0 && (
-              <div className="rounded-2xl border border-white/12 bg-white/5 p-4 backdrop-blur-md">
-                <p className="text-[10px] font-bold text-[#A6AAA4] uppercase">Probably Not</p>
-                <p className="mt-1 text-[#A6AAA4] font-medium">{outingDna.probablyNot.join(', ')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* You Should Know & Availability */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {youShouldKnow.length > 0 && (
-          <div className="rounded-[26px] border border-white/12 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl">
-            <h3 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
+          <div
+            className="rounded-[26px] p-5 backdrop-blur-xl transition-all"
+            style={{
+              backgroundColor: 'rgba(10,12,11,0.62)',
+              border: '1px solid rgba(245,242,234,0.11)',
+              boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+            }}
+          >
+            <h3 className="text-[10px] font-bold tracking-widest text-[rgba(245,242,234,0.44)] uppercase mb-3">
               You Should Know
             </h3>
-            <ul className="mt-3 flex flex-col gap-2.5 text-xs text-[#F3F0E9]">
+            <ul className="flex flex-col gap-2 text-xs text-[#F5F2EA]">
               {youShouldKnow.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-[#D9E4D2] font-bold">•</span>
-                  <span className="font-medium leading-relaxed">{item}</span>
+                  <span className="text-[#5BD99A] font-bold">•</span>
+                  <span className="font-medium leading-relaxed text-[rgba(245,242,234,0.70)]">{item}</span>
                 </li>
               ))}
             </ul>
@@ -130,17 +101,24 @@ export function RealWorldSocialSelf({
         )}
 
         {availabilityText && (
-          <div className="rounded-[26px] border border-white/12 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl">
-            <h3 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
-              Availability & Pitches
+          <div
+            className="rounded-[26px] p-5 backdrop-blur-xl transition-all"
+            style={{
+              backgroundColor: 'rgba(10,12,11,0.62)',
+              border: '1px solid rgba(245,242,234,0.11)',
+              boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+            }}
+          >
+            <h3 className="text-[10px] font-bold tracking-widest text-[rgba(245,242,234,0.44)] uppercase mb-2">
+              Availability &amp; Pitches
             </h3>
-            <p className="mt-2 text-xs leading-relaxed font-medium text-[#F3F0E9]">
+            <p className="text-xs leading-relaxed text-[rgba(245,242,234,0.70)]">
               {availabilityText}
             </p>
 
-            <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-[#A6AAA4]">
+            <div className="mt-3 flex items-center justify-between border-t border-[rgba(245,242,234,0.08)] pt-2.5 text-xs text-[rgba(245,242,234,0.44)]">
               <span>Hosted Outings</span>
-              <span className="font-bold text-[#F3F0E9]">{hostedOutingsCount} hosted</span>
+              <span className="font-bold text-[#5BD99A]">{hostedOutingsCount} hosted</span>
             </div>
           </div>
         )}
