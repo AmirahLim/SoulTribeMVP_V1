@@ -542,6 +542,18 @@ function HomeContent() {
                     </span>
                   </div>
 
+                  {/* Event Cover Photo based on title & category */}
+                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
+                    <img
+                      src={getOutingCategoryImage((item as any).category, item.title)}
+                      alt={item.title}
+                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
+                      {item.area} · <span className="capitalize">{(item as any).category || 'Outing'}</span>
+                    </div>
+                  </div>
+
                   {/* Title & Pitch */}
                   <h2 className="mt-3 text-[20px] font-extrabold text-white">
                     {item.title}
@@ -724,6 +736,18 @@ function HomeContent() {
                     </span>
                   </div>
 
+                  {/* Event Cover Photo based on title & category */}
+                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
+                    <img
+                      src={getOutingCategoryImage(item.category, item.title)}
+                      alt={item.title}
+                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
+                      {item.area} · <span className="capitalize">{item.category || 'Outing'}</span>
+                    </div>
+                  </div>
+
                   <div>
                     <h3 className="text-[19px] font-extrabold text-white">
                       {item.title}
@@ -825,6 +849,18 @@ function HomeContent() {
                     <span className="text-[11.5px] font-bold text-white/70">
                       {item.seatsFilled} / {item.seatsTotal} Seats
                     </span>
+                  </div>
+
+                  {/* Event Cover Photo based on title & category */}
+                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
+                    <img
+                      src={getOutingCategoryImage(item.category, item.title)}
+                      alt={item.title}
+                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
+                      {item.area} · <span className="capitalize">{item.category || 'Outing'}</span>
+                    </div>
                   </div>
 
                   <div>
