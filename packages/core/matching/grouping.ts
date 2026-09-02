@@ -48,8 +48,9 @@ export function buildPairwiseMatrix(
     gated[i][i] = false;
     for (let j = i + 1; j < n; j++) {
       const res = score(uniquePool[i], uniquePool[j], context);
-      resonance[i][j] = res.resonance;
-      resonance[j][i] = res.resonance;
+      const resVal = res.resonance ?? 0;
+      resonance[i][j] = resVal;
+      resonance[j][i] = resVal;
       gated[i][j] = res.gated;
       gated[j][i] = res.gated;
     }

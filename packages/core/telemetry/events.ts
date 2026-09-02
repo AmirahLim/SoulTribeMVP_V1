@@ -26,8 +26,8 @@ export interface MatchSurfacedEvent extends BaseEvent {
   subject_id: string;
   position: number;
   rank_score: number;
-  resonance: number;
-  logistics: number;
+  resonance: number | null;
+  logistics: number | null;
   contributions: Record<string, number>;
   gated: boolean;
   gate_reasons: string[];

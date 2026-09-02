@@ -380,4 +380,13 @@ describe('04 Matching Spec — 12 Core Test Cases', () => {
     const matchRes = score(vecA, vecB);
     assert.strictEqual('personality' in matchRes.contributions, false);
   });
+
+  it('14. Unanswered profiles return resonance null and logistics null instead of default 0.5', () => {
+    const emptyA: ProfileVector = { profile: { id: 'empty-1', display_name: 'Empty 1', confidence: 0.02 } as any };
+    const emptyB: ProfileVector = { profile: { id: 'empty-2', display_name: 'Empty 2', confidence: 0.02 } as any };
+
+    const matchRes = score(emptyA, emptyB);
+    assert.strictEqual(matchRes.resonance, null, 'Resonance is null when no constituent thread can be compared');
+    assert.strictEqual(matchRes.logistics, null, 'Logistics is null when no constituent thread can be compared');
+  });
 });

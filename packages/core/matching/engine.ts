@@ -59,7 +59,7 @@ export function score(
       resWeightTotal += w;
     }
   }
-  const resonance = resWeightTotal > 0 ? resSum / resWeightTotal : 0.5;
+  const resonance = resWeightTotal > 0 ? resSum / resWeightTotal : null;
 
   const logThreads: [number | null, number][] = [
     [sSocialRhythm, weights.social_rhythm],
@@ -76,10 +76,19 @@ export function score(
       logWeightTotal += w;
     }
   }
-  const logistics = logWeightTotal > 0 ? logSum / logWeightTotal : 0.5;
+  const logistics = logWeightTotal > 0 ? logSum / logWeightTotal : null;
 
   // Geometric rank score R^0.6 * L^0.4
-  const baseRank = Math.pow(resonance, 0.6) * Math.pow(logistics, 0.4);
+  let baseRank = 0;
+  if (resonance !== null && logistics !== null) {
+    baseRank = Math.pow(resonance, 0.6) * Math.pow(logistics, 0.4);
+  } else if (resonance !== null) {
+    baseRank = resonance;
+  } else if (logistics !== null) {
+    baseRank = logistics;
+  } else {
+    baseRank = 0;
+  }
   const rank_score = gateCheck.passed ? baseRank : 0;
 
   const contributions: Record<string, number> = {};

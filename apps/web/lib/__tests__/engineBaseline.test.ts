@@ -5,15 +5,13 @@ import { score, generateMatchExplanation, DEMO_PROFILES } from '@soul-tribe/core
 /**
  * ENGINE BASELINE — a golden snapshot of scoring output.
  *
- * These numbers were captured from commit 823abe1 BEFORE the dimension →
- * connection-thread rename. A rename is a no-op: if any value below changes, the
- * rename altered behaviour and must be corrected, not re-baselined.
+ * This snapshot reflects the post-6e engine state (where absence no longer
+ * counts as agreement). A pure rename or cosmetic change must remain a provable
+ * no-op: if any value below changes during a rename, the rename altered
+ * behaviour and must be corrected, not re-baselined.
  *
- * Do NOT update these numbers to make the test pass during a rename.
- *
- * They WILL legitimately change when 6e lands (absence stops counting as agreement).
- * At that point, re-capture them in the same commit as the 6e logic change, and say so
- * in the commit message — never in a rename commit.
+ * Logic changes to scoring may legitimately change these values, provided they
+ * are re-captured and documented in their own dedicated commit.
  */
 
 const MEMBER_A = {
@@ -32,7 +30,7 @@ const MEMBER_B = {
   q7EmotionalPacing: 'Slow opener', q8Qualities: ['Reliability'],
 } as any;
 
-const r6 = (n: number) => Number(n.toFixed(6));
+const r6 = (n: number | null) => (n === null ? null : Number(n.toFixed(6)));
 
 describe('Engine baseline — post-6e golden snapshot', () => {
   it('score() output for two fully-answered, very different members', () => {

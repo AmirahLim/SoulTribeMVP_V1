@@ -158,8 +158,8 @@ export interface MatchContext {
 }
 
 export interface MatchResult {
-  resonance: number; // 0..1
-  logistics: number; // 0..1
+  resonance: number | null; // 0..1 or null if no constituent thread could be compared
+  logistics: number | null; // 0..1 or null if no constituent thread could be compared
   rank_score: number;
   gated: boolean;
   gate_reasons: string[];

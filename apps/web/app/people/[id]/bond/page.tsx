@@ -23,8 +23,8 @@ interface ThreadReading {
 interface BondData {
   overall: {
     rankScore: number;
-    resonance: number;
-    logistics: number;
+    resonance: number | null;
+    logistics: number | null;
     confidence: number;
     provisional: boolean;
   };
@@ -275,13 +275,17 @@ function ViewBondContent() {
             <div className="rounded-[16px] bg-white/10 p-3 text-center border border-white/15">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Resonance</span>
               <div className="mt-1 text-[20px] font-black text-emerald-300">
-                {Math.round(bondData.overall.resonance * 100)}%
+                {typeof bondData.overall.resonance === 'number'
+                  ? `${Math.round(bondData.overall.resonance * 100)}%`
+                  : 'Not measured'}
               </div>
             </div>
             <div className="rounded-[16px] bg-white/10 p-3 text-center border border-white/15">
               <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Logistics</span>
               <div className="mt-1 text-[20px] font-black text-amber-300">
-                {Math.round(bondData.overall.logistics * 100)}%
+                {typeof bondData.overall.logistics === 'number'
+                  ? `${Math.round(bondData.overall.logistics * 100)}%`
+                  : 'Not measured'}
               </div>
             </div>
           </div>

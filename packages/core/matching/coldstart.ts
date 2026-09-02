@@ -154,7 +154,17 @@ export function softGate(
   // Compute base rank score if it was gated only for confidence
   let rawRankScore = result.rank_score;
   if (isProvisional && rawRankScore === 0) {
-    rawRankScore = Math.pow(result.resonance, 0.6) * Math.pow(result.logistics, 0.4);
+    const res = result.resonance;
+    const log = result.logistics;
+    if (res !== null && log !== null) {
+      rawRankScore = Math.pow(res, 0.6) * Math.pow(log, 0.4);
+    } else if (res !== null) {
+      rawRankScore = res;
+    } else if (log !== null) {
+      rawRankScore = log;
+    } else {
+      rawRankScore = 0;
+    }
   }
 
   const adjustedScore = shrinkToPrior(rawRankScore, minConf, options);

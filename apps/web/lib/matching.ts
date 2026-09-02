@@ -166,8 +166,8 @@ export interface RankedMatch {
   homeArea: string;
   bio: string;
   rankScore: number;
-  resonance: number;
-  logistics: number;
+  resonance: number | null;
+  logistics: number | null;
   clickText: string;
   rubText: string;    // GENERATED, not hardcoded
   fitLabel: string;
