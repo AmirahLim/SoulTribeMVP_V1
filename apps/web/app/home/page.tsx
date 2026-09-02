@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE } from '../../lib/userStore';
 import { useAuth } from '../../lib/authContext';
-import { getSupabaseBrowserClient } from '../../lib/supabase';
+import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
 
 export default function HomeDashboardPage() {
@@ -116,6 +116,12 @@ function HomeContent() {
         setMatches(rankedMatchesData);
         setGoingOutings(goingData);
         setRadarOutings(radarData);
+
+        const initialJoinedMap: Record<string, boolean> = {};
+        goingData.forEach((g) => {
+          initialJoinedMap[g.id] = true;
+        });
+        setRadarJoined(initialJoinedMap);
       } catch (err: any) {
         console.error('[SoulTribe Error] Failed to load home dashboard data:', err);
         if (!cancelled) {
@@ -131,8 +137,35 @@ function HomeContent() {
     };
   }, [user?.id, reloadTrigger]);
 
-  const handleToggleRadarJoin = (id: string) => {
-    setRadarJoined((prev) => ({ ...prev, [id]: !prev[id] }));
+  const handleToggleRadarJoin = async (outingId: string) => {
+    const isCurrentlyJoined = Boolean(radarJoined[outingId]);
+
+    setRadarJoined((prev) => ({ ...prev, [outingId]: !isCurrentlyJoined }));
+
+    if (checkIsSupabaseConfigured() && user?.id) {
+      try {
+        const client = getSupabaseBrowserClient();
+        if (!isCurrentlyJoined) {
+          await client.from('outing_members').insert({
+            outing_id: outingId,
+            user_id: user.id,
+            role: 'guest',
+            state: 'requested',
+          });
+        } else {
+          await client
+            .from('outing_members')
+            .delete()
+            .eq('outing_id', outingId)
+            .eq('user_id', user.id);
+        }
+      } catch (err) {
+        console.error('[SoulTribe Error] Failed to update radar join status:', err);
+      }
+    }
+
+    const updatedGoing = await fetchGoingOutings(user?.id);
+    setGoingOutings(updatedGoing);
   };
 
   return (
