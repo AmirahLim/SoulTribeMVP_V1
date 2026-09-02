@@ -17,11 +17,16 @@ import {
   scoreExperience,
 } from '../matching/threads.ts';
 
+export type ResonanceLabel = 'Strong Resonance' | 'Good Resonance' | 'Some Resonance' | 'Worth a Look';
+
 export interface ExplanationText {
   click_text: string;
   friction_text: string;
   generated_by: string;
   headline?: string;
+  resonance_label: ResonanceLabel;
+  evidence_count: number;
+  evidence_label: string; // e.g. "Early read · based on 8 signals"
   why_click?: string[];
   conversation_feel?: string[];
   friendship_path?: string[];
@@ -104,6 +109,30 @@ const CLICK_THREAD_PRIORITY: Record<string, number> = {
   social_rhythm: 2,
 };
 
+export function computeResonanceLabel(
+  highWeightAlignments: number,
+  meaningfulAlignments: number,
+  hasStructuralFriction: boolean,
+  maxFrictionSeverity: 'STRUCTURAL' | 'NOTICEABLE' | 'NEGOTIABLE' | 'COMPLEMENTARY' | 'NONE'
+): ResonanceLabel {
+  if (highWeightAlignments >= 3 && !hasStructuralFriction) {
+    return 'Strong Resonance';
+  }
+  if (meaningfulAlignments >= 2 && maxFrictionSeverity !== 'STRUCTURAL' && maxFrictionSeverity !== 'NOTICEABLE') {
+    return 'Good Resonance';
+  }
+  if (meaningfulAlignments >= 1) {
+    return 'Some Resonance';
+  }
+  return 'Worth a Look';
+}
+
+export function computeEvidenceLabel(signalCount: number): string {
+  if (signalCount < 15) return `Early read · based on ${signalCount} signals`;
+  if (signalCount < 40) return `Developing read · ${signalCount} signals`;
+  return `Deep read · ${signalCount} signals`;
+}
+
 export function generateMatchExplanation(
   vecA: ProfileVector,
   vecB: ProfileVector
@@ -111,7 +140,7 @@ export function generateMatchExplanation(
   const nameA = vecA.profile.display_name;
   const nameB = vecB.profile.display_name;
 
-  // Layer 1: Marker Extraction (Using raw onboarding answers as primary source when available)
+  // Layer 1: Marker Extraction
   const rawMarkersA = extractMarkers(vecA, vecA.answers);
   const rawMarkersB = extractMarkers(vecB, vecB.answers);
 
@@ -122,12 +151,47 @@ export function generateMatchExplanation(
   // Layer 3: Dyadic Composition
   const dyadicStatements = composeDyad(markersA, markersB, nameA, nameB);
 
+  // Signal / Evidence Counting: Count markers actually evaluated for this pair
+  const evaluatedMarkersSet = new Set<string>([...markersA.map((m) => m.key), ...markersB.map((m) => m.key)]);
+  const evidence_count = evaluatedMarkersSet.size;
+  const evidence_label = computeEvidenceLabel(evidence_count);
+
   const clickStatements = dyadicStatements.filter((s) => s.section === 'click');
   const convStatements = dyadicStatements.filter((s) => s.section === 'conversation');
   const pathStatements = dyadicStatements.filter((s) => s.section === 'friendship_path');
 
   // ONLY NOTICEABLE and STRUCTURAL severity statements lead friction!
   const frictionStatements = dyadicStatements.filter((s) => s.section === 'friction' && (s.severity === 'NOTICEABLE' || s.severity === 'STRUCTURAL'));
+
+  // Mechanism-based Resonance Labeling
+  const allAlignments = [...clickStatements, ...convStatements, ...pathStatements];
+  const highWeightThreads = new Set(['personality', 'communication', 'social_rhythm', 'intent']);
+  let highWeightAlignments = 0;
+
+  allAlignments.forEach((stmt) => {
+    const isHighWeight = stmt.sources.some((src) => {
+      const t = src.split('.')[0];
+      return highWeightThreads.has(t);
+    });
+    if (isHighWeight) highWeightAlignments++;
+  });
+
+  const meaningfulAlignments = allAlignments.length;
+  const hasStructuralFriction = dyadicStatements.some((s) => s.section === 'friction' && s.severity === 'STRUCTURAL');
+
+  let maxFrictionSeverity: 'STRUCTURAL' | 'NOTICEABLE' | 'NEGOTIABLE' | 'COMPLEMENTARY' | 'NONE' = 'NONE';
+  const allFrictions = dyadicStatements.filter((s) => s.section === 'friction');
+  if (allFrictions.some((s) => s.severity === 'STRUCTURAL')) maxFrictionSeverity = 'STRUCTURAL';
+  else if (allFrictions.some((s) => s.severity === 'NOTICEABLE')) maxFrictionSeverity = 'NOTICEABLE';
+  else if (allFrictions.some((s) => s.severity === 'NEGOTIABLE')) maxFrictionSeverity = 'NEGOTIABLE';
+  else if (allFrictions.some((s) => s.severity === 'COMPLEMENTARY')) maxFrictionSeverity = 'COMPLEMENTARY';
+
+  const resonance_label = computeResonanceLabel(
+    highWeightAlignments,
+    meaningfulAlignments,
+    hasStructuralFriction,
+    maxFrictionSeverity
+  );
 
   const hasRawAnswers = (vecA.answers && Object.keys(vecA.answers).length > 0) || (vecB.answers && Object.keys(vecB.answers).length > 0);
 
@@ -262,7 +326,7 @@ export function generateMatchExplanation(
   }
 
   if (!friction_text) {
-    // FILTER OUT threads that were already cited as click alignment or interests (interests never lead friction alone)
+    // FILTER OUT threads that were already cited as click alignment or interests
     const eligibleThreads = evaluated.filter(
       (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key) && !clickThreadsUsed.has(d.key) && d.key !== 'interests'
     );
@@ -367,6 +431,9 @@ export function generateMatchExplanation(
     friction_text,
     generated_by: 'deterministic_compositional_layer',
     headline,
+    resonance_label,
+    evidence_count,
+    evidence_label,
     why_click: clickStatements.length > 0 ? clickStatements.map((s) => s.text) : undefined,
     conversation_feel: convStatements.length > 0 ? convStatements.map((s) => s.text) : undefined,
     friendship_path: pathStatements.length > 0 ? pathStatements.map((s) => s.text) : undefined,
