@@ -48,7 +48,6 @@ export function Bloom({
     const maxRadius = renderSize * 0.42;
 
     const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
     const CREAM = '245,242,234';
 
     function mixColor(t: number, alpha: number) {
@@ -91,11 +90,10 @@ export function Bloom({
     ctx.globalCompositeOperation = 'lighter';
     const totalPetals = 10;
 
-    // Map threads or default 10
     for (let i = 0; i < totalPetals; i++) {
       const th = threads[i] || { strength: 0, confidence: 0 };
       const depth = th.confidence > 0 ? Math.max(0.1, th.strength * th.confidence) : 0;
-      const tone = (i / totalPetals); // Color distribution between emerald and amber
+      const tone = (i / totalPetals);
       const ang = (i / totalPetals) * Math.PI * 2 + Math.sin(i * 2.399) * 0.06;
 
       if (depth <= 0) {
@@ -114,12 +112,11 @@ export function Bloom({
         continue;
       }
 
-      // Explored petals: 3 layers with lighter composite
       const len = maxRadius * (0.3 + depth * 0.7);
       const wid = 10 + depth * 11;
-      drawPetal(ang, len * 1.07, wid * 1.6, tone, 0.09); // Wide soft underglow
-      drawPetal(ang, len, wid, tone, 0.6);             // Body
-      drawPetal(ang, len * 0.6, wid * 0.4, tone, 0.34); // Inner highlight
+      drawPetal(ang, len * 1.07, wid * 1.6, tone, 0.09);
+      drawPetal(ang, len, wid, tone, 0.6);
+      drawPetal(ang, len * 0.6, wid * 0.4, tone, 0.34);
     }
 
     // Glowing Radial Core
@@ -166,3 +163,5 @@ export function Bloom({
     </div>
   );
 }
+
+export { Bloom as ThreadBloom };

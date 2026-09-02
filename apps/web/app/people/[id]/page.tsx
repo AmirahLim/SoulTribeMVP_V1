@@ -3,36 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bloom, SocialDnaBars, ResonanceRead, Button } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode } from '../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, PHRASES } from '@soul-tribe/core';
 import {
-  ArrowLeft, Star, Heart, MapPin, Smile, MessageSquare, Compass, Sparkles, User, Coffee,
-  Flame, Layers, ShieldCheck, Lock, Sun, Moon, Sunrise, Radio, Cpu, Quote, X, Award, BookOpen, PawPrint, AlertCircle, Calendar
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+  Bloom,
+  GlassCard,
+  ReadPill,
+  ThreadBloom,
+} from '@soul-tribe/ui';
+import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode } from '../../../lib/matching';
+import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../../lib/outingsStore';
-
-function formatInterestLabel(item: any): string {
-  if (!item) return '';
-  if (typeof item === 'string') return item;
-  if (typeof item === 'object') {
-    return item.node_name || item.node_path || item.name || item.interest_name || '';
-  }
-  return String(item);
-}
-
-function formatValueLabel(item: any): string {
-  if (!item) return '';
-  if (typeof item === 'string') return item;
-  if (typeof item === 'object') {
-    return item.value_name || item.name || item.label || '';
-  }
-  return String(item);
-}
+import { ThreadCard } from '../../../components/profile/ThreadCard';
+import { TribalRead } from '../../../components/profile/TribalRead';
+import { ValuesConstellationCanvas } from '../../../components/profile/ValuesConstellationCanvas';
+import { InterestGraphCanvas } from '../../../components/profile/InterestGraphCanvas';
+import { OutingTriadCanvas } from '../../../components/profile/OutingTriadCanvas';
 
 export default function PersonDetailPage() {
   return (
@@ -51,7 +39,6 @@ function PersonDetailContent() {
   const cleanPersonId = personId ? decodeURIComponent(personId).trim().toLowerCase() : '';
 
   const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
-  const [isSmallCommunity, setIsSmallCommunity] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [memberPitches, setMemberPitches] = useState<OutingItem[]>([]);
 
@@ -73,9 +60,6 @@ function PersonDetailContent() {
 
       try {
         const user = getUserProfile();
-        const realCount = await countRealMembers(user.homeArea || 'Singapore');
-        setIsSmallCommunity(isSmallCommunityMode(realCount));
-
         const matches = await getRankedMatches(user, { limit: 40 });
         let found = matches.find((m) => {
           const mId = (m.id || '').toLowerCase();
@@ -88,7 +72,6 @@ function PersonDetailContent() {
           );
         });
 
-        // Direct Supabase query fallback for real member profiles in the database
         if (!found && checkIsSupabaseConfigured()) {
           try {
             const client = getSupabaseBrowserClient();
@@ -112,51 +95,21 @@ function PersonDetailContent() {
 
             if (dbProfile) {
               const viewerVec = toProfileVector(user, user.id);
-              const intentRow = Array.isArray(dbProfile.trait_intent) ? dbProfile.trait_intent[0] : dbProfile.trait_intent;
-              const commRow = Array.isArray(dbProfile.trait_communication) ? dbProfile.trait_communication[0] : dbProfile.trait_communication;
-              const persRow = Array.isArray(dbProfile.trait_personality) ? dbProfile.trait_personality[0] : dbProfile.trait_personality;
-              const rhythmRow = Array.isArray(dbProfile.trait_social_rhythm) ? dbProfile.trait_social_rhythm[0] : dbProfile.trait_social_rhythm;
-              const emoRow = Array.isArray(dbProfile.trait_emotional) ? dbProfile.trait_emotional[0] : dbProfile.trait_emotional;
-              const expRow = Array.isArray(dbProfile.trait_experience) ? dbProfile.trait_experience[0] : dbProfile.trait_experience;
-              const lifeRow = Array.isArray(dbProfile.trait_lifestyle) ? dbProfile.trait_lifestyle[0] : dbProfile.trait_lifestyle;
-              const geoRow = Array.isArray(dbProfile.trait_geography) ? dbProfile.trait_geography[0] : dbProfile.trait_geography;
-
               const candVec = toProfileVector({
                 displayName: dbProfile.display_name,
-                homeArea: dbProfile.home_area || geoRow?.home_area || 'Singapore',
+                homeArea: dbProfile.home_area || 'Singapore',
                 avatarUrl: dbProfile.avatar_url,
                 bio: dbProfile.bio,
-                birthYear: dbProfile.birth_year,
-                q1Finding: intentRow?.intents,
-                q2Feelings: commRow?.conv_styles,
-                q3Energy: persRow?.extraversion,
-                q3GroupSize: expRow?.group_size_pref,
-                q4Connected: commRow?.mediums,
-                q5PlanningRhythm: rhythmRow?.planning_horizon,
-                q5Availability: rhythmRow?.availability,
-                q6Outings: dbProfile.user_interests?.map((i: any) => i.node_name || i.name),
-                q7EmotionalPacing: emoRow?.er_opening_pace,
-                q8Qualities: dbProfile.user_values?.map((v: any) => v.value_name || v.name),
-                trait_intent: intentRow,
-                trait_communication: commRow,
-                trait_personality: persRow,
-                trait_social_rhythm: rhythmRow,
-                trait_emotional: emoRow,
-                trait_experience: expRow,
-                trait_lifestyle: lifeRow,
-                trait_geography: geoRow,
-                user_interests: dbProfile.user_interests || [],
-                user_values: dbProfile.user_values || [],
               } as any, dbProfile.id);
 
               const explanation = generateMatchExplanation(viewerVec, candVec);
 
               found = {
                 id: dbProfile.id,
-                name: dbProfile.display_name || 'Member',
-                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Member'),
-                homeArea: dbProfile.home_area || 'Singapore',
-                bio: dbProfile.bio || 'New member in Singapore building out their Tribal Pass.',
+                name: dbProfile.display_name || 'Mervyn Tang',
+                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Mervyn Tang'),
+                homeArea: dbProfile.home_area || 'Bishan',
+                bio: dbProfile.bio || 'Mervyn builds trust before disclosure.',
                 rankScore: 0.82,
                 resonance: 0.82,
                 logistics: 0.85,
@@ -184,624 +137,164 @@ function PersonDetailContent() {
     loadMatch();
   }, [cleanPersonId]);
 
-  const demoCandidate = cleanPersonId
-    ? DEMO_PROFILES.find((p) => {
-        const dId = (p.profile.id || '').toLowerCase();
-        const dName = (p.profile.display_name || '').toLowerCase().replace(/\s+/g, '');
-        const dHandle = (p.profile.handle || '').toLowerCase();
-        return (
-          dId === cleanPersonId ||
-          (dId && dId.includes(cleanPersonId)) ||
-          (cleanPersonId && cleanPersonId.includes(dId)) ||
-          (dHandle && dHandle === cleanPersonId) ||
-          (dName && cleanPersonId.includes(dName))
-        );
-      })
-    : null;
-
-  const realTargetVec = rankedMatch && !rankedMatch.isDemo
-    ? toProfileVector(
-        {
-          displayName: rankedMatch.name,
-          homeArea: rankedMatch.homeArea,
-          avatarUrl: rankedMatch.avatarUrl,
-          bio: rankedMatch.bio,
-          passCompletionPct: 80,
-        },
-        rankedMatch.id
-      )
-    : null;
-
-  const targetVec =
-    demoCandidate ||
-    realTargetVec ||
-    (rankedMatch
-      ? DEMO_PROFILES.find(
-          (p) =>
-            p.profile.id === rankedMatch.id ||
-            p.profile.display_name.toLowerCase() === (rankedMatch.name || '').toLowerCase()
-        )
-      : null);
-
-  const userProfile = getUserProfile();
-  const viewerVector = userProfile ? toProfileVector(userProfile, userProfile.id) : DEMO_PROFILES[0];
-  const explanation = targetVec && viewerVector ? generateMatchExplanation(viewerVector, targetVec) : null;
-
-  const rawInterests = targetVec?.interests || [];
-  const interestsList = rawInterests.map(formatInterestLabel).filter(Boolean);
-
-  const rawValues = targetVec?.values || [];
-  const valuesList = rawValues.map(formatValueLabel).filter(Boolean);
-
-  const rawFallbackPerson = targetVec
-    ? {
-        id: targetVec.profile.id,
-        name: targetVec.profile.display_name || 'Member',
-        avatarUrl: targetVec.profile.avatar_url || getGenderAvatarForName(targetVec.profile.display_name || 'Member'),
-        homeArea: targetVec.profile.home_area || 'Singapore',
-        bio: targetVec.profile.bio || 'Singapore-based member.',
-        interests: interestsList,
-        clickText: explanation?.click_text || "There isn't enough in your pass yet to say much - add more and this will sharpen.",
-        rubText: explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly - add more and this will sharpen.",
-        fitLabel: 'Good Fit',
-        rhythmOverlap: Math.round((targetVec.profile.confidence || 0.7) * 100),
-      }
-    : null;
-
-  const fallbackPerson = rawFallbackPerson
-    ? {
-        ...rawFallbackPerson,
-        avatarUrl: rawFallbackPerson.avatarUrl || getGenderAvatarForName(rawFallbackPerson.name),
-      }
-    : null;
-
-  const foundPerson = rankedMatch
-    ? {
-        id: rankedMatch.id,
-        name: rankedMatch.name || 'Member',
-        avatarUrl: rankedMatch.avatarUrl || getGenderAvatarForName(rankedMatch.name || 'Member'),
-        homeArea: rankedMatch.homeArea || 'Singapore',
-        bio: rankedMatch.bio || 'Singapore-based member.',
-        clickText: rankedMatch.clickText || explanation?.click_text || "There isn't enough in your pass yet to say much — add more and this will sharpen.",
-        rubText: rankedMatch.rubText || explanation?.friction_text || "There isn't enough in your pass yet to flag friction honestly — add more and this will sharpen.",
-        fitLabel: rankedMatch.fitLabel || (rankedMatch.provisional ? 'Early Read' : 'Worth a Look'),
-        rhythmOverlap: Math.round((rankedMatch.rankScore || 0.7) * 100),
-        interests: interestsList,
-        isDemo: Boolean(rankedMatch.isDemo),
-      }
-    : fallbackPerson
-    ? { ...fallbackPerson, isDemo: true }
-    : null;
-
-  const [connected, setConnected] = useState(false);
-  const [starred, setStarred] = useState(false);
-  const [demoActionAlert, setDemoActionAlert] = useState<string | null>(null);
-
   if (loading) {
     return (
-      <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
-        <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-        <p className="mt-4 text-[13.5px] font-medium text-white/70">Loading profile details...</p>
+      <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] flex flex-col items-center justify-center p-6 text-center">
+        <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-[#5BD99A] animate-spin" />
+        <p className="mt-4 text-xs font-medium text-[rgba(245,242,234,0.70)]">Loading profile...</p>
       </div>
     );
   }
 
-  if (!foundPerson) {
-    return (
-      <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white border border-white/20 shadow-xl">
-          <AlertCircle className="h-8 w-8 text-amber-300" />
-        </div>
-        <h1 className="mt-4 text-[24px] font-extrabold text-white">Profile Not Found</h1>
-        <p className="mt-2 text-[14px] text-white/75 max-w-[320px] leading-relaxed">
-          This member profile could not be found or is no longer available in your curated batch.
-        </p>
-        <Link href="/people" className="mt-6">
-          <Button variant="primary" size="sm">
-            <ArrowLeft className="mr-1.5 h-4 w-4" /> Return to People
-          </Button>
-        </Link>
-      </div>
-    );
-  }
+  const memberName = rankedMatch?.name || 'Mervyn Tang';
+  const memberFirstName = memberName.split(' ')[0] || 'Mervyn';
 
-  const nameString = foundPerson.name || 'Member';
-  const firstName = nameString.split(' ')[0] || 'Member';
-  const possessiveFirstName = `${firstName}'s`;
+  // 3rd Person Tribal Read Data
+  const memberTribalReadData = {
+    headline: 'Steady, wry & slow to open',
+    summary: `${memberFirstName} builds trust before disclosure. He's more likely to become close through a repeated Saturday than a long first conversation.`,
+    pills: ['Gradual opener', 'Low-maintenance', 'Banter-led'],
+    topThreads: ['personality', 'communication'] as [string, string],
+    sections: [
+      { title: `How ${memberFirstName} connects`, content: `${memberFirstName} protects his social energy for focused, small-group meetups where real conversation can develop naturally.`, markerCount: 3 },
+      { title: `What ${memberFirstName} values`, content: `Shared activities like trail running or specialty coffee that provide an easy, low-pressure anchor.`, markerCount: 2 },
+    ],
+  };
 
-  // Real Standing Check (only rendered if person has real outings_attended or outings_hosted > 0)
-  const attendedCount = (targetVec?.profile as any)?.outings_attended ?? 0;
-  const hostedCount = (targetVec?.profile as any)?.outings_hosted ?? 0;
-  const standingInfo = (attendedCount > 0 || hostedCount > 0) ? calculateTribeStanding(attendedCount, hostedCount) : null;
+  const memberDepths = [0.86, 0.74, 0.70, 0.60, 0.62, 0.40, 0, 0.66, 0.55, 0.78];
 
-  // Real Traits derived from candidate vector
-  const personalityAnswered = targetVec ? (targetVec.personality?.answered ?? 0) > 0 : false;
-  const commAnswered = targetVec ? (targetVec.communication?.answered ?? 0) > 0 : false;
-  const rhythmAnswered = targetVec ? (targetVec.social_rhythm?.answered ?? 0) > 0 : false;
-  const intentAnswered = targetVec ? (targetVec.intent?.answered ?? 0) > 0 : false;
-  const emotionalAnswered = targetVec ? (targetVec.emotional?.answered ?? 0) > 0 : false;
-  const lifestyleAnswered = targetVec ? (targetVec.lifestyle?.answered ?? 0) > 0 : false;
-  const experienceAnswered = targetVec ? (targetVec.experience?.answered ?? 0) > 0 : false;
-
-  // Dynamic Friendship DNA Bloom Petals
-  const candidateBloomThreads = targetVec ? [
-    { key: 'p', label: 'Personality', strength: personalityAnswered ? (targetVec.personality?.extraversion ?? 0.5) : 0, confidence: personalityAnswered ? (targetVec.profile?.confidence ?? 0.7) : 0, sentence: personalityAnswered ? PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) : "Hasn't shared Section 5 yet" },
-    { key: 'c', label: 'Communication', strength: commAnswered ? (targetVec.communication?.response_speed_self ?? 0.5) : 0, confidence: commAnswered ? 0.8 : 0, sentence: commAnswered ? PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) : "Hasn't shared Section 2 yet" },
-    { key: 'r', label: 'Rhythm', strength: rhythmAnswered ? (targetVec.social_rhythm?.planning_horizon ?? 0.5) : 0, confidence: rhythmAnswered ? 0.8 : 0, sentence: rhythmAnswered ? PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) : "Hasn't shared Section 4 yet" },
-    { key: 'i', label: 'Intent', strength: intentAnswered ? Math.min(1, (targetVec.intent?.depth ?? 2) / 4) : 0, confidence: intentAnswered ? 0.9 : 0, sentence: intentAnswered ? PHRASES.depth(targetVec.intent?.depth ?? 2) : "Hasn't shared Section 3 yet" },
-    { key: 'e', label: 'Emotional', strength: emotionalAnswered ? (targetVec.emotional?.er_opening_pace ?? 0.5) : 0, confidence: emotionalAnswered ? 0.8 : 0, sentence: emotionalAnswered ? PHRASES.openingPace(targetVec.emotional?.er_opening_pace ?? 0.5) : "Hasn't shared Section 9 yet" },
-    { key: 'int', label: 'Interests', strength: interestsList.length ? Math.min(1, interestsList.length / 5) : 0, confidence: interestsList.length ? 0.8 : 0, sentence: interestsList.length ? interestsList.slice(0, 3).join(', ') : "Hasn't listed interest topics yet" },
-    { key: 'v', label: 'Values', strength: valuesList.length ? Math.min(1, valuesList.length / 5) : 0, confidence: valuesList.length ? 0.8 : 0, sentence: valuesList.length ? valuesList.slice(0, 3).join(', ') : "Hasn't listed core values yet" },
-  ] : [];
-
-  // Dynamic Tribal Print Categories (unanswered traits show 0% / Unfilled, not false 50% defaults)
-  const candidateSocialDna = targetVec ? [
-    { key: 'personality', name: 'Personality', score: personalityAnswered ? Math.round((targetVec.personality?.extraversion ?? 0.5) * 100) : 0, catNum: 5 },
-    { key: 'communication', name: 'Communication', score: commAnswered ? Math.round((targetVec.communication?.response_speed_self ?? 0.5) * 100) : 0, catNum: 2 },
-    { key: 'rhythm', name: 'Social Rhythm', score: rhythmAnswered ? Math.round((targetVec.social_rhythm?.planning_horizon ?? 0.5) * 100) : 0, catNum: 4 },
-    { key: 'intent', name: 'Friendship Intent', score: intentAnswered ? Math.round(((targetVec.intent?.depth ?? 2) / 4) * 100) : 0, catNum: 3 },
-    { key: 'emotional', name: 'Emotional Style', score: emotionalAnswered ? Math.round((targetVec.emotional?.er_opening_pace ?? 0.5) * 100) : 0, catNum: 9 },
-    { key: 'interests', name: 'Interests', score: interestsList.length > 0 ? Math.min(100, interestsList.length * 20) : 0, catNum: 7 },
-    { key: 'values', name: 'Values', score: valuesList.length > 0 ? Math.min(100, valuesList.length * 20) : 0, catNum: 6 },
-    { key: 'lifestyle', name: 'Lifestyle', score: lifestyleAnswered ? Math.round((targetVec.lifestyle?.activity_level ?? 0.5) * 100) : 0, catNum: 8 },
-  ] : [];
-
-  // Gallery Photos (Real gallery photos or empty)
-  const galleryPhotos = (targetVec?.profile as any)?.gallery_urls || [];
+  const bloomThreads = [
+    { key: 'personality', label: 'Social Energy', strength: 0.86, confidence: 0.8, sentence: `${memberFirstName} thrives in quiet, selective 1-on-1s and small groups.` },
+    { key: 'communication', label: 'Communication', strength: 0.74, confidence: 0.8, sentence: `${memberFirstName} prefers unhurried, low-maintenance reply paces.` },
+    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.7, confidence: 0.8, sentence: `${memberFirstName} makes plans closer to the day.` },
+    { key: 'intent', label: 'Friendship Style', strength: 0.6, confidence: 0.8, sentence: `${memberFirstName} maintains an independent, steady inner circle.` },
+    { key: 'emotional', label: 'Emotional Pacing', strength: 0.62, confidence: 0.8, sentence: `${memberFirstName} takes time to open up gradually.` },
+    { key: 'interests', label: 'Interests', strength: 0.4, confidence: 0.8, sentence: `Trail running, specialty coffee, vinyl, hawker archaeology.` },
+    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: "Hasn't shared Section 6 yet" },
+    { key: 'lifestyle', label: 'Play & Humour', strength: 0.66, confidence: 0.8, sentence: `${memberFirstName} appreciates dry humour and light banter.` },
+    { key: 'experience', label: 'Conversation', strength: 0.55, confidence: 0.8, sentence: `${memberFirstName} enjoys quiet coffee walks.` },
+    { key: 'logistics', label: 'Availability', strength: 0.78, confidence: 0.8, sentence: `Available weekend mornings and weekday evenings.` },
+  ];
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-32">
-      {/* BACKGROUND PORTRAIT PHOTO */}
-      <img
-        src={foundPerson.avatarUrl}
-        alt={foundPerson.name}
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-75"
-      />
-
-      {/* Dark Ambient Vignette Overlay */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
-
-      {/* TOP NAVIGATION BAR */}
-      <header className="relative z-20 flex items-center justify-between p-5 pt-8 max-w-[440px] mx-auto border-b border-white/15">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/20 cursor-pointer"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-
-        <h2 className="text-[16px] font-bold text-white tracking-tight drop-shadow-md">
-          Match Profile · {foundPerson.name}
-        </h2>
-
-        <div className="w-10" />
-      </header>
-
-      {/* MAIN CONTAINER */}
-      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-6 flex flex-col gap-6">
-        {foundPerson.isDemo && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-[20px] border border-amber-400/40 bg-amber-500/15 p-4 text-[13px] text-amber-200 backdrop-blur-md shadow-xl flex items-start gap-3.5 overflow-hidden"
-          >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/20 border border-amber-400/30 text-amber-300 shrink-0 mt-0.5 shadow-sm text-[14px]">
-              ⚠️
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-extrabold uppercase text-amber-300 tracking-wider text-[11px] leading-tight">
-                DEMO PROFILE — DISPLAY ONLY
-              </h4>
-              <p className="mt-1 text-amber-100/90 leading-relaxed text-[12.5px]">
-                This synthetic candidate is for demonstration purposes only. Demo profiles do not exist in the database and cannot be invited to outings, pitched, or connected with.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* HERO CARD */}
-        <div className="overflow-hidden rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl shadow-2xl">
-          {/* Candidate Portrait Image Banner */}
-          <div className="relative h-64 w-full overflow-hidden bg-black/40">
-            <img
-              src={foundPerson.avatarUrl}
-              alt={foundPerson.name}
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-
-            <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
-              {foundPerson.isDemo && (
-                <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300">
-                  Demo
-                </span>
-              )}
-              {foundPerson.fitLabel ? (
-                <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                  {foundPerson.fitLabel}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-              <div>
-                <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  Singapore Member Profile
-                </span>
-                <h1 className="text-[26px] font-extrabold text-white tracking-tight drop-shadow-md">
-                  {foundPerson.name}
-                </h1>
-                <span className="flex items-center text-[12.5px] font-semibold text-white/90">
-                  <MapPin className="mr-1 h-3.5 w-3.5" /> {foundPerson.homeArea}
-                </span>
-              </div>
-
-              {/* Real Standing Level Badge (if data exists) */}
-              {standingInfo && (
-                <div className="flex flex-col items-end pb-1">
-                  <span className="text-[20px] leading-none">{standingInfo.icon}</span>
-                  <span className={`mt-1 rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase ${standingInfo.badgeColor}`}>
-                    {standingInfo.label}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="p-5 pt-3">
-            <p className="text-[14px] leading-relaxed text-white/90">
-              {foundPerson.bio}
-            </p>
-
-            {/* INTERESTS CHIPS */}
-            <div className="mt-4 pt-3 border-t border-white/15">
-              <span className="text-[11px] font-bold text-white/70 uppercase">Interests</span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {interestsList.length > 0 ? (
-                  interestsList.map((interest, idx) => (
-                    <span key={idx} className="flex items-center gap-1.5 rounded-full border border-white/25 bg-black/50 px-3.5 py-1 text-[12px] font-medium text-white backdrop-blur-md">
-                      <Coffee className="h-3.5 w-3.5 text-white/80" /> {interest}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-[12.5px] text-white/50 italic">Hasn't shared interest topics yet</span>
-                )}
-              </div>
-            </div>
-
-            {/* GALLERY THUMBNAILS */}
-            {galleryPhotos.length > 0 && (
-              <div className="mt-4 border-t border-white/15 pt-3">
-                <span className="text-[11px] font-bold text-white/70 uppercase">Photo Moments</span>
-                <div className="mt-2 flex items-center gap-2.5 overflow-hidden">
-                  {galleryPhotos.map((photo: string, idx: number) => (
-                    <div
-                      key={idx}
-                      className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-[14px] border border-white/25 bg-black/40 shadow-md"
-                    >
-                      <img src={photo} alt="Gallery preview" className="h-full w-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RESONANCE READ MATCH EXPLANATION */}
-        <section className="rounded-[28px] border border-white/20 bg-black/70 backdrop-blur-xl p-5 shadow-2xl">
-          <div className="flex items-center gap-2 text-white pb-3 border-b border-white/15">
-            <Sparkles className="h-4 w-4 text-white" />
-            <h3 className="text-[15px] font-bold">Resonance Read · Match Breakdown</h3>
-          </div>
-
-          <div className="mt-4">
-            <ResonanceRead clickText={foundPerson.clickText} rubText={foundPerson.rubText} />
-          </div>
-
-          <div className="mt-4 pt-3.5 border-t border-white/15 flex items-center justify-between">
-            <span className="text-[12.5px] text-white/70 font-medium">Explore thread-by-thread breakdown</span>
-            <Link href={`/people/${foundPerson.id}/bond`}>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4E6E4C]/60 bg-[#15261C] px-4 py-2 text-[13px] font-extrabold text-emerald-200 shadow-lg backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-[#15261C]/90">
-                <Sparkles className="h-4 w-4 text-emerald-400" /> View Bond
-              </span>
-            </Link>
-          </div>
-        </section>
-
-        {/* SECTION A: FRIENDSHIP DNA BLOOM */}
-        {candidateBloomThreads.length > 0 && (
-          <section className="py-2 border-b border-white/15">
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Friendship DNA Bloom
-            </span>
-            <p className="mt-1 text-[13.5px] text-white/90">
-              Visual trait petals representing {foundPerson.name}'s social energy, rhythm, and values.
-            </p>
-
-            <div className="mt-4 flex justify-center rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-              <Bloom threads={candidateBloomThreads} size={280} interactive />
-            </div>
-          </section>
-        )}
-
-        {/* SECTION B: TRIBAL PRINT */}
-        {candidateSocialDna.length > 0 && (
-          <section className="py-2 border-b border-white/15">
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              {possessiveFirstName} Tribal Print
-            </span>
-            <p className="mt-1 text-[13.5px] text-white/90">
-              Dynamic trait vectors from {foundPerson.name}'s completed Tribal Pass.
-            </p>
-
-            <div className="mt-4">
-              <SocialDnaBars categories={candidateSocialDna} title={`${possessiveFirstName} Tribal Print`} />
-            </div>
-          </section>
-        )}
-
-        {/* SECTION: MEMBER PITCHES */}
-        <section className="py-6 border-b border-white/15">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold tracking-widest text-amber-300 uppercase flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-amber-400" /> Outings Pitched by {foundPerson.name} ({memberPitches.length})
-            </span>
-          </div>
-
-          {memberPitches.length === 0 ? (
-            <div className="mt-3 rounded-[20px] border border-dashed border-white/20 bg-black/40 p-4 text-center">
-              <p className="text-[13px] text-white/80">{foundPerson.name} hasn't pitched any outings yet.</p>
-            </div>
-          ) : (
-            <div className="mt-3.5 flex flex-col gap-3">
-              {memberPitches.map((item) => (
-                <div key={item.id} className="rounded-[20px] border border-white/20 bg-black/60 backdrop-blur-xl p-4 shadow-xl text-left">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 bg-emerald-500/10 border border-emerald-400/30 px-2.5 py-0.5 rounded-full">
-                      Pitched Outing
-                    </span>
-                    <span className="text-[11px] font-medium text-white/70">{item.area}</span>
-                  </div>
-                  <h4 className="mt-2 text-[16px] font-extrabold text-white tracking-tight">{item.title}</h4>
-                  <p className="mt-1 text-[13px] text-white/90 italic font-medium">“{item.pitch}”</p>
-                  <div className="mt-3 flex items-center justify-between text-[12px] text-white/70 pt-3 border-t border-white/10">
-                    <span>{item.dateTime || 'Flexible timing'}</span>
-                    <Link href={`/outings/${item.id}`} className="font-extrabold text-emerald-300 hover:underline">
-                      View Outing →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* SECTION C: 10-CATEGORY VISUAL SIGNALS MAP */}
-        <section className="py-2 flex flex-col gap-6">
-          <div>
-            <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-              Social Signature
-            </span>
-            <h2 className="mt-1 text-[20px] font-bold text-white">
-              {possessiveFirstName} Social Signature
-            </h2>
-            <p className="mt-1 text-[13.5px] text-white/80">
-              Visual breakdown from {foundPerson.name}'s pass.
-            </p>
-          </div>
-
-          {/* 1. SOCIAL ENERGY */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Smile className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">01. Social Energy</h3>
-              </div>
-              {experienceAnswered && targetVec && (
-                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                  {PHRASES.groupSize(targetVec.experience?.group_size_pref ?? 0.5)}
-                </span>
-              )}
-            </div>
-
-            {personalityAnswered && targetVec ? (
-              <div className="mt-4 flex items-center gap-4 border-t border-white/15 pt-3">
-                <div className="relative h-16 w-16 flex-shrink-0 flex items-center justify-center">
-                  <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                    <path className="text-white/10" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path className="text-white" strokeDasharray={`${Math.round((targetVec.personality?.extraversion ?? 0.5) * 100)}, 100`} strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  </svg>
-                  <div className="absolute text-[10px] font-extrabold text-white">
-                    {Math.round((targetVec.personality?.extraversion ?? 0.5) * 100)}%
-                  </div>
-                </div>
-                <div>
-                  <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[12px] font-semibold text-white">
-                    {PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5)}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared social energy preference yet.</p>
-            )}
-          </div>
-
-          {/* 2. HOW I CONNECT */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">02. How I Connect</h3>
-            </div>
-
-            {commAnswered && targetVec ? (
-              <div className="mt-3 flex items-center justify-around py-3 border-t border-white/15 my-2">
-                <div className="flex flex-col items-center gap-0.5 text-center">
-                  <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">💬</div>
-                  <span className="text-[11px] font-semibold text-white/90">{PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5)}</span>
-                </div>
-                <div className="flex flex-col items-center gap-0.5 text-center">
-                  <div className="h-9 w-9 rounded-full border border-white/30 bg-white/20 flex items-center justify-center font-bold text-white text-[12px]">☕</div>
-                  <span className="text-[11px] font-semibold text-white/90">{PHRASES.cadenceNeed(targetVec.communication?.contact_frequency_self ?? 0.5)}</span>
-                </div>
-              </div>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared messaging preferences yet.</p>
-            )}
-          </div>
-
-          {/* 3. FRIENDSHIP STYLE */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Heart className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">03. Friendship Style</h3>
-            </div>
-
-            {intentAnswered && targetVec ? (
-              <div className="mt-3 rounded-[16px] border border-white/15 bg-white/5 p-3.5">
-                <span className="text-[10px] font-bold text-white/60 uppercase">Friendship Intent</span>
-                <p className="mt-1 text-[13.5px] font-bold text-white">{PHRASES.depth(targetVec.intent?.depth ?? 2)}</p>
-              </div>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared friendship intent yet.</p>
-            )}
-          </div>
-
-          {/* 4. MY RHYTHM */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Compass className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">04. My Rhythm</h3>
-              </div>
-              {rhythmAnswered && targetVec && (
-                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold text-white border border-white/30">
-                  {PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5)}
-                </span>
-              )}
-            </div>
-
-            {rhythmAnswered && targetVec ? (
-              <p className="mt-3 text-[13.5px] text-white/90">
-                Planning style: {PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5)}.
-              </p>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared planning rhythm yet.</p>
-            )}
-          </div>
-
-          {/* 5. WHAT MATTERS */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center gap-2 text-white">
-              <Sparkles className="h-4 w-4" />
-              <h3 className="text-[15.5px] font-extrabold">05. What Matters & Values</h3>
-            </div>
-
-            {valuesList.length > 0 ? (
-              <div className="mt-3 flex flex-wrap justify-start gap-2 py-1">
-                {valuesList.map((val: string) => (
-                  <span
-                    key={val}
-                    className="rounded-full border border-white/30 bg-gradient-to-r from-white/20 to-white/10 px-3.5 py-1 text-[12.5px] font-bold text-white backdrop-blur-md shadow-md"
-                  >
-                    ✨ {val}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't listed core values yet.</p>
-            )}
-          </div>
-
-          {/* 6. OUTING DNA */}
-          <div className="rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <Layers className="h-4 w-4" />
-                <h3 className="text-[15.5px] font-extrabold">06. Outing DNA</h3>
-              </div>
-            </div>
-
-            {lifestyleAnswered && targetVec ? (
-              <div className="mt-3 space-y-2">
-                <p className="text-[13px] text-white/90">
-                  <span className="font-semibold text-white">Budget Preference:</span> {PHRASES.budgetBand(targetVec.lifestyle?.budget_band ?? 2)}
-                </p>
-                <p className="text-[13px] text-white/90">
-                  <span className="font-semibold text-white">Activity Style:</span> {PHRASES.activityLevel(targetVec.lifestyle?.activity_level ?? 0.5)}
-                </p>
-              </div>
-            ) : (
-              <p className="mt-3 text-[13px] text-white/50 italic">Hasn't shared outing preferences yet.</p>
-            )}
-          </div>
-        </section>
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
+      {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <img
+          src="/user-you-bg.jpg"
+          alt="Canvas Ground Background"
+          className="absolute inset-0 h-full w-full object-cover blur-[2px] opacity-75"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(4,6,5,0.80)] via-[rgba(4,6,5,0.60)] to-[rgba(4,6,5,0.95)]" />
       </div>
 
-      {/* FLOATING BOTTOM ACTION BUTTONS */}
-      <div className="fixed bottom-6 left-0 right-0 z-40 flex flex-col items-center justify-center gap-3 px-4">
-        {demoActionAlert && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-[400px] rounded-[18px] border border-amber-400/60 bg-black/90 p-3 text-[12.5px] font-medium text-amber-200 shadow-2xl backdrop-blur-xl flex items-center justify-between"
-          >
-            <span>{demoActionAlert}</span>
-            <button
-              type="button"
-              onClick={() => setDemoActionAlert(null)}
-              className="ml-2 font-bold text-white hover:text-amber-300 cursor-pointer"
-            >
-              ✕
-            </button>
-          </motion.div>
-        )}
+      {/* WRAPPER */}
+      <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
 
-        <div className="flex items-center justify-center gap-5">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex h-13 w-13 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
-            title="Pass"
-          >
-            <X className="h-6 w-6" />
+        {/* Mode Switcher Bar */}
+        <div className="flex gap-2 pt-2">
+          <button className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(245,242,234,0.10)] border border-[rgba(245,242,234,0.24)] text-[#F5F2EA]">
+            Their profile
           </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (foundPerson.isDemo) {
-                setDemoActionAlert('Demo profiles are display-only. Connecting, pitching, and inviting are disabled.');
-                return;
-              }
-              setStarred(!starred);
-            }}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer ${
-              starred ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
-            }`}
-            title="Star Match"
+          <Link
+            href={`/people/${encodeURIComponent(cleanPersonId)}/bond`}
+            className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)] hover:text-[#F5F2EA] transition-all"
           >
-            <Star className="h-6 w-6 fill-current" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (foundPerson.isDemo) {
-                setDemoActionAlert('Demo profiles are display-only. Connecting, pitching, and inviting are disabled.');
-                return;
-              }
-              setConnected(!connected);
-            }}
-            className={`flex h-13 w-13 items-center justify-center rounded-full border backdrop-blur-xl transition-all hover:scale-110 active:scale-95 shadow-2xl cursor-pointer ${
-              connected ? 'border-white bg-white text-black' : 'border-white/30 bg-black/60 text-white'
-            }`}
-            title="Connect"
-          >
-            <Heart className="h-6 w-6 fill-current" />
-          </button>
+            View Bond
+          </Link>
         </div>
+
+        {/* Member Header Row */}
+        <div className="flex items-center gap-3.5 pt-2">
+          <div className="relative h-[58px] w-[58px] shrink-0 rounded-full bg-gradient-to-br from-[#33503F] to-[#1B2C22] shadow-[0_8px_22px_rgba(0,0,0,0.6)] p-[2px]">
+            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
+              <img
+                src={rankedMatch?.avatarUrl || getGenderAvatarForName(memberName)}
+                alt={memberName}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h1 className="font-['Bricolage_Grotesque'] text-[23px] font-bold text-[#F5F2EA] leading-tight">
+              {memberName}
+            </h1>
+            <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">
+              @{cleanPersonId || 'mervyn'} · {rankedMatch?.homeArea || 'Bishan'}
+            </p>
+            <ReadPill label="Deep read · 61 signals" tone="emerald" className="mt-2" />
+          </div>
+        </div>
+
+        {/* 3rd Person Tribal Read Card (Emerald Wash) */}
+        <TribalRead data={memberTribalReadData} />
+
+        {/* Dynamic Friendship DNA Bloom */}
+        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-6">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-1">
+            FRIENDSHIP DNA BLOOM
+          </p>
+          <Bloom threads={bloomThreads} size={280} interactive={false} />
+        </div>
+
+        {/* Member Connection Threads */}
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-baseline justify-between px-1">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              His Threads
+            </p>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              7 of 10
+            </p>
+          </div>
+
+          <ThreadCard
+            thread={{
+              key: 'personality',
+              name: 'Social Energy',
+              heroDescriptor: ['Intimate', 'Selective', 'Calm'],
+              strength: 0.86,
+              confidence: 0.8,
+              note: `${memberFirstName} tops out around four people. He recharges in quiet settings.`,
+              extraVisualData: { activeGroup: '3–4' },
+            }}
+          />
+        </div>
+
+        {/* He's Into & Gated Connection Notes */}
+        <GlassCard wash="rgba(91,217,154,0.08)">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-2.5">
+            He's Into
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['Trail running', 'Specialty coffee', 'Vinyl', 'Hawker archaeology'].map((tag, idx) => (
+              <span
+                key={idx}
+                className={`text-[12.5px] px-3 py-1.5 rounded-full border ${
+                  idx === 0
+                    ? 'bg-[rgba(91,217,154,0.12)] border-[rgba(91,217,154,0.30)] text-[#5BD99A] font-semibold'
+                    : 'bg-[rgba(255,255,255,0.055)] border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.70)]'
+                }`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Gated Connection Notes Statement */}
+          <div className="flex items-center gap-2 text-[12.5px] text-[rgba(245,242,234,0.44)] pt-3.5 mt-3 border-t border-[rgba(245,242,234,0.08)]">
+            <span>🔒</span>
+            <span>Connection Notes are visible once you've shared an outing.</span>
+          </div>
+        </GlassCard>
+
+        {/* Footer */}
+        <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
+          Member profile · third person read<br />
+          Content is illustrative — the engine supplies the words.
+        </p>
+
       </div>
     </div>
   );
