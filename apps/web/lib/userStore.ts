@@ -256,6 +256,12 @@ export interface PitchedOuting {
   joinedGuests: JoinedGuest[];
   createdAt: string;
   fitBadge?: string;
+  cover_image_url?: string;
+  cover_image_thumb_url?: string;
+  cover_image_alt?: string;
+  cover_photographer_name?: string;
+  cover_photographer_url?: string;
+  cover_download_location?: string;
 }
 
 export function calculatePassCompletion(hasOnboarded: boolean = true, completedCategoryNums: number[] = []): number {

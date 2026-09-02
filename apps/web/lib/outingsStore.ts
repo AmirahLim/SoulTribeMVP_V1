@@ -19,6 +19,12 @@ export interface OutingItem {
   state?: string;
   visibility?: string;
   fitBadge?: string;
+  cover_image_url?: string;
+  cover_image_thumb_url?: string;
+  cover_image_alt?: string;
+  cover_photographer_name?: string;
+  cover_photographer_url?: string;
+  cover_download_location?: string;
 }
 
 export function getOutingCategoryImage(category?: string, title?: string, area?: string): string {
@@ -160,6 +166,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           area,
           starts_at,
           max_participants,
+          cover_image_url,
+          cover_image_thumb_url,
+          cover_image_alt,
+          cover_photographer_name,
+          cover_photographer_url,
+          cover_download_location,
           profiles!outings_host_id_fkey (display_name, avatar_url),
           outing_members (user_id, state)
         )
@@ -204,6 +216,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           seatsTotal: out.max_participants || 6,
           seatsFilled,
           state: row.state,
+          cover_image_url: out.cover_image_url,
+          cover_image_thumb_url: out.cover_image_thumb_url,
+          cover_image_alt: out.cover_image_alt,
+          cover_photographer_name: out.cover_photographer_name,
+          cover_photographer_url: out.cover_photographer_url,
+          cover_download_location: out.cover_download_location,
         };
       })
       .filter(Boolean) as OutingItem[];
@@ -224,6 +242,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           area,
           starts_at,
           max_participants,
+          cover_image_url,
+          cover_image_thumb_url,
+          cover_image_alt,
+          cover_photographer_name,
+          cover_photographer_url,
+          cover_download_location,
           profiles!outings_host_id_fkey (display_name, avatar_url),
           outing_members (user_id, state)
         `)
@@ -264,6 +288,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
             seatsTotal: out.max_participants || 6,
             seatsFilled,
             state: 'requested',
+            cover_image_url: out.cover_image_url,
+            cover_image_thumb_url: out.cover_image_thumb_url,
+            cover_image_alt: out.cover_image_alt,
+            cover_photographer_name: out.cover_photographer_name,
+            cover_photographer_url: out.cover_photographer_url,
+            cover_download_location: out.cover_download_location,
           });
         });
       }
@@ -295,6 +325,12 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
         max_participants,
         visibility,
         state,
+        cover_image_url,
+        cover_image_thumb_url,
+        cover_image_alt,
+        cover_photographer_name,
+        cover_photographer_url,
+        cover_download_location,
         profiles!outings_host_id_fkey (display_name, avatar_url),
         outing_members (user_id, state)
       `)
@@ -342,6 +378,12 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
         hostAvatar,
         seatsTotal: out.max_participants || 6,
         seatsFilled,
+        cover_image_url: out.cover_image_url,
+        cover_image_thumb_url: out.cover_image_thumb_url,
+        cover_image_alt: out.cover_image_alt,
+        cover_photographer_name: out.cover_photographer_name,
+        cover_photographer_url: out.cover_photographer_url,
+        cover_download_location: out.cover_download_location,
         fitBadge: undefined,
       };
     });
@@ -363,6 +405,13 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
     hostAvatar: p.hostAvatar,
     seatsTotal: p.seatsTotal,
     seatsFilled: p.seatsFilled,
+    category: (p as any).category,
+    cover_image_url: p.cover_image_url,
+    cover_image_thumb_url: p.cover_image_thumb_url,
+    cover_image_alt: p.cover_image_alt,
+    cover_photographer_name: p.cover_photographer_name,
+    cover_photographer_url: p.cover_photographer_url,
+    cover_download_location: p.cover_download_location,
   }));
 
   if (!checkIsSupabaseConfigured() || !userId) {
@@ -384,6 +433,12 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
         max_participants,
         visibility,
         state,
+        cover_image_url,
+        cover_image_thumb_url,
+        cover_image_alt,
+        cover_photographer_name,
+        cover_photographer_url,
+        cover_download_location,
         profiles!outings_host_id_fkey (display_name, avatar_url),
         outing_members (user_id, state)
       `)
@@ -419,12 +474,19 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
         title: out.title,
         pitch: out.pitch || '',
         area: out.area || 'Singapore',
+        category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
         hostId: out.host_id,
         hostName,
         hostAvatar,
         seatsTotal: out.max_participants || 6,
         seatsFilled,
+        cover_image_url: out.cover_image_url,
+        cover_image_thumb_url: out.cover_image_thumb_url,
+        cover_image_alt: out.cover_image_alt,
+        cover_photographer_name: out.cover_photographer_name,
+        cover_photographer_url: out.cover_photographer_url,
+        cover_download_location: out.cover_download_location,
       };
     });
 

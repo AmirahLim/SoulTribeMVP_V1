@@ -12,7 +12,9 @@ import { getUserProfile, removeUserPitchLocal, removeJoinedOutingLocal, getUserP
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { getOutingCategoryImage } from '../../../lib/outingsStore';
+import { getGenderAvatarForName } from '@soul-tribe/core';
 import { AuthGuard } from '../../../components/AuthGuard';
+import { OutingCoverHeader } from '../../../components/OutingCoverHeader';
 
 export default function OutingDetailPage() {
   return (
@@ -50,6 +52,12 @@ interface OutingData {
   visibility?: string;
   max_participants: number;
   state: string;
+  cover_image_url?: string | null;
+  cover_image_thumb_url?: string | null;
+  cover_image_alt?: string | null;
+  cover_photographer_name?: string | null;
+  cover_photographer_url?: string | null;
+  cover_download_location?: string | null;
 }
 
 function OutingDetailContent() {
@@ -336,7 +344,7 @@ function OutingDetailContent() {
             const loadedOuting: OutingData = {
               ...dbOuting,
               hostName: hostProfile?.display_name || 'Host',
-              hostAvatar: hostProfile?.avatar_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
+              hostAvatar: hostProfile?.avatar_url || getGenderAvatarForName(hostProfile?.display_name || 'Host'),
               isHostDemo,
             };
 
@@ -351,12 +359,13 @@ function OutingDetailContent() {
             const formattedMembers: OutingMember[] = (dbMembers || []).map((m: any) => {
               const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
               const isViewer = m.user_id === viewerId;
+              const dName = p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member');
               return {
                 user_id: m.user_id,
                 role: m.role,
                 state: m.state,
-                display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
-                avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                display_name: dName,
+                avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || getGenderAvatarForName(dName),
                 home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
                 isDemo: Boolean(m.is_demo || p?.is_demo),
               };
@@ -372,7 +381,7 @@ function OutingDetailContent() {
                     role: 'guest',
                     state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
                     display_name: g.name || 'Member',
-                    avatar_url: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+                    avatar_url: g.avatarUrl || getGenderAvatarForName(g.name || 'Member'),
                     home_area: g.homeArea || 'Singapore',
                     isDemo: g.isDemo,
                   });
@@ -396,11 +405,12 @@ function OutingDetailContent() {
       const localPitch = localPitches.find((p) => p.id === outingId);
 
       if (localPitch) {
+        const hName = localPitch.hostName || profile.displayName || 'Host';
         setOuting({
           id: localPitch.id,
           host_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
-          hostName: localPitch.hostName || profile.displayName || 'Host',
-          hostAvatar: localPitch.hostAvatar || profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+          hostName: hName,
+          hostAvatar: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
           isHostDemo: localPitch.isHostDemo,
           title: localPitch.title,
           pitch: localPitch.pitch,
@@ -413,6 +423,12 @@ function OutingDetailContent() {
           setting: 'General',
           max_participants: localPitch.seatsTotal || 6,
           state: 'open',
+          cover_image_url: localPitch.cover_image_url,
+          cover_image_thumb_url: localPitch.cover_image_thumb_url,
+          cover_image_alt: localPitch.cover_image_alt,
+          cover_photographer_name: localPitch.cover_photographer_name,
+          cover_photographer_url: localPitch.cover_photographer_url,
+          cover_download_location: localPitch.cover_download_location,
         });
 
         const localMembers: OutingMember[] = [
@@ -420,8 +436,8 @@ function OutingDetailContent() {
             user_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
             role: 'host',
             state: 'accepted',
-            display_name: localPitch.hostName || profile.displayName || 'Host',
-            avatar_url: localPitch.hostAvatar || profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+            display_name: hName,
+            avatar_url: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
             home_area: profile.homeArea || 'Singapore',
           },
           ...(localPitch.joinedGuests || []).map((g) => ({
@@ -429,7 +445,7 @@ function OutingDetailContent() {
             role: 'guest' as const,
             state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
             display_name: g.name || 'Member',
-            avatar_url: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+            avatar_url: g.avatarUrl || getGenderAvatarForName(g.name || 'Member'),
             home_area: g.homeArea || 'Singapore',
             isDemo: g.isDemo,
           })),
@@ -698,30 +714,16 @@ function OutingDetailContent() {
       </button>
 
       {/* Top Location Header */}
-      <div className="relative h-44 w-full overflow-hidden rounded-[24px] bg-[#15261C] border border-[#F3F0E9]/12 shadow-lg">
-        <img
-          src={getOutingCategoryImage(outing.activity_category, outing.title, outing.area)}
-          alt={outing.title}
-          className="h-full w-full object-cover opacity-70"
-        />
-
-        <div className="absolute top-4 left-4 rounded-full bg-[#0D1D15]/90 px-3 py-1 text-[11px] font-bold tracking-widest text-[#F3F0E9] uppercase backdrop-blur-sm flex items-center gap-1.5">
-          <span>{outing.area}</span>
-          <span>·</span>
-          <span className="capitalize">{outing.activity_category}</span>
-        </div>
-
-        <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-          <span className="rounded-full bg-[#0D1D15] border border-[#F3F0E9]/20 px-3.5 py-1 text-[12px] font-bold text-[#F3F0E9] capitalize">
-            {outing.state} Outing
-          </span>
-          <img
-            src={outing.hostAvatar}
-            alt={outing.hostName}
-            className="h-11 w-11 rounded-full border-2 border-[#F3F0E9] object-cover shadow-sm"
-          />
-        </div>
-      </div>
+      <OutingCoverHeader
+        cover_image_url={outing.cover_image_url}
+        cover_image_thumb_url={outing.cover_image_thumb_url}
+        cover_image_alt={outing.cover_image_alt || outing.title}
+        cover_photographer_name={outing.cover_photographer_name}
+        cover_photographer_url={outing.cover_photographer_url}
+        category={outing.activity_category}
+        area={outing.area}
+        aspect="banner"
+      />
 
       <div className="mt-6 flex flex-col gap-6">
         {/* Messages */}

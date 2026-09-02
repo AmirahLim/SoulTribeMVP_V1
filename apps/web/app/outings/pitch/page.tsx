@@ -5,13 +5,15 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@soul-tribe/ui';
-import { Check, AlertTriangle, ArrowLeft, Plus, Clock, Calendar } from 'lucide-react';
+import { Check, AlertTriangle, ArrowLeft, Plus, Clock, Calendar, RefreshCw, Upload, ImageIcon } from 'lucide-react';
 import { getUserProfile, PitchedOuting, JoinedGuest, addUserPitch } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { getGenderAvatarForName } from '@soul-tribe/core';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/authContext';
 import { AuthGuard } from '../../../components/AuthGuard';
+import { OutingCoverHeader } from '../../../components/OutingCoverHeader';
+import { uploadOutingCover } from '../../../lib/coverUpload';
 
 function PitchComposerContent() {
   const router = useRouter();
@@ -38,6 +40,96 @@ function PitchComposerContent() {
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
   const [maxParticipants] = useState<number>(6);
   const [setting, setSetting] = useState<string>('General');
+
+  // Cover Image Search & Host Override State
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [selectedCover, setSelectedCover] = useState<{
+    cover_image_url?: string | null;
+    cover_image_thumb_url?: string | null;
+    cover_image_alt?: string | null;
+    cover_photographer_name?: string | null;
+    cover_photographer_url?: string | null;
+    cover_download_location?: string | null;
+  } | null>(null);
+  const [isSearchingImage, setIsSearchingImage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Live Unsplash Image Search debounced on title/pitch/category change
+  useEffect(() => {
+    if (!title.trim() && !pitch.trim()) return;
+
+    const timer = setTimeout(async () => {
+      setIsSearchingImage(true);
+      try {
+        const res = await fetch('/api/outings/search-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            pitch,
+            category: activityCategory,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const results = data.results || [];
+          setSearchResults(results);
+          setSearchIndex(0);
+          if (results.length > 0) {
+            setSelectedCover(results[0]);
+          } else {
+            setSelectedCover(null);
+          }
+        }
+      } catch {
+        // Leave cover null if search fails
+      } finally {
+        setIsSearchingImage(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [title, pitch, activityCategory]);
+
+  const handleTryNextImage = () => {
+    if (searchResults.length === 0) return;
+    const nextIdx = (searchIndex + 1) % searchResults.length;
+    setSearchIndex(nextIdx);
+    setSelectedCover(searchResults[nextIdx]);
+  };
+
+  const handleCustomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    setErrorMessage('');
+
+    try {
+      const profile = getUserProfile();
+      const hostId = authUser?.id || profile.id || 'host-user';
+      const result = await uploadOutingCover(hostId, file);
+
+      if (result.success && result.coverUrl) {
+        setSelectedCover({
+          cover_image_url: result.coverUrl,
+          cover_image_thumb_url: result.coverUrl,
+          cover_image_alt: title || 'Host uploaded cover image',
+          cover_photographer_name: null,
+          cover_photographer_url: null,
+          cover_download_location: null,
+        });
+      } else {
+        setErrorMessage(result.error || 'Failed to upload custom cover photo.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Error uploading photo');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const [candidates, setCandidates] = useState<RankedMatch[]>([]);
   const [selectedGuests, setSelectedGuests] = useState<RankedMatch[]>([]);
@@ -223,7 +315,20 @@ function PitchComposerContent() {
           return;
         }
 
-        // Insert into outings table
+        // If Unsplash image was selected, trigger download location GET request ONCE on creation
+        if (selectedCover?.cover_download_location) {
+          try {
+            await fetch('/api/outings/trigger-download', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ downloadLocation: selectedCover.cover_download_location }),
+            });
+          } catch {
+            // Ignore non-blocking download credit error
+          }
+        }
+
+        // Insert into outings table with cover image columns
         const { data: newOuting, error: outingError } = await client
           .from('outings')
           .insert({
@@ -240,6 +345,12 @@ function PitchComposerContent() {
             visibility: visibility,
             max_participants: maxParticipants,
             state: 'open',
+            cover_image_url: selectedCover?.cover_image_url || null,
+            cover_image_thumb_url: selectedCover?.cover_image_thumb_url || null,
+            cover_image_alt: selectedCover?.cover_image_alt || null,
+            cover_photographer_name: selectedCover?.cover_photographer_name || null,
+            cover_photographer_url: selectedCover?.cover_photographer_url || null,
+            cover_download_location: selectedCover?.cover_download_location || null,
           })
           .select('*')
           .single();
@@ -298,6 +409,12 @@ function PitchComposerContent() {
             isDemo: g.isDemo,
           })),
           createdAt: new Date().toISOString(),
+          cover_image_url: selectedCover?.cover_image_url || undefined,
+          cover_image_thumb_url: selectedCover?.cover_image_thumb_url || undefined,
+          cover_image_alt: selectedCover?.cover_image_alt || undefined,
+          cover_photographer_name: selectedCover?.cover_photographer_name || undefined,
+          cover_photographer_url: selectedCover?.cover_photographer_url || undefined,
+          cover_download_location: selectedCover?.cover_download_location || undefined,
         };
 
         addUserPitch(newPitchObj);
@@ -331,6 +448,12 @@ function PitchComposerContent() {
         cohesionScore: 80,
         joinedGuests: joinedGuestsList,
         createdAt: new Date().toISOString(),
+        cover_image_url: selectedCover?.cover_image_url || undefined,
+        cover_image_thumb_url: selectedCover?.cover_image_thumb_url || undefined,
+        cover_image_alt: selectedCover?.cover_image_alt || undefined,
+        cover_photographer_name: selectedCover?.cover_photographer_name || undefined,
+        cover_photographer_url: selectedCover?.cover_photographer_url || undefined,
+        cover_download_location: selectedCover?.cover_download_location || undefined,
       };
 
       addUserPitch(newPitchObj);
@@ -550,6 +673,56 @@ function PitchComposerContent() {
                   <option value="requestable">Requestable</option>
                   <option value="invite_only">Invite Only</option>
                 </select>
+              </div>
+            </div>
+
+            {/* COVER PHOTO PREVIEW & HOST OVERRIDES */}
+            <div className="space-y-2 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <label className="text-[13px] font-semibold text-white flex items-center gap-1.5">
+                  <ImageIcon className="h-3.5 w-3.5 text-amber-300" /> Outing Cover Image Preview
+                </label>
+                {isSearchingImage && (
+                  <span className="text-[11px] text-amber-300 animate-pulse">Searching Unsplash...</span>
+                )}
+              </div>
+
+              <OutingCoverHeader
+                cover_image_url={selectedCover?.cover_image_url}
+                cover_image_thumb_url={selectedCover?.cover_image_thumb_url}
+                cover_image_alt={selectedCover?.cover_image_alt || title}
+                cover_photographer_name={selectedCover?.cover_photographer_name}
+                cover_photographer_url={selectedCover?.cover_photographer_url}
+                category={activityCategory}
+                area={area}
+              />
+
+              <div className="flex items-center gap-2 pt-1">
+                {searchResults.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleTryNextImage}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-[12px] border border-white/20 bg-white/10 px-3 py-2 text-[12px] font-bold text-white hover:bg-white/20 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" /> Try Another ({searchIndex + 1}/{searchResults.length})
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-[12px] border border-amber-300/40 bg-amber-500/20 px-3 py-2 text-[12px] font-bold text-amber-200 hover:bg-amber-500/30 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="h-3.5 w-3.5" /> {isUploadingImage ? 'Uploading...' : 'Upload Your Own'}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCustomImageUpload}
+                  className="hidden"
+                />
               </div>
             </div>
           </div>

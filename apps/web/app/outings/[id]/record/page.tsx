@@ -10,6 +10,7 @@ import { useAuth } from '../../../../lib/authContext';
 import { getUserProfile } from '../../../../lib/userStore';
 import { saveRhythmCheck, saveOutingRecord, RhythmCheckInput } from '../../../../lib/rhythmChecks';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../../lib/supabase';
+import { getGenderAvatarForName } from '@soul-tribe/core';
 import { AuthGuard } from '../../../../components/AuthGuard';
 
 export default function OutingRecordPage() {
@@ -110,12 +111,15 @@ function OutingRecordContent() {
           if (memberRows) {
             const realPeerAttendees: Attendee[] = memberRows
               .filter((m: any) => m.user_id !== authorId)
-              .map((m: any) => ({
-                id: m.user_id,
-                name: m.profiles?.display_name || 'Member',
-                avatarUrl: m.profiles?.avatar_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-                isHost: m.role === 'host',
-              }));
+              .map((m: any) => {
+                const mName = m.profiles?.display_name || 'Member';
+                return {
+                  id: m.user_id,
+                  name: mName,
+                  avatarUrl: m.profiles?.avatar_url || getGenderAvatarForName(mName),
+                  isHost: m.role === 'host',
+                };
+              });
 
             setAttendees(realPeerAttendees);
 

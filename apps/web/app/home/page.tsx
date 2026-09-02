@@ -13,6 +13,7 @@ import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, Pitche
 import { useAuth } from '../../lib/authContext';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
+import { OutingCoverHeader } from '../../components/OutingCoverHeader';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -542,17 +543,17 @@ function HomeContent() {
                     </span>
                   </div>
 
-                  {/* Event Cover Photo based on title & category */}
-                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
-                    <img
-                      src={getOutingCategoryImage((item as any).category, item.title, item.area)}
-                      alt={item.title}
-                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
-                      {item.area} · <span className="capitalize">{(item as any).category || 'Outing'}</span>
-                    </div>
-                  </div>
+                  {/* Event Cover Header */}
+                  <OutingCoverHeader
+                    cover_image_url={item.cover_image_url}
+                    cover_image_thumb_url={item.cover_image_thumb_url}
+                    cover_image_alt={item.cover_image_alt || item.title}
+                    cover_photographer_name={item.cover_photographer_name}
+                    cover_photographer_url={item.cover_photographer_url}
+                    category={(item as any).category}
+                    area={item.area}
+                    className="mt-3"
+                  />
 
                   {/* Title & Pitch */}
                   <h2 className="mt-3 text-[20px] font-extrabold text-white">
@@ -736,17 +737,17 @@ function HomeContent() {
                     </span>
                   </div>
 
-                  {/* Event Cover Photo based on title & category */}
-                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
-                    <img
-                      src={getOutingCategoryImage(item.category, item.title, item.area)}
-                      alt={item.title}
-                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
-                      {item.area} · <span className="capitalize">{item.category || 'Outing'}</span>
-                    </div>
-                  </div>
+                  {/* Event Cover Header */}
+                  <OutingCoverHeader
+                    cover_image_url={item.cover_image_url}
+                    cover_image_thumb_url={item.cover_image_thumb_url}
+                    cover_image_alt={item.cover_image_alt || item.title}
+                    cover_photographer_name={item.cover_photographer_name}
+                    cover_photographer_url={item.cover_photographer_url}
+                    category={item.category}
+                    area={item.area}
+                    className="mt-3"
+                  />
 
                   <div>
                     <h3 className="text-[19px] font-extrabold text-white">
@@ -851,17 +852,17 @@ function HomeContent() {
                     </span>
                   </div>
 
-                  {/* Event Cover Photo based on title & category */}
-                  <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
-                    <img
-                      src={getOutingCategoryImage(item.category, item.title, item.area)}
-                      alt={item.title}
-                      className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
-                    />
-                    <div className="absolute top-3 left-3 rounded-full bg-black/80 px-3 py-1 text-[10.5px] font-bold text-white uppercase backdrop-blur-md border border-white/20">
-                      {item.area} · <span className="capitalize">{item.category || 'Outing'}</span>
-                    </div>
-                  </div>
+                  {/* Event Cover Header */}
+                  <OutingCoverHeader
+                    cover_image_url={item.cover_image_url}
+                    cover_image_thumb_url={item.cover_image_thumb_url}
+                    cover_image_alt={item.cover_image_alt || item.title}
+                    cover_photographer_name={item.cover_photographer_name}
+                    cover_photographer_url={item.cover_photographer_url}
+                    category={item.category}
+                    area={item.area}
+                    className="mt-3"
+                  />
 
                   <div>
                     <h3 className="text-[19px] font-extrabold text-white">
