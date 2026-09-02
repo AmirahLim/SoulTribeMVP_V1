@@ -24,7 +24,7 @@ function createMockVector(overrides: Partial<ProfileVector> = {}): ProfileVector
       status: 'active',
       ...overrides.profile,
     },
-    personality: {
+    personality: 'personality' in overrides ? overrides.personality : {
       user_id: userId,
       openness: 0.5,
       conscientiousness: 0.5,
@@ -37,7 +37,6 @@ function createMockVector(overrides: Partial<ProfileVector> = {}): ProfileVector
       novelty_seeking: 0.5,
       intellectual_curiosity: 0.5,
       answered: 10,
-      ...overrides.personality,
     },
     communication: {
       user_id: userId,
@@ -369,5 +368,16 @@ describe('04 Matching Spec — 12 Core Test Cases', () => {
     assert.strictEqual(res.gated, true);
     assert.strictEqual(res.rank_score, 0);
     assert.ok(res.gate_reasons.includes('CONFIDENCE_TOO_LOW'));
+  });
+
+  it('13. Absence is not agreement: missing personality fields produce null score, not high agreement', () => {
+    const vecA = createMockVector({ personality: undefined });
+    const vecB = createMockVector({ personality: undefined });
+
+    const pScore = scorePersonality(vecA, vecB);
+    assert.strictEqual(pScore, null);
+
+    const matchRes = score(vecA, vecB);
+    assert.strictEqual('personality' in matchRes.contributions, false);
   });
 });

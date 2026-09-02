@@ -42,52 +42,57 @@ export function score(
   const sExperience = scoreExperience(vecA, vecB);
   const sGeography = scoreGeography(vecA, vecB);
 
-  // Resonance Group (Personality 15, Communication 15, Intent 15, Emotional 10, Interests 10, Values 8 = 73 total)
-  const resSum =
-    sPersonality * weights.personality +
-    sCommunication * weights.communication +
-    sIntent * weights.intent +
-    sEmotional * weights.emotional +
-    sInterests * weights.interests +
-    sValues * weights.values;
-  const resWeightTotal =
-    weights.personality +
-    weights.communication +
-    weights.intent +
-    weights.emotional +
-    weights.interests +
-    weights.values;
-  const resonance = resSum / resWeightTotal;
+  const resDims: [number | null, number][] = [
+    [sPersonality, weights.personality],
+    [sCommunication, weights.communication],
+    [sIntent, weights.intent],
+    [sEmotional, weights.emotional],
+    [sInterests, weights.interests],
+    [sValues, weights.values],
+  ];
 
-  // Logistics Group (Social Rhythm 15, Lifestyle 7, Experience 3, Geography 2 = 27 total)
-  const logSum =
-    sSocialRhythm * weights.social_rhythm +
-    sLifestyle * weights.lifestyle +
-    sExperience * weights.experience +
-    sGeography * weights.geography;
-  const logWeightTotal =
-    weights.social_rhythm +
-    weights.lifestyle +
-    weights.experience +
-    weights.geography;
-  const logistics = logSum / logWeightTotal;
+  let resSum = 0;
+  let resWeightTotal = 0;
+  for (const [scoreVal, w] of resDims) {
+    if (typeof scoreVal === 'number') {
+      resSum += scoreVal * w;
+      resWeightTotal += w;
+    }
+  }
+  const resonance = resWeightTotal > 0 ? resSum / resWeightTotal : 0.5;
+
+  const logDims: [number | null, number][] = [
+    [sSocialRhythm, weights.social_rhythm],
+    [sLifestyle, weights.lifestyle],
+    [sExperience, weights.experience],
+    [sGeography, weights.geography],
+  ];
+
+  let logSum = 0;
+  let logWeightTotal = 0;
+  for (const [scoreVal, w] of logDims) {
+    if (typeof scoreVal === 'number') {
+      logSum += scoreVal * w;
+      logWeightTotal += w;
+    }
+  }
+  const logistics = logWeightTotal > 0 ? logSum / logWeightTotal : 0.5;
 
   // Geometric rank score R^0.6 * L^0.4
   const baseRank = Math.pow(resonance, 0.6) * Math.pow(logistics, 0.4);
   const rank_score = gateCheck.passed ? baseRank : 0;
 
-  const contributions: Record<string, number> = {
-    personality: sPersonality,
-    communication: sCommunication,
-    social_rhythm: sSocialRhythm,
-    intent: sIntent,
-    emotional: sEmotional,
-    interests: sInterests,
-    values: sValues,
-    lifestyle: sLifestyle,
-    experience: sExperience,
-    geography: sGeography,
-  };
+  const contributions: Record<string, number> = {};
+  if (typeof sPersonality === 'number') contributions.personality = sPersonality;
+  if (typeof sCommunication === 'number') contributions.communication = sCommunication;
+  if (typeof sSocialRhythm === 'number') contributions.social_rhythm = sSocialRhythm;
+  if (typeof sIntent === 'number') contributions.intent = sIntent;
+  if (typeof sEmotional === 'number') contributions.emotional = sEmotional;
+  if (typeof sInterests === 'number') contributions.interests = sInterests;
+  if (typeof sValues === 'number') contributions.values = sValues;
+  if (typeof sLifestyle === 'number') contributions.lifestyle = sLifestyle;
+  if (typeof sExperience === 'number') contributions.experience = sExperience;
+  if (typeof sGeography === 'number') contributions.geography = sGeography;
 
   return {
     resonance,

@@ -18,8 +18,25 @@ export function calculateResonancePair(vecA: ProfileVector, vecB: ProfileVector)
   const int = scoreInterests(vecA, vecB);
   const v = scoreValues(vecA, vecB);
 
-  const rawResonance = (p * 15 + c * 15 + i * 15 + e * 10 + int * 10 + v * 8) / 73;
-  return rawResonance;
+  const dims: [number | null, number][] = [
+    [p, 15],
+    [c, 15],
+    [i, 15],
+    [e, 10],
+    [int, 10],
+    [v, 8],
+  ];
+
+  let sum = 0;
+  let totalW = 0;
+  for (const [scoreVal, w] of dims) {
+    if (typeof scoreVal === 'number') {
+      sum += scoreVal * w;
+      totalW += w;
+    }
+  }
+
+  return totalW > 0 ? sum / totalW : 0.5;
 }
 
 export function calculateGroupCohesion(group: ProfileVector[]): GroupCohesionResult {

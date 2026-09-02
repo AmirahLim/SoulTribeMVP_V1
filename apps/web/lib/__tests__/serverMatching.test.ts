@@ -269,18 +269,18 @@ describe('Server-Side Matching & Privacy Protections (Step 6b)', () => {
       trait_geography: { answered: 2 },
     } as any);
 
-    expect(thinProfile.personality.answered).toBe(0);
-    expect(thinProfile.communication.answered).toBe(0);
-    expect(thinProfile.social_rhythm.answered).toBe(0);
-    expect(thinProfile.intent.answered).toBe(0);
-    expect(thinProfile.emotional.answered).toBe(0);
-    expect(thinProfile.lifestyle.answered).toBe(0);
-    expect(thinProfile.experience.answered).toBe(0);
+    expect(thinProfile.personality?.answered ?? 0).toBe(0);
+    expect(thinProfile.communication?.answered ?? 0).toBe(0);
+    expect(thinProfile.social_rhythm?.answered ?? 0).toBe(0);
+    expect(thinProfile.intent?.answered ?? 0).toBe(0);
+    expect(thinProfile.emotional?.answered ?? 0).toBe(0);
+    expect(thinProfile.lifestyle?.answered ?? 0).toBe(0);
+    expect(thinProfile.experience?.answered ?? 0).toBe(0);
 
-    expect(thinProfile.communication.mediums).toHaveLength(0);
-    expect(thinProfile.communication.conv_styles).toHaveLength(0);
-    expect(thinProfile.intent.intents).toHaveLength(0);
-    expect(thinProfile.experience.settings).toHaveLength(0);
+    expect(thinProfile.communication?.mediums ?? []).toHaveLength(0);
+    expect(thinProfile.communication?.conv_styles ?? []).toHaveLength(0);
+    expect(thinProfile.intent?.intents ?? []).toHaveLength(0);
+    expect(thinProfile.experience?.settings ?? []).toHaveLength(0);
 
     expect(thinProfile.profile.confidence).toBeLessThan(fullProfile.profile.confidence);
   });

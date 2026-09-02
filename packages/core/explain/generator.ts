@@ -106,7 +106,7 @@ export function generateMatchExplanation(
     { key: 'values', score: scoreValues(vecA, vecB), weight: 8 },
     { key: 'lifestyle', score: scoreLifestyle(vecA, vecB), weight: 7 },
     { key: 'experience', score: scoreExperience(vecA, vecB), weight: 3 },
-  ];
+  ].filter((d): d is { key: string; score: number; weight: number } => typeof d.score === 'number');
 
   // Calculate contribution above baseline
   const evaluated = dimScores.map((d) => ({

@@ -59,7 +59,7 @@ export function dimensionVector(
   vecA: ProfileVector,
   vecB: ProfileVector,
   _context?: MatchContext
-): Record<DimensionKey, number> {
+): Record<DimensionKey, number | null> {
   return {
     personality: scorePersonality(vecA, vecB),
     communication: scoreCommunication(vecA, vecB),
@@ -75,24 +75,30 @@ export function dimensionVector(
 }
 
 export function recombine(
-  dims: Record<DimensionKey, number>,
+  dims: Record<DimensionKey, number | null>,
   weights: WeightVector
 ): { resonance: number; logistics: number; rank: number } {
   let resSum = 0;
   let resWeightTotal = 0;
   for (const d of RESONANCE_DIMS) {
-    const w = weights[d] ?? 0;
-    resSum += (dims[d] ?? 0) * w;
-    resWeightTotal += w;
+    const val = dims[d];
+    if (typeof val === 'number') {
+      const w = weights[d] ?? 0;
+      resSum += val * w;
+      resWeightTotal += w;
+    }
   }
   const resonance = resWeightTotal > 0 ? resSum / resWeightTotal : 0;
 
   let logSum = 0;
   let logWeightTotal = 0;
   for (const d of LOGISTICS_DIMS) {
-    const w = weights[d] ?? 0;
-    logSum += (dims[d] ?? 0) * w;
-    logWeightTotal += w;
+    const val = dims[d];
+    if (typeof val === 'number') {
+      const w = weights[d] ?? 0;
+      logSum += val * w;
+      logWeightTotal += w;
+    }
   }
   const logistics = logWeightTotal > 0 ? logSum / logWeightTotal : 0;
 
@@ -103,7 +109,7 @@ export function recombine(
 export interface OutcomeSample {
   userA: string;
   userB: string;
-  dims: Record<DimensionKey, number>;
+  dims: Record<DimensionKey, number | null>;
   outcome: number; // 0..1
 }
 

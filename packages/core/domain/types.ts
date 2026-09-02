@@ -17,73 +17,73 @@ export interface Profile {
 
 export interface TraitPersonality {
   user_id: string;
-  openness: number;
-  conscientiousness: number;
-  extraversion: number;
-  agreeableness: number;
-  emotional_stability: number;
-  serious_playful: number;
-  intensity_easygoing: number;
-  assertive_accommodating: number;
-  novelty_seeking: number;
-  intellectual_curiosity: number;
+  openness?: number;
+  conscientiousness?: number;
+  extraversion?: number;
+  agreeableness?: number;
+  emotional_stability?: number;
+  serious_playful?: number;
+  intensity_easygoing?: number;
+  assertive_accommodating?: number;
+  novelty_seeking?: number;
+  intellectual_curiosity?: number;
   answered: number;
 }
 
 export interface TraitCommunication {
   user_id: string;
-  contact_frequency_self: number;
-  contact_frequency_expect: number;
-  response_speed_self: number;
-  response_speed_expect: number;
-  initiation_self: number;
-  initiation_expect: number;
-  message_length: number;
-  direct_diplomatic: number;
-  high_context_literal: number;
-  mediums: string[];
-  conv_styles: string[];
+  contact_frequency_self?: number;
+  contact_frequency_expect?: number;
+  response_speed_self?: number;
+  response_speed_expect?: number;
+  initiation_self?: number;
+  initiation_expect?: number;
+  message_length?: number;
+  direct_diplomatic?: number;
+  high_context_literal?: number;
+  mediums?: string[];
+  conv_styles?: string[];
   answered: number;
 }
 
 export interface TraitSocialRhythm {
   user_id: string;
-  availability: string[]; // e.g. 'mon_evening', 7 days x 4 blocks
-  fri_night: boolean;
-  sat_night: boolean;
-  planning_horizon: number; // 0 same day -> 1 several weeks
-  social_freq_self: number;
-  social_freq_expect: number;
-  preferred_duration: number;
-  energy_peak: number;
+  availability?: string[]; // e.g. 'mon_evening', 7 days x 4 blocks
+  fri_night?: boolean;
+  sat_night?: boolean;
+  planning_horizon?: number; // 0 same day -> 1 several weeks
+  social_freq_self?: number;
+  social_freq_expect?: number;
+  preferred_duration?: number;
+  energy_peak?: number;
   answered: number;
 }
 
 export interface TraitIntent {
   user_id: string;
-  intents: string[];
-  depth: number; // 0-4
-  open_to_hosting: boolean;
+  intents?: string[];
+  depth?: number; // 0-4
+  open_to_hosting?: boolean;
   answered: number;
 }
 
 export interface TraitEmotional {
   user_id: string;
-  er_opening_pace: number;
-  er_cadence_need: number;
-  er_cadence_expect: number;
-  er_reassurance_need: number;
-  er_reassurance_offer: number;
-  er_recovery_time: number;
-  er_conflict_approach: number;
-  expressiveness: number;
-  vulnerability_comfort: number;
-  affection: number;
-  advice_vs_listening_self: number;
-  advice_vs_listening_expect: number;
-  reliability_self: number;
-  reliability_expect: number;
-  boundary_clarity: number;
+  er_opening_pace?: number;
+  er_cadence_need?: number;
+  er_cadence_expect?: number;
+  er_reassurance_need?: number;
+  er_reassurance_offer?: number;
+  er_recovery_time?: number;
+  er_conflict_approach?: number;
+  expressiveness?: number;
+  vulnerability_comfort?: number;
+  affection?: number;
+  advice_vs_listening_self?: number;
+  advice_vs_listening_expect?: number;
+  reliability_self?: number;
+  reliability_expect?: number;
+  boundary_clarity?: number;
   answered: number;
 }
 
@@ -105,48 +105,48 @@ export interface UserInterest {
 
 export interface TraitLifestyle {
   user_id: string;
-  budget_band: number; // 0..4
-  alcohol: 'none' | 'occasional' | 'regular';
-  smoking: 'none' | 'occasional' | 'regular';
-  activity_level: number;
-  travel_frequency: number;
-  life_stage: string;
-  work_schedule: string[];
-  food_prefs: string[];
-  pets: string[];
-  accessibility_needs: string[];
-  dealbreakers: string[];
+  budget_band?: number; // 0..4
+  alcohol?: 'none' | 'occasional' | 'regular';
+  smoking?: 'none' | 'occasional' | 'regular';
+  activity_level?: number;
+  travel_frequency?: number;
+  life_stage?: string;
+  work_schedule?: string[];
+  food_prefs?: string[];
+  pets?: string[];
+  accessibility_needs?: string[];
+  dealbreakers?: string[];
   answered: number;
 }
 
 export interface TraitExperience {
   user_id: string;
-  settings: string[];
-  group_size_pref: number;
-  orientation: string[];
-  novelty: number;
+  settings?: string[];
+  group_size_pref?: number;
+  orientation?: string[];
+  novelty?: number;
   answered: number;
 }
 
 export interface TraitGeography {
   user_id: string;
-  home_area: string;
-  radius_minutes: Record<string, number>;
+  home_area?: string;
+  radius_minutes?: Record<string, number>;
   answered: number;
 }
 
 export interface ProfileVector {
   profile: Profile;
-  personality: TraitPersonality;
-  communication: TraitCommunication;
-  social_rhythm: TraitSocialRhythm;
-  intent: TraitIntent;
-  emotional: TraitEmotional;
-  values: UserValue[];
-  interests: UserInterest[];
-  lifestyle: TraitLifestyle;
-  experience: TraitExperience;
-  geography: TraitGeography;
+  personality?: TraitPersonality;
+  communication?: TraitCommunication;
+  social_rhythm?: TraitSocialRhythm;
+  intent?: TraitIntent;
+  emotional?: TraitEmotional;
+  values?: UserValue[];
+  interests?: UserInterest[];
+  lifestyle?: TraitLifestyle;
+  experience?: TraitExperience;
+  geography?: TraitGeography;
 }
 
 export interface MatchContext {

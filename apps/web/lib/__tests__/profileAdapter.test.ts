@@ -15,9 +15,9 @@ describe('Part 5 — Profile Adapter Tests', () => {
     };
 
     const vec = toProfileVector(emptyUser);
-    assert.strictEqual(vec.personality.answered, 0);
-    assert.strictEqual(vec.communication.answered, 0);
-    assert.strictEqual(vec.emotional.answered, 0);
+    assert.strictEqual(vec.personality?.answered ?? 0, 0);
+    assert.strictEqual(vec.communication?.answered ?? 0, 0);
+    assert.strictEqual(vec.emotional?.answered ?? 0, 0);
     assert.ok(vec.profile.confidence < 0.3, `Expected low confidence, got ${vec.profile.confidence}`);
   });
 
@@ -32,9 +32,9 @@ describe('Part 5 — Profile Adapter Tests', () => {
     };
 
     const vec = toProfileVector(emptyUser);
-    assert.strictEqual(vec.personality.answered, 0);
-    assert.strictEqual(vec.lifestyle.answered, 0);
-    assert.strictEqual(vec.experience.answered, 0);
+    assert.strictEqual(vec.personality?.answered ?? 0, 0);
+    assert.strictEqual(vec.lifestyle?.answered ?? 0, 0);
+    assert.strictEqual(vec.experience?.answered ?? 0, 0);
   });
 
   it('3. A known MBTI maps to the expected extraversion/conscientiousness direction', () => {
@@ -48,8 +48,8 @@ describe('Part 5 — Profile Adapter Tests', () => {
     };
 
     const vecESTJ = toProfileVector(userESTJ);
-    assert.strictEqual(vecESTJ.personality.extraversion, 0.8);
-    assert.strictEqual(vecESTJ.personality.conscientiousness, 0.8);
+    assert.strictEqual(vecESTJ.personality?.extraversion, 0.8);
+    assert.strictEqual(vecESTJ.personality?.conscientiousness, 0.8);
 
     const userINFP: UserProfileData = {
       displayName: 'INFP User',
@@ -61,8 +61,8 @@ describe('Part 5 — Profile Adapter Tests', () => {
     };
 
     const vecINFP = toProfileVector(userINFP);
-    assert.strictEqual(vecINFP.personality.extraversion, 0.3);
-    assert.strictEqual(vecINFP.personality.conscientiousness, 0.3);
+    assert.strictEqual(vecINFP.personality?.extraversion, 0.3);
+    assert.strictEqual(vecINFP.personality?.conscientiousness, 0.3);
   });
 
   it('4. sunSign/moonSign/risingSign do NOT change any numeric trait (identical traits)', () => {

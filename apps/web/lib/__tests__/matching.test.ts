@@ -268,7 +268,7 @@ describe('Small Community Mode Tests', () => {
       },
     };
 
-    setCandidateSource(mockSource);
+    setCandidateSource(mockSource as any);
 
     const realCount = await countRealMembers('Singapore');
     assert.strictEqual(realCount, 50);

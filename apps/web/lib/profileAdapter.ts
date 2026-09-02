@@ -130,34 +130,33 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const q8Qualities = rawQ8;
 
   // 1. Personality
-  const dbPersAnswered = (user as any).trait_personality?.answered ?? (user as any).personality?.answered;
-  const personalityAnswered = typeof dbPersAnswered === 'number'
-    ? dbPersAnswered
-    : ((q2.length > 0 || typeof q3Energy === 'number') ? 8 : (mbtiMap ? 10 : 0));
-
-  const serious_playful = q2.some((f: string) => f.includes('Deep') || f.includes('meaningful')) ? 0.7 
-    : q2.some((f: string) => f.includes('Chill') || f.includes('relaxed')) ? 0.4 
-    : (socialVibeVal?.serious_playful ?? 0.5);
+  const persObj = (user as any).trait_personality !== undefined ? (user as any).trait_personality : (user as any).personality;
+  const serious_playful = q2.some((f: string) => f.includes('Playful') || f.includes('banter')) ? 0.8 
+    : (q2.some((f: string) => f.includes('Deep') || f.includes('meaningful')) ? 0.7 : socialVibeVal?.serious_playful);
   const intensity_easygoing = q2.some((f: string) => f.includes('Active') || f.includes('energetic')) ? 0.8 
-    : (socialVibeVal?.intensity_easygoing ?? 0.3);
+    : (socialVibeVal?.intensity_easygoing);
   const extraversion = typeof q3Energy === 'number' 
     ? (q3Energy > 1 ? q3Energy / 100 : Math.max(0.1, Math.min(0.9, 1 - q3Energy))) 
-    : (mbtiMap?.extraversion ?? 0.5);
+    : (mbtiMap?.extraversion);
 
-  const personality = {
+  const personalityAnswered = persObj !== undefined
+    ? (persObj?.answered ?? 0)
+    : (typeof q3Energy === 'number' || q2.length > 0 ? 1 : ((mbtiMap ? 10 : 0) + (socialVibeVal ? 3 : 0)));
+
+  const personality = personalityAnswered > 0 ? {
     user_id: userId,
-    openness: mbtiMap?.openness ?? 0.6,
-    conscientiousness: mbtiMap?.conscientiousness ?? 0.5,
-    extraversion,
-    agreeableness: mbtiMap?.agreeableness ?? 0.6,
-    emotional_stability: 0.5,
-    serious_playful,
-    intensity_easygoing,
-    assertive_accommodating: 0.5,
-    novelty_seeking: mbtiMap?.novelty_seeking ?? saturdayVal?.novelty ?? (tripVal ?? 0.5),
-    intellectual_curiosity: 0.6,
+    openness: persObj?.openness ?? mbtiMap?.openness,
+    conscientiousness: persObj?.conscientiousness ?? mbtiMap?.conscientiousness,
+    extraversion: persObj?.extraversion ?? extraversion,
+    agreeableness: persObj?.agreeableness ?? mbtiMap?.agreeableness,
+    emotional_stability: persObj?.emotional_stability,
+    serious_playful: persObj?.serious_playful ?? serious_playful,
+    intensity_easygoing: persObj?.intensity_easygoing ?? intensity_easygoing,
+    assertive_accommodating: persObj?.assertive_accommodating,
+    novelty_seeking: persObj?.novelty_seeking ?? mbtiMap?.novelty_seeking ?? saturdayVal?.novelty ?? tripVal,
+    intellectual_curiosity: persObj?.intellectual_curiosity,
     answered: personalityAnswered,
-  };
+  } : undefined;
 
   // 2. Communication
   const commObj = (user as any).trait_communication !== undefined ? (user as any).trait_communication : (user as any).communication;
@@ -165,21 +164,21 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     ? (commObj?.answered ?? 0)
     : (q4.length > 0 || q2.length > 0 ? 8 : ((messagingVal ? 5 : 0) + (deep.messagingStyleOpen ? 3 : 0)));
 
-  const communication = {
+  const communication = commAnswered > 0 ? {
     user_id: userId,
-    contact_frequency_self: q4.some((c: string) => c.includes('check-in')) ? 0.7 : (messagingVal?.contact_frequency_self ?? 0.5),
-    contact_frequency_expect: q4.some((c: string) => c.includes('check-in')) ? 0.7 : (messagingVal?.contact_frequency_self ?? 0.5),
-    response_speed_self: messagingVal?.response_speed_self ?? 0.6,
-    response_speed_expect: messagingVal?.response_speed_self ?? 0.6,
-    initiation_self: 0.5,
-    initiation_expect: 0.5,
-    message_length: messagingVal?.message_length ?? 0.5,
-    direct_diplomatic: 0.5,
-    high_context_literal: 0.5,
-    mediums: q4.length > 0 ? q4 : [],
-    conv_styles: q2.length > 0 ? q2 : [],
+    contact_frequency_self: commObj?.contact_frequency_self ?? (q4.some((c: string) => c.includes('check-in')) ? 0.7 : messagingVal?.contact_frequency_self),
+    contact_frequency_expect: commObj?.contact_frequency_expect ?? (q4.some((c: string) => c.includes('check-in')) ? 0.7 : messagingVal?.contact_frequency_self),
+    response_speed_self: commObj?.response_speed_self ?? messagingVal?.response_speed_self,
+    response_speed_expect: commObj?.response_speed_expect ?? messagingVal?.response_speed_self,
+    initiation_self: commObj?.initiation_self,
+    initiation_expect: commObj?.initiation_expect,
+    message_length: commObj?.message_length ?? messagingVal?.message_length,
+    direct_diplomatic: commObj?.direct_diplomatic,
+    high_context_literal: commObj?.high_context_literal,
+    mediums: commObj?.mediums ?? (q4.length > 0 ? q4 : undefined),
+    conv_styles: commObj?.conv_styles ?? (q2.length > 0 ? q2 : undefined),
     answered: Math.min(10, commAnswered),
-  };
+  } : undefined;
 
   // 3. Social Rhythm
   const rhythmObj = (user as any).trait_social_rhythm !== undefined ? (user as any).trait_social_rhythm : (user as any).social_rhythm;
@@ -189,20 +188,20 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
 
   const planning_horizon = typeof q5Rhythm === 'string'
     ? (q5Rhythm.includes('Spontaneous') ? 0.2 : 0.8)
-    : (typeof q5Rhythm === 'number' ? q5Rhythm : (saturdayVal?.planning_horizon ?? 0.5));
+    : (typeof q5Rhythm === 'number' ? q5Rhythm : (saturdayVal?.planning_horizon));
 
-  const social_rhythm = {
+  const social_rhythm = rhythmAnswered > 0 ? {
     user_id: userId,
-    availability: q5Avail.length > 0 ? q5Avail : [],
-    fri_night: Boolean((user as any).trait_social_rhythm?.fri_night ?? (user as any).social_rhythm?.fri_night ?? (user as any).fri_night),
-    sat_night: Boolean((user as any).trait_social_rhythm?.sat_night ?? (user as any).social_rhythm?.sat_night ?? (user as any).sat_night),
-    planning_horizon,
-    social_freq_self: 0.5,
-    social_freq_expect: 0.5,
-    preferred_duration: 0.5,
-    energy_peak: 0.5,
+    availability: rhythmObj?.availability ?? (q5Avail.length > 0 ? q5Avail : undefined),
+    fri_night: rhythmObj?.fri_night !== undefined ? Boolean(rhythmObj.fri_night) : (user as any).fri_night,
+    sat_night: rhythmObj?.sat_night !== undefined ? Boolean(rhythmObj.sat_night) : (user as any).sat_night,
+    planning_horizon: rhythmObj?.planning_horizon ?? planning_horizon,
+    social_freq_self: rhythmObj?.social_freq_self,
+    social_freq_expect: rhythmObj?.social_freq_expect,
+    preferred_duration: rhythmObj?.preferred_duration,
+    energy_peak: rhythmObj?.energy_peak,
     answered: Math.min(5, rhythmAnswered),
-  };
+  } : undefined;
 
   // 4. Intent
   const intentObj = (user as any).trait_intent !== undefined ? (user as any).trait_intent : (user as any).intent;
@@ -210,13 +209,13 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     ? (intentObj?.answered ?? 0)
     : (q1.length > 0 ? 5 : (deep.friendshipPillars ? 3 : 0));
 
-  const intent = {
+  const intent = intentAnswered > 0 ? {
     user_id: userId,
-    intents: q1.length > 0 ? q1 : [],
-    depth: q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : 2,
-    open_to_hosting: false,
+    intents: intentObj?.intents ?? (q1.length > 0 ? q1 : undefined),
+    depth: intentObj?.depth ?? (q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : (q1.length > 0 ? 2 : undefined)),
+    open_to_hosting: intentObj?.open_to_hosting,
     answered: intentAnswered,
-  };
+  } : undefined;
 
   // 5. Emotional
   const emoObj = (user as any).trait_emotional !== undefined ? (user as any).trait_emotional : (user as any).emotional;
@@ -226,27 +225,27 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
 
   const er_opening_pace = typeof q7Pacing === 'string'
     ? (q7Pacing.includes('Fast') ? 0.8 : 0.4)
-    : (typeof q7Pacing === 'number' ? q7Pacing : 0.5);
+    : (typeof q7Pacing === 'number' ? q7Pacing : undefined);
 
-  const emotional = {
+  const emotional = emotionalAnswered > 0 ? {
     user_id: userId,
-    er_opening_pace,
-    er_cadence_need: 0.5,
-    er_cadence_expect: 0.5,
-    er_reassurance_need: 0.5,
-    er_reassurance_offer: 0.5,
-    er_recovery_time: 0.5,
-    er_conflict_approach: 0.5,
-    expressiveness: 0.5,
-    vulnerability_comfort: 0.6,
-    affection: 0.5,
-    advice_vs_listening_self: supportVal ?? 0.5,
-    advice_vs_listening_expect: supportVal ?? 0.5,
-    reliability_self: q8Qualities.some((q: string) => q.includes('Reliability')) ? 0.9 : 0.7,
-    reliability_expect: 0.8,
-    boundary_clarity: 0.6,
+    er_opening_pace: emoObj?.er_opening_pace ?? er_opening_pace,
+    er_cadence_need: emoObj?.er_cadence_need,
+    er_cadence_expect: emoObj?.er_cadence_expect,
+    er_reassurance_need: emoObj?.er_reassurance_need,
+    er_reassurance_offer: emoObj?.er_reassurance_offer,
+    er_recovery_time: emoObj?.er_recovery_time,
+    er_conflict_approach: emoObj?.er_conflict_approach,
+    expressiveness: emoObj?.expressiveness,
+    vulnerability_comfort: emoObj?.vulnerability_comfort,
+    affection: emoObj?.affection,
+    advice_vs_listening_self: emoObj?.advice_vs_listening_self ?? supportVal,
+    advice_vs_listening_expect: emoObj?.advice_vs_listening_expect ?? supportVal,
+    reliability_self: emoObj?.reliability_self ?? (q8Qualities.some((q: string) => q.includes('Reliability')) ? 0.9 : undefined),
+    reliability_expect: emoObj?.reliability_expect,
+    boundary_clarity: emoObj?.boundary_clarity,
     answered: emotionalAnswered,
-  };
+  } : undefined;
 
   // 6. Lifestyle
   const lifeObj = (user as any).trait_lifestyle !== undefined ? (user as any).trait_lifestyle : (user as any).lifestyle;
@@ -254,21 +253,21 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     ? (lifeObj?.answered ?? 0)
     : (deep.budgetPref ? 5 : 0);
 
-  const lifestyle = {
+  const lifestyle = lifestyleAnswered > 0 ? {
     user_id: userId,
-    budget_band: 2,
-    alcohol: 'occasional' as const,
-    smoking: 'none' as const,
-    activity_level: 0.5,
-    travel_frequency: 0.5,
-    life_stage: 'working',
-    work_schedule: ['standard'],
-    food_prefs: ['anything'],
-    pets: [],
-    accessibility_needs: [],
-    dealbreakers: [],
+    budget_band: lifeObj?.budget_band,
+    alcohol: lifeObj?.alcohol,
+    smoking: lifeObj?.smoking,
+    activity_level: lifeObj?.activity_level,
+    travel_frequency: lifeObj?.travel_frequency,
+    life_stage: lifeObj?.life_stage,
+    work_schedule: lifeObj?.work_schedule,
+    food_prefs: lifeObj?.food_prefs,
+    pets: lifeObj?.pets,
+    accessibility_needs: lifeObj?.accessibility_needs,
+    dealbreakers: lifeObj?.dealbreakers,
     answered: lifestyleAnswered,
-  };
+  } : undefined;
 
   // 7. Experience
   const expObj = (user as any).trait_experience !== undefined ? (user as any).trait_experience : (user as any).experience;
@@ -277,41 +276,46 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     : (q3GroupSize ? 4 : (groupSizeVal !== null ? 4 : 0));
   const group_size_pref = typeof q3GroupSize === 'string'
     ? (q3GroupSize.includes('1-on-1') ? 0.2 : q3GroupSize.includes('3-4') ? 0.4 : 0.6)
-    : (typeof q3GroupSize === 'number' ? q3GroupSize : (groupSizeVal ?? 0.5));
+    : (typeof q3GroupSize === 'number' ? q3GroupSize : groupSizeVal);
 
-  const experience = {
+  const experience = expAnswered > 0 ? {
     user_id: userId,
-    settings: q6Outings.length > 0 ? q6Outings : [],
-    group_size_pref,
-    orientation: ['conversation_first'],
-    novelty: saturdayVal?.novelty ?? 0.5,
+    settings: expObj?.settings ?? (q6Outings.length > 0 ? q6Outings : undefined),
+    group_size_pref: expObj?.group_size_pref ?? group_size_pref,
+    orientation: expObj?.orientation,
+    novelty: expObj?.novelty ?? saturdayVal?.novelty,
     answered: expAnswered,
-  };
+  } : undefined;
 
   // 8. Geography
   const geoObj = (user as any).trait_geography !== undefined ? (user as any).trait_geography : (user as any).geography;
+  const homeArea = user.homeArea || (user as any).home_area;
   const geographyAnswered = geoObj !== undefined
     ? (geoObj?.answered ?? 0)
-    : (user.homeArea || (user as any).home_area ? 2 : 0);
-  const geography = {
+    : (homeArea ? 2 : 0);
+  const geography = geographyAnswered > 0 ? {
     user_id: userId,
-    home_area: user.homeArea || (user as any).home_area || 'Singapore',
-    radius_minutes: { coffee: 30, dining: 45 },
+    home_area: geoObj?.home_area || homeArea || 'Singapore',
+    radius_minutes: geoObj?.radius_minutes || { coffee: 30, dining: 45 },
     answered: geographyAnswered,
-  };
+  } : undefined;
 
   // 9. Interests (from Q6 Outings)
-  const interests = q6Outings.map((name: string, idx: number) => ({
+  const interests = q6Outings.length > 0 ? q6Outings.map((name: string, idx: number) => ({
     node_id: String(idx + 1),
     node_name: name,
     node_path: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-  }));
+  })) : ((user as any).user_interests || undefined);
 
   // 10. Values (from Q8 Qualities)
-  const values = q8Qualities.map((val: string) => ({
+  const values = q8Qualities.length > 0 ? q8Qualities.map((val: string) => ({
+    user_id: userId,
+    value_key: val.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
     value_name: val,
+    stance: 0.8,
     importance: 0.8,
-  }));
+    visibility: 'matching_only' as const,
+  })) : ((user as any).user_values || undefined);
 
   const birthYear = user.birthYear ?? (user as any).birth_year;
   const agePrefMin = user.agePrefMin ?? (user as any).age_pref_min;
