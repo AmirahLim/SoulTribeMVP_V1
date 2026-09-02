@@ -6,7 +6,7 @@ export interface OnboardingDataToSave {
   displayName: string;
   handle: string;
   homeArea: string;
-  birthYear: number;
+  birthYear?: number | null;
   avatarUrl?: string;
   bio?: string;
   q1Finding: string[];
@@ -34,7 +34,7 @@ export async function saveOnboardingToSupabase(
       handle: data.handle.trim().toLowerCase(),
       display_name: data.displayName.trim(),
       home_area: data.homeArea.trim(),
-      birth_year: data.birthYear,
+      birth_year: typeof data.birthYear === 'number' && !isNaN(data.birthYear) ? data.birthYear : null,
       avatar_url: data.avatarUrl || null,
       bio: data.bio || null,
       profile_version: 1,

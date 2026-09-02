@@ -53,7 +53,7 @@ function ProfileContent() {
   const [editPhoto, setEditPhoto] = useState('');
 
 function normalizeInterestList(rawList?: string[]): string[] {
-  if (!Array.isArray(rawList)) return ['Coffee & wandering', 'Board games'];
+  if (!Array.isArray(rawList)) return [];
   const validSet = new Set(ONBOARDING_INTEREST_OPTIONS);
   const normalized: string[] = [];
 
@@ -78,30 +78,30 @@ function normalizeInterestList(rawList?: string[]): string[] {
   }
 
   const result = Array.from(new Set(normalized));
-  return result.length > 0 ? result.slice(0, 3) : ['Coffee & wandering', 'Board games'];
+  return result.slice(0, 3);
 }
 
   const [q1Finding, setQ1Finding] = useState<string[]>([]);
   const [q2Feelings, setQ2Feelings] = useState<string[]>([]);
-  const [q3GroupSize, setQ3GroupSize] = useState<string>('3–4 people');
+  const [q3GroupSize, setQ3GroupSize] = useState<string>('');
   const [q4Connected, setQ4Connected] = useState<string[]>([]);
-  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string>('Flexible');
+  const [q5PlanningRhythm, setQ5PlanningRhythm] = useState<string>('');
   const [q5Availability, setQ5Availability] = useState<string[]>([]);
   const [q6Outings, setQ6Outings] = useState<string[]>([]);
-  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string>('Balanced opener');
+  const [q7EmotionalPacing, setQ7EmotionalPacing] = useState<string>('');
   const [q8Qualities, setQ8Qualities] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOnboardingEditOpen) {
-      setQ1Finding(profile.q1Finding || ['Close 1-on-1 friendships']);
-      setQ2Feelings(profile.q2Feelings || ['Deep 1-on-1s', 'Chill & relaxed']);
-      setQ3GroupSize(profile.q3GroupSize || '3–4 people');
-      setQ4Connected(profile.q4Connected || ['Voice notes', 'Regular check-ins']);
-      setQ5PlanningRhythm(profile.q5PlanningRhythm || 'Flexible');
-      setQ5Availability(profile.q5Availability || ['Fri night', 'Sat night']);
+      setQ1Finding(profile.q1Finding || []);
+      setQ2Feelings(profile.q2Feelings || []);
+      setQ3GroupSize(profile.q3GroupSize || '');
+      setQ4Connected(profile.q4Connected || []);
+      setQ5PlanningRhythm(profile.q5PlanningRhythm || '');
+      setQ5Availability(profile.q5Availability || []);
       setQ6Outings(normalizeInterestList(profile.q6Outings));
-      setQ7EmotionalPacing(profile.q7EmotionalPacing || 'Balanced opener');
-      setQ8Qualities(profile.q8Qualities || ['Authenticity', 'Reliability']);
+      setQ7EmotionalPacing(profile.q7EmotionalPacing || '');
+      setQ8Qualities(profile.q8Qualities || []);
     }
   }, [isOnboardingEditOpen, profile]);
 
@@ -128,12 +128,12 @@ function normalizeInterestList(rawList?: string[]): string[] {
           displayName: profile.displayName,
           handle: profile.handle || profile.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
           homeArea: profile.homeArea,
-          birthYear: profile.birthYear || 1995,
+          birthYear: profile.birthYear,
           avatarUrl: profile.avatarUrl,
           bio: profile.bio,
           q1Finding,
           q2Feelings,
-          q3Energy: 0.5,
+          q3Energy: profile.q3Energy,
           q3GroupSize,
           q4Connected,
           q5PlanningRhythm,
