@@ -175,12 +175,53 @@ export interface RankedMatch {
   isDemo: boolean;                       // SAFEGUARD 1: Flag carried to UI
 }
 
-export function getFitLabel(rankScore: number): string {
+export function getFitLabel(
+  rankScore: number,
+  isProvisional?: boolean,
+  minConfidence?: number
+): string {
+  if (isProvisional || (minConfidence !== undefined && minConfidence < 0.55)) {
+    if (rankScore >= 0.60) return 'Early Read';
+    if (rankScore >= 0.40) return 'Worth a Look';
+    return '';
+  }
   if (rankScore >= 0.90) return 'Rare Resonance';
   if (rankScore >= 0.80) return 'Strong Resonance';
   if (rankScore >= 0.70) return 'Natural Resonance';
   if (rankScore >= 0.60) return 'Some Resonance';
   return '';
+}
+
+export function getTribalPassStatusCopy(
+  completionPct: number,
+  matchCount: number,
+  isProvisional: boolean = true
+): { headline: string; subtitle: string } {
+  if (completionPct <= 20) {
+    return {
+      headline: "You've completed your 8 baseline onboarding questions.",
+      subtitle:
+        matchCount > 0
+          ? `${matchCount} ${matchCount === 1 ? 'person' : 'people'} to look at — your matches sharpen as you fill in your Tribal Pass.`
+          : 'Complete your Tribal Pass to sharpen your matches.',
+    };
+  } else if (completionPct < 80) {
+    return {
+      headline: "We've learned your social rhythm and core communication style.",
+      subtitle:
+        matchCount > 0
+          ? `${matchCount} ${matchCount === 1 ? 'connection' : 'connections'} surfaced — complete remaining sections to refine your alignment.`
+          : 'Complete remaining sections to sharpen your tribe alignment.',
+    };
+  } else {
+    return {
+      headline: 'Your Tribal Pass is well-developed.',
+      subtitle:
+        matchCount > 0
+          ? `${matchCount} ${matchCount === 1 ? 'match' : 'matches'} with clear resonance and rhythm reading.`
+          : 'Your profile is rich. Check back as new members join.',
+    };
+  }
 }
 
 export function scoreDemoCandidates(
@@ -195,6 +236,7 @@ export function scoreDemoCandidates(
     if (!softRes.eligible) continue;
 
     const explanation = generateMatchExplanation(viewerVec, candVec);
+    const minConf = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
     ranked.push({
       id: candVec.profile.id,
       name: candVec.profile.display_name,
@@ -206,7 +248,7 @@ export function scoreDemoCandidates(
       logistics: matchRes.logistics,
       clickText: explanation.click_text,
       rubText: explanation.friction_text,
-      fitLabel: getFitLabel(softRes.adjustedScore),
+      fitLabel: getFitLabel(softRes.adjustedScore, softRes.provisional, minConf),
       provisional: softRes.provisional,
       isDemo: candVec.isDemo ?? true,
     });

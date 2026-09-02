@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode } from '../../lib/matching';
+import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
 import { fetchGoingOutings, fetchRadarOutings, OutingItem } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle } from 'lucide-react';
@@ -173,9 +173,19 @@ function HomeContent() {
             </span>
           </div>
 
-          <p className="mt-2 text-[14.5px] leading-relaxed text-white drop-shadow-sm">
-            We’ve learned your social rhythm and communication style. {matches.length > 0 ? `${matches.length} ${matches.length === 1 ? 'person looks' : 'people look'} like a strong fit.` : 'Complete more pass questions to surface matches.'}
-          </p>
+          {(() => {
+            const statusCopy = getTribalPassStatusCopy(profile.passCompletionPct, matches.length);
+            return (
+              <div className="mt-2 space-y-1">
+                <p className="text-[14.5px] font-bold text-white drop-shadow-sm">
+                  {statusCopy.headline}
+                </p>
+                <p className="text-[13.5px] text-white/80 leading-relaxed drop-shadow-sm">
+                  {statusCopy.subtitle}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Dynamic Hairline Data Points */}
           <div className="mt-3.5 flex items-center gap-5 text-[12.5px] text-white/80">

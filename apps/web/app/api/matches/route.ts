@@ -13,7 +13,16 @@ import { toProfileVector } from '../../../lib/profileAdapter';
 
 export const runtime = 'nodejs';
 
-function getFitLabel(rankScore: number): string {
+function getFitLabel(
+  rankScore: number,
+  isProvisional?: boolean,
+  minConfidence?: number
+): string {
+  if (isProvisional || (minConfidence !== undefined && minConfidence < 0.55)) {
+    if (rankScore >= 0.60) return 'Early Read';
+    if (rankScore >= 0.40) return 'Worth a Look';
+    return '';
+  }
   if (rankScore >= 0.90) return 'Rare Resonance';
   if (rankScore >= 0.80) return 'Strong Resonance';
   if (rankScore >= 0.70) return 'Natural Resonance';
@@ -240,7 +249,7 @@ export async function POST(req: NextRequest) {
         logistics: matchRes.logistics,
         clickText: explanation.click_text,
         rubText: explanation.friction_text,
-        fitLabel: getFitLabel(softRes.adjustedScore),
+        fitLabel: getFitLabel(softRes.adjustedScore, softRes.provisional, Math.min(viewerVec.profile.confidence, candVec.profile.confidence)),
         provisional: softRes.provisional,
         isDemo: false,
       });
