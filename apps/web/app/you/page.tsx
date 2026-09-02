@@ -16,15 +16,27 @@ import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 
 import { ProfileHero } from '../../components/profile/ProfileHero';
-import { ReadDepthIndicator } from '../../components/profile/ReadDepthIndicator';
+import { PassArcCanvas } from '../../components/profile/PassArcCanvas';
 import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
 import { WhatStandsOut } from '../../components/profile/WhatStandsOut';
-import { RealWorldSocialSelf } from '../../components/profile/RealWorldSocialSelf';
 import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
 import { TribalRead } from '../../components/profile/TribalRead';
 import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
 import { ConnectionNotes, NoteItem } from '../../components/profile/ConnectionNotes';
 import { SocialInstincts, InstinctItem } from '../../components/profile/SocialInstincts';
+import { ValuesConstellationCanvas } from '../../components/profile/ValuesConstellationCanvas';
+import { InterestGraphCanvas } from '../../components/profile/InterestGraphCanvas';
+import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
+
+/**
+ * Fix 1: Strip prompt stems from open answers to prevent double-prefixing.
+ */
+function sanitizeOpenAnswer(raw?: string): string {
+  if (!raw) return '';
+  return raw
+    .replace(/^(I really respect people who|I feel most connected when|I'm looking for|What earns my trust is|I respect people who)\s*/i, '')
+    .trim();
+}
 
 export default function ProfilePage() {
   return (
@@ -44,7 +56,7 @@ function ProfileContent() {
     homeArea: 'Singapore',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 95,
+    passCompletionPct: 42,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -133,32 +145,32 @@ function ProfileContent() {
 
   const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
   const completedCats = profile.completedCategoryNums || [2, 3, 4, 5, 6, 7];
-  const isCatDone = (num: number) => completedCats.includes(num);
 
-  // Confidence derived from signal counts (engine confidence)
-  const confidenceValue = 0.95;
-  const totalSignalsCount = 78;
+  // Engine confidence derived from answered thread signals (no passCompletionPct)
+  const confidenceValue = Math.min(0.95, Math.max(0.1, (completedCats.length * 12) / 100));
 
-  // Next best questions phrased as value
+  // Next best questions phrased as value (Fix 4: Progressive depth instead of wall of zeroes)
   const nextPrompts = getActiveNextBestPrompts(profile, 2).map((p) => ({
     thread: p.thread,
     question: p.label,
     prompt: p.copy,
   }));
 
-  // Bloom threads
+  // Bloom threads (10 petals always)
   const bloomThreads = [
-    { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Thrives in quiet, intentional 1-on-1s and small groups.' },
-    { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'Prefers low-pressure, async messaging.' },
-    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.75, confidence: confidenceValue, sentence: 'Values planned dates locked in advance.' },
-    { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'Seeks a small, enduring inner circle.' },
+    { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Four people is where you stop scanning the room and start noticing one person.' },
+    { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'You surface in bursts. A quiet fortnight does not read as distance.' },
+    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.75, confidence: confidenceValue, sentence: 'Plans land best a week or two out. Same-day invitations rarely stick.' },
+    { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.' },
     { key: 'emotional', label: 'Emotional Connection', strength: 0.8, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
     { key: 'interests', label: 'Interests', strength: 0.85, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
-    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Prioritizes authenticity, growth, and community.' },
+    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Curiosity sits at the centre of most of your answers — the others orbit it.' },
     { key: 'lifestyle', label: 'Play & Humour', strength: 0.8, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
+    { key: 'experience', label: 'Conversation', strength: 0.7, confidence: confidenceValue, sentence: 'Conversations start somewhere ordinary and end up somewhere neither planned.' },
+    { key: 'logistics', label: 'Availability', strength: 0.65, confidence: confidenceValue, sentence: 'Available weekday evenings and Saturday mornings.' },
   ];
 
-  // Connection Threads list
+  // Connection Threads list with drawn visual objects
   const connectionThreadsList: ThreadData[] = [
     {
       key: 'personality',
@@ -166,13 +178,12 @@ function ProfileContent() {
       heroDescriptor: ['Intimate', 'Selective', 'Calm'],
       strength: 0.85,
       confidence: confidenceValue,
+      note: 'Four people is where you stop scanning the room and start noticing one person.',
       naturalSetting: 'Low-noise coffee spots, quiet studios, 1-on-1 tea catch-ups.',
-      socialMeaning: 'You recharge through focused conversations rather than bustling crowds.',
       thriveWhen: 'Settings have minimal background noise and predictable party sizes.',
-      potentialFriction: 'May feel drained in loud, open-ended networking mixers.',
+      extraVisualData: { activeGroup: '3–4' },
       signals: [
         { key: 'q3', label: 'Prefers 1-on-1 or 3-4 people', evidenceLevel: 'DIRECT' },
-        { key: 'p_ext', label: 'Selective extraversion', evidenceLevel: 'SUPPORTED INFERENCE' },
       ],
     },
     {
@@ -181,24 +192,37 @@ function ProfileContent() {
       heroDescriptor: ['Asynchronous', 'Low-pressure', 'Intentional'],
       strength: 0.9,
       confidence: confidenceValue,
+      note: "You surface in bursts. A quiet fortnight doesn't read as distance.",
       naturalSetting: 'Thoughtful text threads, voice notes, and unhurried replies.',
-      socialMeaning: 'You communicate deeply without expecting immediate instant-reply speed.',
       thriveWhen: 'Friends share asynchronous digital touchpoints.',
-      potentialFriction: 'High-frequency daily check-in expectations.',
       signals: [
         { key: 'q4', label: 'Low-maintenance reply pace', evidenceLevel: 'DIRECT' },
       ],
     },
     {
+      key: 'intent',
+      name: 'Friendship Style',
+      heroDescriptor: ['Close', 'Independent', 'Steady'],
+      strength: 0.95,
+      confidence: confidenceValue,
+      note: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.',
+      naturalSetting: 'Small inner circle with deep mutual trust.',
+      thriveWhen: 'Friendships allow long quiet stretches without guilt.',
+      extraVisualData: { mapX: 34, mapY: 36 }, // Close & Few quadrant
+      signals: [
+        { key: 'q7', label: 'Observant first trust pacing', evidenceLevel: 'DIRECT' },
+      ],
+    },
+    {
       key: 'social_rhythm',
       name: 'Social Rhythm',
-      heroDescriptor: ['Structured', 'Advance-planned', 'Predictable'],
+      heroDescriptor: ['Structured', 'Advance-planned'],
       strength: 0.75,
       confidence: confidenceValue,
+      note: 'Plans land best a week or two out. Same-day invitations rarely stick.',
       naturalSetting: 'Meetups confirmed 1–2 weeks in advance.',
-      socialMeaning: 'Knowing plans ahead of time lets you allocate energy effortlessly.',
       thriveWhen: 'Calendars are settled early without last-minute scrambling.',
-      potentialFriction: 'Same-day last-minute plans.',
+      extraVisualData: { activeDays: ['W', 'S', 'S2'] },
       signals: [
         { key: 'q5', label: 'Planned 1-2 weeks in advance', evidenceLevel: 'DIRECT' },
       ],
@@ -208,7 +232,7 @@ function ProfileContent() {
   // Stage B Synthesis Data
   const tribalReadData = {
     headline: 'Selective, curious & quietly adventurous',
-    summary: 'You tend to build connection through smaller settings, shared experiences, and conversations that gradually become more meaningful.',
+    summary: 'You build connection through smaller settings and shared experience — conversations that start somewhere ordinary and end up somewhere neither of you planned.',
     pills: ['Small-circle energy', 'Depth over frequency', 'Novelty-seeking'],
     topThreads: ['personality', 'interests'] as [string, string],
     sections: [
@@ -249,32 +273,20 @@ function ProfileContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#F3F0E9] pb-24">
-      {/* RESTORED ATMOSPHERIC CANVAS BACKGROUND IMAGE */}
-      <img
-        src="/user-you-bg.jpg"
-        alt="Atmospheric Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-75"
-      />
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
+      {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <img
+          src="/user-you-bg.jpg"
+          alt="Canvas Ground Background"
+          className="absolute inset-0 h-full w-full object-cover blur-[2px] opacity-75"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(4,6,5,0.80)] via-[rgba(4,6,5,0.60)] to-[rgba(4,6,5,0.95)]" />
+      </div>
 
-      {/* AMBIENT GRADIENT VIGNETTE OVERLAY */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#0D1D15]/85 via-[#0D1D15]/75 to-[#0D1D15]/95 z-0 pointer-events-none" />
-
-      {/* PAGE CONTAINER WITH FLOATING GLASSMORPHIC CARDS */}
-      <div className="relative z-10 mx-auto max-w-2xl px-5 pt-8 flex flex-col gap-8">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between">
-          <ReadDepthIndicator signalCount={totalSignalsCount} />
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="rounded-full border border-white/20 bg-white/10 p-2.5 text-[#F3F0E9] hover:bg-white/20 backdrop-blur-md transition-all"
-            title="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* 2.1 Profile Hero */}
+      {/* WRAPPER */}
+      <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
+        {/* Profile Header */}
         <ProfileHero
           displayName={profile.displayName || 'Mimeo'}
           handle={profile.handle || 'mimeooo'}
@@ -289,112 +301,124 @@ function ProfileContent() {
           onExploreThread={() => router.push('/you/deeper')}
         />
 
-        {/* 2.4 Floating Ethereal Tribal Bloom (No box wrapper) */}
-        <div className="flex flex-col items-center py-4 text-center">
-          <span className="text-[10px] font-bold tracking-widest text-[#D9E4D2] uppercase">
-            Your Social Signature (Tribal Bloom)
-          </span>
-          <p className="mt-1 text-xs text-[#A6AAA4]">
-            An organic visual signature generated from your active Connection Threads.
-          </p>
+        {/* Tribal Pass Arc Progress */}
+        <PassArcCanvas exploredPct={confidenceValue} signalsText={`Developing read · 34 signals`} />
 
-          <div className="mt-6 flex justify-center">
-            <Bloom threads={bloomThreads} size={280} interactive />
-          </div>
+        {/* Tribal Bloom (10 Petals Canvas) */}
+        <div className="flex flex-col items-center py-2 text-center">
+          <Bloom threads={bloomThreads} size={280} interactive />
+          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-2">
+            Ten threads · six explored · <span className="text-[#EFB94E]">tap a petal</span>
+          </p>
         </div>
 
-        {/* 3.1 Stage B: Your Tribal Read (Luminous Floating Card) */}
+        {/* Your Tribal Read */}
         <TribalRead data={tribalReadData} />
 
-        {/* 3.2 Stage B: The Interesting Part (Cross-thread Tension) */}
+        {/* The Interesting Part (Cross-thread Tension) */}
         <TheInterestingPart tension={contradictionTension} />
 
-        {/* 2.5 What Stands Out */}
-        <WhatStandsOut
-          standouts={[
-            { trait: 'Socially selective', description: 'You consistently favour smaller, higher-quality interactions over crowded mixers.' },
-            { trait: 'High curiosity', description: 'Novel ideas and unfamiliar environments appear repeatedly across your Pass.' },
-          ]}
-        />
-
-        {/* 2.3 Connection Threads (Luminous Floating Cards) */}
-        <div className="flex flex-col gap-4">
-          <h2 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
-            Connection Threads
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {connectionThreadsList.map((t) => (
-              <ThreadCard key={t.key} thread={t} />
-            ))}
+        {/* Connection Threads (Drawn Objects) */}
+        <div className="flex flex-col gap-3.5">
+          <div className="flex items-baseline justify-between px-1">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              Connection Threads
+            </p>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              6 of 10
+            </p>
           </div>
+
+          {connectionThreadsList.map((t) => (
+            <ThreadCard key={t.key} thread={t} />
+          ))}
         </div>
 
-        {/* 3.3 Stage B: Connection Notes */}
-        <ConnectionNotes notes={connectionNotesList} />
+        {/* What Matters (Values Constellation Canvas) */}
+        <ValuesConstellationCanvas />
 
-        {/* 3.4 Stage B: Social Instincts */}
-        <SocialInstincts primaryInstinct={primaryInstinct} />
+        {/* I'm Into (Interest Graph Canvas) */}
+        <InterestGraphCanvas />
 
-        {/* 2.6 Real-world Social Self */}
-        <RealWorldSocialSelf
-          interests={[
-            { name: 'Specialty Coffee', isRabbitHole: true },
-            { name: 'Ceramics & Craft' },
-            { name: 'Analog Film' },
-            { name: 'Architecture Walks' },
-          ]}
-          outingDna={{
-            descriptors: ['Low-key', 'Creative', 'Exploratory'],
-            instantYes: 'Specialty coffee walk & ceramic studio visit',
-            usuallyYes: ['Quiet museum visits', 'Acoustic live music'],
-            convinceMe: ['Rooftop cocktail mixers'],
-          }}
-          youShouldKnow={[
-            'Prefers 1-on-1 or small group meetups (3-4 max)',
-            'Plans dates 1-2 weeks in advance',
-            'Enjoys quiet cafes over noisy venues',
-          ]}
-          availabilityText="Generally available weekday evenings and Saturday mornings for coffee or craft hangouts."
-          hostedOutingsCount={profile.outingsHosted || 1}
+        {/* Outing DNA (Triad Radar Canvas) */}
+        <OutingTriadCanvas
+          descriptors={['Low-key', 'Creative', 'Exploratory']}
+          values={[0.85, 0.78, 0.72]}
+          instantYes="Pottery somewhere you've never been, then coffee that runs long"
+          usuallyYes={['Quiet museums', 'acoustic sets', 'neighbourhood walks']}
+          convinceMe={['Rooftop mixers']}
         />
 
-        {/* 2.7 Boundaries & Matching */}
+        {/* Connection Notes & Social Instincts */}
+        <ConnectionNotes notes={connectionNotesList} />
+        <SocialInstincts primaryInstinct={primaryInstinct} />
+
+        {/* Hosted Pitches List (Fix 2: Distinct Pitch Title & Body) */}
+        {userPitches.length > 0 && (
+          <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.11)] shadow-xl">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
+              Hosted Pitches ({userPitches.length})
+            </p>
+            <div className="flex flex-col gap-3">
+              {userPitches.map((p) => (
+                <div key={p.id} className="rounded-xl border border-[rgba(245,242,234,0.08)] bg-[rgba(255,255,255,0.03)] p-3.5">
+                  <h4 className="font-['Bricolage_Grotesque'] text-sm font-semibold text-[#F5F2EA]">
+                    {p.title}
+                  </h4>
+                  <p className="text-xs text-[rgba(245,242,234,0.70)] mt-1 leading-relaxed">
+                    {p.pitch && p.pitch !== p.title
+                      ? p.pitch
+                      : `Hosted by ${profile.displayName} in ${p.area || profile.homeArea}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Boundaries & Matching */}
         <BoundariesMatching />
+
+        {/* Footer */}
+        <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
+          Visual profile · your background, your brand colours<br />
+          Content is illustrative — the engine supplies the words.
+        </p>
       </div>
 
       {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1D15]/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-[24px] border border-white/20 bg-[#15261C] p-6 text-[#F3F0E9]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(7,9,8,0.85)] p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-[26px] border border-[rgba(245,242,234,0.20)] bg-[#0A0C0B] p-6 text-[#F5F2EA]">
             <h3 className="text-lg font-bold">Edit Profile & Settings</h3>
 
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
               <div>
-                <label className="font-semibold text-[#A6AAA4]">Display Name</label>
+                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Display Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[#A6AAA4]">Home Area</label>
+                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Home Area</label>
                 <input
                   type="text"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[#A6AAA4]">Bio</label>
+                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Bio</label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
                   rows={3}
                 />
               </div>
@@ -403,13 +427,13 @@ function ProfileContent() {
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen(false)}
-                  className="flex-1 rounded-xl border border-white/20 bg-[#0D1D15] py-2.5 font-bold"
+                  className="flex-1 rounded-xl border border-[rgba(245,242,234,0.20)] bg-[rgba(255,255,255,0.05)] py-2.5 font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#2D523E] py-2.5 font-bold text-[#F3F0E9]"
+                  className="flex-1 rounded-xl bg-[#5BD99A] py-2.5 font-bold text-[#070908]"
                 >
                   Save Changes
                 </button>
