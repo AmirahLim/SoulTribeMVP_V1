@@ -21,7 +21,7 @@ export interface BloomProps {
 
 export function Bloom({
   threads,
-  size = 240,
+  size = 280,
   interactive = true,
   onSelectThread,
   className = '',
@@ -45,11 +45,21 @@ export function Bloom({
 
   return (
     <div className={`relative flex flex-col items-center justify-center ${className}`}>
+      {/* Ethereal Ambient Glow Halo behind Bloom */}
+      <div
+        className="absolute rounded-full pointer-events-none opacity-60 blur-2xl transition-all duration-700"
+        style={{
+          width: size * 0.95,
+          height: size * 0.95,
+          background: 'radial-gradient(circle, rgba(217, 228, 210, 0.25) 0%, rgba(45, 82, 62, 0.15) 50%, transparent 80%)',
+        }}
+      />
+
       <svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="overflow-visible"
+        className="relative z-10 overflow-visible"
       >
         <defs>
           {threads.map((dim) => {
@@ -71,8 +81,8 @@ export function Bloom({
         </defs>
 
         {/* Concentric organic guide rings */}
-        <circle cx={center} cy={center} r={maxRadius * 0.35} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.12" />
-        <circle cx={center} cy={center} r={maxRadius * 0.70} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="4 4" opacity="0.1" />
+        <circle cx={center} cy={center} r={maxRadius * 0.35} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.15" />
+        <circle cx={center} cy={center} r={maxRadius * 0.70} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="4 4" opacity="0.12" />
         <circle cx={center} cy={center} r={maxRadius} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="5 5" opacity="0.08" />
 
         {/* Petals */}
@@ -116,14 +126,14 @@ export function Bloom({
           );
         })}
 
-        {/* Core center node */}
-        <circle cx={center} cy={center} r={size * 0.045} fill="#F3F0E9" stroke="#15261C" strokeWidth="2" />
+        {/* Glowing Center Core */}
+        <circle cx={center} cy={center} r={size * 0.045} fill="#F3F0E9" stroke="#15261C" strokeWidth="2.5" className="shadow-lg" />
       </svg>
 
       {/* Selected Thread Tooltip */}
       {selectedDim && (
-        <div className="mt-3 max-w-[280px] rounded-[16px] border border-[#F3F0E9]/15 bg-[#15261C] p-3 text-center shadow-lg transition-all duration-300">
-          <p className="text-[10px] font-bold tracking-widest text-[#8F998D] uppercase">
+        <div className="relative z-20 mt-4 max-w-[280px] rounded-[18px] border border-white/20 bg-[#15261C]/90 p-3.5 text-center shadow-2xl backdrop-blur-xl transition-all duration-300">
+          <p className="text-[10px] font-bold tracking-widest text-[#D9E4D2] uppercase">
             {selectedDim.label}
           </p>
           <p className="mt-1 text-[13px] font-medium leading-relaxed text-[#F3F0E9]">

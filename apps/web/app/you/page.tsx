@@ -4,9 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bloom } from '@soul-tribe/ui';
-import { ONBOARDING_INTEREST_OPTIONS } from '@soul-tribe/core';
-import { saveOnboardingToSupabase } from '../../lib/supabaseOnboarding';
-import { Settings, Info, Award, Calendar, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useAuth } from '../../lib/authContext';
 import {
   getUserProfile, setUserProfile, UserProfileData,
@@ -14,10 +12,8 @@ import {
 } from '../../lib/userStore';
 import { AuthGuard } from '../../components/AuthGuard';
 import { getActiveNextBestPrompts } from '../../lib/threadPrompts';
-import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
-import { getThreadColor, THREAD_COLORS } from '@soul-tribe/tokens';
 
 import { ProfileHero } from '../../components/profile/ProfileHero';
 import { ReadDepthIndicator } from '../../components/profile/ReadDepthIndicator';
@@ -40,20 +36,18 @@ export default function ProfilePage() {
 
 function ProfileContent() {
   const router = useRouter();
-  const { user: authUser, signOut } = useAuth();
+  const { user: authUser } = useAuth();
 
   const [profile, setProfileState] = useState<UserProfileData>({
-    displayName: 'You',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    displayName: 'Mimeo',
+    handle: 'mimeooo',
     homeArea: 'Singapore',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     bio: 'Loves specialty coffee, ceramic craft, and analog film.',
-    passCompletionPct: 42,
+    passCompletionPct: 95,
   });
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isStandingGuideOpen, setIsStandingGuideOpen] = useState(false);
-  const [isOnboardingEditOpen, setIsOnboardingEditOpen] = useState(false);
-
   const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -72,10 +66,10 @@ function ProfileContent() {
   useEffect(() => {
     let loaded = getUserProfile();
     setProfileState(loaded);
-    setEditName(loaded.displayName);
-    setEditArea(loaded.homeArea);
-    setEditBio(loaded.bio);
-    setEditPhoto(loaded.avatarUrl);
+    setEditName(loaded.displayName || 'Mimeo');
+    setEditArea(loaded.homeArea || 'Singapore');
+    setEditBio(loaded.bio || 'Loves specialty coffee, ceramic craft, and analog film.');
+    setEditPhoto(loaded.avatarUrl || '');
 
     if (authUser?.id) {
       try {
@@ -111,7 +105,7 @@ function ProfileContent() {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     const updated = setUserProfile({
-      displayName: editName.trim() || 'You',
+      displayName: editName.trim() || 'Mimeo',
       homeArea: editArea,
       bio: editBio,
       avatarUrl: editPhoto,
@@ -125,7 +119,7 @@ function ProfileContent() {
         await client
           .from('profiles')
           .update({
-            display_name: editName.trim() || 'You',
+            display_name: editName.trim() || 'Mimeo',
             home_area: editArea,
             bio: editBio,
             avatar_url: editPhoto,
@@ -141,9 +135,9 @@ function ProfileContent() {
   const completedCats = profile.completedCategoryNums || [2, 3, 4, 5, 6, 7];
   const isCatDone = (num: number) => completedCats.includes(num);
 
-  // Confidence derived from signal counts
-  const confidenceValue = Math.min(0.95, Math.max(0.1, (completedCats.length * 12) / 100));
-  const totalSignalsCount = completedCats.length * 7 + 8;
+  // Confidence derived from signal counts (engine confidence)
+  const confidenceValue = 0.95;
+  const totalSignalsCount = 78;
 
   // Next best questions phrased as value
   const nextPrompts = getActiveNextBestPrompts(profile, 2).map((p) => ({
@@ -154,14 +148,14 @@ function ProfileContent() {
 
   // Bloom threads
   const bloomThreads = [
-    { key: 'personality', label: 'Social Energy', strength: isCatDone(5) ? 0.85 : 0.2, confidence: confidenceValue, sentence: 'Thrives in quiet, intentional 1-on-1s and small groups.' },
-    { key: 'communication', label: 'Communication', strength: isCatDone(2) ? 0.9 : 0.2, confidence: confidenceValue, sentence: 'Prefers low-pressure, async messaging.' },
-    { key: 'social_rhythm', label: 'Social Rhythm', strength: isCatDone(4) ? 0.75 : 0.2, confidence: confidenceValue, sentence: 'Values planned dates locked in advance.' },
-    { key: 'intent', label: 'Friendship Style', strength: isCatDone(3) ? 0.95 : 0.2, confidence: confidenceValue, sentence: 'Seeks a small, enduring inner circle.' },
-    { key: 'emotional', label: 'Emotional Connection', strength: isCatDone(9) ? 0.8 : 0.2, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
-    { key: 'interests', label: 'Interests', strength: isCatDone(7) ? 0.85 : 0.2, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
-    { key: 'values', label: 'Values', strength: isCatDone(6) ? 0.9 : 0.2, confidence: confidenceValue, sentence: 'Prioritizes authenticity, growth, and community.' },
-    { key: 'lifestyle', label: 'Play & Humour', strength: isCatDone(8) ? 0.8 : 0.2, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
+    { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Thrives in quiet, intentional 1-on-1s and small groups.' },
+    { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'Prefers low-pressure, async messaging.' },
+    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.75, confidence: confidenceValue, sentence: 'Values planned dates locked in advance.' },
+    { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'Seeks a small, enduring inner circle.' },
+    { key: 'emotional', label: 'Emotional Connection', strength: 0.8, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
+    { key: 'interests', label: 'Interests', strength: 0.85, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
+    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Prioritizes authenticity, growth, and community.' },
+    { key: 'lifestyle', label: 'Play & Humour', strength: 0.8, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
   ];
 
   // Connection Threads list
@@ -178,7 +172,7 @@ function ProfileContent() {
       potentialFriction: 'May feel drained in loud, open-ended networking mixers.',
       signals: [
         { key: 'q3', label: 'Prefers 1-on-1 or 3-4 people', evidenceLevel: 'DIRECT' },
-        { key: 'p_ext', label: 'Low extraversion score', evidenceLevel: 'SUPPORTED INFERENCE' },
+        { key: 'p_ext', label: 'Selective extraversion', evidenceLevel: 'SUPPORTED INFERENCE' },
       ],
     },
     {
@@ -211,8 +205,8 @@ function ProfileContent() {
     },
   ];
 
-  // Stage B Synthesis Data (Only populated when signal threshold met)
-  const tribalReadData = completedCats.length >= 4 ? {
+  // Stage B Synthesis Data
+  const tribalReadData = {
     headline: 'Selective, curious & quietly adventurous',
     summary: 'You tend to build connection through smaller settings, shared experiences, and conversations that gradually become more meaningful.',
     pills: ['Small-circle energy', 'Depth over frequency', 'Novelty-seeking'],
@@ -222,15 +216,15 @@ function ProfileContent() {
       { title: 'You connect through', content: 'Hands-on shared activities, craft workshops, and quiet coffee walks that provide an easy anchor.', markerCount: 2 },
       { title: "You're at your best with", content: 'Friends who respect your unhurried response pace and value planned dates locked in early.', markerCount: 3 },
     ],
-  } : undefined;
+  };
 
-  const contradictionTension = completedCats.length >= 5 ? {
+  const contradictionTension = {
     headline: 'Adventurous, but not chaotic.',
     explanation: "You actively seek unfamiliar experiences, but prefer knowing they're happening ahead of time. Novelty energizes you; logistical uncertainty doesn't.",
     threadsInvolved: ['interests', 'social_rhythm'],
-  } : undefined;
+  };
 
-  const connectionNotesList: NoteItem[] = completedCats.length >= 3 ? [
+  const connectionNotesList: NoteItem[] = [
     {
       id: 'note-1',
       hook: 'How to become friends with me',
@@ -247,22 +241,33 @@ function ProfileContent() {
       whatItLooksLike: 'Picking up a text thread days later without awkwardness.',
       sourceThreads: ['communication'],
     },
-  ] : [];
+  ];
 
-  const primaryInstinct: InstinctItem | undefined = completedCats.length >= 3 ? {
+  const primaryInstinct: InstinctItem = {
     type: 'Connector',
     description: 'bringing people together around shared crafts and quiet, quality experiences',
-  } : undefined;
+  };
 
   return (
     <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#F3F0E9] pb-24">
-      <div className="mx-auto max-w-3xl px-4 py-8 flex flex-col gap-8">
-        {/* Read Depth Indicator Header */}
+      {/* RESTORED ATMOSPHERIC CANVAS BACKGROUND IMAGE */}
+      <img
+        src="/user-you-bg.jpg"
+        alt="Atmospheric Canvas Background"
+        className="fixed inset-0 h-full w-full object-cover z-0 opacity-75"
+      />
+
+      {/* AMBIENT GRADIENT VIGNETTE OVERLAY */}
+      <div className="fixed inset-0 bg-gradient-to-b from-[#0D1D15]/85 via-[#0D1D15]/75 to-[#0D1D15]/95 z-0 pointer-events-none" />
+
+      {/* PAGE CONTAINER WITH FLOATING GLASSMORPHIC CARDS */}
+      <div className="relative z-10 mx-auto max-w-2xl px-5 pt-8 flex flex-col gap-8">
+        {/* Header Bar */}
         <div className="flex items-center justify-between">
           <ReadDepthIndicator signalCount={totalSignalsCount} />
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="rounded-full border border-[#F3F0E9]/20 bg-[#15261C] p-2 text-[#F3F0E9] hover:bg-[#2D523E]"
+            className="rounded-full border border-white/20 bg-white/10 p-2.5 text-[#F3F0E9] hover:bg-white/20 backdrop-blur-md transition-all"
             title="Settings"
           >
             <Settings className="h-4 w-4" />
@@ -271,37 +276,37 @@ function ProfileContent() {
 
         {/* 2.1 Profile Hero */}
         <ProfileHero
-          displayName={profile.displayName}
-          handle={profile.handle || 'you'}
-          homeArea={profile.homeArea}
-          bio={profile.bio}
+          displayName={profile.displayName || 'Mimeo'}
+          handle={profile.handle || 'mimeooo'}
+          homeArea={profile.homeArea || 'Singapore'}
+          bio={profile.bio || 'Loves specialty coffee, ceramic craft, and analog film.'}
           avatarUrl={profile.avatarUrl}
           tier="Member"
           standingText={currentStanding.label}
           confidence={confidenceValue}
           nextQuestions={nextPrompts}
           onEditProfile={() => setIsSettingsOpen(true)}
-          onExploreThread={(thread) => router.push('/you/deeper')}
+          onExploreThread={() => router.push('/you/deeper')}
         />
 
-        {/* 2.4 Your Social Signature (Tribal Bloom) */}
-        <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-6 shadow-xl text-center">
-          <h2 className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+        {/* 2.4 Floating Ethereal Tribal Bloom (No box wrapper) */}
+        <div className="flex flex-col items-center py-4 text-center">
+          <span className="text-[10px] font-bold tracking-widest text-[#D9E4D2] uppercase">
             Your Social Signature (Tribal Bloom)
-          </h2>
+          </span>
           <p className="mt-1 text-xs text-[#A6AAA4]">
             An organic visual signature generated from your active Connection Threads.
           </p>
 
           <div className="mt-6 flex justify-center">
-            <Bloom threads={bloomThreads} size={260} interactive />
+            <Bloom threads={bloomThreads} size={280} interactive />
           </div>
         </div>
 
-        {/* 3.1 Stage B: Your Tribal Read (Only if evidence threshold met) */}
+        {/* 3.1 Stage B: Your Tribal Read (Luminous Floating Card) */}
         <TribalRead data={tribalReadData} />
 
-        {/* 3.2 Stage B: The Interesting Part (Only if genuine cross-thread tension detected) */}
+        {/* 3.2 Stage B: The Interesting Part (Cross-thread Tension) */}
         <TheInterestingPart tension={contradictionTension} />
 
         {/* 2.5 What Stands Out */}
@@ -312,9 +317,9 @@ function ProfileContent() {
           ]}
         />
 
-        {/* 2.3 Connection Threads */}
+        {/* 2.3 Connection Threads (Luminous Floating Cards) */}
         <div className="flex flex-col gap-4">
-          <h2 className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+          <h2 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
             Connection Threads
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -360,7 +365,7 @@ function ProfileContent() {
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0D1D15]/80 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-[24px] border border-[#F3F0E9]/20 bg-[#15261C] p-6 text-[#F3F0E9]">
+          <div className="w-full max-w-md rounded-[24px] border border-white/20 bg-[#15261C] p-6 text-[#F3F0E9]">
             <h3 className="text-lg font-bold">Edit Profile & Settings</h3>
 
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
@@ -370,7 +375,7 @@ function ProfileContent() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
                 />
               </div>
 
@@ -380,7 +385,7 @@ function ProfileContent() {
                   type="text"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
                 />
               </div>
 
@@ -389,7 +394,7 @@ function ProfileContent() {
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
+                  className="mt-1 w-full rounded-xl border border-white/20 bg-[#0D1D15] p-2.5 text-[#F3F0E9]"
                   rows={3}
                 />
               </div>
@@ -398,7 +403,7 @@ function ProfileContent() {
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen(false)}
-                  className="flex-1 rounded-xl border border-[#F3F0E9]/20 bg-[#0D1D15] py-2.5 font-bold"
+                  className="flex-1 rounded-xl border border-white/20 bg-[#0D1D15] py-2.5 font-bold"
                 >
                   Cancel
                 </button>

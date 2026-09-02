@@ -21,7 +21,6 @@ export interface ThreadData {
   thriveWhen?: string;
   potentialFriction?: string;
   signals?: SignalItem[];
-  // Data for thread visualizers
   extraVisualData?: Record<string, any>;
 }
 
@@ -38,7 +37,7 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
 
   return (
     <div
-      className={`relative rounded-[22px] p-6 transition-all duration-300 ${className}`}
+      className={`relative rounded-[24px] p-6 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-[1.01] ${className}`}
       style={{
         backgroundColor: colorSpec.surface,
         color: colorSpec.ink,
@@ -47,22 +46,22 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
       {/* Collapsed Header */}
       <div className="flex items-start justify-between">
         <div>
-          <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">
+          <span className="text-[10px] font-bold tracking-widest uppercase opacity-75">
             Connection Thread
           </span>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: colorSpec.ink }}>
+          <h2 className="text-xl font-extrabold tracking-tight" style={{ color: colorSpec.ink }}>
             {colorSpec.name}
           </h2>
-          <p className="mt-1 text-xs font-semibold tracking-wide opacity-85">
+          <p className="mt-1 text-xs font-bold tracking-wide opacity-90">
             {descriptorText}
           </p>
         </div>
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className="rounded-full border px-3 py-1 text-xs font-semibold transition-all hover:opacity-80"
+          className="rounded-full border px-3.5 py-1 text-xs font-bold transition-all hover:opacity-80"
           style={{
-            borderColor: `${colorSpec.ink}33`,
+            borderColor: `${colorSpec.ink}40`,
             color: colorSpec.ink,
           }}
         >
@@ -71,38 +70,38 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
       </div>
 
       {/* Thread Visualisation */}
-      <div className="my-4 border-t border-b py-3 opacity-90" style={{ borderColor: `${colorSpec.ink}20` }}>
+      <div className="my-4 border-t border-b py-3.5 opacity-95" style={{ borderColor: `${colorSpec.ink}25` }}>
         {renderThreadVisual(thread, colorSpec)}
       </div>
 
       {/* Expanded Details */}
       {expanded && (
-        <div className="mt-4 flex flex-col gap-4 border-t pt-4 text-xs leading-relaxed" style={{ borderColor: `${colorSpec.ink}25` }}>
+        <div className="mt-4 flex flex-col gap-4 border-t pt-4 text-xs leading-relaxed" style={{ borderColor: `${colorSpec.ink}30` }}>
           {thread.naturalSetting && (
             <div>
               <p className="font-bold uppercase tracking-wider text-[10px] opacity-75">Your Natural Setting</p>
-              <p className="mt-0.5 font-medium">{thread.naturalSetting}</p>
+              <p className="mt-0.5 font-semibold">{thread.naturalSetting}</p>
             </div>
           )}
 
           {thread.socialMeaning && (
             <div>
               <p className="font-bold uppercase tracking-wider text-[10px] opacity-75">What This Means Socially</p>
-              <p className="mt-0.5 font-medium">{thread.socialMeaning}</p>
+              <p className="mt-0.5 font-semibold">{thread.socialMeaning}</p>
             </div>
           )}
 
           {thread.thriveWhen && (
             <div>
               <p className="font-bold uppercase tracking-wider text-[10px] opacity-75">You May Thrive When</p>
-              <p className="mt-0.5 font-medium">{thread.thriveWhen}</p>
+              <p className="mt-0.5 font-semibold">{thread.thriveWhen}</p>
             </div>
           )}
 
           {thread.potentialFriction && (
             <div>
               <p className="font-bold uppercase tracking-wider text-[10px] opacity-75">Potential Friction</p>
-              <p className="mt-0.5 font-medium">{thread.potentialFriction}</p>
+              <p className="mt-0.5 font-semibold">{thread.potentialFriction}</p>
             </div>
           )}
 
@@ -115,16 +114,16 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
                 {thread.signals.map((sig, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-[11px] font-bold"
                     style={{
-                      borderColor: `${colorSpec.ink}30`,
-                      backgroundColor: `${colorSpec.ink}10`,
+                      borderColor: `${colorSpec.ink}35`,
+                      backgroundColor: `${colorSpec.ink}15`,
                       color: colorSpec.ink,
                     }}
                   >
                     <span>{sig.label}</span>
                     {sig.evidenceLevel && (
-                      <span className="opacity-60 text-[9px]">[{sig.evidenceLevel}]</span>
+                      <span className="opacity-70 text-[9px]">[{sig.evidenceLevel}]</span>
                     )}
                   </span>
                 ))}
@@ -144,14 +143,14 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
     case 'personality':
     case 'Social Energy':
       return (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-[11px] font-semibold opacity-75">
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between text-[11px] font-bold opacity-85">
             <span>Selective 1-on-1</span>
             <span>Expansive Groups</span>
           </div>
-          <div className="relative h-2.5 w-full rounded-full" style={{ backgroundColor: `${colorSpec.ink}20` }}>
+          <div className="relative h-3 w-full rounded-full" style={{ backgroundColor: `${colorSpec.ink}25` }}>
             <div
-              className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 shadow-sm transition-all"
+              className="absolute top-1/2 h-4.5 w-4.5 -translate-y-1/2 rounded-full border-2 shadow-md transition-all"
               style={{
                 left: `${val * 100}%`,
                 backgroundColor: colorSpec.ink,
@@ -166,28 +165,28 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
     case 'Communication':
       return (
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold opacity-75">Async Rhythm</span>
-          <div className="flex flex-1 gap-1">
-            {[0.8, 0.4, 0.9, 0.3, 0.7, 0.5, 0.85].map((height, i) => (
+          <span className="text-[11px] font-bold opacity-85">Async Rhythm</span>
+          <div className="flex flex-1 gap-1.5">
+            {[0.8, 0.4, 0.95, 0.3, 0.75, 0.5, 0.9].map((height, i) => (
               <div
                 key={i}
                 className="h-4 flex-1 rounded-sm transition-all"
                 style={{
                   backgroundColor: colorSpec.ink,
-                  opacity: i % 2 === 0 ? height : height * 0.4,
+                  opacity: i % 2 === 0 ? height : height * 0.45,
                 }}
               />
             ))}
           </div>
-          <span className="text-[11px] font-semibold opacity-75">Real-time</span>
+          <span className="text-[11px] font-bold opacity-85">Real-time</span>
         </div>
       );
 
     case 'social_rhythm':
     case 'Social Rhythm':
       return (
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between text-[11px] font-semibold opacity-75">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between text-[11px] font-bold opacity-85">
             <span>Weekly Availability</span>
             <span>{thread.extraVisualData?.slotsCount || '3 slots'}</span>
           </div>
@@ -195,9 +194,9 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
             {['Mon', 'Wed', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
               <div
                 key={day}
-                className="flex flex-1 flex-col items-center rounded-md p-1 text-[10px] font-bold"
+                className="flex flex-1 flex-col items-center rounded-lg p-1.5 text-[10px] font-extrabold"
                 style={{
-                  backgroundColor: idx % 2 === 1 ? `${colorSpec.ink}25` : `${colorSpec.ink}10`,
+                  backgroundColor: idx % 2 === 1 ? `${colorSpec.ink}30` : `${colorSpec.ink}15`,
                   color: colorSpec.ink,
                 }}
               >
@@ -210,11 +209,11 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
 
     default:
       return (
-        <div className="flex items-center justify-between text-xs font-semibold">
-          <span className="opacity-75">Thread Strength</span>
-          <div className="h-2 w-36 rounded-full" style={{ backgroundColor: `${colorSpec.ink}20` }}>
+        <div className="flex items-center justify-between text-xs font-bold">
+          <span className="opacity-85">Thread Alignment</span>
+          <div className="h-2.5 w-36 rounded-full" style={{ backgroundColor: `${colorSpec.ink}25` }}>
             <div
-              className="h-full rounded-full"
+              className="h-full rounded-full transition-all"
               style={{
                 width: `${val * 100}%`,
                 backgroundColor: colorSpec.ink,

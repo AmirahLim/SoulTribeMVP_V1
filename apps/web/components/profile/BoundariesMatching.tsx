@@ -14,8 +14,8 @@ export function BoundariesMatching({
   className = '',
 }: BoundariesMatchingProps) {
   return (
-    <div className={`rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-6 shadow-xl ${className}`}>
-      <h3 className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
+    <div className={`rounded-[26px] border border-white/12 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl ${className}`}>
+      <h3 className="text-[11px] font-bold tracking-widest text-[#D9E4D2] uppercase">
         Boundaries & Privacy Controls
       </h3>
       <p className="mt-1 text-xs text-[#A6AAA4]">
@@ -24,15 +24,15 @@ export function BoundariesMatching({
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {/* Visible on Profile */}
-        <div className="rounded-[18px] border border-[#D9E4D2]/30 bg-[#0D1D15] p-4">
+        <div className="rounded-[20px] border border-[#D9E4D2]/30 bg-[#D9E4D2]/10 p-4.5 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#D9E4D2]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#D9E4D2]" />
             <h4 className="text-xs font-bold text-[#D9E4D2]">Visible on Profile</h4>
           </div>
-          <ul className="mt-3 space-y-1.5 text-xs text-[#F3F0E9]/90">
+          <ul className="mt-3 space-y-2 text-xs font-medium text-[#F3F0E9]">
             {visibleFields.map((f, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span className="text-[#D9E4D2]">✓</span>
+                <span className="text-[#D9E4D2] font-bold">✓</span>
                 <span>{f}</span>
               </li>
             ))}
@@ -40,15 +40,15 @@ export function BoundariesMatching({
         </div>
 
         {/* Used Privately for Matching */}
-        <div className="rounded-[18px] border border-[#F3F0E9]/15 bg-[#0D1D15] p-4">
+        <div className="rounded-[20px] border border-white/12 bg-white/5 p-4.5 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#8F998D]" />
-            <h4 className="text-xs font-bold text-[#8F998D]">Used Privately for Matching</h4>
+            <span className="h-2.5 w-2.5 rounded-full bg-[#A6AAA4]" />
+            <h4 className="text-xs font-bold text-[#A6AAA4]">Used Privately for Matching</h4>
           </div>
-          <ul className="mt-3 space-y-1.5 text-xs text-[#A6AAA4]">
+          <ul className="mt-3 space-y-2 text-xs font-medium text-[#A6AAA4]">
             {privateFields.map((f, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span className="text-[#8F998D]">🔒</span>
+                <span>🔒</span>
                 <span>{f}</span>
               </li>
             ))}
