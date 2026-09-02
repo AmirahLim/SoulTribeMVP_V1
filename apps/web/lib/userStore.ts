@@ -244,6 +244,7 @@ export interface PitchedOuting {
   title: string;
   pitch: string;
   area: string;
+  category?: string;
   dateTime: string;
   hostName: string;
   hostAvatar: string;

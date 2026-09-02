@@ -14,6 +14,8 @@ import { useAuth } from '../../lib/authContext';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/supabase';
 import { AuthGuard } from '../../components/AuthGuard';
 
+import { useSearchParams } from 'next/navigation';
+
 export default function HomeDashboardPage() {
   return (
     <AuthGuard>
@@ -24,8 +26,16 @@ export default function HomeDashboardPage() {
 
 function HomeContent() {
   const { user, isSupabaseConfigured } = useAuth();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'matches' | 'pitches' | 'going' | 'radar'>('matches');
   const [profile, setProfileState] = useState<UserProfileData>(DEFAULT_USER_PROFILE);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'pitches' || tabParam === 'going' || tabParam === 'radar' || tabParam === 'matches') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Dynamic Tab Data State
   const [matches, setMatches] = useState<RankedMatch[]>([]);

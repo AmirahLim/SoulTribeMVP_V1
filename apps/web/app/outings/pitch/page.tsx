@@ -268,7 +268,7 @@ function PitchComposerContent() {
 
         // Insert invited guests into outing_members if any
         for (const guest of selectedGuests) {
-          if (guest.id && !guest.isDemo) {
+          if (guest.id) {
             await client.from('outing_members').insert({
               outing_id: newOuting.id,
               user_id: guest.id,

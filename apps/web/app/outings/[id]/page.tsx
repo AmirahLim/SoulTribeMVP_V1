@@ -161,6 +161,23 @@ function OutingDetailContent() {
       }
     }
 
+    // Sync with localStorage pitches
+    const pitches = getUserPitches();
+    const idx = pitches.findIndex((p) => p.id === outingId);
+    if (idx !== -1) {
+      pitches[idx] = {
+        ...pitches[idx],
+        title: cleanTitle,
+        pitch: cleanPitch,
+        area: cleanArea,
+        category: editCategory,
+        seatsTotal: editMaxParticipants,
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('soul_tribe_user_pitches', JSON.stringify(pitches));
+      }
+    }
+
     setOuting((prev) =>
       prev
         ? {
@@ -177,6 +194,7 @@ function OutingDetailContent() {
 
     setIsEditing(false);
     setActionMessage('Pitch details updated successfully!');
+    router.push('/home?tab=pitches');
   };
 
   const handleDeleteOuting = async () => {
@@ -330,20 +348,39 @@ function OutingDetailContent() {
               .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
               .eq('outing_id', outingId);
 
-            if (dbMembers && dbMembers.length > 0) {
-              const formattedMembers: OutingMember[] = dbMembers.map((m: any) => {
-                const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-                const isViewer = m.user_id === viewerId;
-                return {
-                  user_id: m.user_id,
-                  role: m.role,
-                  state: m.state,
-                  display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
-                  avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-                  home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
-                  isDemo: Boolean(m.is_demo || p?.is_demo),
-                };
+            const formattedMembers: OutingMember[] = (dbMembers || []).map((m: any) => {
+              const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+              const isViewer = m.user_id === viewerId;
+              return {
+                user_id: m.user_id,
+                role: m.role,
+                state: m.state,
+                display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
+                avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
+                isDemo: Boolean(m.is_demo || p?.is_demo),
+              };
+            });
+
+            // Merge local pitch joined guests (e.g. Mervyn, Samuel) if not present in dbMembers
+            const localPitch = getUserPitches().find((p) => p.id === outingId);
+            if (localPitch?.joinedGuests) {
+              localPitch.joinedGuests.forEach((g) => {
+                if (!formattedMembers.some((m) => m.user_id === g.id)) {
+                  formattedMembers.push({
+                    user_id: g.id,
+                    role: 'guest',
+                    state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
+                    display_name: g.name || 'Member',
+                    avatar_url: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+                    home_area: g.homeArea || 'Singapore',
+                    isDemo: g.isDemo,
+                  });
+                }
               });
+            }
+
+            if (formattedMembers.length > 0) {
               setMembers(formattedMembers);
               setLoading(false);
               return;
@@ -1067,10 +1104,27 @@ function OutingDetailContent() {
                           className="h-8 w-8 rounded-full object-cover"
                         />
                         <div>
-                          <span className="font-bold text-[#F3F0E9] flex items-center gap-1">
-                            {m.display_name} {m.role === 'host' && <span className="text-amber-300 text-[10px] uppercase font-extrabold">(Host)</span>}
+                          <span className="font-bold text-[#F3F0E9] flex items-center gap-1.5">
+                            {m.display_name}
+                            {m.role === 'host' && <span className="text-amber-300 text-[10px] uppercase font-extrabold">(Host)</span>}
                           </span>
-                          <span className="text-[10.5px] text-[#A6AAA4]">{m.home_area} · {m.state}</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10.5px] text-[#A6AAA4]">{m.home_area}</span>
+                            <span className="text-[10.5px] text-[#A6AAA4]">·</span>
+                            {m.role === 'host' || m.state === 'accepted' ? (
+                              <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                ✓ Confirmed
+                              </span>
+                            ) : m.state === 'declined' ? (
+                              <span className="rounded-full bg-red-500/20 text-red-300 border border-red-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                ✕ Not Attending
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                ⏳ Pending
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
