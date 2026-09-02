@@ -488,6 +488,15 @@ function PersonDetailContent() {
           <div className="mt-4">
             <ResonanceRead clickText={foundPerson.clickText} rubText={foundPerson.rubText} />
           </div>
+
+          <div className="mt-4 pt-3.5 border-t border-white/15 flex items-center justify-between">
+            <span className="text-[12.5px] text-white/70 font-medium">Explore dimension-by-dimension breakdown</span>
+            <Link href={`/people/${foundPerson.id}/bond`}>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4E6E4C]/60 bg-[#15261C] px-4 py-2 text-[13px] font-extrabold text-emerald-200 shadow-lg backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-[#15261C]/90">
+                <Sparkles className="h-4 w-4 text-emerald-400" /> View Bond
+              </span>
+            </Link>
+          </div>
         </section>
 
         {/* SECTION A: FRIENDSHIP DNA BLOOM */}

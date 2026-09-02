@@ -278,11 +278,11 @@ function ViewBondContent() {
           </div>
         </div>
 
-        {/* DIMENSION READINGS: RESONANCE */}
+        {/* DIMENSION READINGS: RESONANCE (TRIBAL THREAD) */}
         <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-emerald-400" /> Resonance Dimensions
+              <Sparkles className="h-4 w-4 text-emerald-400" /> Your Tribal Thread with {personMatch?.name || 'Member'}
             </h3>
             <span className="text-[11px] font-medium text-white/60">Weighted share</span>
           </div>
@@ -310,11 +310,11 @@ function ViewBondContent() {
           </div>
         </section>
 
-        {/* WHERE YOU MIGHT RUB (FRICTION READ) */}
+        {/* POTENTIAL FRICTION */}
         {bondData.rubText && (
-          <section className="mt-6 rounded-[24px] border border-amber-400/30 bg-amber-500/10 backdrop-blur-xl p-5 shadow-xl">
-            <h3 className="text-[14px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertCircle className="h-4 w-4 text-amber-300 shrink-0" /> Where You Might Rub
+          <section className="mt-6 rounded-[24px] border border-[#654422]/50 bg-[#2B1A17]/70 backdrop-blur-xl p-5 shadow-xl">
+            <h3 className="text-[14px] font-bold text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
+              <AlertCircle className="h-4 w-4 text-amber-300 shrink-0" /> Potential Friction
             </h3>
             <p className="mt-2 text-[13.5px] leading-relaxed text-amber-100/90 font-medium">
               {bondData.rubText}
@@ -381,7 +381,7 @@ function DimensionRow({ dim }: { dim: DimensionReading }) {
           </div>
           <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-[#164014] via-[#074710] to-[#654422] transition-all duration-500"
               style={{ width: `${alignmentPct}%` }}
             />
           </div>

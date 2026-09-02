@@ -228,7 +228,8 @@ export async function POST(req: NextRequest) {
     const isKnown = isAnsweredA && isAnsweredB;
     const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
 
-    if (!isKnown) {
+    const contrib = matchRes.contributions[key];
+    if (!isKnown || typeof contrib !== 'number') {
       return {
         key,
         status: 'unknown' as const,
@@ -236,7 +237,7 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    const alignment = matchRes.contributions[key] ?? 0.5;
+    const alignment = contrib;
     const phrase = getDimensionPhrase(key, alignment);
 
     return {

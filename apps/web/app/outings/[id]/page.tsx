@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
-import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
 import { getUserProfile } from '../../../lib/userStore';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
@@ -490,9 +490,16 @@ function OutingDetailContent() {
                   </div>
                 </div>
 
-                <span className="text-[10.5px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2.5 py-0.5">
-                  Accepted ✓
-                </span>
+                <div className="flex items-center gap-2">
+                  <Link href={`/people/${m.user_id}/bond`}>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-200 hover:border-emerald-400">
+                      <Sparkles className="h-3 w-3 text-emerald-400" /> View Bond
+                    </span>
+                  </Link>
+                  <span className="text-[10.5px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2.5 py-0.5">
+                    Accepted ✓
+                  </span>
+                </div>
               </div>
             ))}
           </div>
