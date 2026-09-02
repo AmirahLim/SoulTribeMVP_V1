@@ -257,4 +257,28 @@ describe('POST /api/bond Endpoint Tests', () => {
     expect(emoDim.status).toBe('unknown');
     expect('phrase' in emoDim).toBe(false);
   });
+
+  it('6. POST /api/bond returns mechanism, outputState, fitAtoB, fitBtoA and imbalance at top level', async () => {
+    const req = new NextRequest('http://localhost/api/bond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid_token',
+      },
+      body: JSON.stringify({ candidateId: 'cand-full' }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.overall).toHaveProperty('fitAtoB');
+    expect(json.overall).toHaveProperty('fitBtoA');
+    expect(json.overall).toHaveProperty('imbalance');
+
+    const knownThread = json.threads.find((d: any) => d.status === 'known');
+    expect(knownThread).toBeDefined();
+    expect(knownThread).toHaveProperty('mechanism');
+    expect(knownThread).toHaveProperty('outputState');
+  });
 });

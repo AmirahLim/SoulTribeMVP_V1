@@ -203,6 +203,7 @@ function ViewBondContent() {
       } finally {
         setLoading(false);
       }
+    }
 
     loadBond();
   }, [cleanPersonId]);

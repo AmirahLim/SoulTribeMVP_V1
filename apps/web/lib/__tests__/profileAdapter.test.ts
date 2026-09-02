@@ -138,4 +138,21 @@ describe('Part 5 — Profile Adapter Tests', () => {
 
     assert.ok(vecFull.profile.confidence > vecEmpty.profile.confidence + 0.3, 'Fully answered profile must have higher confidence');
   });
+
+  it('6. Confidence is not overridable by passCompletionPct: 100', () => {
+    const user100: UserProfileData = {
+      displayName: 'Self Reported 100 User',
+      avatarUrl: '',
+      homeArea: 'Singapore',
+      bio: '',
+      passCompletionPct: 100,
+      deepProfile: {
+        mbti: 'INTJ',
+        groupSize: '3–4 people',
+      },
+    };
+
+    const vec = toProfileVector(user100);
+    assert.ok(vec.profile.confidence <= 0.50, `Expected calculated signal confidence <= 0.50, got ${vec.profile.confidence}`);
+  });
 });
