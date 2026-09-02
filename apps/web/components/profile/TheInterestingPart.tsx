@@ -20,25 +20,45 @@ export function TheInterestingPart({ tension, className = '' }: TheInterestingPa
   }
 
   return (
-    <div className={`rounded-[24px] border border-[#F0DBD0]/30 bg-[#F0DBD0] p-6 shadow-xl text-[#3E2A22] ${className}`}>
-      <span className="text-[10px] font-bold tracking-widest uppercase opacity-75">
-        The Interesting Part
-      </span>
+    <div
+      className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
+      style={{
+        backgroundColor: 'rgba(10,12,11,0.62)',
+        border: '1px solid rgba(245,242,234,0.11)',
+        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+      }}
+    >
+      {/* Subtle Amber Wash Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-85"
+        style={{
+          background: 'radial-gradient(120% 80% at 12% 0%, rgba(239,185,78,0.14) 0%, transparent 62%)',
+        }}
+      />
 
-      <h3 className="mt-1 text-2xl font-bold tracking-tight">
-        {tension.headline}
-      </h3>
+      <div className="relative z-10">
+        <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
+          The Interesting Part
+        </span>
 
-      <p className="mt-2 text-xs leading-relaxed font-medium opacity-90">
-        {tension.explanation}
-      </p>
+        <h3 className="font-['Bricolage_Grotesque'] mt-1 text-2xl font-bold tracking-tight text-[#F5F2EA]">
+          {tension.headline}
+        </h3>
 
-      <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold opacity-75">
-        {tension.threadsInvolved.map((t, idx) => (
-          <span key={idx} className="rounded-full border border-[#3E2A22]/20 bg-[#3E2A22]/10 px-2.5 py-0.5">
-            Cross-thread: {t}
-          </span>
-        ))}
+        <p className="mt-2 text-xs leading-relaxed font-normal text-[rgba(245,242,234,0.70)]">
+          {tension.explanation}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold text-[rgba(245,242,234,0.70)]">
+          {tension.threadsInvolved.map((t, idx) => (
+            <span
+              key={idx}
+              className="rounded-full border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[11px] font-medium text-[#F5F2EA]"
+            >
+              Cross-thread: {t}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
