@@ -347,6 +347,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     lifestyle,
     experience,
     geography,
+    answers: { ...(user.deepProfile || {}), ...user },
   };
 
   rawVec.profile.confidence = Math.max(0, Math.min(1.0, completenessConfidence(rawVec)));

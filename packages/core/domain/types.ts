@@ -97,7 +97,7 @@ export interface UserValue {
 
 export interface UserInterest {
   user_id: string;
-  node_id: number;
+  node_id: number | string;
   node_path: string;
   node_name: string;
   affinity: 'love' | 'regular' | 'learning' | 'curious';
@@ -135,6 +135,33 @@ export interface TraitGeography {
   answered: number;
 }
 
+export interface OnboardingAnswers {
+  q1Finding?: string[] | string;
+  q2Feelings?: string[] | string;
+  q3Energy?: number | string;
+  q3GroupSize?: string;
+  q4Social?: number | string;
+  q4Connected?: string[] | string;
+  q5PlanningRhythm?: string;
+  q5Planning?: string;
+  q6Vibe?: string;
+  q6Outings?: string[];
+  q7Trust?: string;
+  q7EmotionalPacing?: string | number;
+  q8Boundaries?: string;
+  q8Qualities?: string[];
+  groupSize?: string;
+  messagingStyle?: string;
+  messagingStyleOpen?: string;
+  socialVibe?: string;
+  supportStyle?: string;
+  idealSaturday?: string;
+  spontaneousTrip?: string;
+  mbti?: string;
+  deepProfile?: Record<string, any>;
+  [key: string]: any;
+}
+
 export interface ProfileVector {
   profile: Profile;
   personality?: TraitPersonality;
@@ -147,6 +174,7 @@ export interface ProfileVector {
   lifestyle?: TraitLifestyle;
   experience?: TraitExperience;
   geography?: TraitGeography;
+  answers?: OnboardingAnswers;
 }
 
 export interface MatchContext {
