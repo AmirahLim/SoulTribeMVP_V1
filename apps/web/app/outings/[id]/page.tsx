@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { IllustratedGround, SeatRow, Button } from '@soul-tribe/ui';
 import { MapPin, Calendar, Clock, ArrowLeft, Check, AlertTriangle, UserCheck, ShieldCheck, UserPlus, XCircle, Sparkles, Edit3, Plus, X, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../lib/authContext';
-import { getUserProfile, removeUserPitchLocal, removeJoinedOutingLocal } from '../../../lib/userStore';
+import { getUserProfile, removeUserPitchLocal, removeJoinedOutingLocal, getUserPitches } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { getOutingCategoryImage } from '../../../lib/outingsStore';
@@ -263,6 +263,32 @@ function OutingDetailContent() {
     setIsAddUserOpen(false);
   };
 
+  const handleRemoveMember = async (memberUserId: string) => {
+    setErrorMessage('');
+    setActionMessage('');
+
+    if (memberUserId === viewerId || (outing && memberUserId === outing.host_id)) {
+      setErrorMessage('You cannot remove the host from the outing.');
+      return;
+    }
+
+    if (checkIsSupabaseConfigured()) {
+      try {
+        const client = getSupabaseBrowserClient();
+        await client
+          .from('outing_members')
+          .delete()
+          .eq('outing_id', outingId)
+          .eq('user_id', memberUserId);
+      } catch (err: any) {
+        console.error('[SoulTribe Error] Failed to remove member from DB:', err);
+      }
+    }
+
+    setMembers((prev) => prev.filter((m) => m.user_id !== memberUserId));
+    setActionMessage('Member removed from outing roster.');
+  };
+
   useEffect(() => {
     async function loadOutingDetails() {
       setLoading(true);
@@ -273,65 +299,108 @@ function OutingDetailContent() {
           const client = getSupabaseBrowserClient();
 
           // 1. Load real outing by ID from outings table
-          const { data: dbOuting, error: outingErr } = await client
+          const { data: dbOuting } = await client
             .from('outings')
             .select('*')
             .eq('id', outingId)
             .single();
 
-          if (outingErr || !dbOuting) {
-            setOuting(null);
-            setLoading(false);
-            return;
+          if (dbOuting) {
+            // 2. Load host profile from profiles table
+            const { data: hostProfile } = await client
+              .from('profiles')
+              .select('display_name, avatar_url, home_area')
+              .eq('id', dbOuting.host_id)
+              .single();
+
+            const isHostDemo = Boolean((dbOuting as any).is_demo || (hostProfile as any)?.is_demo);
+
+            const loadedOuting: OutingData = {
+              ...dbOuting,
+              hostName: hostProfile?.display_name || 'Host',
+              hostAvatar: hostProfile?.avatar_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
+              isHostDemo,
+            };
+
+            setOuting(loadedOuting);
+
+            // 3. Load real members joined with profiles from outing_members table
+            const { data: dbMembers } = await client
+              .from('outing_members')
+              .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
+              .eq('outing_id', outingId);
+
+            if (dbMembers && dbMembers.length > 0) {
+              const formattedMembers: OutingMember[] = dbMembers.map((m: any) => {
+                const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+                const isViewer = m.user_id === viewerId;
+                return {
+                  user_id: m.user_id,
+                  role: m.role,
+                  state: m.state,
+                  display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
+                  avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+                  home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
+                  isDemo: Boolean(m.is_demo || p?.is_demo),
+                };
+              });
+              setMembers(formattedMembers);
+              setLoading(false);
+              return;
+            }
           }
-
-          // 2. Load host profile from profiles table
-          const { data: hostProfile } = await client
-            .from('profiles')
-            .select('display_name, avatar_url, home_area')
-            .eq('id', dbOuting.host_id)
-            .single();
-
-          const isHostDemo = Boolean((dbOuting as any).is_demo || (hostProfile as any)?.is_demo);
-
-          const loadedOuting: OutingData = {
-            ...dbOuting,
-            hostName: hostProfile?.display_name || 'Host',
-            hostAvatar: hostProfile?.avatar_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80',
-            isHostDemo,
-          };
-
-          setOuting(loadedOuting);
-
-          // 3. Load real members joined with profiles from outing_members table
-          const { data: dbMembers } = await client
-            .from('outing_members')
-            .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
-            .eq('outing_id', outingId);
-
-          if (dbMembers) {
-            const formattedMembers: OutingMember[] = dbMembers.map((m: any) => {
-              const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-              const isViewer = m.user_id === viewerId;
-              return {
-                user_id: m.user_id,
-                role: m.role,
-                state: m.state,
-                display_name: p?.display_name || (isViewer ? profile.displayName || 'You' : 'Member'),
-                avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-                home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
-                isDemo: Boolean(m.is_demo || p?.is_demo),
-              };
-            });
-            setMembers(formattedMembers);
-          }
-
-          setLoading(false);
-          return;
         } catch {
-          setOuting(null);
-          setMembers([]);
+          // Fallthrough
         }
+      }
+
+      // Check local store fallback
+      const localPitches = getUserPitches();
+      const localPitch = localPitches.find((p) => p.id === outingId);
+
+      if (localPitch) {
+        setOuting({
+          id: localPitch.id,
+          host_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
+          hostName: localPitch.hostName || profile.displayName || 'Host',
+          hostAvatar: localPitch.hostAvatar || profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+          isHostDemo: localPitch.isHostDemo,
+          title: localPitch.title,
+          pitch: localPitch.pitch,
+          area: localPitch.area,
+          activity_category: (localPitch as any).activity_category || (localPitch as any).category || 'coffee',
+          starts_at: localPitch.createdAt || new Date().toISOString(),
+          duration_minutes: 120,
+          budget_band: 2,
+          orientation: 'conversation_first',
+          setting: 'General',
+          max_participants: localPitch.seatsTotal || 6,
+          state: 'open',
+        });
+
+        const localMembers: OutingMember[] = [
+          {
+            user_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
+            role: 'host',
+            state: 'accepted',
+            display_name: localPitch.hostName || profile.displayName || 'Host',
+            avatar_url: localPitch.hostAvatar || profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+            home_area: profile.homeArea || 'Singapore',
+          },
+          ...(localPitch.joinedGuests || []).map((g) => ({
+            user_id: g.id,
+            role: 'guest' as const,
+            state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
+            display_name: g.name || 'Member',
+            avatar_url: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+            home_area: g.homeArea || 'Singapore',
+            isDemo: g.isDemo,
+          })),
+        ];
+
+        setMembers(localMembers);
+        setLoading(false);
+        return;
       }
 
       setOuting(null);
@@ -759,6 +828,15 @@ function OutingDetailContent() {
                   <span className="text-[10.5px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2.5 py-0.5">
                     Accepted ✓
                   </span>
+                  {isHost && m.role !== 'host' && m.user_id !== viewerId && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(m.user_id)}
+                      className="text-[10.5px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2 py-0.5"
+                    >
+                      Remove ✕
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -958,19 +1036,56 @@ function OutingDetailContent() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                  Max Participants (Cap 6)
-                </label>
-                <input
-                  type="number"
-                  min={2}
-                  max={6}
-                  value={editMaxParticipants}
-                  onChange={(e) => setEditMaxParticipants(Math.min(6, Math.max(2, parseInt(e.target.value) || 6)))}
-                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
-                  required
-                />
+              {/* MANAGE INVITED MEMBERS SECTION */}
+              <div className="pt-3 border-t border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4]">
+                    Invited Members ({members.length} Total)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false);
+                      openAddUserModal();
+                    }}
+                    className="text-[11.5px] font-extrabold text-emerald-300 hover:text-emerald-200 flex items-center gap-1"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" /> + Add Member
+                  </button>
+                </div>
+
+                <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                  {members.map((m) => (
+                    <div
+                      key={m.user_id}
+                      className="flex items-center justify-between rounded-[14px] border border-white/10 bg-[#0D1D15] p-2.5 text-[12.5px]"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <img
+                          src={m.avatar_url}
+                          alt={m.display_name}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                        <div>
+                          <span className="font-bold text-[#F3F0E9] flex items-center gap-1">
+                            {m.display_name} {m.role === 'host' && <span className="text-amber-300 text-[10px] uppercase font-extrabold">(Host)</span>}
+                          </span>
+                          <span className="text-[10.5px] text-[#A6AAA4]">{m.home_area} · {m.state}</span>
+                        </div>
+                      </div>
+
+                      {m.role !== 'host' && m.user_id !== viewerId && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(m.user_id)}
+                          className="text-[11px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2.5 py-0.5"
+                        >
+                          Remove ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
