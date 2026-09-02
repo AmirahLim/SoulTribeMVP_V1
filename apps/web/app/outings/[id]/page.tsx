@@ -331,8 +331,14 @@ function OutingDetailContent() {
     );
   }
 
-  const isHost = outing.host_id === viewerId;
-  const myMemberRecord = members.find((m) => m.user_id === viewerId);
+  const isHost =
+    outing.host_id === viewerId ||
+    (Boolean(authUser?.id) && outing.host_id === authUser?.id) ||
+    (Boolean(profile.id) && outing.host_id === profile.id);
+
+  const myMemberRecord = members.find(
+    (m) => m.user_id === viewerId || (authUser?.id && m.user_id === authUser.id) || (profile.id && m.user_id === profile.id)
+  );
   const myState = myMemberRecord?.state || null;
 
   const acceptedMembers = members.filter((m) => m.state === 'accepted');

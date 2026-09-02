@@ -47,8 +47,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         )
       `)
       .eq('user_id', userId)
-      .eq('state', 'accepted')
-      .neq('role', 'host');
+      .in('state', ['accepted', 'requested']);
 
     if (error || !memberRows || memberRows.length === 0) {
       return [];
@@ -62,7 +61,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         const hostName = hostProfile?.display_name || '';
         const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');
         const members = Array.isArray(out.outing_members) ? out.outing_members : [];
-        const seatsFilled = members.filter((m: any) => m.state === 'accepted').length;
+        const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
 
         let dateTimeStr = '';
         if (out.starts_at) {
@@ -89,6 +88,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           hostAvatar,
           seatsTotal: out.max_participants || 6,
           seatsFilled,
+          state: row.state,
         };
       })
       .filter(Boolean) as OutingItem[];
