@@ -83,7 +83,10 @@ export function ProfileHero({
         </div>
 
         {/* Connector Active Level Card with Spacious Padding */}
-        <div className="flex items-start justify-between rounded-[22px] border border-[rgba(245,242,234,0.12)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-md">
+        <div
+          className="flex items-start justify-between rounded-[22px] border border-[rgba(245,242,234,0.12)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-md"
+          style={{ padding: '20px 20px' }}
+        >
           <div className="flex flex-col gap-2 flex-1 pr-4 pl-1.5 py-0.5">
             <div className="flex items-center gap-2.5">
               <span className="text-lg">🤝</span>

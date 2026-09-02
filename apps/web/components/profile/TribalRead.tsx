@@ -48,11 +48,12 @@ export function TribalRead({
     <>
       {/* Dark Glass Card with Radial Wash */}
       <div
-        className={`relative rounded-[26px] p-5.5 backdrop-blur-xl transition-all ${className}`}
+        className={`relative rounded-[26px] p-6 backdrop-blur-xl transition-all ${className}`}
         style={{
           backgroundColor: 'rgba(10,12,11,0.62)',
           border: '1px solid rgba(245,242,234,0.11)',
           boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+          padding: '24px 22px',
         }}
       >
         <div
