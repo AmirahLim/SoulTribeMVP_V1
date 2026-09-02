@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { getThreadColor } from '@soul-tribe/tokens';
+import React, { useRef, useEffect, useState } from 'react';
 
 export interface BloomThread {
   key: string;
@@ -26,117 +25,140 @@ export function Bloom({
   onSelectThread,
   className = '',
 }: BloomProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  const center = size / 2;
-  const maxRadius = size * 0.38;
-  const total = Math.max(1, threads.length);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  const handlePetalClick = (key: string) => {
-    if (!interactive) return;
-    const nextKey = selectedKey === key ? null : key;
-    setSelectedKey(nextKey);
-    if (onSelectThread) {
-      onSelectThread(key);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const renderSize = Math.min(300, size);
+    canvas.width = renderSize * dpr;
+    canvas.height = renderSize * dpr;
+    canvas.style.width = `${renderSize}px`;
+    canvas.style.height = `${renderSize}px`;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.scale(dpr, dpr);
+    const cx = renderSize / 2;
+    const cy = renderSize / 2;
+    const maxRadius = renderSize * 0.42;
+
+    const AMBER = '239,185,78';
+    const EMERALD = '91,217,154';
+    const CREAM = '245,242,234';
+
+    function mixColor(t: number, alpha: number) {
+      const r = Math.round(91 + (239 - 91) * t);
+      const g = Math.round(217 + (185 - 217) * t);
+      const b = Math.round(154 + (78 - 154) * t);
+      return `rgba(${r},${g},${b},${alpha})`;
     }
-  };
+
+    function drawPetal(ang: number, len: number, wid: number, tone: number, alpha: number) {
+      if (!ctx) return;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ang);
+
+      const grad = ctx.createLinearGradient(0, 0, 0, -len);
+      grad.addColorStop(0, mixColor(tone, alpha * 0.1));
+      grad.addColorStop(0.5, mixColor(tone, alpha));
+      grad.addColorStop(1, mixColor(tone, alpha * 0.08));
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(wid, -len * 0.27, wid * 0.9, -len * 0.72, 0, -len);
+      ctx.bezierCurveTo(-wid * 0.9, -len * 0.72, -wid, -len * 0.27, 0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Guide rings
+    ctx.strokeStyle = `rgba(${CREAM},0.05)`;
+    ctx.lineWidth = 1;
+    [0.3, 0.52, 0.74].forEach((k) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxRadius * k, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    ctx.globalCompositeOperation = 'lighter';
+    const totalPetals = 10;
+
+    // Map threads or default 10
+    for (let i = 0; i < totalPetals; i++) {
+      const th = threads[i] || { strength: 0, confidence: 0 };
+      const depth = th.confidence > 0 ? Math.max(0.1, th.strength * th.confidence) : 0;
+      const tone = (i / totalPetals); // Color distribution between emerald and amber
+      const ang = (i / totalPetals) * Math.PI * 2 + Math.sin(i * 2.399) * 0.06;
+
+      if (depth <= 0) {
+        // Unexplored: ghost outline petal
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(ang);
+        ctx.strokeStyle = `rgba(${CREAM},0.13)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(11, -maxRadius * 0.16, 10, -maxRadius * 0.42, 0, -maxRadius * 0.56);
+        ctx.bezierCurveTo(-10, -maxRadius * 0.42, -11, -maxRadius * 0.16, 0, 0);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+      }
+
+      // Explored petals: 3 layers with lighter composite
+      const len = maxRadius * (0.3 + depth * 0.7);
+      const wid = 10 + depth * 11;
+      drawPetal(ang, len * 1.07, wid * 1.6, tone, 0.09); // Wide soft underglow
+      drawPetal(ang, len, wid, tone, 0.6);             // Body
+      drawPetal(ang, len * 0.6, wid * 0.4, tone, 0.34); // Inner highlight
+    }
+
+    // Glowing Radial Core
+    const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 26);
+    cg.addColorStop(0, 'rgba(255,252,244,0.95)');
+    cg.addColorStop(0.45, `rgba(${AMBER},0.30)`);
+    cg.addColorStop(1, `rgba(${AMBER},0)`);
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalCompositeOperation = 'source-over';
+  }, [threads, size]);
 
   const selectedDim = threads.find((d) => d.key === selectedKey);
 
   return (
     <div className={`relative flex flex-col items-center justify-center ${className}`}>
-      {/* Ethereal Ambient Glow Halo behind Bloom */}
-      <div
-        className="absolute rounded-full pointer-events-none opacity-60 blur-2xl transition-all duration-700"
-        style={{
-          width: size * 0.95,
-          height: size * 0.95,
-          background: 'radial-gradient(circle, rgba(217, 228, 210, 0.25) 0%, rgba(45, 82, 62, 0.15) 50%, transparent 80%)',
+      <canvas
+        ref={canvasRef}
+        onClick={() => {
+          if (!interactive || threads.length === 0) return;
+          const nextIndex = Math.floor(Math.random() * Math.min(threads.length, 6));
+          const target = threads[nextIndex];
+          if (target) {
+            setSelectedKey(selectedKey === target.key ? null : target.key);
+            onSelectThread?.(target.key);
+          }
         }}
+        className={`block ${interactive ? 'cursor-pointer' : ''}`}
       />
 
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="relative z-10 overflow-visible"
-      >
-        <defs>
-          {threads.map((dim) => {
-            const spec = getThreadColor(dim.key || dim.label);
-            return (
-              <linearGradient
-                key={`grad-${dim.key}`}
-                id={`bloom-grad-${dim.key}`}
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
-              >
-                <stop offset="0%" stopColor={spec.surface} stopOpacity="0.95" />
-                <stop offset="100%" stopColor={spec.surface} stopOpacity="0.65" />
-              </linearGradient>
-            );
-          })}
-        </defs>
-
-        {/* Concentric organic guide rings */}
-        <circle cx={center} cy={center} r={maxRadius * 0.35} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.15" />
-        <circle cx={center} cy={center} r={maxRadius * 0.70} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="4 4" opacity="0.12" />
-        <circle cx={center} cy={center} r={maxRadius} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="5 5" opacity="0.08" />
-
-        {/* Petals */}
-        {threads.map((dim, idx) => {
-          const angleDeg = (idx * 360) / total - 90;
-          const angleRad = (angleDeg * Math.PI) / 180;
-
-          // Emerging bloom scaling: minimum length 0.35 so 10% looks complete & elegant
-          const effectiveScale = 0.35 + 0.65 * (dim.confidence > 0 ? Math.max(dim.strength, dim.confidence) : 0.2);
-          const petalLength = maxRadius * effectiveScale;
-          const petalWidth = Math.max(12, size * 0.065);
-
-          const tipX = center + petalLength * Math.cos(angleRad);
-          const tipY = center + petalLength * Math.sin(angleRad);
-
-          const perpAngleRad = angleRad + Math.PI / 2;
-          const cp1X = center + (petalLength * 0.55) * Math.cos(angleRad) + (petalWidth / 2) * Math.cos(perpAngleRad);
-          const cp1Y = center + (petalLength * 0.55) * Math.sin(angleRad) + (petalWidth / 2) * Math.sin(perpAngleRad);
-
-          const cp2X = center + (petalLength * 0.55) * Math.cos(angleRad) - (petalWidth / 2) * Math.cos(perpAngleRad);
-          const cp2Y = center + (petalLength * 0.55) * Math.sin(angleRad) - (petalWidth / 2) * Math.sin(perpAngleRad);
-
-          const pathData = `M ${center} ${center} Q ${cp1X} ${cp1Y} ${tipX} ${tipY} Q ${cp2X} ${cp2Y} ${center} ${center} Z`;
-
-          const isSelected = selectedKey === dim.key;
-          const spec = getThreadColor(dim.key || dim.label);
-
-          return (
-            <path
-              key={dim.key}
-              d={pathData}
-              fill={`url(#bloom-grad-${dim.key})`}
-              opacity={isSelected ? 1 : 0.88}
-              stroke={isSelected ? spec.ink : spec.surface}
-              strokeWidth={isSelected ? 2.5 : 1}
-              className={`transition-all duration-300 ${interactive ? 'cursor-pointer hover:opacity-100 hover:scale-105' : ''}`}
-              onClick={() => handlePetalClick(dim.key)}
-            >
-              <title>{`${spec.name}: ${dim.sentence || dim.label}`}</title>
-            </path>
-          );
-        })}
-
-        {/* Glowing Center Core */}
-        <circle cx={center} cy={center} r={size * 0.045} fill="#F3F0E9" stroke="#15261C" strokeWidth="2.5" className="shadow-lg" />
-      </svg>
-
-      {/* Selected Thread Tooltip */}
       {selectedDim && (
-        <div className="relative z-20 mt-4 max-w-[280px] rounded-[18px] border border-white/20 bg-[#15261C]/90 p-3.5 text-center shadow-2xl backdrop-blur-xl transition-all duration-300">
-          <p className="text-[10px] font-bold tracking-widest text-[#D9E4D2] uppercase">
+        <div className="mt-3 max-w-[280px] rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(10,12,11,0.85)] p-3 text-center shadow-xl backdrop-blur-md">
+          <p className="text-[10px] font-bold tracking-widest text-[#EFB94E] uppercase">
             {selectedDim.label}
           </p>
-          <p className="mt-1 text-[13px] font-medium leading-relaxed text-[#F3F0E9]">
+          <p className="mt-1 text-[12.5px] font-medium leading-relaxed text-[#F5F2EA]">
             {selectedDim.sentence}
           </p>
         </div>
