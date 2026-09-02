@@ -138,14 +138,25 @@ function LumaSignInForm() {
   // Handle post-auth routing checks for logged-in session
   useEffect(() => {
     if (user && !authLoading && !isChooseUsernameStep) {
-      checkUserProfileExists(user.id).then((hasProfile) => {
+      getUserProfileRecord(user.id).then((profileRec) => {
         const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
-        if (hasProfile) {
+        if (profileRec?.hasProfile) {
+          // Sync existing remote profile to userStore
+          const currentLocal = getUserProfile();
+          setUserProfile({
+            ...currentLocal,
+            displayName: profileRec.display_name || currentLocal.displayName || 'Member',
+            handle: profileRec.handle || currentLocal.handle,
+            avatarUrl: profileRec.avatar_url || currentLocal.avatarUrl,
+            homeArea: profileRec.home_area || currentLocal.homeArea || 'Singapore',
+            bio: profileRec.bio || currentLocal.bio,
+            hasCompletedOnboarding: true,
+          });
           router.push(targetPath);
         } else {
           // Check if local profile exists
           const currentProfile = getUserProfile();
-          if (currentProfile.hasCompletedOnboarding || (currentProfile.displayName && currentProfile.displayName !== 'You')) {
+          if (currentProfile.hasCompletedOnboarding && currentProfile.displayName) {
             saveOnboardingToSupabase(user.id, {
               displayName: currentProfile.displayName,
               handle: currentProfile.handle || deriveSuggestedHandle(currentProfile.displayName),
@@ -167,8 +178,8 @@ function LumaSignInForm() {
               router.push('/home');
             });
           } else {
-            // Default to home if signing in to an existing account
-            router.push('/home');
+            // New user without profile -> prompt choose username / onboarding
+            setIsChooseUsernameStep(true);
           }
         }
       });
