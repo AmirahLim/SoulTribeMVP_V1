@@ -1,6 +1,6 @@
 import type { ProfileVector, MatchResult } from '../domain/types.ts';
-import { BASELINE_WEIGHTS, RESONANCE_DIMS, LOGISTICS_DIMS } from './evaluation.ts';
-import type { DimensionKey } from './evaluation.ts';
+import { BASELINE_WEIGHTS, RESONANCE_THREADS, LOGISTICS_THREADS } from './evaluation.ts';
+import type { ThreadKey } from './evaluation.ts';
 
 export interface ColdStartOptions {
   prior?: number;            // neutral score to shrink toward, default 0.5
@@ -23,7 +23,7 @@ export function confidenceFromCompleteness(vec: ProfileVector): number {
   const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / 5));
   const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / 2));
 
-  const ratios: Record<DimensionKey, number> = {
+  const ratios: Record<ThreadKey, number> = {
     personality: personalityRatio,
     communication: communicationRatio,
     social_rhythm: socialRhythmRatio,
@@ -39,7 +39,7 @@ export function confidenceFromCompleteness(vec: ProfileVector): number {
   let weightedSum = 0;
   let totalWeight = 0;
 
-  for (const k of Object.keys(BASELINE_WEIGHTS) as DimensionKey[]) {
+  for (const k of Object.keys(BASELINE_WEIGHTS) as ThreadKey[]) {
     const w = BASELINE_WEIGHTS[k];
     weightedSum += ratios[k] * w;
     totalWeight += w;
@@ -162,8 +162,8 @@ export function explorationBoost(
   return explorationBonus * Math.exp(-count / 5);
 }
 
-export function nextBestQuestions(vec: ProfileVector, limit: number = 3): DimensionKey[] {
-  const allDims: DimensionKey[] = [...RESONANCE_DIMS, ...LOGISTICS_DIMS];
+export function nextBestQuestions(vec: ProfileVector, limit: number = 3): ThreadKey[] {
+  const allThreads: ThreadKey[] = [...RESONANCE_THREADS, ...LOGISTICS_THREADS];
 
   const personalityRatio = Math.min(1, Math.max(0, (vec.personality?.answered ?? 0) / 10));
   const communicationRatio = Math.min(1, Math.max(0, (vec.communication?.answered ?? 0) / 10));
@@ -176,7 +176,7 @@ export function nextBestQuestions(vec: ProfileVector, limit: number = 3): Dimens
   const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / 5));
   const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / 2));
 
-  const ratios: Record<DimensionKey, number> = {
+  const ratios: Record<ThreadKey, number> = {
     personality: personalityRatio,
     communication: communicationRatio,
     social_rhythm: socialRhythmRatio,
@@ -189,12 +189,12 @@ export function nextBestQuestions(vec: ProfileVector, limit: number = 3): Dimens
     geography: geographyRatio,
   };
 
-  const scores = allDims.map((dim) => {
-    const w = BASELINE_WEIGHTS[dim] ?? 10;
-    const incompleteness = 1 - ratios[dim];
-    return { dim, score: w * incompleteness };
+  const scores = allThreads.map((thread) => {
+    const w = BASELINE_WEIGHTS[thread] ?? 10;
+    const incompleteness = 1 - ratios[thread];
+    return { thread, score: w * incompleteness };
   });
 
   scores.sort((a, b) => b.score - a.score);
-  return scores.slice(0, Math.max(1, limit)).map((s) => s.dim);
+  return scores.slice(0, Math.max(1, limit)).map((s) => s.thread);
 }

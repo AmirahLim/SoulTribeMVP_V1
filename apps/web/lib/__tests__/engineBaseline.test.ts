@@ -11,6 +11,8 @@ describe('Engine Baseline Snapshot Before Rename', () => {
   const memberA: UserProfileData & Record<string, any> = {
     displayName: 'Member Alpha',
     handle: 'member_a',
+    avatarUrl: '',
+    bio: '',
     homeArea: 'Tiong Bahru',
     birthYear: 1992,
     passCompletionPct: 100,
@@ -38,6 +40,8 @@ describe('Engine Baseline Snapshot Before Rename', () => {
   const memberB: UserProfileData & Record<string, any> = {
     displayName: 'Member Beta',
     handle: 'member_b',
+    avatarUrl: '',
+    bio: '',
     homeArea: 'Tampines',
     birthYear: 1988,
     passCompletionPct: 100,

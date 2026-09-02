@@ -11,7 +11,7 @@ import { getUserProfile } from '../../../../lib/userStore';
 import { getRankedMatches, RankedMatch, toProfileVector } from '../../../../lib/matching';
 import { DEMO_PROFILES, score, softGate, generateMatchExplanation, nextBestQuestions, BASELINE_WEIGHTS } from '@soul-tribe/core';
 
-interface DimensionReading {
+interface ThreadReading {
   key: string;
   status: 'known' | 'unknown';
   alignment?: number;
@@ -27,12 +27,12 @@ interface BondData {
     confidence: number;
     provisional: boolean;
   };
-  dimensions: DimensionReading[];
+  threads: ThreadReading[];
   rubText: string;
   sharpen: Array<{ questionId: string; prompt: string; href: string }>;
 }
 
-const DIM_NAMES: Record<string, string> = {
+const THREAD_NAMES: Record<string, string> = {
   personality: 'Personality & Energy',
   communication: 'Communication Pace',
   intent: 'Friendship Intent',
@@ -94,7 +94,12 @@ function ViewBondContent() {
 
             if (res.ok) {
               const data = await res.json();
-              setBondData(data);
+              setBondData({
+                overall: data.overall,
+                threads: data.threads,
+                rubText: data.rubText,
+                sharpen: data.sharpen,
+              });
 
               // Also load match candidate info for header
               const matches = await getRankedMatches(userProfile, { limit: 40 });
@@ -129,15 +134,15 @@ function ViewBondContent() {
             const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
             const explanation = generateMatchExplanation(viewerVec, candDemoVec);
 
-            const isDimAnswered = (vec: any, k: string) => {
+            const isThreadAnswered = (vec: any, k: string) => {
               if (k === 'interests' || k === 'values') return (vec[k]?.length ?? 0) > 0;
               return (vec[k]?.answered ?? 0) > 0;
             };
 
-            const dimKeys = ['personality', 'communication', 'intent', 'emotional', 'values', 'interests', 'social_rhythm', 'lifestyle', 'experience', 'geography'];
-            const dimensions: DimensionReading[] = dimKeys.map((key) => {
-              const knownA = isDimAnswered(viewerVec, key);
-              const knownB = isDimAnswered(candDemoVec, key);
+            const threadKeys = ['personality', 'communication', 'intent', 'emotional', 'values', 'interests', 'social_rhythm', 'lifestyle', 'experience', 'geography'];
+            const threads: ThreadReading[] = threadKeys.map((key) => {
+              const knownA = isThreadAnswered(viewerVec, key);
+              const knownB = isThreadAnswered(candDemoVec, key);
               const isKnown = knownA && knownB;
               const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
 
@@ -151,14 +156,14 @@ function ViewBondContent() {
                 status: 'known' as const,
                 alignment,
                 weight,
-                phrase: alignment >= 0.75 ? 'Strong alignment in this dimension.' : 'Balanced resonance in this dimension.',
+                phrase: alignment >= 0.75 ? 'Strong alignment in this connection thread.' : 'Balanced resonance in this connection thread.',
               };
             });
 
             const nextQuestions = nextBestQuestions(viewerVec, 3);
             const sharpen = nextQuestions.map((qId) => ({
               questionId: qId,
-              prompt: `Answer questions on ${DIM_NAMES[qId] || qId} to sharpen this bond reading`,
+              prompt: `Answer questions on ${THREAD_NAMES[qId] || qId} to sharpen this bond reading`,
               href: '/you/deeper',
             }));
 
@@ -170,7 +175,7 @@ function ViewBondContent() {
                 confidence: Math.min(viewerVec.profile.confidence, candDemoVec.profile.confidence),
                 provisional: softRes.provisional,
               },
-              dimensions,
+              threads,
               rubText: explanation.friction_text,
               sharpen,
             });
@@ -209,11 +214,11 @@ function ViewBondContent() {
     );
   }
 
-  const resonanceDims = bondData.dimensions
+  const resonanceThreads = bondData.threads
     .filter((d) => RESONANCE_KEYS.has(d.key))
     .sort((a, b) => b.weight - a.weight);
 
-  const logisticsDims = bondData.dimensions
+  const logisticsThreads = bondData.threads
     .filter((d) => !RESONANCE_KEYS.has(d.key))
     .sort((a, b) => b.weight - a.weight);
 
@@ -278,7 +283,7 @@ function ViewBondContent() {
           </div>
         </div>
 
-        {/* DIMENSION READINGS: RESONANCE (TRIBAL THREAD) */}
+        {/* THREAD READINGS: RESONANCE (TRIBAL THREAD) */}
         <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
@@ -288,24 +293,24 @@ function ViewBondContent() {
           </div>
 
           <div className="flex flex-col gap-3">
-            {resonanceDims.map((dim) => (
-              <DimensionRow key={dim.key} dim={dim} />
+            {resonanceThreads.map((thread) => (
+              <ThreadRow key={thread.key} thread={thread} />
             ))}
           </div>
         </section>
 
-        {/* DIMENSION READINGS: LOGISTICS */}
+        {/* THREAD READINGS: LOGISTICS */}
         <section className="mt-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-amber-400" /> Logistics & Rhythm Dimensions
+              <Layers className="h-4 w-4 text-amber-400" /> Logistics & Rhythm Connection Threads
             </h3>
             <span className="text-[11px] font-medium text-white/60">Weighted share</span>
           </div>
 
           <div className="flex flex-col gap-3">
-            {logisticsDims.map((dim) => (
-              <DimensionRow key={dim.key} dim={dim} />
+            {logisticsThreads.map((thread) => (
+              <ThreadRow key={thread.key} thread={thread} />
             ))}
           </div>
         </section>
@@ -358,25 +363,25 @@ function ViewBondContent() {
   );
 }
 
-function DimensionRow({ dim }: { dim: DimensionReading }) {
-  const isKnown = dim.status === 'known' && typeof dim.alignment === 'number';
-  const alignmentPct = isKnown ? Math.round((dim.alignment as number) * 100) : 0;
+function ThreadRow({ thread }: { thread: ThreadReading }) {
+  const isKnown = thread.status === 'known' && typeof thread.alignment === 'number';
+  const alignmentPct = isKnown ? Math.round((thread.alignment as number) * 100) : 0;
 
   return (
     <div className="rounded-[18px] border border-white/15 bg-black/50 backdrop-blur-xl p-3.5 shadow-lg">
       <div className="flex items-center justify-between">
         <h4 className="text-[13.5px] font-bold text-white">
-          {DIM_NAMES[dim.key] || dim.key}
+          {THREAD_NAMES[thread.key] || thread.key}
         </h4>
         <span className="text-[11px] font-semibold text-white/60">
-          {dim.weight}% weight
+          {thread.weight}% weight
         </span>
       </div>
 
       {isKnown ? (
         <div className="mt-2.5">
           <div className="flex items-center justify-between text-[12px] text-white/80 mb-1">
-            <span className="font-medium text-white/90">{dim.phrase}</span>
+            <span className="font-medium text-white/90">{thread.phrase}</span>
             <span className="font-bold text-white">{alignmentPct}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">

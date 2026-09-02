@@ -52,7 +52,7 @@ export function validateAvatarFile(file: File): AvatarValidationResult {
  */
 export async function compressAndFormatImage(
   file: File,
-  maxDimension = 1000,
+  maxImageSize = 1000,
   quality = 0.85
 ): Promise<string> {
   return new Promise((resolve) => {
@@ -67,13 +67,13 @@ export async function compressAndFormatImage(
       const img = new Image();
       img.onload = () => {
         let { width, height } = img;
-        if (width > maxDimension || height > maxDimension) {
+        if (width > maxImageSize || height > maxImageSize) {
           if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
+            height = Math.round((height * maxImageSize) / width);
+            width = maxImageSize;
           } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
+            width = Math.round((width * maxImageSize) / height);
+            height = maxImageSize;
           }
         }
 

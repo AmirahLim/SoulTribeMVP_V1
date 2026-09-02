@@ -1,4 +1,4 @@
-export interface DimensionWeights {
+export interface ThreadWeights {
   personality: number; // base 15
   communication: number; // base 15
   social_rhythm: number; // base 15
@@ -11,7 +11,7 @@ export interface DimensionWeights {
   geography: number; // base 2
 }
 
-export const BASE_WEIGHTS: DimensionWeights = {
+export const BASE_WEIGHTS: ThreadWeights = {
   personality: 15,
   communication: 15,
   social_rhythm: 15,
@@ -27,10 +27,10 @@ export const BASE_WEIGHTS: DimensionWeights = {
 export function getOutingContextualWeights(
   category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative',
   hasInterestMatch?: boolean
-): DimensionWeights {
+): ThreadWeights {
   if (!category) return BASE_WEIGHTS;
 
-  const multipliers: Record<string, Partial<DimensionWeights>> = {
+  const multipliers: Record<string, Partial<ThreadWeights>> = {
     coffee: { geography: 2.5, lifestyle: 1.0, experience: 2.0, communication: 1.2, social_rhythm: 1.0 },
     dining: { geography: 1.5, lifestyle: 2.0, experience: 2.0, communication: 1.0, social_rhythm: 1.0 },
     active: { geography: 3.0, lifestyle: 2.0, experience: 2.5, communication: 0.6, social_rhythm: 1.2 },
@@ -40,7 +40,7 @@ export function getOutingContextualWeights(
   };
 
   const mult = multipliers[category] || {};
-  const raw: DimensionWeights = {
+  const raw: ThreadWeights = {
     personality: BASE_WEIGHTS.personality,
     communication: BASE_WEIGHTS.communication * (mult.communication ?? 1.0),
     social_rhythm: BASE_WEIGHTS.social_rhythm * (mult.social_rhythm ?? 1.0),

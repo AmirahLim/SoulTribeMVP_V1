@@ -129,7 +129,7 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     assert.ok(b10 < b5);
   });
 
-  it('7. nextBestQuestions returns the heaviest under-answered dimension first', () => {
+  it('7. nextBestQuestions returns the heaviest under-answered thread first', () => {
     const vec = createMockVector('1', 'Alice');
     vec.personality.answered = 10;
     vec.communication.answered = 0;

@@ -181,7 +181,7 @@ describe('Module 1 — Group-forming optimiser', () => {
     }
   });
 
-  it('6. Matrix builder deduplicates pool and constructs correct dimensions', () => {
+  it('6. Matrix builder deduplicates pool and constructs correct threads', () => {
     const p1 = createMockVector('1', 'User 1');
     const p2 = createMockVector('2', 'User 2');
     const pool = [p1, p2, p1]; // duplicate p1

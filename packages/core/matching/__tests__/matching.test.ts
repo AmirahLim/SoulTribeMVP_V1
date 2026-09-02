@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { score } from '../engine.ts';
-import { scoreCommunication, scorePersonality, scoreIntent, scoreInterests, scoreValues } from '../dimensions.ts';
+import { scoreCommunication, scorePersonality, scoreIntent, scoreInterests, scoreValues } from '../threads.ts';
 import { generateMatchExplanation } from '../../explain/generator.ts';
 import { calculateGroupCohesion } from '../cohesion.ts';
 import type { ProfileVector } from '../../domain/types.ts';

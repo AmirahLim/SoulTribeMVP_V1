@@ -1,16 +1,16 @@
-import { DimensionKey, nextBestQuestions } from '@soul-tribe/core';
+import { ThreadKey, nextBestQuestions } from '@soul-tribe/core';
 import type { UserProfileData } from './userStore';
 import { toProfileVector } from './profileAdapter';
 
-export interface DimensionPromptInfo {
-  dimension: DimensionKey;
+export interface ThreadPromptInfo {
+  thread: ThreadKey;
   label: string;
   copy: string;
   categoryNum: number;
   href: string;
 }
 
-export const DIMENSION_PROMPT_MAP: Record<DimensionKey, Omit<DimensionPromptInfo, 'dimension'>> = {
+export const THREAD_PROMPT_MAP: Record<ThreadKey, Omit<ThreadPromptInfo, 'thread'>> = {
   communication: {
     label: 'Communication Style',
     copy: 'Answering a few questions about how you communicate would sharpen your matches most.',
@@ -75,19 +75,19 @@ export const DIMENSION_PROMPT_MAP: Record<DimensionKey, Omit<DimensionPromptInfo
 
 /**
  * Returns active next-best question prompts for a user profile.
- * Only returns items if the dimension is genuinely incomplete (ratio < 1.0).
- * If all dimensions are 100% complete, returns [].
+ * Only returns items if the thread is genuinely incomplete (ratio < 1.0).
+ * If all threads are 100% complete, returns [].
  */
-export function getActiveNextBestPrompts(profile: UserProfileData, limit: number = 2): DimensionPromptInfo[] {
+export function getActiveNextBestPrompts(profile: UserProfileData, limit: number = 2): ThreadPromptInfo[] {
   if (profile.passCompletionPct >= 100) {
     return [];
   }
   const vec = toProfileVector(profile);
-  const dimKeys = nextBestQuestions(vec, limit);
+  const threadKeys = nextBestQuestions(vec, limit);
 
-  const activePrompts: DimensionPromptInfo[] = [];
+  const activePrompts: ThreadPromptInfo[] = [];
 
-  for (const key of dimKeys) {
+  for (const key of threadKeys) {
     let ratio = 1;
     if (key === 'personality') ratio = Math.min(1, (vec.personality?.answered ?? 0) / 10);
     else if (key === 'communication') ratio = Math.min(1, (vec.communication?.answered ?? 0) / 10);
@@ -101,10 +101,10 @@ export function getActiveNextBestPrompts(profile: UserProfileData, limit: number
     else if (key === 'geography') ratio = Math.min(1, (vec.geography?.answered ?? 0) / 2);
 
     if (ratio < 1.0) {
-      const info = DIMENSION_PROMPT_MAP[key];
+      const info = THREAD_PROMPT_MAP[key];
       if (info) {
         activePrompts.push({
-          dimension: key,
+          thread: key,
           ...info,
         });
       }

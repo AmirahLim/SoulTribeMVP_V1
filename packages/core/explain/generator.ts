@@ -11,7 +11,7 @@ import {
   scoreLifestyle,
   scoreExperience,
   scoreGeography,
-} from '../matching/dimensions.ts';
+} from '../matching/threads.ts';
 
 export interface ExplanationText {
   click_text: string;
@@ -19,7 +19,7 @@ export interface ExplanationText {
   generated_by: string;
 }
 
-function isDimensionAnswered(vec: ProfileVector, key: string): boolean {
+function isThreadAnswered(vec: ProfileVector, key: string): boolean {
   if (!vec) return false;
   if (key === 'personality') return (vec.personality?.answered ?? 0) > 0;
   if (key === 'communication') return (vec.communication?.answered ?? 0) > 0;
@@ -64,7 +64,7 @@ function formatValueName(item: any): string {
   return str;
 }
 
-const DIM_LABELS: Record<string, string> = {
+const THREAD_LABELS: Record<string, string> = {
   personality: 'personality & social energy',
   communication: 'messaging & response pace',
   social_rhythm: 'planning style',
@@ -77,7 +77,7 @@ const DIM_LABELS: Record<string, string> = {
   geography: 'neighborhood location',
 };
 
-const CLICK_DIM_PRIORITY: Record<string, number> = {
+const CLICK_THREAD_PRIORITY: Record<string, number> = {
   interests: 10,
   values: 9,
   intent: 8,
@@ -96,7 +96,7 @@ export function generateMatchExplanation(
   const nameA = vecA.profile.display_name;
   const nameB = vecB.profile.display_name;
 
-  const dimScores = [
+  const threadScores = [
     { key: 'personality', score: scorePersonality(vecA, vecB), weight: 15 },
     { key: 'communication', score: scoreCommunication(vecA, vecB), weight: 15 },
     { key: 'social_rhythm', score: scoreSocialRhythm(vecA, vecB), weight: 15 },
@@ -109,18 +109,18 @@ export function generateMatchExplanation(
   ].filter((d): d is { key: string; score: number; weight: number } => typeof d.score === 'number');
 
   // Calculate contribution above baseline
-  const evaluated = dimScores.map((d) => ({
+  const evaluated = threadScores.map((d) => ({
     ...d,
     contrib: d.weight * (d.score - 0.5),
   }));
 
   // --- HONEST POSITIVE CLICK SELECTION ---
-  const eligibleClickDims = evaluated.filter(
-    (d) => isDimensionAnswered(vecA, d.key) && isDimensionAnswered(vecB, d.key)
+  const eligibleClickThreads = evaluated.filter(
+    (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key)
   );
 
-  // If no dimension is eligible (very thin profile), return honest thin-profile prompt
-  if (eligibleClickDims.length === 0) {
+  // If no connection thread is eligible (very thin profile), return honest thin-profile prompt
+  if (eligibleClickThreads.length === 0) {
     return {
       click_text: `Shared community member in Singapore with ${nameB}.`,
       friction_text: `${nameB} is still completing their Tribal Pass - specific friction points will sharpen as more answers are shared.`,
@@ -128,17 +128,17 @@ export function generateMatchExplanation(
     };
   }
 
-  // Sort eligible click dimensions by uniqueness priority + score
-  eligibleClickDims.sort((a, b) => {
-    const priorityA = (CLICK_DIM_PRIORITY[a.key] || 1) + a.score;
-    const priorityB = (CLICK_DIM_PRIORITY[b.key] || 1) + b.score;
+  // Sort eligible click connection threads by uniqueness priority + score
+  eligibleClickThreads.sort((a, b) => {
+    const priorityA = (CLICK_THREAD_PRIORITY[a.key] || 1) + a.score;
+    const priorityB = (CLICK_THREAD_PRIORITY[b.key] || 1) + b.score;
     return priorityB - priorityA;
   });
 
   const clickParts: string[] = [];
-  const candidateClickDims = eligibleClickDims.filter((d) => d.score >= 0.40);
+  const candidateClickThreads = eligibleClickThreads.filter((d) => d.score >= 0.40);
 
-  for (const d of candidateClickDims) {
+  for (const d of candidateClickThreads) {
     if (clickParts.length >= 2) break;
 
     const isStrong = d.score >= 0.70; // Tier 1 (Strong) vs Tier 2 (Mild)
@@ -217,10 +217,10 @@ export function generateMatchExplanation(
     }
   }
 
-  // Fallback if no candidate dimension met score threshold
+  // Fallback if no candidate connection thread met score threshold
   if (clickParts.length === 0) {
-    const highest = eligibleClickDims[0];
-    const label = DIM_LABELS[highest.key] || 'social rhythm';
+    const highest = eligibleClickThreads[0];
+    const label = THREAD_LABELS[highest.key] || 'social rhythm';
     clickParts.push(`Gentle overall social alignment with ${nameB}, with a natural connection around ${label}.`);
   }
 
@@ -228,13 +228,13 @@ export function generateMatchExplanation(
 
   // --- HONEST FRICTION SELECTION WITHOUT TAUTOLOGIES ---
 
-  // Filter to ONLY dimensions where BOTH sides actually have answered data
-  const eligibleDims = evaluated.filter((d) =>
-    isDimensionAnswered(vecA, d.key) && isDimensionAnswered(vecB, d.key)
+  // Filter to ONLY connection threads where BOTH sides actually have answered data
+  const eligibleThreads = evaluated.filter((d) =>
+    isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key)
   );
 
-  // If no dimension is eligible (very thin profile), emit exact thin-profile sentence
-  if (eligibleDims.length === 0) {
+  // If no connection thread is eligible (very thin profile), emit exact thin-profile sentence
+  if (eligibleThreads.length === 0) {
     return {
       click_text,
       friction_text: "There isn't enough in your pass yet to flag friction honestly - add more and this will sharpen.",
@@ -242,13 +242,13 @@ export function generateMatchExplanation(
     };
   }
 
-  // Sort eligible dimensions by score ascending (lowest score first)
-  eligibleDims.sort((a, b) => a.score - b.score);
+  // Sort eligible connection threads by score ascending (lowest score first)
+  eligibleThreads.sort((a, b) => a.score - b.score);
 
   const frictionParts: string[] = [];
-  const candidateDims = eligibleDims.filter((d) => d.score < 0.70);
+  const candidateThreads = eligibleThreads.filter((d) => d.score < 0.70);
 
-  for (const d of candidateDims) {
+  for (const d of candidateThreads) {
     if (frictionParts.length >= 2) break;
 
     const isClearFriction = d.score < 0.55; // Tier 1 vs Tier 2
@@ -370,13 +370,13 @@ export function generateMatchExplanation(
     }
   }
 
-  // Fallback if no candidate dimension produced a sentence
+  // Fallback if no candidate connection thread produced a sentence
   if (frictionParts.length === 0) {
-    const weakest = eligibleDims.filter((d) => d.key !== 'geography')[0];
-    if (!weakest || eligibleDims.length <= 1) {
+    const weakest = eligibleThreads.filter((d) => d.key !== 'geography')[0];
+    if (!weakest || eligibleThreads.length <= 1) {
       frictionParts.push(`${nameB} is still completing their Tribal Pass - as more section answers are shared, specific friction flags will sharpen.`);
     } else {
-      const label = DIM_LABELS[weakest.key] || 'social rhythm';
+      const label = THREAD_LABELS[weakest.key] || 'social rhythm';
       frictionParts.push(`Nothing much to flag - the mildest difference is around ${label}, and it's small.`);
     }
   }

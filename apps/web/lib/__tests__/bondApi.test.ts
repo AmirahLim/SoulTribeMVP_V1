@@ -145,14 +145,14 @@ describe('POST /api/bond Endpoint Tests', () => {
     const json1 = await res1.json();
     const json2 = await res2.json();
 
-    const pers1 = json1.dimensions.find((d: any) => d.key === 'personality');
-    const pers2 = json2.dimensions.find((d: any) => d.key === 'personality');
+    const pers1 = json1.threads.find((d: any) => d.key === 'personality');
+    const pers2 = json2.threads.find((d: any) => d.key === 'personality');
 
     expect(pers1.phrase).not.toBe(pers2.phrase);
     expect(pers1.alignment).not.toBe(pers2.alignment);
   });
 
-  it('2. Thin viewer returns honest state plus non-empty sharpen list and no dimension sentences for unanswered dimensions', async () => {
+  it('2. Thin viewer returns honest state plus non-empty sharpen list and no connection thread sentences for unanswered connection threads', async () => {
     const req = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
       headers: {
@@ -166,14 +166,15 @@ describe('POST /api/bond Endpoint Tests', () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    const allUnknown = json.dimensions.every(
+    const threads = json.threads;
+    const allUnknown = threads.every(
       (d: any) => d.status === 'unknown' && !('alignment' in d) && !('phrase' in d)
     );
     expect(allUnknown).toBe(true);
     expect(json.sharpen.length).toBeGreaterThan(0);
   });
 
-  it('3. No dimension with status: "unknown" carries an alignment key at any depth', async () => {
+  it('3. No connection thread with status: "unknown" carries an alignment key at any depth', async () => {
     const req = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
       headers: {
@@ -185,8 +186,9 @@ describe('POST /api/bond Endpoint Tests', () => {
 
     const res = await POST(req);
     const json = await res.json();
+    const threads = json.threads;
 
-    for (const d of json.dimensions) {
+    for (const d of threads) {
       if (d.status === 'unknown') {
         expect('alignment' in d).toBe(false);
         expect('phrase' in d).toBe(false);
@@ -232,8 +234,9 @@ describe('POST /api/bond Endpoint Tests', () => {
 
     const res = await POST(req);
     const json = await res.json();
+    const threads = json.threads;
 
-    const persDim = json.dimensions.find((d: any) => d.key === 'personality');
+    const persDim = threads.find((d: any) => d.key === 'personality');
     expect(persDim.status).toBe('known');
     expect(persDim.phrase).toContain('social energy');
 
@@ -249,7 +252,8 @@ describe('POST /api/bond Endpoint Tests', () => {
 
     const res2 = await POST(req2);
     const json2 = await res2.json();
-    const emoDim = json2.dimensions.find((d: any) => d.key === 'emotional');
+    const threads2 = json2.threads;
+    const emoDim = threads2.find((d: any) => d.key === 'emotional');
     expect(emoDim.status).toBe('unknown');
     expect('phrase' in emoDim).toBe(false);
   });

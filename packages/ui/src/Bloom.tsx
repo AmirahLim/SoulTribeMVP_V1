@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-export interface BloomDimension {
+export interface BloomThread {
   key: string;
   label: string;
   strength: number; // 0..1
@@ -11,14 +11,14 @@ export interface BloomDimension {
 }
 
 export interface BloomProps {
-  dimensions: BloomDimension[];
+  threads: BloomThread[];
   size?: number;
   interactive?: boolean;
   className?: string;
 }
 
 export function Bloom({
-  dimensions,
+  threads,
   size = 220,
   interactive = true,
   className = '',
@@ -27,9 +27,9 @@ export function Bloom({
 
   const center = size / 2;
   const maxRadius = size * 0.38;
-  const total = dimensions.length;
+  const total = threads.length;
 
-  const selectedDim = dimensions.find((d) => d.key === selectedKey);
+  const selectedDim = threads.find((d) => d.key === selectedKey);
 
   return (
     <div className={`relative flex flex-col items-center justify-center ${className}`}>
@@ -53,7 +53,7 @@ export function Bloom({
         <circle cx={center} cy={center} r={maxRadius} fill="none" stroke="#F3F0E9" strokeWidth="0.8" strokeDasharray="5 5" opacity="0.1" />
 
         {/* Petals */}
-        {dimensions.map((dim, idx) => {
+        {threads.map((dim, idx) => {
           const angleDeg = (idx * 360) / total - 90;
           const angleRad = (angleDeg * Math.PI) / 180;
 

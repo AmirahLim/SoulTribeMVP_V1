@@ -8,7 +8,7 @@ import {
   clearMockSuppressionData,
   getMondayOfWeek,
 } from '../matching';
-import { getActiveNextBestPrompts, DIMENSION_PROMPT_MAP } from '../dimensionPrompts';
+import { getActiveNextBestPrompts, THREAD_PROMPT_MAP } from '../threadPrompts';
 import { DEMO_PROFILES, nextBestQuestions } from '@soul-tribe/core';
 
 describe('Cold Start Wiring Tests — explorationBoost & nextBestQuestions', () => {
@@ -72,7 +72,7 @@ describe('Cold Start Wiring Tests — explorationBoost & nextBestQuestions', () 
     assert.ok(matches[0].fitLabel !== undefined, 'fitLabel is present');
   });
 
-  it('2. nextBestQuestions maps all DimensionKeys to onboarding question routes and non-guilt copy', () => {
+  it('2. nextBestQuestions maps all ThreadKeys to onboarding question routes and non-guilt copy', () => {
     const incompleteUser: UserProfileData = {
       displayName: 'Incomplete User',
       avatarUrl: '',

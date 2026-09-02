@@ -1,6 +1,6 @@
 import type { ProfileVector } from '../domain/types.ts';
-import { scorePersonality } from './dimensions.ts';
-import { scoreCommunication, scoreIntent, scoreEmotional, scoreInterests, scoreValues } from './dimensions.ts';
+import { scorePersonality } from './threads.ts';
+import { scoreCommunication, scoreIntent, scoreEmotional, scoreInterests, scoreValues } from './threads.ts';
 
 export interface GroupCohesionResult {
   cohesion: number;
@@ -18,7 +18,7 @@ export function calculateResonancePair(vecA: ProfileVector, vecB: ProfileVector)
   const int = scoreInterests(vecA, vecB);
   const v = scoreValues(vecA, vecB);
 
-  const dims: [number | null, number][] = [
+  const threads: [number | null, number][] = [
     [p, 15],
     [c, 15],
     [i, 15],
@@ -29,7 +29,7 @@ export function calculateResonancePair(vecA: ProfileVector, vecB: ProfileVector)
 
   let sum = 0;
   let totalW = 0;
-  for (const [scoreVal, w] of dims) {
+  for (const [scoreVal, w] of threads) {
     if (typeof scoreVal === 'number') {
       sum += scoreVal * w;
       totalW += w;

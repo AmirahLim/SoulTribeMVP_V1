@@ -97,7 +97,7 @@ function OnboardingContent() {
   const stepPct = Math.round((step / 8) * 100);
 
   const confidence = Math.min(0.95, 0.25 + step * 0.09);
-  const bloomDimensions = [
+  const bloomThreads = [
     { key: 'intent', label: 'Intent', strength: q1Finding.length / 3, confidence, sentence: `Seeking ${q1Finding[0] || 'close friends'}.` },
     { key: 'feeling', label: 'Relational', strength: q2Feelings.length / 4, confidence, sentence: `Values friendships where ${q2Feelings[0] || 'we can be ourselves'}.` },
     { key: 'energy', label: 'Social Energy', strength: q3Energy !== null ? 1 - q3Energy : 0.5, confidence, sentence: `Thrives in ${q3GroupSize || 'intimate'} settings.` },
@@ -260,7 +260,7 @@ function OnboardingContent() {
             </p>
 
             <div className="my-6 rounded-[24px] border border-white/20 bg-black/60 p-4 backdrop-blur-xl">
-              <Bloom dimensions={bloomDimensions} size={210} interactive={true} />
+              <Bloom threads={bloomThreads} size={210} interactive={true} />
             </div>
 
             <Button
@@ -310,7 +310,7 @@ function OnboardingContent() {
         {/* Live Friendship DNA Preview */}
         <section className="mt-4 flex justify-center">
           <div className="rounded-full border border-white/20 bg-black/40 p-2 backdrop-blur-md">
-            <Bloom dimensions={bloomDimensions} size={90} interactive={false} />
+            <Bloom threads={bloomThreads} size={90} interactive={false} />
           </div>
         </section>
 

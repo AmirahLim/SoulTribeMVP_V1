@@ -10,7 +10,7 @@ import {
   scoreLifestyle,
   scoreExperience,
   scoreGeography,
-} from './dimensions.ts';
+} from './threads.ts';
 import { evaluateGates } from './gates.ts';
 import { getOutingContextualWeights } from './reweighting.ts';
 
@@ -42,7 +42,7 @@ export function score(
   const sExperience = scoreExperience(vecA, vecB);
   const sGeography = scoreGeography(vecA, vecB);
 
-  const resDims: [number | null, number][] = [
+  const resThreads: [number | null, number][] = [
     [sPersonality, weights.personality],
     [sCommunication, weights.communication],
     [sIntent, weights.intent],
@@ -53,7 +53,7 @@ export function score(
 
   let resSum = 0;
   let resWeightTotal = 0;
-  for (const [scoreVal, w] of resDims) {
+  for (const [scoreVal, w] of resThreads) {
     if (typeof scoreVal === 'number') {
       resSum += scoreVal * w;
       resWeightTotal += w;
@@ -61,7 +61,7 @@ export function score(
   }
   const resonance = resWeightTotal > 0 ? resSum / resWeightTotal : 0.5;
 
-  const logDims: [number | null, number][] = [
+  const logThreads: [number | null, number][] = [
     [sSocialRhythm, weights.social_rhythm],
     [sLifestyle, weights.lifestyle],
     [sExperience, weights.experience],
@@ -70,7 +70,7 @@ export function score(
 
   let logSum = 0;
   let logWeightTotal = 0;
-  for (const [scoreVal, w] of logDims) {
+  for (const [scoreVal, w] of logThreads) {
     if (typeof scoreVal === 'number') {
       logSum += scoreVal * w;
       logWeightTotal += w;

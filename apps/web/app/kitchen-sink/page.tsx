@@ -24,7 +24,7 @@ export default function KitchenSinkPage() {
 }
 
 function KitchenSinkContent() {
-  const bloomDimensions = [
+  const bloomThreads = [
     { key: 'energy', label: 'Social Energy', strength: 0.8, confidence: 0.9, sentence: 'Prefers small groups' },
     { key: 'size', label: 'Group Size', strength: 0.4, confidence: 0.8, sentence: 'Ideal size is 3 to 4' },
     { key: 'planning', label: 'Planning Horizon', strength: 0.9, confidence: 0.85, sentence: 'Plans days ahead' },
@@ -53,7 +53,7 @@ function KitchenSinkContent() {
         <section className="rounded-[24px] border border-[#2B211B]/10 bg-[#FFFDFA] p-6 shadow-sm">
           <h2 className="mb-4 text-[20px] font-semibold text-[#2B211B]">1. Friendship DNA Bloom</h2>
           <div className="flex justify-center">
-            <Bloom dimensions={bloomDimensions} size={240} interactive={true} />
+            <Bloom threads={bloomThreads} size={240} interactive={true} />
           </div>
         </section>
 

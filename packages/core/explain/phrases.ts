@@ -161,7 +161,7 @@ export const PHRASES_YOU = {
   },
 };
 
-export function getBondDimensionPhrase(
+export function getBondThreadPhrase(
   key: string,
   vecA: ProfileVector,
   vecB: ProfileVector,

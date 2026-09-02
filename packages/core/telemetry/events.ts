@@ -1,5 +1,5 @@
 import type { ProfileVector, MatchResult, MatchContext } from '../domain/types.ts';
-import type { OutcomeSample, DimensionKey } from '../matching/evaluation.ts';
+import type { OutcomeSample, ThreadKey } from '../matching/evaluation.ts';
 import { normalizeOutcome } from '../matching/evaluation.ts';
 import { ENGINE_VERSION, WEIGHTS_VERSION } from './version.ts';
 
@@ -170,7 +170,7 @@ export function toOutcomeSamples(events: TelemetryEvent[]): OutcomeSample[] {
         samples.push({
           userA: rEvent.actor_id,
           userB: rEvent.subject_id,
-          dims: surfaced.contributions as Record<DimensionKey, number>,
+          dims: surfaced.contributions as Record<ThreadKey, number>,
           outcome: normalizeOutcome(rEvent.would_meet_again),
         });
       }

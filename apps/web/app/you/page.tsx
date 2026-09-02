@@ -18,7 +18,7 @@ import {
 } from '../../lib/userStore';
 
 import { AuthGuard } from '../../components/AuthGuard';
-import { getActiveNextBestPrompts } from '../../lib/dimensionPrompts';
+import { getActiveNextBestPrompts } from '../../lib/threadPrompts';
 import { validateAvatarFile, uploadAvatar } from '../../lib/avatarUpload';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 
@@ -261,7 +261,7 @@ function normalizeInterestList(rawList?: string[]): string[] {
   const completedCats = profile.completedCategoryNums || [];
   const isCatDone = (num: number) => completedCats.includes(num);
 
-  const bloomDimensions = [
+  const bloomThreads = [
     { key: 'p', label: 'Personality', strength: isCatDone(5) ? 0.85 : 0, confidence: isCatDone(5) ? 0.9 : 0, sentence: isCatDone(5) ? (deep.selfDescriptionOpen || 'Curious, reflective, and independent.') : 'Unlock by completing Section 5 in Deeper Pass' },
     { key: 'c', label: 'Communication', strength: isCatDone(2) ? 0.9 : 0, confidence: isCatDone(2) ? 0.95 : 0, sentence: isCatDone(2) ? (deep.messagingStyleOpen || 'Prefers intentional messages & voice notes.') : 'Unlock by completing Section 2 in Deeper Pass' },
     { key: 'r', label: 'Rhythm', strength: isCatDone(4) ? 0.75 : 0, confidence: isCatDone(4) ? 0.85 : 0, sentence: isCatDone(4) ? (deep.idealSaturdayOpen || 'Slow mornings, afternoons for exploring.') : 'Unlock by completing Section 4 in Deeper Pass' },
@@ -352,7 +352,7 @@ function normalizeInterestList(rawList?: string[]): string[] {
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Sharpen Your Matches
               </span>
               {getActiveNextBestPrompts(profile, 2).map((prompt) => (
-                <Link key={prompt.dimension} href={prompt.href} className="block">
+                <Link key={prompt.thread} href={prompt.href} className="block">
                   <div className="rounded-[20px] border border-amber-400/30 bg-amber-500/10 hover:bg-amber-500/20 p-4 transition shadow-lg backdrop-blur-md flex items-center justify-between gap-3 group">
                     <div className="space-y-1">
                       <h4 className="text-[14px] font-extrabold text-amber-200 flex items-center gap-2">
@@ -432,7 +432,7 @@ function normalizeInterestList(rawList?: string[]): string[] {
           </p>
 
           <div className="mt-6 flex justify-center rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-            <Bloom dimensions={bloomDimensions} size={280} interactive />
+            <Bloom threads={bloomThreads} size={280} interactive />
           </div>
         </section>
 

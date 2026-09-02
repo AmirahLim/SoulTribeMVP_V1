@@ -5,15 +5,14 @@ import {
   score,
   softGate,
   generateMatchExplanation,
-  nextBestQuestions,
   BASELINE_WEIGHTS,
   ProfileVector,
-  getBondDimensionPhrase,
+  getBondThreadPhrase,
 } from '@soul-tribe/core';
 
 export const runtime = 'nodejs';
 
-function isDimAnswered(vec: ProfileVector, key: string): boolean {
+function isThreadAnswered(vec: ProfileVector, key: string): boolean {
   if (!vec) return false;
   if (key === 'personality') return (vec.personality?.answered ?? 0) > 0;
   if (key === 'communication') return (vec.communication?.answered ?? 0) > 0;
@@ -146,7 +145,7 @@ export async function POST(req: NextRequest) {
 
   const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
 
-  const dimKeys = [
+  const threadKeys = [
     'personality',
     'communication',
     'intent',
@@ -159,9 +158,9 @@ export async function POST(req: NextRequest) {
     'geography',
   ];
 
-  const dimensions = dimKeys.map((key) => {
-    const isAnsweredA = isDimAnswered(viewerVec, key);
-    const isAnsweredB = isDimAnswered(candVec, key);
+  const threads = threadKeys.map((key) => {
+    const isAnsweredA = isThreadAnswered(viewerVec, key);
+    const isAnsweredB = isThreadAnswered(candVec, key);
     const isKnown = isAnsweredA && isAnsweredB;
     const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
 
@@ -175,7 +174,7 @@ export async function POST(req: NextRequest) {
     }
 
     const alignment = contrib;
-    const phrase = getBondDimensionPhrase(key, viewerVec, candVec, alignment);
+    const phrase = getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,
@@ -186,7 +185,7 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  const DIM_LABELS: Record<string, string> = {
+  const THREAD_LABELS: Record<string, string> = {
     personality: 'personality',
     communication: 'communication style',
     social_rhythm: 'social rhythm & availability',
@@ -202,9 +201,9 @@ export async function POST(req: NextRequest) {
   const viewerGaps: { questionId: string; prompt: string; href: string }[] = [];
   const candidateGaps: { questionId: string; prompt: string; href: string }[] = [];
 
-  for (const key of dimKeys) {
-    const viewerAns = isDimAnswered(viewerVec, key);
-    const candAns = isDimAnswered(candVec, key);
+  for (const key of threadKeys) {
+    const viewerAns = isThreadAnswered(viewerVec, key);
+    const candAns = isThreadAnswered(candVec, key);
 
     if (!viewerAns) {
       viewerGaps.push({
@@ -213,7 +212,7 @@ export async function POST(req: NextRequest) {
         href: QUESTION_MAP[key]?.href || '/you/deeper',
       });
     } else if (!candAns) {
-      const label = DIM_LABELS[key] || key.replace('_', ' ');
+      const label = THREAD_LABELS[key] || key.replace('_', ' ');
       candidateGaps.push({
         questionId: key,
         prompt: `${candVec.profile.display_name} hasn't shared their ${label} yet — this part sharpens when they do.`,
@@ -235,7 +234,7 @@ export async function POST(req: NextRequest) {
       confidence: minConfidence,
       provisional: softRes.provisional,
     },
-    dimensions,
+    threads,
     rubText: explanation.friction_text,
     sharpen,
   });

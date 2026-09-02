@@ -6,7 +6,7 @@ import { Button, Chip } from '@soul-tribe/ui';
 import { ArrowLeft, Check, Sparkles, Lock, Globe, CheckCircle2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, DeepProfileAnswers, calculatePassCompletion } from '../../../lib/userStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getActiveNextBestPrompts } from '../../../lib/dimensionPrompts';
+import { getActiveNextBestPrompts } from '../../../lib/threadPrompts';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { saveDeeperPassToSupabase } from '../../../lib/supabaseOnboarding';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';

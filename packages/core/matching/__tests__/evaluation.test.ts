@@ -2,11 +2,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import type { ProfileVector } from '../../domain/types.ts';
 import { score } from '../engine.ts';
-import type { OutcomeSample, DimensionKey } from '../evaluation.ts';
+import type { OutcomeSample, ThreadKey } from '../evaluation.ts';
 import {
   normalizeOutcome,
   recombine,
-  dimensionVector,
+  threadVector,
   evaluate,
   tuneWeights,
   BASELINE_WEIGHTS,
@@ -52,7 +52,7 @@ describe('Module 2 — Evaluation & weight tuning', () => {
     const vecB = createMockVector('2', 'Bob');
 
     const realScore = score(vecA, vecB);
-    const dims = dimensionVector(vecA, vecB);
+    const dims = threadVector(vecA, vecB);
     const recombined = recombine(dims, BASELINE_WEIGHTS);
 
     assert.ok(Math.abs(realScore.resonance - recombined.resonance) < 0.02, 'Resonance mismatch');
@@ -62,7 +62,7 @@ describe('Module 2 — Evaluation & weight tuning', () => {
   it('3. Pearson and Spearman return 1.0 for perfectly correlated data', () => {
     const samples: OutcomeSample[] = Array.from({ length: 60 }, (_, i) => {
       const val = (i + 1) / 60;
-      const dims: Record<DimensionKey, number> = {
+      const dims: Record<ThreadKey, number> = {
         personality: val, communication: val, social_rhythm: val, intent: val,
         emotional: val, interests: val, values: val, lifestyle: val, experience: val, geography: val,
       };
@@ -74,7 +74,7 @@ describe('Module 2 — Evaluation & weight tuning', () => {
     assert.ok(metrics.spearman > 0.99, `Expected Spearman ~1.0, got ${metrics.spearman}`);
   });
 
-  it('4. tuneWeights on dimension-dominated outcome shifts weight toward that dimension', () => {
+  it('4. tuneWeights on thread-dominated outcome shifts weight toward that thread', () => {
     // Generate samples where outcome is strictly determined by personality, with random noise in other dims
     let seed = 123;
     const rng = () => {
@@ -84,7 +84,7 @@ describe('Module 2 — Evaluation & weight tuning', () => {
 
     const samples: OutcomeSample[] = Array.from({ length: 100 }, (_, i) => {
       const pVal = (i + 1) / 100;
-      const dims: Record<DimensionKey, number> = {
+      const dims: Record<ThreadKey, number> = {
         personality: pVal,
         communication: rng(),
         social_rhythm: rng(),

@@ -313,7 +313,7 @@ function PersonDetailContent() {
   const experienceAnswered = targetVec ? (targetVec.experience?.answered ?? 0) > 0 : false;
 
   // Dynamic Friendship DNA Bloom Petals
-  const candidateBloomDimensions = targetVec ? [
+  const candidateBloomThreads = targetVec ? [
     { key: 'p', label: 'Personality', strength: personalityAnswered ? (targetVec.personality?.extraversion ?? 0.5) : 0, confidence: personalityAnswered ? (targetVec.profile?.confidence ?? 0.7) : 0, sentence: personalityAnswered ? PHRASES.extraversion(targetVec.personality?.extraversion ?? 0.5) : "Hasn't shared Section 5 yet" },
     { key: 'c', label: 'Communication', strength: commAnswered ? (targetVec.communication?.response_speed_self ?? 0.5) : 0, confidence: commAnswered ? 0.8 : 0, sentence: commAnswered ? PHRASES.responseSpeed(targetVec.communication?.response_speed_self ?? 0.5) : "Hasn't shared Section 2 yet" },
     { key: 'r', label: 'Rhythm', strength: rhythmAnswered ? (targetVec.social_rhythm?.planning_horizon ?? 0.5) : 0, confidence: rhythmAnswered ? 0.8 : 0, sentence: rhythmAnswered ? PHRASES.planningHorizon(targetVec.social_rhythm?.planning_horizon ?? 0.5) : "Hasn't shared Section 4 yet" },
@@ -490,7 +490,7 @@ function PersonDetailContent() {
           </div>
 
           <div className="mt-4 pt-3.5 border-t border-white/15 flex items-center justify-between">
-            <span className="text-[12.5px] text-white/70 font-medium">Explore dimension-by-dimension breakdown</span>
+            <span className="text-[12.5px] text-white/70 font-medium">Explore thread-by-thread breakdown</span>
             <Link href={`/people/${foundPerson.id}/bond`}>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4E6E4C]/60 bg-[#15261C] px-4 py-2 text-[13px] font-extrabold text-emerald-200 shadow-lg backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-[#15261C]/90">
                 <Sparkles className="h-4 w-4 text-emerald-400" /> View Bond
@@ -500,7 +500,7 @@ function PersonDetailContent() {
         </section>
 
         {/* SECTION A: FRIENDSHIP DNA BLOOM */}
-        {candidateBloomDimensions.length > 0 && (
+        {candidateBloomThreads.length > 0 && (
           <section className="py-2 border-b border-white/15">
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
               Friendship DNA Bloom
@@ -510,7 +510,7 @@ function PersonDetailContent() {
             </p>
 
             <div className="mt-4 flex justify-center rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-              <Bloom dimensions={candidateBloomDimensions} size={280} interactive />
+              <Bloom threads={candidateBloomThreads} size={280} interactive />
             </div>
           </section>
         )}

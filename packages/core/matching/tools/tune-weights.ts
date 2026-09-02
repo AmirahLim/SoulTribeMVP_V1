@@ -1,5 +1,5 @@
 import { BASELINE_WEIGHTS, tuneWeights, recombine } from '../evaluation.ts';
-import type { OutcomeSample, DimensionKey } from '../evaluation.ts';
+import type { OutcomeSample, ThreadKey } from '../evaluation.ts';
 import type { ProfileVector } from '../../domain/types.ts';
 
 function createMockVector(id: string, name: string): ProfileVector {
@@ -46,8 +46,8 @@ function runTuningTool() {
       const vecA = pool[i];
       const vecB = pool[j];
 
-      // Simulated dimension scores
-      const dims: Record<DimensionKey, number> = {
+      // Simulated thread scores
+      const dims: Record<ThreadKey, number> = {
         personality: Math.abs(vecA.personality.openness - vecB.personality.openness),
         communication: Math.abs(vecA.communication.contact_frequency_self - vecB.communication.contact_frequency_self),
         social_rhythm: Math.abs(vecA.social_rhythm.planning_horizon - vecB.social_rhythm.planning_horizon),
@@ -77,9 +77,9 @@ function runTuningTool() {
   const tuningResult = tuneWeights(samples, BASELINE_WEIGHTS, { iterations: 20, seed: 123 });
 
   console.log('\n--- WEIGHT COMPARISON TABLE ---');
-  console.log('Dimension        | Baseline Weight | Tuned Weight');
+  console.log('Thread           | Baseline Weight | Tuned Weight');
   console.log('--------------------------------------------------');
-  for (const k of Object.keys(BASELINE_WEIGHTS) as DimensionKey[]) {
+  for (const k of Object.keys(BASELINE_WEIGHTS) as ThreadKey[]) {
     const baseW = BASELINE_WEIGHTS[k].toFixed(1).padStart(15);
     const tunedW = tuningResult.weights[k].toFixed(1).padStart(12);
     console.log(`${k.padEnd(16)} | ${baseW} | ${tunedW}`);

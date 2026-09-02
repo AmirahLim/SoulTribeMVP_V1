@@ -1,7 +1,7 @@
 // Absence is not agreement.
 // Two people who have both said nothing are not compatible; they are unmeasured.
 // Scorers compare only fields where BOTH sides have a real volunteered value.
-// If no field in a dimension is comparable, the dimension returns null.
+// If no field in a connection thread is comparable, the thread returns null.
 
 import type { ProfileVector } from '../domain/types.ts';
 import {

@@ -10,9 +10,9 @@ import {
   scoreLifestyle,
   scoreExperience,
   scoreGeography,
-} from './dimensions.ts';
+} from './threads.ts';
 
-export type DimensionKey =
+export type ThreadKey =
   | 'personality'
   | 'communication'
   | 'social_rhythm'
@@ -24,9 +24,9 @@ export type DimensionKey =
   | 'experience'
   | 'geography';
 
-export type WeightVector = Record<DimensionKey, number>;
+export type WeightVector = Record<ThreadKey, number>;
 
-export const RESONANCE_DIMS: DimensionKey[] = [
+export const RESONANCE_THREADS: ThreadKey[] = [
   'personality',
   'communication',
   'intent',
@@ -35,7 +35,7 @@ export const RESONANCE_DIMS: DimensionKey[] = [
   'values',
 ];
 
-export const LOGISTICS_DIMS: DimensionKey[] = [
+export const LOGISTICS_THREADS: ThreadKey[] = [
   'social_rhythm',
   'lifestyle',
   'experience',
@@ -55,11 +55,11 @@ export const BASELINE_WEIGHTS: WeightVector = {
   geography: 2,
 };
 
-export function dimensionVector(
+export function threadVector(
   vecA: ProfileVector,
   vecB: ProfileVector,
   _context?: MatchContext
-): Record<DimensionKey, number | null> {
+): Record<ThreadKey, number | null> {
   return {
     personality: scorePersonality(vecA, vecB),
     communication: scoreCommunication(vecA, vecB),
@@ -75,12 +75,12 @@ export function dimensionVector(
 }
 
 export function recombine(
-  dims: Record<DimensionKey, number | null>,
+  dims: Record<ThreadKey, number | null>,
   weights: WeightVector
 ): { resonance: number; logistics: number; rank: number } {
   let resSum = 0;
   let resWeightTotal = 0;
-  for (const d of RESONANCE_DIMS) {
+  for (const d of RESONANCE_THREADS) {
     const val = dims[d];
     if (typeof val === 'number') {
       const w = weights[d] ?? 0;
@@ -92,7 +92,7 @@ export function recombine(
 
   let logSum = 0;
   let logWeightTotal = 0;
-  for (const d of LOGISTICS_DIMS) {
+  for (const d of LOGISTICS_THREADS) {
     const val = dims[d];
     if (typeof val === 'number') {
       const w = weights[d] ?? 0;
@@ -109,7 +109,7 @@ export function recombine(
 export interface OutcomeSample {
   userA: string;
   userB: string;
-  dims: Record<DimensionKey, number | null>;
+  dims: Record<ThreadKey, number | null>;
   outcome: number; // 0..1
 }
 
@@ -288,7 +288,7 @@ function normalizeWeightsTo100(weights: WeightVector): WeightVector {
   const total = Object.values(copy).reduce((a, b) => a + b, 0);
   if (total <= 0) return { ...BASELINE_WEIGHTS };
 
-  const keys = Object.keys(copy) as DimensionKey[];
+  const keys = Object.keys(copy) as ThreadKey[];
   const normalized: WeightVector = { ...copy };
   for (const k of keys) {
     normalized[k] = (copy[k] / total) * 100;
@@ -331,16 +331,16 @@ export function tuneWeights(
   let currentWeights = normalizeWeightsTo100(baseline);
   let bestTrainScore = evaluate(trainSamples, currentWeights).spearman;
 
-  const dimensions: DimensionKey[] = [
-    ...RESONANCE_DIMS,
-    ...LOGISTICS_DIMS,
+  const threads: ThreadKey[] = [
+    ...RESONANCE_THREADS,
+    ...LOGISTICS_THREADS,
   ];
 
   for (let iter = 0; iter < iterations; iter++) {
     let improvedInPass = false;
 
     for (const step of stepSizes) {
-      for (const dim of dimensions) {
+      for (const dim of threads) {
         for (const dir of [1, -1]) {
           const candidateWeights = { ...currentWeights };
           candidateWeights[dim] = Math.max(0.1, candidateWeights[dim] + dir * step);
