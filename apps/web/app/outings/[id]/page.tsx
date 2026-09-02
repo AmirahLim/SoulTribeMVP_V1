@@ -982,8 +982,8 @@ function OutingDetailContent() {
 
       {/* EDIT PITCH MODAL */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-[28px] border border-white/20 bg-[#15261C] shadow-2xl text-left overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pb-24 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[75vh] md:max-h-[82vh] flex flex-col rounded-[28px] border border-white/20 bg-[#15261C] shadow-2xl text-left overflow-hidden my-auto">
             {/* Fixed Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0 bg-[#15261C]">
               <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
@@ -1174,8 +1174,8 @@ function OutingDetailContent() {
 
       {/* DELETE PITCH CONFIRMATION MODAL */}
       {isDeleteConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-[28px] border border-red-500/30 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pb-24 overflow-y-auto">
+          <div className="w-full max-w-md rounded-[28px] border border-red-500/30 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left my-auto">
             <div className="flex items-center gap-3 border-b border-white/10 pb-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
                 <Trash2 className="h-5 w-5" />
@@ -1210,8 +1210,8 @@ function OutingDetailContent() {
 
       {/* ADD MEMBER MODAL */}
       {isAddUserOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg rounded-[28px] border border-white/20 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pb-24 overflow-y-auto">
+          <div className="w-full max-w-lg rounded-[28px] border border-white/20 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left my-auto">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-emerald-400" /> Add Member to Outing
