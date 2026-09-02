@@ -253,7 +253,7 @@ function PitchComposerContent() {
             orientation: orientation,
             visibility: visibility,
             max_participants: maxParticipants,
-            state: 'proposed',
+            state: 'open',
           })
           .select('*')
           .single();
