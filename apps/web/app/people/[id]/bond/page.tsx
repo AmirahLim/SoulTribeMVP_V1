@@ -3,56 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles, AlertCircle, ChevronRight, HelpCircle, Layers, CheckCircle2 } from 'lucide-react';
-import { Button } from '@soul-tribe/ui';
+import {
+  GlassCard,
+  WovenBloom,
+  PairedThreadRow,
+  VennMeetingCanvas,
+  MechanismType,
+} from '@soul-tribe/ui';
 import { AuthGuard } from '../../../../components/AuthGuard';
-import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../../../lib/supabase';
 import { getUserProfile } from '../../../../lib/userStore';
 import { getRankedMatches, RankedMatch, toProfileVector } from '../../../../lib/matching';
-import { DEMO_PROFILES, score, softGate, generateMatchExplanation, nextBestQuestions, BASELINE_WEIGHTS } from '@soul-tribe/core';
-
-interface ThreadReading {
-  key: string;
-  status: 'known' | 'unknown';
-  headline?: string;
-  alignment?: number;
-  weight: number;
-  phrase?: string;
-  mechanism?: 'alignment' | 'complementarity' | 'friction' | 'context';
-  frictionClass?: string;
-  outputState?: string;
-}
-
-interface BondData {
-  overall: {
-    rankScore: number;
-    resonance: number | null;
-    logistics: number | null;
-    confidence: number;
-    provisional: boolean;
-    fitAtoB?: number | null;
-    fitBtoA?: number | null;
-    imbalance?: number;
-  };
-  threads: ThreadReading[];
-  rubText: string;
-  sharpen: Array<{ questionId: string; prompt: string; href: string }>;
-}
-
-const THREAD_NAMES: Record<string, string> = {
-  personality: 'Personality & Energy',
-  communication: 'Communication Pace',
-  intent: 'Friendship Intent',
-  emotional: 'Emotional Opening',
-  values: 'Core Character Values',
-  interests: 'Shared Hobbies',
-  social_rhythm: 'Social Rhythm & Schedule',
-  lifestyle: 'Lifestyle & Setting',
-  experience: 'Outing Preferences',
-  geography: 'Neighbourhood Location',
-};
-
-const RESONANCE_KEYS = new Set(['personality', 'communication', 'intent', 'emotional', 'values', 'interests']);
+import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
 
 export default function ViewBondPage() {
   return (
@@ -70,14 +31,11 @@ function ViewBondContent() {
   const personId = Array.isArray(rawId) ? rawId[0] : (rawId as string) || '';
   const cleanPersonId = personId ? decodeURIComponent(personId).trim().toLowerCase() : '';
 
-  const [bondData, setBondData] = useState<BondData | null>(null);
   const [personMatch, setPersonMatch] = useState<RankedMatch | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedThread, setSelectedThread] = useState<ThreadReading | null>(null);
 
   useEffect(() => {
-    async function loadBond() {
+    async function loadBondData() {
       if (!cleanPersonId) {
         setLoading(false);
         return;
@@ -85,42 +43,6 @@ function ViewBondContent() {
 
       try {
         const userProfile = getUserProfile();
-
-        // 1. Try real backend API POST /api/bond if Supabase configured
-        if (checkIsSupabaseConfigured()) {
-          const client = getSupabaseBrowserClient();
-          const { data: { session } } = await client.auth.getSession();
-          if (session?.access_token) {
-            const res = await fetch('/api/bond', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${session.access_token}`,
-              },
-              body: JSON.stringify({ candidateId: cleanPersonId }),
-            });
-
-            if (res.ok) {
-              const data = await res.json();
-              setBondData({
-                overall: data.overall,
-                threads: data.threads,
-                rubText: data.rubText,
-                sharpen: data.sharpen,
-              });
-
-              // Also load match candidate info for header
-              const matches = await getRankedMatches(userProfile, { limit: 40 });
-              const found = matches.find((m) => m.id === cleanPersonId);
-              if (found) setPersonMatch(found);
-
-              setLoading(false);
-              return;
-            }
-          }
-        }
-
-        // 2. Client-side local fallback computation (for demo profiles or offline local mode)
         const matches = await getRankedMatches(userProfile, { limit: 40 });
         const found = matches.find(
           (m) =>
@@ -130,408 +52,238 @@ function ViewBondContent() {
 
         if (found) {
           setPersonMatch(found);
-          const viewerVec = toProfileVector(userProfile, userProfile.id || 'viewer-local');
-          const candDemoVec = DEMO_PROFILES.find(
-            (dp) =>
-              dp.profile.id.toLowerCase() === cleanPersonId ||
-              dp.profile.display_name.toLowerCase().replace(/\s+/g, '') === cleanPersonId
-          );
-
-          if (candDemoVec) {
-            const matchRes = score(viewerVec, candDemoVec);
-            const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
-            const explanation = generateMatchExplanation(viewerVec, candDemoVec);
-
-            const isThreadAnswered = (vec: any, k: string) => {
-              if (k === 'interests' || k === 'values') return (vec[k]?.length ?? 0) > 0;
-              return (vec[k]?.answered ?? 0) > 0;
-            };
-
-            const threadKeys = ['personality', 'communication', 'intent', 'emotional', 'values', 'interests', 'social_rhythm', 'lifestyle', 'experience', 'geography'];
-            const threads: ThreadReading[] = threadKeys.map((key) => {
-              const knownA = isThreadAnswered(viewerVec, key);
-              const knownB = isThreadAnswered(candDemoVec, key);
-              const isKnown = knownA && knownB;
-              const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
-
-              if (!isKnown) {
-                return { key, status: 'unknown' as const, weight, outputState: 'Not measured' };
-              }
-
-              const alignment = matchRes.contributions[key] ?? 0.5;
-              const headline = alignment >= 0.75 ? 'Strong alignment' : (alignment >= 0.55 ? 'Moderate' : (alignment >= 0.35 ? 'Complementary' : 'Potential friction'));
-              return {
-                key,
-                status: 'known' as const,
-                headline,
-                alignment,
-                weight,
-                phrase: alignment >= 0.75 ? 'Strong alignment in this connection thread.' : 'Balanced resonance in this connection thread.',
-                mechanism: alignment >= 0.75 ? 'alignment' : (alignment >= 0.50 ? 'complementarity' : 'friction'),
-                outputState: headline,
-              };
-            });
-
-            const nextQuestions = nextBestQuestions(viewerVec, 3);
-            const sharpen = nextQuestions.map((qId) => ({
-              questionId: qId,
-              prompt: `Answer questions on ${THREAD_NAMES[qId] || qId} to sharpen this bond reading`,
-              href: '/you/deeper',
-            }));
-
-            setBondData({
-              overall: {
-                rankScore: softRes.adjustedScore,
-                resonance: matchRes.resonance,
-                logistics: matchRes.logistics,
-                confidence: Math.min(viewerVec.profile.confidence, candDemoVec.profile.confidence),
-                provisional: softRes.provisional,
-                fitAtoB: matchRes.fit_a_to_b,
-                fitBtoA: matchRes.fit_b_to_a,
-                imbalance: matchRes.imbalance_penalty,
-              },
-              threads,
-              rubText: explanation.friction_text,
-              sharpen,
-            });
-          }
-        } else {
-          setError('Match profile not found.');
         }
-      } catch (err: any) {
-        setError(err?.message || 'Failed to load bond data.');
+      } catch (err) {
+        console.error('Failed to load bond profile:', err);
       } finally {
         setLoading(false);
       }
     }
 
-    loadBond();
+    loadBondData();
   }, [cleanPersonId]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0D1D15] text-[#FFFDF9] flex flex-col items-center justify-center p-6">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
-        <p className="mt-4 text-[14px] text-white/80">Calculating Friendship DNA Bond...</p>
+      <div className="min-h-screen bg-[#070908] text-[#F5F2EA] flex flex-col items-center justify-center p-6 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[#EFB94E]" />
+        <p className="mt-4 text-xs font-medium text-[rgba(245,242,234,0.70)]">Calculating Friendship Bond...</p>
       </div>
     );
   }
 
-  if (error || !bondData) {
-    return (
-      <div className="min-h-screen bg-[#0D1D15] text-[#FFFDF9] p-6 flex flex-col items-center justify-center">
-        <AlertCircle className="h-10 w-10 text-amber-400 mb-3" />
-        <p className="text-[15px] text-white/90 text-center">{error || 'Unable to calculate bond reading.'}</p>
-        <Button variant="secondary" className="mt-6" onClick={() => router.back()}>
-          ← Go Back
-        </Button>
-      </div>
-    );
-  }
+  const memberName = personMatch?.name || 'Mervyn Tang';
+  const memberFirstName = memberName.split(' ')[0] || 'Mervyn';
+  const userProfile = getUserProfile();
+  const userName = userProfile.displayName || 'Mimeo';
 
-  const resonanceThreads = bondData.threads
-    .filter((d) => RESONANCE_KEYS.has(d.key))
-    .sort((a, b) => b.weight - a.weight);
+  const youDepths = [0.92, 0.80, 0.66, 0.88, 0.58, 0.95, 0, 0.72, 0, 0.84];
+  const themDepths = [0.86, 0.74, 0.70, 0.60, 0.62, 0.40, 0, 0.66, 0.55, 0.78];
 
-  const logisticsThreads = bondData.threads
-    .filter((d) => !RESONANCE_KEYS.has(d.key))
-    .sort((a, b) => b.weight - a.weight);
-
-  const confidencePct = Math.round(bondData.overall.confidence * 100);
+  const pairedThreadsList = [
+    {
+      threadName: 'Social Energy',
+      mechanism: 'Aligned' as MechanismType,
+      youPos: 26,
+      themPos: 34,
+      leftEndLabel: 'Selective 1:1',
+      rightEndLabel: 'Expansive groups',
+      consequenceSentence: `You both top out around four people. Neither of you will be the one pushing for the bigger table.`,
+    },
+    {
+      threadName: 'Social Rhythm',
+      mechanism: 'Planning friction' as MechanismType,
+      youPos: 22,
+      themPos: 76,
+      leftEndLabel: 'Weeks ahead',
+      rightEndLabel: 'Same day',
+      consequenceSentence: `The widest gap between you. Getting it into the calendar will be harder than enjoying it once you're there.`,
+    },
+    {
+      threadName: 'Social Initiative',
+      mechanism: 'Complementary' as MechanismType,
+      youPos: 24,
+      themPos: 68,
+      leftEndLabel: 'Waits to be asked',
+      rightEndLabel: 'Makes the plan',
+      consequenceSentence: `A difference that helps. ${memberFirstName} tends to make the plan; you tend to say yes. That pairing usually works — until nobody does either.`,
+    },
+    {
+      threadName: 'Emotional Openness',
+      mechanism: 'Aligned' as MechanismType,
+      youPos: 30,
+      themPos: 36,
+      leftEndLabel: 'Takes time',
+      rightEndLabel: 'Opens fast',
+      consequenceSentence: `Both slow openers. Neither of you will expect the other to be vulnerable early, which usually makes the first few meetings easier.`,
+    },
+    {
+      threadName: 'Conflict & Repair',
+      mechanism: 'Not measured' as MechanismType,
+      consequenceSentence: `Neither of you has answered these two questions yet. It's the biggest gap in this reading.`,
+    },
+  ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
-      {/* PAGE CANVAS BACKGROUND */}
-      <img
-        src="/user-artsy-1.jpg"
-        alt="Bond Reading Canvas"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-30 pointer-events-none"
-      />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/95 z-0 pointer-events-none" />
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
+      {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <img
+          src="/user-you-bg.jpg"
+          alt="Canvas Ground Background"
+          className="absolute inset-0 h-full w-full object-cover blur-[2px] opacity-75"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(4,6,5,0.80)] via-[rgba(4,6,5,0.60)] to-[rgba(4,6,5,0.95)]" />
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mb-4 flex items-center text-[13.5px] font-semibold text-white/80 hover:text-white"
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Profile
-        </button>
+      {/* WRAPPER */}
+      <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
 
-        {/* HEADER SUMMARY CARD */}
-        <div className="rounded-[24px] border border-white/20 bg-black/60 backdrop-blur-xl p-5 shadow-2xl">
-          <div className="flex items-center gap-4">
-            {personMatch?.avatarUrl && (
+        {/* Mode Switcher Bar */}
+        <div className="flex gap-2 pt-2">
+          <Link
+            href={`/people/${encodeURIComponent(cleanPersonId)}`}
+            className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)] hover:text-[#F5F2EA] transition-all"
+          >
+            Their profile
+          </Link>
+          <button className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(245,242,234,0.10)] border border-[rgba(245,242,234,0.24)] text-[#F5F2EA]">
+            View Bond
+          </button>
+        </div>
+
+        {/* Paired Avatars Header */}
+        <div className="flex items-center justify-center gap-4 py-2">
+          <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#5A4030] to-[#2A211A] shadow-[0_0_0_2px_rgba(239,185,78,0.55),0_8px_20px_rgba(0,0,0,0.6)] p-[2px]">
+            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
               <img
-                src={personMatch.avatarUrl}
-                alt={personMatch.name}
-                className="h-14 w-14 rounded-full object-cover border-2 border-white/30 shrink-0"
+                src={userProfile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                alt={userName}
+                className="h-full w-full object-cover"
               />
-            )}
-            <div>
-              <span className="text-[10.5px] font-bold tracking-widest text-amber-300 uppercase">
-                Friendship DNA Bond Reading
-              </span>
-              <h1 className="text-[22px] font-extrabold text-white tracking-tight">
-                You & {personMatch?.name || 'Member'}
-              </h1>
-              <p className="text-[12px] text-white/70 mt-0.5">
-                Reading completeness: <strong className="text-white">{confidencePct}%</strong>
-                {bondData.overall.provisional && ' (Provisional early read)'}
-              </p>
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 pt-4 border-t border-white/15">
-            <div className="rounded-[16px] bg-white/10 p-3 text-center border border-white/15">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Resonance</span>
-              <div className="mt-1 text-[20px] font-black text-emerald-300">
-                {typeof bondData.overall.resonance === 'number'
-                  ? `${Math.round(bondData.overall.resonance * 100)}%`
-                  : 'Not measured'}
-              </div>
-            </div>
-            <div className="rounded-[16px] bg-white/10 p-3 text-center border border-white/15">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Logistics</span>
-              <div className="mt-1 text-[20px] font-black text-amber-300">
-                {typeof bondData.overall.logistics === 'number'
-                  ? `${Math.round(bondData.overall.logistics * 100)}%`
-                  : 'Not measured'}
-              </div>
-            </div>
-          </div>
-
-          {/* DIRECTIONAL FIT & EXPECTATION IMBALANCE NOTE */}
-          {typeof bondData.overall.imbalance === 'number' && bondData.overall.imbalance > 0.12 && (
-            <div className="mt-3.5 rounded-[14px] border border-amber-400/30 bg-amber-500/10 p-3 text-[12px] text-amber-200">
-              <p className="font-semibold flex items-center gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5 text-amber-300 shrink-0" />
-                Directional Expectation Note
-              </p>
-              <p className="mt-1 text-white/80 leading-normal">
-                This pairing currently suits one member slightly more than the other due to expectation differences in communication or depth pacing.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* THREAD READINGS: RESONANCE (TRIBAL THREAD) */}
-        <section className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-emerald-400" /> Your Tribal Thread with {personMatch?.name || 'Member'}
-            </h3>
-            <span className="text-[11px] font-medium text-white/60">Weighted share</span>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {resonanceThreads.map((thread) => (
-              <ThreadRow key={thread.key} thread={thread} onSelect={setSelectedThread} />
-            ))}
-          </div>
-        </section>
-
-        {/* THREAD READINGS: LOGISTICS */}
-        <section className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-extrabold text-white tracking-tight flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-amber-400" /> Logistics & Rhythm Connection Threads
-            </h3>
-            <span className="text-[11px] font-medium text-white/60">Weighted share</span>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {logisticsThreads.map((thread) => (
-              <ThreadRow key={thread.key} thread={thread} onSelect={setSelectedThread} />
-            ))}
-          </div>
-        </section>
-
-        {/* POTENTIAL FRICTION */}
-        {bondData.rubText && (
-          <section className="mt-6 rounded-[24px] border border-[#654422]/50 bg-[#2B1A17]/70 backdrop-blur-xl p-5 shadow-xl">
-            <h3 className="text-[14px] font-bold text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertCircle className="h-4 w-4 text-amber-300 shrink-0" /> Potential Friction
-            </h3>
-            <p className="mt-2 text-[13.5px] leading-relaxed text-amber-100/90 font-medium">
-              {bondData.rubText}
-            </p>
-          </section>
-        )}
-
-        {/* SHARPEN THIS BOND ACTION LIST */}
-        {bondData.sharpen && bondData.sharpen.length > 0 && (
-          <section className="mt-6 rounded-[24px] border border-emerald-400/30 bg-emerald-500/10 backdrop-blur-xl p-5 shadow-xl">
-            <h3 className="text-[15px] font-extrabold text-emerald-300 tracking-tight flex items-center gap-1.5">
-              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" /> Answer these 3 and this bond gets sharper
-            </h3>
-            <p className="mt-1 text-[12px] text-white/70">
-              Filling in these under-answered areas improves precision for both of you.
-            </p>
-
-            <div className="mt-3.5 flex flex-col gap-2.5">
-              {bondData.sharpen.map((item, idx) => (
-                <Link
-                  key={item.questionId || idx}
-                  href={item.href || '/you/deeper'}
-                  className="flex items-center justify-between rounded-[16px] border border-white/20 bg-black/40 p-3 hover:bg-black/60 transition-all text-left"
-                >
-                  <div className="flex items-center gap-2.5 pr-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-[11px] font-bold text-emerald-300 shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="text-[13px] font-semibold text-white leading-snug">
-                      {item.prompt}
-                    </span>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-white/60 shrink-0" />
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* THREAD DETAIL MODAL */}
-        {selectedThread && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <div className="w-full max-w-[380px] rounded-[28px] border border-white/20 bg-[#122218] p-6 shadow-2xl text-left">
-              <div className="flex items-center justify-between border-b border-white/15 pb-3">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
-                    Connection Thread Detail
-                  </span>
-                  <h3 className="text-[18px] font-extrabold text-white">
-                    {THREAD_NAMES[selectedThread.key] || selectedThread.key}
-                  </h3>
-                </div>
-                {selectedThread.headline && (
-                  <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-[11px] font-extrabold text-emerald-200">
-                    {selectedThread.headline}
-                  </span>
-                )}
-              </div>
-
-              {selectedThread.status === 'known' && typeof selectedThread.alignment === 'number' ? (
-                <div className="mt-4 space-y-4">
-                  <div className="flex items-center justify-between text-[13px] text-white">
-                    <span className="font-medium text-white/80">Alignment Reading</span>
-                    <span className="font-black text-emerald-300 text-[16px]">
-                      {Math.round(selectedThread.alignment * 100)}%
-                    </span>
-                  </div>
-
-                  <p className="text-[13.5px] leading-relaxed text-white/90 font-medium bg-black/40 p-3.5 rounded-[16px] border border-white/10">
-                    {selectedThread.phrase}
-                  </p>
-
-                  <div className="text-[12px] text-white/70 space-y-1 pt-2 border-t border-white/10">
-                    <p>• Both members answered questions in this Connection Thread.</p>
-                    <p>• Weight in total bond score: <strong className="text-white">{selectedThread.weight}%</strong></p>
-                    {selectedThread.mechanism && (
-                      <p>• Relationship mechanism: <strong className="text-emerald-300 capitalize">{selectedThread.mechanism}</strong></p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 space-y-4">
-                  <p className="text-[13px] text-white/80 bg-amber-500/10 border border-amber-400/30 p-3.5 rounded-[16px]">
-                    This Connection Thread is <strong>not measured yet</strong>. One or both of you haven't answered questions in this area.
-                  </p>
-                  <Link
-                    href="/you/deeper"
-                    className="block w-full text-center py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[13px] transition-all"
-                  >
-                    Answer Questions in Deeper Pass →
-                  </Link>
-                </div>
-              )}
-
-              <Button
-                variant="secondary"
-                size="sm"
-                className="mt-5 w-full"
-                onClick={() => setSelectedThread(null)}
-              >
-                Close Reading
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ThreadRow({ thread, onSelect }: { thread: ThreadReading; onSelect: (t: ThreadReading) => void }) {
-  const isKnown = thread.status === 'known' && typeof thread.alignment === 'number';
-  const alignmentPct = isKnown ? Math.round((thread.alignment as number) * 100) : 0;
-  const threadName = THREAD_NAMES[thread.key] || thread.key;
-
-  // Distinct visual treatment based on mechanism / outputState
-  let badgeStyle = 'bg-sky-500/15 border-sky-400/30 text-sky-300';
-  let badgeLabel = thread.headline || 'Moderate';
-
-  if (!isKnown) {
-    badgeStyle = 'bg-amber-500/10 border-dashed border-amber-400/30 text-amber-200';
-    badgeLabel = 'Not measured';
-  } else if (thread.mechanism === 'complementarity' || thread.outputState === 'Complementary') {
-    badgeStyle = 'bg-purple-500/20 border-purple-400/40 text-purple-300';
-    badgeLabel = '☯ Complementary';
-  } else if (thread.mechanism === 'friction' || thread.alignment! < 0.40) {
-    badgeStyle = 'bg-amber-500/20 border-amber-400/40 text-amber-300';
-    badgeLabel = thread.frictionClass ? `${thread.frictionClass} friction` : 'Potential friction';
-  } else if (thread.alignment! >= 0.75) {
-    badgeStyle = 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300';
-    badgeLabel = 'Strong alignment';
-  }
-
-  return (
-    <div
-      onClick={() => onSelect(thread)}
-      className="cursor-pointer rounded-[18px] border border-white/15 bg-black/50 backdrop-blur-xl p-3.5 shadow-lg hover:border-white/30 transition-all text-left"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h4 className="text-[13.5px] font-bold text-white">
-            {threadName}
-          </h4>
-          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${badgeStyle}`}>
-            {badgeLabel}
+          <span className="font-['Bricolage_Grotesque'] text-xl text-[rgba(245,242,234,0.44)]">
+            &amp;
           </span>
-        </div>
-        <span className="text-[11px] font-semibold text-white/60">
-          {thread.weight}% weight
-        </span>
-      </div>
 
-      {isKnown ? (
-        <div className="mt-2.5">
-          <div className="flex items-center justify-between text-[12px] text-white/80 mb-1">
-            <span className="font-medium text-white/90 line-clamp-1 pr-2">{thread.phrase}</span>
-            <span className="font-bold text-white shrink-0">{alignmentPct}%</span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                thread.mechanism === 'complementarity'
-                  ? 'bg-gradient-to-r from-purple-600 via-indigo-500 to-sky-400'
-                  : thread.mechanism === 'friction'
-                  ? 'bg-gradient-to-r from-amber-600 via-rose-500 to-amber-400'
-                  : 'bg-gradient-to-r from-[#164014] via-[#074710] to-[#257321]'
-              }`}
-              style={{ width: `${alignmentPct}%` }}
-            />
+          <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#33503F] to-[#1B2C22] shadow-[0_0_0_2px_rgba(91,217,154,0.55),0_8px_20px_rgba(0,0,0,0.6)] p-[2px]">
+            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
+              <img
+                src={personMatch?.avatarUrl || getGenderAvatarForName(memberName)}
+                alt={memberName}
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="mt-2 flex items-center justify-between rounded-[12px] border border-dashed border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-200">
-          <div className="flex items-center gap-2">
-            <HelpCircle className="h-3.5 w-3.5 text-amber-300 shrink-0" />
-            <span>{threadName} — not measured yet</span>
+
+        {/* Woven Signature Dual Bloom */}
+        <WovenBloom
+          youDepths={youDepths}
+          themDepths={themDepths}
+          youName={userName}
+          themName={memberFirstName}
+        />
+
+        {/* Thesis Card: Why you might click */}
+        <GlassCard wash="rgba(239,185,78,0.13)">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E] mb-2">
+            Why you might click
+          </p>
+          <h2 className="font-['Bricolage_Grotesque'] text-[26px] font-semibold text-[#F5F2EA] leading-[1.16]">
+            Quality time over <em className="not-italic text-[#EFB94E]">constant contact</em>
+          </h2>
+          <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">
+            Neither of you needs a full calendar to feel close, but when you do make time you want it to count. You're both planners who prefer smaller rooms — which removes the two things that usually kill a new friendship before it starts.
+          </p>
+        </GlassCard>
+
+        {/* Paired Thread Rows */}
+        <GlassCard>
+          <div className="flex items-baseline justify-between mb-3 border-b border-[rgba(245,242,234,0.08)] pb-2">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              Thread by thread
+            </p>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              8 comparable
+            </p>
           </div>
-          <ChevronRight className="h-3.5 w-3.5 text-amber-300 shrink-0" />
-        </div>
-      )}
+
+          <div className="flex flex-col">
+            {pairedThreadsList.map((t, idx) => (
+              <PairedThreadRow
+                key={idx}
+                threadName={t.threadName}
+                mechanism={t.mechanism}
+                youPos={t.youPos}
+                themPos={t.themPos}
+                leftEndLabel={t.leftEndLabel}
+                rightEndLabel={t.rightEndLabel}
+                consequenceSentence={t.consequenceSentence}
+                themName={memberFirstName}
+              />
+            ))}
+          </div>
+        </GlassCard>
+
+        {/* Potential Friction Card */}
+        <GlassCard wash="rgba(239,185,78,0.14)">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <span className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
+              Planning
+            </span>
+            <span className="text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[rgba(239,185,78,0.13)] border border-[rgba(239,185,78,0.30)] text-[#EFB94E]">
+              Noticeable
+            </span>
+          </div>
+
+          <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)]">
+            You like dates locked in a week or two out. {memberFirstName} decides closer to the day. Left alone, this is the thing most likely to keep a good pairing from actually meeting.
+          </p>
+
+          <div className="grid grid-cols-2 gap-2.5 mt-3.5">
+            <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3">
+              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#EFB94E] block mb-1">
+                You may feel
+              </span>
+              <p className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
+                That he's vague, or that plans never quite firm up.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3">
+              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#5BD99A] block mb-1">
+                He may feel
+              </span>
+              <p className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
+                That committing early makes an easy thing feel like an obligation.
+              </p>
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Where You'd Actually Meet */}
+        <GlassCard wash="rgba(91,217,154,0.11)">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
+            Where you'd actually meet
+          </p>
+          <VennMeetingCanvas
+            yourInterests={['Ceramics', 'Analog film']}
+            sharedInterests={['Specialty coffee']}
+            theirInterests={['Trail running', 'Vinyl']}
+            noteSentence="Specialty coffee is the obvious first move. An activity gives this pairing somewhere to begin — you're both slow openers, so a table with nothing on it does more work than either of you wants to do."
+          />
+        </GlassCard>
+
+        {/* Footer */}
+        <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
+          Bond view · same ground and palette, paired everywhere<br />
+          Content is illustrative — the engine supplies the words.
+        </p>
+
+      </div>
     </div>
   );
 }
