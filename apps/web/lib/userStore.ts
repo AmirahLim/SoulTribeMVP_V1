@@ -291,8 +291,6 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   version: 10,
   displayName: 'Priya Sharma',
   handle: 'priya_sharma',
-  dateOfBirth: '1995-06-15',
-  birthYear: 1995,
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
   homeArea: 'Singapore',
   bio: 'Loves specialty coffee, ceramic craft, and analog film.',
@@ -332,47 +330,7 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   },
 };
 
-export const DEFAULT_PITCHES: PitchedOuting[] = [
-  {
-    id: 'pitch-101',
-    title: 'Saturday Pottery & Filter Coffee',
-    pitch: "Let's spend two hours throwing clay at a local studio, followed by a quiet filter coffee to talk properly.",
-    area: 'Singapore',
-    dateTime: 'Sat 14 Sep · 3:00pm',
-    hostName: 'Priya Sharma',
-    hostAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    seatsTotal: 6,
-    seatsFilled: 4,
-    cohesionScore: 88,
-    joinedGuests: [
-      {
-        id: 'p2',
-        name: 'Marcus Tan',
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-        homeArea: 'Singapore',
-        status: 'Confirmed',
-        isDemo: true,
-      },
-      {
-        id: 'p3',
-        name: 'Maya Lin',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-        homeArea: 'Singapore',
-        status: 'Confirmed',
-        isDemo: true,
-      },
-      {
-        id: 'p4',
-        name: 'Chen Wei',
-        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-        homeArea: 'Singapore',
-        status: 'Confirmed',
-        isDemo: true,
-      },
-    ],
-    createdAt: new Date().toISOString(),
-  },
-];
+export const DEFAULT_PITCHES: PitchedOuting[] = [];
 
 export function getUserProfile(): UserProfileData {
   if (typeof window === 'undefined') return DEFAULT_USER_PROFILE;
@@ -453,7 +411,7 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
 }
 
 export function getUserPitches(): PitchedOuting[] {
-  if (typeof window === 'undefined') return DEFAULT_PITCHES;
+  if (typeof window === 'undefined') return [];
   try {
     const saved = localStorage.getItem('soul_tribe_user_pitches');
     if (saved) {
@@ -465,7 +423,7 @@ export function getUserPitches(): PitchedOuting[] {
   } catch (e) {
     console.error('Failed to read user pitches', e);
   }
-  return DEFAULT_PITCHES;
+  return [];
 }
 
 export function addUserPitch(newPitch: PitchedOuting): PitchedOuting[] {
