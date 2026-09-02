@@ -836,9 +836,9 @@ function OutingDetailContent() {
           {/* Member List */}
           <div className="pt-2 space-y-2.5 border-t border-white/10">
             <span className="text-[11px] font-bold text-[#A6AAA4] uppercase tracking-wider block">
-              Accepted Members
+              Invited & Joining Roster ({members.length} Members)
             </span>
-            {acceptedMembers.map((m) => (
+            {members.map((m) => (
               <div key={m.user_id} className="flex items-center justify-between rounded-[16px] border border-white/10 bg-[#0D1D15] p-2.5">
                 <div className="flex items-center gap-2.5">
                   <img
@@ -862,9 +862,21 @@ function OutingDetailContent() {
                       <Sparkles className="h-3 w-3 text-emerald-400" /> View Bond
                     </span>
                   </Link>
-                  <span className="text-[10.5px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2.5 py-0.5">
-                    Accepted ✓
-                  </span>
+
+                  {m.role === 'host' || m.state === 'accepted' ? (
+                    <span className="text-[10.5px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 rounded-full px-2.5 py-0.5">
+                      ✓ Confirmed
+                    </span>
+                  ) : m.state === 'declined' ? (
+                    <span className="text-[10.5px] font-bold text-red-300 bg-red-500/20 border border-red-400/30 rounded-full px-2.5 py-0.5">
+                      ✕ Not Attending
+                    </span>
+                  ) : (
+                    <span className="text-[10.5px] font-bold text-amber-300 bg-amber-500/20 border border-amber-400/30 rounded-full px-2.5 py-0.5">
+                      ⏳ Pending
+                    </span>
+                  )}
+
                   {isHost && m.role !== 'host' && m.user_id !== viewerId && (
                     <button
                       type="button"
@@ -970,9 +982,10 @@ function OutingDetailContent() {
 
       {/* EDIT PITCH MODAL */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg rounded-[28px] border border-white/20 bg-[#15261C] p-6 shadow-2xl space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-[28px] border border-white/20 bg-[#15261C] shadow-2xl text-left overflow-hidden">
+            {/* Fixed Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0 bg-[#15261C]">
               <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
                 <Edit3 className="h-5 w-5 text-amber-400" /> Edit Outing Pitch
               </h3>
@@ -985,164 +998,168 @@ function OutingDetailContent() {
               </button>
             </div>
 
-            <form onSubmit={handleSavePitchEdit} className="space-y-4">
-              <div>
-                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                  Outing Title
-                </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                  Pitch Description
-                </label>
-                <textarea
-                  rows={4}
-                  value={editPitch}
-                  onChange={(e) => setEditPitch(e.target.value)}
-                  className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSavePitchEdit} className="flex flex-col min-h-0 flex-1">
+              <div className="overflow-y-auto p-6 space-y-4 flex-1">
                 <div>
                   <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                    Activity Category
-                  </label>
-                  <select
-                    value={editCategory}
-                    onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="coffee">Coffee & Cafe</option>
-                    <option value="dining">Dining & Food</option>
-                    <option value="intellectual">Intellectual & Deep Talk</option>
-                    <option value="cultural">Cultural & Arts</option>
-                    <option value="creative">Creative & Craft</option>
-                    <option value="active">Active & Outdoor</option>
-                    <option value="nightlife">Nightlife & Drinks</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                    Neighbourhood / Area
+                    Outing Title
                   </label>
                   <input
                     type="text"
-                    value={editArea}
-                    onChange={(e) => setEditArea(e.target.value)}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
                     className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
                     required
                   />
                 </div>
-              </div>
-
-              {/* SEPARATE DATE & TIME INPUTS */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                    Outing Date
-                  </label>
-                  <input
-                    type="date"
-                    value={editDate}
-                    onChange={(e) => setEditDate(e.target.value)}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
-                    Outing Time
+                    Pitch Description
                   </label>
-                  <input
-                    type="time"
-                    value={editTime}
-                    onChange={(e) => setEditTime(e.target.value)}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                  <textarea
+                    rows={3}
+                    value={editPitch}
+                    onChange={(e) => setEditPitch(e.target.value)}
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                    required
                   />
                 </div>
-              </div>
 
-              {/* MANAGE INVITED MEMBERS SECTION */}
-              <div className="pt-3 border-t border-white/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4]">
-                    Invited Members ({members.length} Total)
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsEditing(false);
-                      openAddUserModal();
-                    }}
-                    className="text-[11.5px] font-extrabold text-emerald-300 hover:text-emerald-200 flex items-center gap-1"
-                  >
-                    <UserPlus className="h-3.5 w-3.5" /> + Add Member
-                  </button>
-                </div>
-
-                <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
-                  {members.map((m) => (
-                    <div
-                      key={m.user_id}
-                      className="flex items-center justify-between rounded-[14px] border border-white/10 bg-[#0D1D15] p-2.5 text-[12.5px]"
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                      Activity Category
+                    </label>
+                    <select
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={m.avatar_url}
-                          alt={m.display_name}
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                        <div>
-                          <span className="font-bold text-[#F3F0E9] flex items-center gap-1.5">
-                            {m.display_name}
-                            {m.role === 'host' && <span className="text-amber-300 text-[10px] uppercase font-extrabold">(Host)</span>}
-                          </span>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10.5px] text-[#A6AAA4]">{m.home_area}</span>
-                            <span className="text-[10.5px] text-[#A6AAA4]">·</span>
-                            {m.role === 'host' || m.state === 'accepted' ? (
-                              <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.2 text-[9.5px] font-bold">
-                                ✓ Confirmed
-                              </span>
-                            ) : m.state === 'declined' ? (
-                              <span className="rounded-full bg-red-500/20 text-red-300 border border-red-400/30 px-2 py-0.2 text-[9.5px] font-bold">
-                                ✕ Not Attending
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.2 text-[9.5px] font-bold">
-                                ⏳ Pending
-                              </span>
-                            )}
+                      <option value="coffee">Coffee & Cafe</option>
+                      <option value="dining">Dining & Food</option>
+                      <option value="intellectual">Intellectual & Deep Talk</option>
+                      <option value="cultural">Cultural & Arts</option>
+                      <option value="creative">Creative & Craft</option>
+                      <option value="active">Active & Outdoor</option>
+                      <option value="nightlife">Nightlife & Drinks</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                      Neighbourhood / Area
+                    </label>
+                    <input
+                      type="text"
+                      value={editArea}
+                      onChange={(e) => setEditArea(e.target.value)}
+                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* SEPARATE DATE & TIME INPUTS */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                      Outing Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                      Outing Time
+                    </label>
+                    <input
+                      type="time"
+                      value={editTime}
+                      onChange={(e) => setEditTime(e.target.value)}
+                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* MANAGE INVITED MEMBERS SECTION */}
+                <div className="pt-3 border-t border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4]">
+                      Invited Members ({members.length} Total)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        openAddUserModal();
+                      }}
+                      className="text-[11.5px] font-extrabold text-emerald-300 hover:text-emerald-200 flex items-center gap-1"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" /> + Add Member
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {members.map((m) => (
+                      <div
+                        key={m.user_id}
+                        className="flex items-center justify-between rounded-[14px] border border-white/10 bg-[#0D1D15] p-2.5 text-[12.5px]"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={m.avatar_url}
+                            alt={m.display_name}
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                          <div>
+                            <span className="font-bold text-[#F3F0E9] flex items-center gap-1.5">
+                              {m.display_name}
+                              {m.role === 'host' && <span className="text-amber-300 text-[10px] uppercase font-extrabold">(Host)</span>}
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[10.5px] text-[#A6AAA4]">{m.home_area}</span>
+                              <span className="text-[10.5px] text-[#A6AAA4]">·</span>
+                              {m.role === 'host' || m.state === 'accepted' ? (
+                                <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                  ✓ Confirmed
+                                </span>
+                              ) : m.state === 'declined' ? (
+                                <span className="rounded-full bg-red-500/20 text-red-300 border border-red-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                  ✕ Not Attending
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.2 text-[9.5px] font-bold">
+                                  ⏳ Pending
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {m.role !== 'host' && m.user_id !== viewerId && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMember(m.user_id)}
-                          className="text-[11px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2.5 py-0.5"
-                        >
-                          Remove ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                        {m.role !== 'host' && m.user_id !== viewerId && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMember(m.user_id)}
+                            className="text-[11px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2.5 py-0.5"
+                          >
+                            Remove ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              {/* Fixed Footer */}
+              <div className="border-t border-white/10 px-6 py-4 shrink-0 bg-[#15261C] flex justify-end gap-2">
                 <Button type="button" variant="secondary" size="md" onClick={() => setIsEditing(false)}>
                   Cancel
                 </Button>

@@ -22,31 +22,70 @@ export interface OutingItem {
 }
 
 export function getOutingCategoryImage(category?: string, title?: string): string {
-  const cat = (category || '').toLowerCase();
   const t = (title || '').toLowerCase();
+  const cat = (category || '').toLowerCase();
 
-  if (cat.includes('coffee') || t.includes('coffee') || t.includes('cafe') || t.includes('latte') || t.includes('espresso')) {
-    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80';
+  // 1. Title Specific High-Resolution Photography Matching
+  if (t.includes('dating') || t.includes('singles') || t.includes('romance') || t.includes('match') || t.includes('relationship')) {
+    // Cozy candlelit discussion lounge atmosphere
+    return 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('dining') || cat.includes('food') || t.includes('dinner') || t.includes('food') || t.includes('ramen') || t.includes('brunch') || t.includes('eat')) {
-    return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('board game') || t.includes('game') || t.includes('catan') || t.includes('chess') || t.includes('tabletop')) {
+    // Tabletop board games setting
+    return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('active') || cat.includes('outdoor') || t.includes('hike') || t.includes('walk') || t.includes('run') || t.includes('climb') || t.includes('park')) {
-    return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('ramen') || t.includes('sushi') || t.includes('japanese') || t.includes('noodle')) {
+    // Japanese dining bar
+    return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('intellectual') || t.includes('book') || t.includes('read') || t.includes('talk') || t.includes('philosophy') || t.includes('debate') || t.includes('discuss')) {
-    return 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('book') || t.includes('reading') || t.includes('library') || t.includes('literature') || t.includes('novel')) {
+    // Bookshop library
+    return 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('cultural') || cat.includes('art') || t.includes('museum') || t.includes('gallery') || t.includes('exhibition') || t.includes('theatre')) {
-    return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('coffee') || t.includes('cafe') || t.includes('latte') || t.includes('matcha') || t.includes('espresso')) {
+    // Specialty coffee & latte art
+    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('nightlife') || cat.includes('drinks') || t.includes('cocktail') || t.includes('bar') || t.includes('pub') || t.includes('wine')) {
-    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('cocktail') || t.includes('wine') || t.includes('drinks') || t.includes('speakeasy') || t.includes('bar') || t.includes('pub') || t.includes('beer')) {
+    // Speakeasy lounge bar
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
   }
-  if (cat.includes('creative') || cat.includes('craft') || t.includes('pottery') || t.includes('paint') || t.includes('draw') || t.includes('craft')) {
-    return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('pottery') || t.includes('ceramic') || t.includes('craft') || t.includes('clay') || t.includes('paint')) {
+    // Pottery studio workshop
+    return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
   }
-  return 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80';
+  if (t.includes('hike') || t.includes('walk') || t.includes('bouldering') || t.includes('climb') || t.includes('run') || t.includes('park')) {
+    // Nature hiking trail
+    return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (t.includes('museum') || t.includes('gallery') || t.includes('art') || t.includes('exhibition')) {
+    // Modern art gallery
+    return 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 2. Category Fallbacks with Ultra High-Res Photography
+  if (cat.includes('coffee')) {
+    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('dining') || cat.includes('food')) {
+    return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('active') || cat.includes('outdoor')) {
+    return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('intellectual')) {
+    return 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('cultural') || cat.includes('art')) {
+    return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('nightlife') || cat.includes('drinks')) {
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (cat.includes('creative') || cat.includes('craft')) {
+    return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=1080&auto=format&fit=crop&q=85';
+  }
+  return 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1080&auto=format&fit=crop&q=85';
 }
 
 import { getUserPitches, getJoinedOutingsLocal } from './userStore';
