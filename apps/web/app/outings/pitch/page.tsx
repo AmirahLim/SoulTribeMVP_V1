@@ -571,7 +571,7 @@ function PitchComposerContent() {
             {/* SEPARATE DATE & TIME SECTIONS */}
             <div className="space-y-3 pt-2 border-t border-white/10">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
+                <div className="min-w-0 w-full">
                   <label className="text-[13px] font-semibold text-white flex items-center gap-1.5 mb-1">
                     <Calendar className="h-3.5 w-3.5 text-amber-300" /> Outing Date
                   </label>
@@ -580,11 +580,11 @@ function PitchComposerContent() {
                     value={pitchDate}
                     onChange={(e) => setPitchDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13.5px] text-white outline-none focus:border-white/50"
+                    className="h-11 w-full max-w-full min-w-0 box-border block rounded-[12px] border border-white/20 bg-black/60 px-3 py-2 text-[13.5px] text-white outline-none focus:border-white/50"
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0 w-full">
                   <label className="text-[13px] font-semibold text-white flex items-center gap-1.5 mb-1">
                     <Clock className="h-3.5 w-3.5 text-amber-300" /> Outing Time
                   </label>
@@ -592,7 +592,7 @@ function PitchComposerContent() {
                     type="time"
                     value={pitchTime}
                     onChange={(e) => setPitchTime(e.target.value)}
-                    className="h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-3 text-[13.5px] text-white outline-none focus:border-white/50"
+                    className="h-11 w-full max-w-full min-w-0 box-border block rounded-[12px] border border-white/20 bg-black/60 px-3 py-2 text-[13.5px] text-white outline-none focus:border-white/50"
                   />
                 </div>
               </div>

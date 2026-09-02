@@ -1064,8 +1064,8 @@ function OutingDetailContent() {
                 </div>
 
                 {/* SEPARATE DATE & TIME INPUTS */}
-                <div className="grid grid-cols-2 gap-3 pb-1">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
+                  <div className="min-w-0 w-full">
                     <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Outing Date
                     </label>
@@ -1073,11 +1073,11 @@ function OutingDetailContent() {
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border"
+                      className="w-full max-w-full min-w-0 h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border block"
                     />
                   </div>
 
-                  <div>
+                  <div className="min-w-0 w-full">
                     <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Outing Time
                     </label>
@@ -1085,7 +1085,7 @@ function OutingDetailContent() {
                       type="time"
                       value={editTime}
                       onChange={(e) => setEditTime(e.target.value)}
-                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border"
+                      className="w-full max-w-full min-w-0 h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border block"
                     />
                   </div>
                 </div>
