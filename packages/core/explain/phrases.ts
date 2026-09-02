@@ -296,3 +296,10 @@ export function getBondThreadPhrase(
   if (alignment >= 0.70) return `Strong alignment in ${key.replace('_', ' ')} based on your shared answers.`;
   return `Balanced contrast in ${key.replace('_', ' ')} based on your reported preferences.`;
 }
+
+export function getHeadlineForAlignment(alignment: number): string {
+  if (alignment >= 0.75) return 'Closely aligned';
+  if (alignment >= 0.55) return 'Complementary';
+  if (alignment >= 0.35) return 'Different rhythms';
+  return 'Likely friction';
+}

@@ -8,6 +8,7 @@ import {
   BASELINE_WEIGHTS,
   ProfileVector,
   getBondThreadPhrase,
+  getHeadlineForAlignment,
 } from '@soul-tribe/core';
 
 export const runtime = 'nodejs';
@@ -174,11 +175,13 @@ export async function POST(req: NextRequest) {
     }
 
     const alignment = contrib;
+    const headline = getHeadlineForAlignment(alignment);
     const phrase = getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,
       status: 'known' as const,
+      headline,
       alignment,
       weight,
       phrase,

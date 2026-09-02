@@ -14,6 +14,7 @@ import { DEMO_PROFILES, score, softGate, generateMatchExplanation, nextBestQuest
 interface ThreadReading {
   key: string;
   status: 'known' | 'unknown';
+  headline?: string;
   alignment?: number;
   weight: number;
   phrase?: string;
@@ -67,6 +68,7 @@ function ViewBondContent() {
   const [personMatch, setPersonMatch] = useState<RankedMatch | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedThread, setSelectedThread] = useState<ThreadReading | null>(null);
 
   useEffect(() => {
     async function loadBond() {
@@ -151,9 +153,11 @@ function ViewBondContent() {
               }
 
               const alignment = matchRes.contributions[key] ?? 0.5;
+              const headline = alignment >= 0.75 ? 'Closely aligned' : (alignment >= 0.55 ? 'Complementary' : (alignment >= 0.35 ? 'Different rhythms' : 'Likely friction'));
               return {
                 key,
                 status: 'known' as const,
+                headline,
                 alignment,
                 weight,
                 phrase: alignment >= 0.75 ? 'Strong alignment in this connection thread.' : 'Balanced resonance in this connection thread.',
@@ -294,7 +298,7 @@ function ViewBondContent() {
 
           <div className="flex flex-col gap-3">
             {resonanceThreads.map((thread) => (
-              <ThreadRow key={thread.key} thread={thread} />
+              <ThreadRow key={thread.key} thread={thread} onSelect={setSelectedThread} />
             ))}
           </div>
         </section>
@@ -310,7 +314,7 @@ function ViewBondContent() {
 
           <div className="flex flex-col gap-3">
             {logisticsThreads.map((thread) => (
-              <ThreadRow key={thread.key} thread={thread} />
+              <ThreadRow key={thread.key} thread={thread} onSelect={setSelectedThread} />
             ))}
           </div>
         </section>
@@ -341,7 +345,7 @@ function ViewBondContent() {
               {bondData.sharpen.map((item, idx) => (
                 <Link
                   key={item.questionId || idx}
-                  href={item.href}
+                  href={item.href || '/you/deeper'}
                   className="flex items-center justify-between rounded-[16px] border border-white/20 bg-black/40 p-3 hover:bg-black/60 transition-all text-left"
                 >
                   <div className="flex items-center gap-2.5 pr-2">
@@ -358,21 +362,96 @@ function ViewBondContent() {
             </div>
           </section>
         )}
+
+        {/* THREAD DETAIL MODAL */}
+        {selectedThread && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div className="w-full max-w-[380px] rounded-[28px] border border-white/20 bg-[#122218] p-6 shadow-2xl text-left">
+              <div className="flex items-center justify-between border-b border-white/15 pb-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
+                    Connection Thread Detail
+                  </span>
+                  <h3 className="text-[18px] font-extrabold text-white">
+                    {THREAD_NAMES[selectedThread.key] || selectedThread.key}
+                  </h3>
+                </div>
+                {selectedThread.headline && (
+                  <span className="rounded-full bg-emerald-500/20 border border-emerald-400/40 px-3 py-1 text-[11px] font-extrabold text-emerald-200">
+                    {selectedThread.headline}
+                  </span>
+                )}
+              </div>
+
+              {selectedThread.status === 'known' && typeof selectedThread.alignment === 'number' ? (
+                <div className="mt-4 space-y-4">
+                  <div className="flex items-center justify-between text-[13px] text-white">
+                    <span className="font-medium text-white/80">Alignment Reading</span>
+                    <span className="font-black text-emerald-300 text-[16px]">
+                      {Math.round(selectedThread.alignment * 100)}%
+                    </span>
+                  </div>
+
+                  <p className="text-[13.5px] leading-relaxed text-white/90 font-medium bg-black/40 p-3.5 rounded-[16px] border border-white/10">
+                    {selectedThread.phrase}
+                  </p>
+
+                  <div className="text-[12px] text-white/70 space-y-1 pt-2 border-t border-white/10">
+                    <p>• Both members answered questions in this Connection Thread.</p>
+                    <p>• Weight in total bond score: <strong className="text-white">{selectedThread.weight}%</strong></p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  <p className="text-[13px] text-white/80 bg-amber-500/10 border border-amber-400/30 p-3.5 rounded-[16px]">
+                    This Connection Thread is <strong>not measured yet</strong>. One or both of you haven't answered questions in this area.
+                  </p>
+                  <Link
+                    href="/you/deeper"
+                    className="block w-full text-center py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-[13px] transition-all"
+                  >
+                    Answer Questions in Deeper Pass →
+                  </Link>
+                </div>
+              )}
+
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-5 w-full"
+                onClick={() => setSelectedThread(null)}
+              >
+                Close Reading
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function ThreadRow({ thread }: { thread: ThreadReading }) {
+function ThreadRow({ thread, onSelect }: { thread: ThreadReading; onSelect: (t: ThreadReading) => void }) {
   const isKnown = thread.status === 'known' && typeof thread.alignment === 'number';
   const alignmentPct = isKnown ? Math.round((thread.alignment as number) * 100) : 0;
+  const threadName = THREAD_NAMES[thread.key] || thread.key;
 
   return (
-    <div className="rounded-[18px] border border-white/15 bg-black/50 backdrop-blur-xl p-3.5 shadow-lg">
+    <div
+      onClick={() => onSelect(thread)}
+      className="cursor-pointer rounded-[18px] border border-white/15 bg-black/50 backdrop-blur-xl p-3.5 shadow-lg hover:border-white/30 transition-all text-left"
+    >
       <div className="flex items-center justify-between">
-        <h4 className="text-[13.5px] font-bold text-white">
-          {THREAD_NAMES[thread.key] || thread.key}
-        </h4>
+        <div className="flex items-center gap-2">
+          <h4 className="text-[13.5px] font-bold text-white">
+            {threadName}
+          </h4>
+          {thread.headline && (
+            <span className="rounded-full bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
+              {thread.headline}
+            </span>
+          )}
+        </div>
         <span className="text-[11px] font-semibold text-white/60">
           {thread.weight}% weight
         </span>
@@ -381,8 +460,8 @@ function ThreadRow({ thread }: { thread: ThreadReading }) {
       {isKnown ? (
         <div className="mt-2.5">
           <div className="flex items-center justify-between text-[12px] text-white/80 mb-1">
-            <span className="font-medium text-white/90">{thread.phrase}</span>
-            <span className="font-bold text-white">{alignmentPct}%</span>
+            <span className="font-medium text-white/90 line-clamp-1 pr-2">{thread.phrase}</span>
+            <span className="font-bold text-white shrink-0">{alignmentPct}%</span>
           </div>
           <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">
             <div
@@ -392,9 +471,12 @@ function ThreadRow({ thread }: { thread: ThreadReading }) {
           </div>
         </div>
       ) : (
-        <div className="mt-2 flex items-center gap-2 rounded-[12px] border border-dashed border-white/20 bg-white/5 px-3 py-2 text-[12px] text-white/60">
-          <HelpCircle className="h-3.5 w-3.5 text-white/40 shrink-0" />
-          <span>Not enough answers yet from one of you</span>
+        <div className="mt-2 flex items-center justify-between rounded-[12px] border border-dashed border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-200">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+            <span>{threadName} — not measured yet</span>
+          </div>
+          <ChevronRight className="h-3.5 w-3.5 text-amber-300 shrink-0" />
         </div>
       )}
     </div>
