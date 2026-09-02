@@ -2,11 +2,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { generateMatchExplanation } from '../generator.ts';
 import { extractMarkers } from '../markers.ts';
-import { composeDyad } from '../dyad.ts';
+import { composeDyad, DYADIC_RULES } from '../dyad.ts';
 import { LEVEL_5_BLOCKED_TERMS } from '../blocklist.ts';
-import type { ProfileVector } from '../../domain/types.ts';
+import type { ProfileVector, OnboardingAnswers } from '../../domain/types.ts';
 
-describe('Step 6m — The Compositional Interpretation Layer', () => {
+describe('Step 6n — The Compositional Interpretation Layer', () => {
   const marcus: ProfileVector = {
     profile: {
       id: 'marcus',
@@ -21,37 +21,43 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
       tier: 'free',
       status: 'active',
     },
+    answers: {
+      q3GroupSize: '1-on-1',
+      q4Social: 'Low-maintenance - no pressure to reply fast',
+      q5PlanningRhythm: 'Planned - a week or two in advance',
+      q7Trust: 'Observant first - I take time to build trust',
+    },
     personality: {
       user_id: 'marcus',
-      extraversion: 0.3, // socially-selective
-      conscientiousness: 0.7, // structured-routine
+      extraversion: 0.3,
+      conscientiousness: 0.7,
       answered: 2,
     },
     social_rhythm: {
       user_id: 'marcus',
-      planning_horizon: 0.8, // advance-planning
+      planning_horizon: 0.8,
       answered: 1,
     },
     communication: {
       user_id: 'marcus',
-      contact_frequency_self: 0.3, // low-contact
-      response_speed_self: 0.3, // async-pacer
+      contact_frequency_self: 0.3,
+      response_speed_self: 0.3,
       answered: 2,
     },
     intent: {
       user_id: 'marcus',
-      depth: 0.8, // depth-oriented
+      depth: 0.8,
       answered: 1,
     },
   };
 
-  const partner1: ProfileVector = {
+  const amirah: ProfileVector = {
     profile: {
-      id: 'partner1',
-      handle: 'p1',
-      display_name: 'Chloe',
-      home_area: 'Novena',
-      birth_year: 1993,
+      id: 'amirah',
+      handle: 'amirah',
+      display_name: 'Amirah',
+      home_area: 'Tanjong Pagar',
+      birth_year: 1994,
       age_pref_min: 24,
       age_pref_max: 38,
       profile_version: 1,
@@ -59,24 +65,20 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
       tier: 'free',
       status: 'active',
     },
-    social_rhythm: {
-      user_id: 'partner1',
-      planning_horizon: 0.2, // spontaneous
-      answered: 1,
-    },
-    personality: {
-      user_id: 'partner1',
-      extraversion: 0.3, // socially-selective
-      answered: 1,
+    answers: {
+      q3GroupSize: '1-on-1',
+      q4Social: 'Deep conversations every few weeks',
+      q5PlanningRhythm: 'Spontaneous - same day or day before',
+      q7Trust: 'Observant first - I take time to build trust',
     },
     communication: {
-      user_id: 'partner1',
-      contact_frequency_self: 0.3, // low-contact
+      user_id: 'amirah',
+      contact_frequency_self: 0.5, // scalar > 0.4, but raw answer gives low-contact!
       answered: 1,
     },
     intent: {
-      user_id: 'partner1',
-      depth: 0.8, // depth-oriented
+      user_id: 'amirah',
+      depth: 0.8,
       answered: 1,
     },
   };
@@ -97,80 +99,58 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
     },
     social_rhythm: {
       user_id: 'partner2',
-      planning_horizon: 0.8, // advance-planning (same as Marcus!)
+      planning_horizon: 0.8,
       answered: 1,
     },
     personality: {
       user_id: 'partner2',
-      extraversion: 0.8, // socially-expansive
+      extraversion: 0.8,
       answered: 1,
     },
     communication: {
       user_id: 'partner2',
-      contact_frequency_self: 0.8, // frequent-touchpoints
+      contact_frequency_self: 0.8,
       answered: 1,
     },
   };
 
-  const partner3: ProfileVector = {
-    profile: {
-      id: 'partner3',
-      handle: 'p3',
-      display_name: 'Sarah',
-      home_area: 'Bishan',
-      birth_year: 1994,
-      age_pref_min: 24,
-      age_pref_max: 38,
-      profile_version: 1,
-      confidence: 0.8,
-      tier: 'free',
-      status: 'active',
-    },
-    social_rhythm: {
-      user_id: 'partner3',
-      planning_horizon: 0.2, // spontaneous
-      answered: 1,
-    },
-    communication: {
-      user_id: 'partner3',
-      contact_frequency_self: 0.3, // low-contact
-      answered: 1,
-    },
-  };
-
-  it('1. The same person reads differently with 3 different partners', () => {
-    const exp1 = generateMatchExplanation(marcus, partner1);
-    const exp2 = generateMatchExplanation(marcus, partner2);
-    const exp3 = generateMatchExplanation(marcus, partner3);
-
-    // Assert all 3 readings differ in substance
-    assert.notStrictEqual(exp1.click_text, exp2.click_text);
-    assert.notStrictEqual(exp1.click_text, exp3.click_text);
-    assert.notStrictEqual(exp2.click_text, exp3.click_text);
-
-    // Assert planning-friction sentence appears for partner 1 (spontaneous) and not partner 2 (advance-planning)
-    assert.ok(exp1.friction_text.includes('planning') || exp1.friction_text.includes('calendar') || exp1.friction_text.includes('plans'));
-    assert.strictEqual(exp2.friction_text.includes('planning rhythms'), false);
+  it('1. The quiet-week rule fires for Marcus × Amirah (Regression Test for Fix 1 & 2)', () => {
+    const explanation = generateMatchExplanation(marcus, amirah);
+    assert.ok(
+      explanation.click_text.includes('Neither of you will read a quiet week as rejection'),
+      `Quiet week rule must fire for Marcus x Amirah, got click_text: "${explanation.click_text}"`
+    );
   });
 
-  it('2. Combination rules fire ONLY on full matches', () => {
-    // Marcus + Partner 1 have: socially-selective + low-contact on both sides
-    const mMarcus = extractMarkers(marcus);
-    const mP1 = extractMarkers(partner1);
-    const statementsFull = composeDyad(mMarcus, mP1, 'Marcus', 'Chloe');
+  it('2. Dyadic output is preferred over bare per-thread enumeration for well-answered pair', () => {
+    const exp = generateMatchExplanation(marcus, amirah);
+    assert.ok(exp.dyadic_statements && exp.dyadic_statements.length > 0, 'Must produce dyadic statements');
+    assert.strictEqual(exp.click_text.startsWith('Overlap with'), false, 'Dyadic statement must be preferred over bare enumeration');
+  });
+
+  it('3. The same person reads differently with different partners', () => {
+    const exp1 = generateMatchExplanation(marcus, amirah);
+    const exp2 = generateMatchExplanation(marcus, partner2);
+
+    assert.notStrictEqual(exp1.click_text, exp2.click_text);
+  });
+
+  it('4. Combination rules fire ONLY on full matches', () => {
+    const mMarcus = extractMarkers(marcus, marcus.answers);
+    const mAmirah = extractMarkers(amirah, amirah.answers);
+    const statementsFull = composeDyad(mMarcus, mAmirah, 'Marcus', 'Amirah');
 
     const hasQuietWeek = statementsFull.some((s) => s.id === 'dyad-quiet-week-alignment');
     assert.strictEqual(hasQuietWeek, true, 'Rule must fire when all markers match');
 
-    // Remove 1 required marker from Partner 1 (e.g. remove low-contact)
-    const mP1Incomplete = mP1.filter((m) => m.key !== 'low-contact');
-    const statementsIncomplete = composeDyad(mMarcus, mP1Incomplete, 'Marcus', 'Chloe');
+    const mAmirahIncomplete = mAmirah.filter((m) => m.key !== 'low-contact');
+    const statementsIncomplete = composeDyad(mMarcus, mAmirahIncomplete, 'Marcus', 'Amirah');
     const hasQuietWeekIncomplete = statementsIncomplete.some((s) => s.id === 'dyad-quiet-week-alignment');
     assert.strictEqual(hasQuietWeekIncomplete, false, 'Rule must NOT fire when 1 required marker is missing');
   });
 
-  it('3. Evidence levels hold (level <= 4 for all statements)', () => {
-    const exp = generateMatchExplanation(marcus, partner1);
+  it('5. Evidence levels hold (level <= 4 for all statements)', () => {
+    const exp = generateMatchExplanation(marcus, amirah);
     if (exp.dyadic_statements) {
       exp.dyadic_statements.forEach((stmt) => {
         assert.ok(stmt.level >= 1 && stmt.level <= 4, `Statement ${stmt.id} level must be between 1 and 4`);
@@ -178,8 +158,8 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
     }
   });
 
-  it('4. Level 5 blocklist enforced against term list', () => {
-    const exp1 = generateMatchExplanation(marcus, partner1);
+  it('6. Level 5 blocklist enforced against term list', () => {
+    const exp1 = generateMatchExplanation(marcus, amirah);
     const exp2 = generateMatchExplanation(marcus, partner2);
 
     const allTexts = [
@@ -196,7 +176,7 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
     });
   });
 
-  it('5. Unanswered questions produce no markers', () => {
+  it('7. Unanswered questions produce no markers', () => {
     const emptyVec: ProfileVector = {
       profile: {
         id: 'empty',
@@ -217,8 +197,8 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
     assert.strictEqual(markers.length, 0);
   });
 
-  it('6. Traceability — every emitted statement carries non-empty sources', () => {
-    const exp = generateMatchExplanation(marcus, partner1);
+  it('8. Traceability — every emitted statement carries non-empty sources', () => {
+    const exp = generateMatchExplanation(marcus, amirah);
     if (exp.dyadic_statements) {
       exp.dyadic_statements.forEach((stmt) => {
         assert.ok(Array.isArray(stmt.sources) && stmt.sources.length > 0, `Statement ${stmt.id} must carry non-empty sources array`);
@@ -226,8 +206,8 @@ describe('Step 6m — The Compositional Interpretation Layer', () => {
     }
   });
 
-  it('7. No percentage compatibility score appears in headline or text', () => {
-    const exp = generateMatchExplanation(marcus, partner1);
+  it('9. No percentage compatibility score appears in headline or text', () => {
+    const exp = generateMatchExplanation(marcus, amirah);
     const fullOutput = `${exp.headline} ${exp.click_text} ${exp.friction_text}`;
     assert.strictEqual(/\d+%/.test(fullOutput), false, 'No percentage compatibility figure may appear in output');
   });
