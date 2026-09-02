@@ -55,7 +55,7 @@ describe('Step 6r — Visual Drawings & Bug Fixes Verification', () => {
 
   it('7. Card wash colors use brand amber and emerald with high-contrast text', () => {
     expect(colors.brand.amber).toBe('#EFB94E');
-    expect(colors.brand.emerald).toBe('#5BD99A');
+    expect(colors.brand.emerald).toBe('#3D7A5A');
     expect(THREAD_COLORS.personality.tone).toBe('emerald');
     expect(THREAD_COLORS.intent.tone).toBe('amber');
   });

@@ -1,29 +1,22 @@
 {
-  "ground": {
-    "paper": "#0D1D15",
-    "card": "rgba(10,12,11,0.62)",
-    "forest": "#0D1D15",
-    "emerald": "#1C3325",
-    "wood": "#15261C"
+  "brand": {
+    "ground": "#070908",
+    "amber": "#EFB94E",
+    "emerald": "#3D7A5A",
+    "amberWash": "rgba(239,185,78,0.13)",
+    "amberDim": "rgba(239,185,78,0.14)",
+    "emeraldWash": "rgba(45,82,62,0.20)",
+    "emeraldDim": "rgba(45,82,62,0.30)"
   },
   "ink": {
     "primary": "#F5F2EA",
     "secondary": "rgba(245,242,234,0.70)",
-    "muted": "rgba(245,242,234,0.44)",
-    "faint": "rgba(245,242,234,0.22)"
-  },
-  "brand": {
-    "amber": "#EFB94E",
-    "emerald": "#5BD99A",
-    "ink": "#F5F2EA",
-    "amberWash": "rgba(239,185,78,0.13)",
-    "emeraldWash": "rgba(91,217,154,0.13)",
-    "amberDim": "rgba(239,185,78,0.16)",
-    "emeraldDim": "rgba(91,217,154,0.14)"
+    "tertiary": "rgba(245,242,234,0.44)",
+    "quaternary": "rgba(245,242,234,0.22)"
   },
   "glass": {
     "bg": "rgba(10,12,11,0.62)",
     "border": "rgba(245,242,234,0.11)",
-    "lip": "rgba(245,242,234,0.22)"
+    "highlight": "rgba(245,242,234,0.22)"
   }
 }

@@ -93,7 +93,7 @@ export function ProfileHero({
               <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
                 {instinctType}
               </h3>
-              <span className="rounded-full border border-[rgba(91,217,154,0.30)] bg-[rgba(91,217,154,0.14)] px-3 py-0.5 text-[10px] font-bold text-[#5BD99A] uppercase tracking-wider">
+              <span className="rounded-full border border-[rgba(45,82,62,0.45)] bg-[rgba(45,82,62,0.25)] px-3 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider">
                 ACTIVE LEVEL
               </span>
             </div>

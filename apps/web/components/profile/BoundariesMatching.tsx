@@ -28,10 +28,10 @@ export function BoundariesMatching({
       }}
     >
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-[10px] font-bold tracking-widest text-[#5BD99A] uppercase">
+        <h3 className="text-[10px] font-bold tracking-widest text-[#4E8B69] uppercase">
           Boundaries &amp; Social Principles
         </h3>
-        <span className="text-[10px] font-bold tracking-wider uppercase text-[#5BD99A] bg-[rgba(91,217,154,0.12)] border border-[rgba(91,217,154,0.28)] px-2.5 py-0.5 rounded-full">
+        <span className="text-[10px] font-bold tracking-wider uppercase text-[#4E8B69] bg-[rgba(45,82,62,0.25)] border border-[rgba(45,82,62,0.45)] px-2.5 py-0.5 rounded-full">
           Shared On Profile
         </span>
       </div>
@@ -62,18 +62,18 @@ export function BoundariesMatching({
         </div>
 
         {/* 2. Cancellation Stance Card */}
-        <div className="rounded-xl border border-[rgba(91,217,154,0.25)] bg-[rgba(91,217,154,0.08)] p-3.5 flex flex-col justify-between">
+        <div className="rounded-xl border border-[rgba(45,82,62,0.40)] bg-[rgba(45,82,62,0.20)] p-3.5 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <Shield className="h-4 w-4 text-[#5BD99A]" />
-              <h4 className="text-xs font-bold text-[#5BD99A]">Cancellation Stance</h4>
+              <Shield className="h-4 w-4 text-[#4E8B69]" />
+              <h4 className="text-xs font-bold text-[#4E8B69]">Cancellation Stance</h4>
             </div>
             <p className="text-xs font-semibold text-[#F5F2EA]">
               {cancellationStance}
             </p>
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD99A]" />
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#4E8B69]" />
             <span className="text-[11px] text-[rgba(245,242,234,0.70)]">Graceful &amp; low pressure</span>
           </div>
         </div>

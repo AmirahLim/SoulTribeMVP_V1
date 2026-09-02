@@ -3,9 +3,9 @@ import { colors, THREAD_COLORS } from '@soul-tribe/tokens';
 import { containsLevel5Violation } from '@soul-tribe/core';
 
 describe('Step 6r Brand & Visual Profile Test Suite', () => {
-  it('1. Brand tokens match spec: amber #EFB94E, emerald #5BD99A, ink #F5F2EA', () => {
+  it('1. Brand tokens match spec: amber #EFB94E, emerald #3D7A5A, ink #F5F2EA', () => {
     expect(colors.brand.amber).toBe('#EFB94E');
-    expect(colors.brand.emerald).toBe('#5BD99A');
+    expect(colors.brand.emerald).toBe('#3D7A5A');
     expect(colors.ink.primary).toBe('#F5F2EA');
   });
 

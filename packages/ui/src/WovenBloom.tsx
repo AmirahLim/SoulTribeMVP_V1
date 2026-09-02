@@ -43,7 +43,7 @@ export function WovenBloom({
     const cy = H / 2;
 
     const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
+    const EMERALD = '45,82,62';
     const CREAM = '245,242,234';
 
     function drawPetal(cx: number, cy: number, ang: number, len: number, wid: number, rgb: string, alpha: number) {
@@ -130,7 +130,7 @@ export function WovenBloom({
           {youName}
         </span>
         <span className="flex items-center gap-1.5">
-          <b className="inline-block w-2 h-2 rounded-full bg-[#5BD99A]" />
+          <b className="inline-block w-2 h-2 rounded-full bg-[#3D7A5A]" />
           {themName}
         </span>
         <span className="flex items-center gap-1.5">

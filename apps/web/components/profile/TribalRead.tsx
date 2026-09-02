@@ -41,8 +41,8 @@ export function TribalRead({
   if (validSections.length === 0) return null;
 
   const isEmerald = tone === 'emerald';
-  const accentColor = isEmerald ? '#5BD99A' : '#EFB94E';
-  const washColor = isEmerald ? 'rgba(91,217,154,0.13)' : 'rgba(239,185,78,0.13)';
+  const accentColor = isEmerald ? '#4E8B69' : '#EFB94E';
+  const washColor = isEmerald ? 'rgba(45,82,62,0.20)' : 'rgba(239,185,78,0.13)';
 
   return (
     <>
@@ -84,8 +84,8 @@ export function TribalRead({
                 key={idx}
                 className="text-[11.5px] px-3 py-1 rounded-full border"
                 style={{
-                  backgroundColor: idx === 0 ? (isEmerald ? 'rgba(91,217,154,0.16)' : 'rgba(239,185,78,0.16)') : 'rgba(255,255,255,0.06)',
-                  borderColor: idx === 0 ? (isEmerald ? 'rgba(91,217,154,0.32)' : 'rgba(239,185,78,0.32)') : 'rgba(245,242,234,0.11)',
+                  backgroundColor: idx === 0 ? (isEmerald ? 'rgba(45,82,62,0.25)' : 'rgba(239,185,78,0.16)') : 'rgba(255,255,255,0.06)',
+                  borderColor: idx === 0 ? (isEmerald ? 'rgba(45,82,62,0.45)' : 'rgba(239,185,78,0.32)') : 'rgba(245,242,234,0.11)',
                   color: idx === 0 ? accentColor : 'rgba(245,242,234,0.75)',
                 }}
               >

@@ -254,7 +254,7 @@ function ViewBondContent() {
             </div>
 
             <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3">
-              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#5BD99A] block mb-1">
+              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#4E8B69] block mb-1">
                 He may feel
               </span>
               <p className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">

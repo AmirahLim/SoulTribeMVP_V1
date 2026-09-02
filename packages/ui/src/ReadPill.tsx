@@ -15,15 +15,15 @@ export function ReadPill({ label, tone = 'emerald', className = '' }: ReadPillPr
     <span
       className={`inline-flex items-center gap-1.75 px-3 py-1 rounded-full text-[11px] font-semibold border ${
         isEmerald
-          ? 'bg-[rgba(91,217,154,0.12)] border-[rgba(91,217,154,0.28)] text-[#5BD99A]'
+          ? 'bg-[rgba(45,82,62,0.25)] border-[rgba(45,82,62,0.45)] text-[#4E8B69]'
           : 'bg-[rgba(239,185,78,0.12)] border-[rgba(239,185,78,0.28)] text-[#EFB94E]'
       } ${className}`}
     >
       <i
         className="w-1.25 h-1.25 rounded-full"
         style={{
-          backgroundColor: isEmerald ? '#5BD99A' : '#EFB94E',
-          boxShadow: `0 0 8px ${isEmerald ? '#5BD99A' : '#EFB94E'}`,
+          backgroundColor: isEmerald ? '#3D7A5A' : '#EFB94E',
+          boxShadow: `0 0 8px ${isEmerald ? '#3D7A5A' : '#EFB94E'}`,
         }}
       />
       <span>{label}</span>

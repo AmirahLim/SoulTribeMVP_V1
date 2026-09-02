@@ -31,7 +31,7 @@ export function PairedThreadRow({
 
   let badgeClass = 'bg-[rgba(245,242,234,0.06)] text-[rgba(245,242,234,0.44)] border border-[rgba(245,242,234,0.11)]';
   if (mechanism === 'Aligned') {
-    badgeClass = 'bg-[rgba(91,217,154,0.14)] text-[#5BD99A] border border-[rgba(91,217,154,0.30)]';
+    badgeClass = 'bg-[rgba(45,82,62,0.25)] text-[#4E8B69] border border-[rgba(45,82,62,0.45)]';
   } else if (mechanism === 'Complementary') {
     badgeClass = 'bg-[rgba(150,190,255,0.13)] text-[#9FC3FF] border border-[rgba(150,190,255,0.30)]';
   } else if (mechanism === 'Planning friction' || mechanism === 'Friction') {
@@ -41,16 +41,16 @@ export function PairedThreadRow({
   // Calculate track span
   let minPos = 0;
   let maxPos = 0;
-  let spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.6), rgba(91,217,154,0.6))';
+  let spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.6), rgba(45,82,62,0.6))';
 
   if (!isUnmeasured && youPos !== undefined && themPos !== undefined) {
     minPos = Math.min(youPos, themPos);
     maxPos = Math.max(youPos, themPos);
 
     if (mechanism === 'Complementary') {
-      spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.5), rgba(159,195,255,0.45), rgba(91,217,154,0.5))';
+      spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.5), rgba(159,195,255,0.45), rgba(45,82,62,0.5))';
     } else if (mechanism === 'Planning friction' || mechanism === 'Friction') {
-      spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.55), rgba(239,185,78,0.18), rgba(91,217,154,0.55))';
+      spanGradient = 'linear-gradient(90deg, rgba(239,185,78,0.55), rgba(239,185,78,0.18), rgba(45,82,62,0.55))';
     }
   }
 
@@ -91,9 +91,9 @@ export function PairedThreadRow({
               style={{ left: `${youPos}%` }}
               title="You"
             />
-            {/* Them Dot (Emerald) */}
+            {/* Them Dot (Deep Forest Green) */}
             <div
-              className="absolute top-3.5 w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#5BD99A] shadow-[0_0_0_4px_rgba(91,217,154,0.22),0_0_14px_rgba(91,217,154,0.90)]"
+              className="absolute top-3.5 w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#3D7A5A] shadow-[0_0_0_4px_rgba(45,82,62,0.30),0_0_14px_rgba(45,82,62,0.90)]"
               style={{ left: `${themPos}%` }}
               title={themName}
             />

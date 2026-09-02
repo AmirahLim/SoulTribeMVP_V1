@@ -43,7 +43,7 @@ export function VennMeetingCanvas({
     const o = r * 0.52;
 
     const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
+    const EMERALD = '45,82,62';
     const CREAM = '245,242,234';
 
     ctx.globalCompositeOperation = 'lighter';
