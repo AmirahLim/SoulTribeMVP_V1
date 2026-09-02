@@ -55,22 +55,30 @@ export function PairedThreadRow({
   }
 
   return (
-    <div className={`py-4 border-t border-[rgba(245,242,234,0.08)] first-of-type:border-t-0 ${className}`}>
+    <div className={`py-6 border-t border-[rgba(245,242,234,0.10)] first-of-type:border-t-0 ${className}`}>
       {/* Header & Mechanism Badge */}
-      <div className="flex items-baseline justify-between gap-2.5 mb-2.5">
-        <span className="text-[14.5px] font-semibold text-[#F5F2EA]">{threadName}</span>
-        <span className={`text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full whitespace-nowrap ${badgeClass}`}>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <span className="font-['Bricolage_Grotesque'] text-[16px] font-bold text-[#F5F2EA]">{threadName}</span>
+        <span className={`text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full whitespace-nowrap ${badgeClass}`}>
           {mechanism}
         </span>
       </div>
 
       {/* Paired Track & Dots */}
       {!isUnmeasured && youPos !== undefined && themPos !== undefined ? (
-        <>
-          <div className="relative h-6.5 my-1">
-            <div className="absolute left-0 right-0 top-2.75 h-1 rounded-full bg-[rgba(245,242,234,0.09)]" />
+        <div className="my-2.5">
+          {/* End Labels above track for high contrast readability */}
+          {(leftEndLabel || rightEndLabel) && (
+            <div className="flex justify-between text-[11px] font-semibold text-[rgba(245,242,234,0.60)] mb-1.5 tracking-wide">
+              <span>{leftEndLabel}</span>
+              <span>{rightEndLabel}</span>
+            </div>
+          )}
+
+          <div className="relative h-7 my-1">
+            <div className="absolute left-0 right-0 top-3 h-1 rounded-full bg-[rgba(245,242,234,0.12)]" />
             <div
-              className="absolute top-2.75 h-1 rounded-full"
+              className="absolute top-3 h-1 rounded-full"
               style={{
                 left: `${minPos}%`,
                 width: `${Math.max(4, maxPos - minPos)}%`,
@@ -79,29 +87,22 @@ export function PairedThreadRow({
             />
             {/* You Dot (Amber) */}
             <div
-              className="absolute top-3.25 w-3.25 h-3.25 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#EFB94E] shadow-[0_0_0_4px_rgba(239,185,78,0.16),0_0_12px_rgba(239,185,78,0.85)]"
+              className="absolute top-3.5 w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#EFB94E] shadow-[0_0_0_4px_rgba(239,185,78,0.22),0_0_14px_rgba(239,185,78,0.90)]"
               style={{ left: `${youPos}%` }}
               title="You"
             />
             {/* Them Dot (Emerald) */}
             <div
-              className="absolute top-3.25 w-3.25 h-3.25 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#5BD99A] shadow-[0_0_0_4px_rgba(91,217,154,0.16),0_0_12px_rgba(91,217,154,0.85)]"
+              className="absolute top-3.5 w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#5BD99A] shadow-[0_0_0_4px_rgba(91,217,154,0.22),0_0_14px_rgba(91,217,154,0.90)]"
               style={{ left: `${themPos}%` }}
               title={themName}
             />
           </div>
-
-          {(leftEndLabel || rightEndLabel) && (
-            <div className="flex justify-between text-[10px] text-[rgba(245,242,234,0.22)] mt-0.5 tracking-wide">
-              <span>{leftEndLabel}</span>
-              <span>{rightEndLabel}</span>
-            </div>
-          )}
-        </>
+        </div>
       ) : null}
 
       {/* Consequence sentence */}
-      <p className="text-[12.5px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">
+      <p className="text-[13.5px] leading-relaxed text-[rgba(245,242,234,0.80)] mt-3">
         {consequenceSentence}
       </p>
     </div>

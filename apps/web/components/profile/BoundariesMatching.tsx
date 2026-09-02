@@ -1,16 +1,21 @@
 'use client';
 
 import React from 'react';
+import { Clock, Shield, Users, MapPin, CheckCircle2 } from 'lucide-react';
 
 export interface BoundariesMatchingProps {
-  visibleFields?: string[];
-  privateFields?: string[];
+  punctualityStance?: string;
+  cancellationStance?: string;
+  groupSizeBoundary?: string;
+  locationBoundary?: string;
   className?: string;
 }
 
 export function BoundariesMatching({
-  visibleFields = ['Display Name & Handle', 'Home Neighbourhood', 'Pass Signal Summaries', 'Hosted Pitches'],
-  privateFields = ['Exact Age Preferences', 'Availability Calendar Slots', 'Rhythm Check Feedback', 'Psychometric Trait Vectors'],
+  punctualityStance = 'Flexible · Context-driven',
+  cancellationStance = 'Context matters · 24h notice preferred',
+  groupSizeBoundary = 'Max 6 participants per table',
+  locationBoundary = 'Singapore Central & East',
   className = '',
 }: BoundariesMatchingProps) {
   return (
@@ -22,44 +27,77 @@ export function BoundariesMatching({
         boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
       }}
     >
-      <h3 className="text-[10px] font-bold tracking-widest text-[rgba(245,242,234,0.44)] uppercase">
-        Boundaries &amp; Privacy Controls
-      </h3>
-      <p className="mt-1 text-xs text-[rgba(245,242,234,0.70)]">
-        Clear distinction between what other members can see and what is kept private.
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-[10px] font-bold tracking-widest text-[#5BD99A] uppercase">
+          Boundaries &amp; Social Principles
+        </h3>
+        <span className="text-[10px] font-bold tracking-wider uppercase text-[#5BD99A] bg-[rgba(91,217,154,0.12)] border border-[rgba(91,217,154,0.28)] px-2.5 py-0.5 rounded-full">
+          Shared On Profile
+        </span>
+      </div>
+
+      <p className="text-xs text-[rgba(245,242,234,0.70)] mb-4">
+        Clear social expectations that create predictable, comfortable meetups.
       </p>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {/* Visible on Profile */}
-        <div className="rounded-xl border border-[rgba(91,217,154,0.25)] bg-[rgba(91,217,154,0.08)] p-3.5">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#5BD99A]" />
-            <h4 className="text-xs font-bold text-[#5BD99A]">Visible on Profile</h4>
+      {/* Visual Principles Grid */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* 1. Punctuality Stance Card */}
+        <div className="rounded-xl border border-[rgba(239,185,78,0.25)] bg-[rgba(239,185,78,0.08)] p-3.5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Clock className="h-4 w-4 text-[#EFB94E]" />
+              <h4 className="text-xs font-bold text-[#EFB94E]">Punctuality Stance</h4>
+            </div>
+            <p className="text-xs font-semibold text-[#F5F2EA]">
+              {punctualityStance}
+            </p>
           </div>
-          <ul className="mt-2.5 space-y-1.5 text-xs text-[#F5F2EA]">
-            {visibleFields.map((f, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="text-[#5BD99A] font-bold">✓</span>
-                <span className="text-[rgba(245,242,234,0.70)]">{f}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3 flex items-center gap-1.5">
+            <span className="h-1.5 flex-1 rounded-full bg-[#EFB94E]" />
+            <span className="h-1.5 flex-1 rounded-full bg-[#EFB94E]" />
+            <span className="h-1.5 flex-1 rounded-full bg-[rgba(245,242,234,0.15)]" />
+            <span className="h-1.5 flex-1 rounded-full bg-[rgba(245,242,234,0.15)]" />
+          </div>
         </div>
 
-        {/* Used Privately for Matching */}
-        <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.03)] p-3.5">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[rgba(245,242,234,0.44)]" />
-            <h4 className="text-xs font-bold text-[rgba(245,242,234,0.44)]">Used Privately for Matching</h4>
+        {/* 2. Cancellation Stance Card */}
+        <div className="rounded-xl border border-[rgba(91,217,154,0.25)] bg-[rgba(91,217,154,0.08)] p-3.5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Shield className="h-4 w-4 text-[#5BD99A]" />
+              <h4 className="text-xs font-bold text-[#5BD99A]">Cancellation Stance</h4>
+            </div>
+            <p className="text-xs font-semibold text-[#F5F2EA]">
+              {cancellationStance}
+            </p>
           </div>
-          <ul className="mt-2.5 space-y-1.5 text-xs text-[rgba(245,242,234,0.44)]">
-            {privateFields.map((f, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span>🔒</span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3 flex items-center gap-2">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD99A]" />
+            <span className="text-[11px] text-[rgba(245,242,234,0.70)]">Graceful &amp; low pressure</span>
+          </div>
+        </div>
+
+        {/* 3. Group Size Boundary Card */}
+        <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Users className="h-4 w-4 text-[rgba(245,242,234,0.70)]" />
+            <h4 className="text-xs font-bold text-[#F5F2EA]">Table Limit</h4>
+          </div>
+          <p className="text-xs text-[rgba(245,242,234,0.70)]">
+            {groupSizeBoundary}
+          </p>
+        </div>
+
+        {/* 4. Geography Boundary Card */}
+        <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <MapPin className="h-4 w-4 text-[rgba(245,242,234,0.70)]" />
+            <h4 className="text-xs font-bold text-[#F5F2EA]">Match Area</h4>
+          </div>
+          <p className="text-xs text-[rgba(245,242,234,0.70)]">
+            {locationBoundary}
+          </p>
         </div>
       </div>
     </div>
