@@ -180,7 +180,17 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
     .in('state', ['accepted', 'requested']);
 
   if (error) {
-    throw new Error(`[Supabase ${error.code || 'ERROR'}] Failed to fetch attending outings: ${error.message}`);
+    console.error('[SoulTribe] Supabase query error in fetchGoingOutings:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
+
+  if (!memberRows || memberRows.length === 0) {
+    return [];
   }
 
   const dbItems: OutingItem[] = (memberRows || [])
@@ -279,7 +289,17 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
     .eq('state', 'open');
 
   if (error) {
-    throw new Error(`[Supabase ${error.code || 'ERROR'}] Failed to fetch radar outings: ${error.message}`);
+    console.error('[SoulTribe] Supabase query error in fetchRadarOutings:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
+
+  if (!outingRows || outingRows.length === 0) {
+    return [];
   }
 
   // Hard demo rule: filter out own outings AND any demo outings
@@ -396,7 +416,17 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
     .eq('host_id', userId);
 
   if (error) {
-    throw new Error(`[Supabase ${error.code || 'ERROR'}] Failed to fetch user pitches: ${error.message}`);
+    console.error('[SoulTribe] Supabase query error in fetchUserPitches:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
+
+  if (!dbOutings || dbOutings.length === 0) {
+    return localItems;
   }
 
   const dbItems: OutingItem[] = (dbOutings || [])

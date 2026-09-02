@@ -59,8 +59,9 @@ describe('Step 6l — Outings Store Invariants & Hard Demo Rule', () => {
     expect(pitches.some((i) => i.isHostDemo)).toBe(false);
   });
 
-  it('2. With a real userId and a mocked client returning an error, the error propagates — never demo items', async () => {
-    const mockDbError = { code: 'PGRST116', message: 'Database query execution failed' };
+  it('2. With a real userId and a mocked client returning an error, the error propagates and logs [SoulTribe] details', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mockDbError = { code: 'PGRST116', message: 'Database query execution failed', details: 'col error', hint: 'run migration' };
 
     const mockFrom = vi.fn().mockImplementation((table: string) => {
       if (table === 'outings') {
@@ -85,6 +86,11 @@ describe('Step 6l — Outings Store Invariants & Hard Demo Rule', () => {
     (supabaseModule.getSupabaseBrowserClient as any).mockReturnValue({ from: mockFrom });
 
     await expect(fetchRadarOutings(mockUserId)).rejects.toThrow(/PGRST116/);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[SoulTribe]'),
+      expect.objectContaining({ code: 'PGRST116', message: 'Database query execution failed' })
+    );
+
     await expect(fetchGoingOutings(mockUserId)).rejects.toThrow(/PGRST116/);
     await expect(fetchUserPitches(mockUserId)).rejects.toThrow(/PGRST116/);
   });
