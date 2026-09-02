@@ -38,4 +38,29 @@ describe('Availability & Dealbreaker Gate Evaluation', () => {
     const res = evaluateGates(vecA, vecB);
     assert.strictEqual(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'), false);
   });
+
+  it('5. candidatePoolSize = 14 skips availability and geography gates', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday'], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: ['sun_evening'], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB, { candidatePoolSize: 14 });
+    assert.strictEqual(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'), false);
+    assert.strictEqual(res.reasons.includes('GEOGRAPHY_TOO_FAR'), false);
+  });
+
+  it('6. candidatePoolSize = 15 evaluates availability and geography gates', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday'], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: ['sun_evening'], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB, { candidatePoolSize: 15 });
+    assert.ok(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'));
+  });
+
+  it('7. candidatePoolSize = undefined behaves as default (evaluates gates)', () => {
+    const vecA = { ...baseA, social_rhythm: { ...baseA.social_rhythm, availability: ['sat_midday'], fri_night: false, sat_night: false } };
+    const vecB = { ...baseB, social_rhythm: { ...baseB.social_rhythm, availability: ['sun_evening'], fri_night: false, sat_night: false } };
+
+    const res = evaluateGates(vecA, vecB);
+    assert.ok(res.reasons.includes('NO_SHARED_AVAILABILITY_SLOT'));
+  });
 });
