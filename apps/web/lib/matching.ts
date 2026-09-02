@@ -172,6 +172,7 @@ export interface RankedMatch {
   rubText: string;    // GENERATED, not hardcoded
   fitLabel: string;
   provisional: boolean;                  // thin-profile match
+  confidence?: number;
   isDemo: boolean;                       // SAFEGUARD 1: Flag carried to UI
 }
 
@@ -197,31 +198,25 @@ export function getTribalPassStatusCopy(
   matchCount: number,
   isProvisional: boolean = true
 ): { headline: string; subtitle: string } {
-  if (completionPct <= 20) {
-    return {
-      headline: "You've completed your 8 baseline onboarding questions.",
-      subtitle:
-        matchCount > 0
-          ? `${matchCount} ${matchCount === 1 ? 'person' : 'people'} to look at — your matches sharpen as you fill in your Tribal Pass.`
-          : 'Complete your Tribal Pass to sharpen your matches.',
-    };
-  } else if (completionPct < 80) {
-    return {
-      headline: "We've learned your social rhythm and core communication style.",
-      subtitle:
-        matchCount > 0
-          ? `${matchCount} ${matchCount === 1 ? 'connection' : 'connections'} surfaced — complete remaining sections to refine your alignment.`
-          : 'Complete remaining sections to sharpen your tribe alignment.',
-    };
-  } else {
-    return {
-      headline: 'Your Tribal Pass is well-developed.',
-      subtitle:
-        matchCount > 0
-          ? `${matchCount} ${matchCount === 1 ? 'match' : 'matches'} with clear resonance and rhythm reading.`
-          : 'Your profile is rich. Check back as new members join.',
-    };
+  let headline = "You've completed your 8 baseline onboarding questions.";
+  if (completionPct > 20 && completionPct < 80) {
+    headline = "You've answered baseline onboarding and initial Tribal Pass questions.";
+  } else if (completionPct >= 80) {
+    headline = "Your Tribal Pass is well-developed.";
   }
+
+  let subtitle = "";
+  if (matchCount > 0) {
+    if (isProvisional) {
+      subtitle = `${matchCount} ${matchCount === 1 ? 'person' : 'people'} to look at — these sharpen as you fill in your Tribal Pass.`;
+    } else {
+      subtitle = `${matchCount} ${matchCount === 1 ? 'match' : 'matches'} with clear resonance and rhythm reading.`;
+    }
+  } else {
+    subtitle = "Complete remaining sections to sharpen your tribe alignment.";
+  }
+
+  return { headline, subtitle };
 }
 
 export function scoreDemoCandidates(

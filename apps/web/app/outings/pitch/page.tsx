@@ -8,6 +8,7 @@ import { Button } from '@soul-tribe/ui';
 import { Check, AlertTriangle, ArrowLeft, Plus } from 'lucide-react';
 import { getUserProfile, PitchedOuting, JoinedGuest, addUserPitch } from '../../../lib/userStore';
 import { getRankedMatches, RankedMatch } from '../../../lib/matching';
+import { getGenderAvatarForName } from '@soul-tribe/core';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/authContext';
 import { AuthGuard } from '../../../components/AuthGuard';
@@ -273,7 +274,7 @@ function PitchComposerContent() {
       const joinedGuestsList: JoinedGuest[] = selectedGuests.map((g) => ({
         id: g.id,
         name: g.name,
-        avatarUrl: g.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        avatarUrl: g.avatarUrl || getGenderAvatarForName(g.name),
         homeArea: g.homeArea,
         status: 'Pending',
         isDemo: g.isDemo,
@@ -286,7 +287,7 @@ function PitchComposerContent() {
         area: area.trim(),
         dateTime: new Date(startsAt).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
         hostName: profile.displayName || 'You',
-        hostAvatar: profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        hostAvatar: profile.avatarUrl || getGenderAvatarForName(profile.displayName || 'You'),
         seatsTotal: maxParticipants,
         seatsFilled: joinedGuestsList.length + 1,
         cohesionScore: 80,
@@ -537,7 +538,7 @@ function PitchComposerContent() {
                   >
                     <div className="flex items-center gap-3">
                       <img
-                        src={candidate.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
+                        src={candidate.avatarUrl || getGenderAvatarForName(candidate.name)}
                         alt={candidate.name}
                         className="h-10 w-10 rounded-full object-cover"
                       />

@@ -174,7 +174,8 @@ function HomeContent() {
           </div>
 
           {(() => {
-            const statusCopy = getTribalPassStatusCopy(profile.passCompletionPct, matches.length);
+            const isAnyProvisional = matches.length === 0 || matches.some((m) => m.provisional || (m.confidence !== undefined && m.confidence < 0.55));
+            const statusCopy = getTribalPassStatusCopy(profile.passCompletionPct, matches.length, isAnyProvisional);
             return (
               <div className="mt-2 space-y-1">
                 <p className="text-[14.5px] font-bold text-white drop-shadow-sm">
