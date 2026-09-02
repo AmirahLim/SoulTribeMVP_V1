@@ -41,10 +41,10 @@ describe('Engine baseline — post-6e golden snapshot', () => {
     expect(r6(r.resonance)).toBe(0.233857);
     expect(r6(r.logistics)).toBe(0.171611);
     expect(r6(r.rank_score)).toBe(0);
-    expect(r6(r.confidence_a)).toBe(1);
-    expect(r6(r.confidence_b)).toBe(1);
+    expect(r6(r.confidence_a)).toBe(0.365);
+    expect(r6(r.confidence_b)).toBe(0.4075);
     expect(r.gated).toBe(true);
-    expect(r.gate_reasons).toEqual(['NO_SHARED_AVAILABILITY_SLOT']);
+    expect(r.gate_reasons).toEqual(['CONFIDENCE_TOO_LOW', 'NO_SHARED_AVAILABILITY_SLOT']);
 
     expect(Object.fromEntries(
       Object.entries(r.contributions).map(([k, v]) => [k, r6(v as number)])

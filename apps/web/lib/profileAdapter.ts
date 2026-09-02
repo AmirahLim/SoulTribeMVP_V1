@@ -349,14 +349,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     geography,
   };
 
-  let confidence = completenessConfidence(rawVec);
-  if (typeof (user as any).passCompletionPct === 'number' && (user as any).passCompletionPct > 0) {
-    confidence = Math.max(confidence, (user as any).passCompletionPct / 100);
-  }
-  if (typeof (user as any).confidence === 'number') {
-    confidence = (user as any).confidence;
-  }
-  rawVec.profile.confidence = Math.max(0, Math.min(1.0, confidence));
+  rawVec.profile.confidence = Math.max(0, Math.min(1.0, completenessConfidence(rawVec)));
 
   return rawVec;
 }
