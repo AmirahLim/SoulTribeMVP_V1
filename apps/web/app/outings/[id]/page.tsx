@@ -700,7 +700,7 @@ function OutingDetailContent() {
       {/* Top Location Header */}
       <div className="relative h-44 w-full overflow-hidden rounded-[24px] bg-[#15261C] border border-[#F3F0E9]/12 shadow-lg">
         <img
-          src={getOutingCategoryImage(outing.activity_category, outing.title)}
+          src={getOutingCategoryImage(outing.activity_category, outing.title, outing.area)}
           alt={outing.title}
           className="h-full w-full object-cover opacity-70"
         />
@@ -982,8 +982,8 @@ function OutingDetailContent() {
 
       {/* EDIT PITCH MODAL */}
       {isEditing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 pb-24 overflow-y-auto">
-          <div className="w-full max-w-lg max-h-[75vh] md:max-h-[82vh] flex flex-col rounded-[28px] border border-white/20 bg-[#15261C] shadow-2xl text-left overflow-hidden my-auto">
+        <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/85 backdrop-blur-md p-4 pt-6 pb-32 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[68vh] sm:max-h-[78vh] flex flex-col rounded-[28px] border border-white/20 bg-[#15261C] shadow-2xl text-left overflow-hidden my-auto shrink-0">
             {/* Fixed Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0 bg-[#15261C]">
               <h3 className="text-[18px] font-bold text-[#F3F0E9] flex items-center gap-2">
@@ -1000,42 +1000,42 @@ function OutingDetailContent() {
 
             {/* Scrollable Form Body */}
             <form onSubmit={handleSavePitchEdit} className="flex flex-col min-h-0 flex-1">
-              <div className="overflow-y-auto p-6 space-y-4 flex-1">
+              <div className="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1 custom-scrollbar">
                 <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                     Outing Title
                   </label>
                   <input
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                    className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[14px] text-white focus:outline-none focus:border-amber-400 box-border"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                  <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                     Pitch Description
                   </label>
                   <textarea
                     rows={3}
                     value={editPitch}
                     onChange={(e) => setEditPitch(e.target.value)}
-                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                    className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400 box-border"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Activity Category
                     </label>
                     <select
                       value={editCategory}
                       onChange={(e) => setEditCategory(e.target.value)}
-                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border"
                     >
                       <option value="coffee">Coffee & Cafe</option>
                       <option value="dining">Dining & Food</option>
@@ -1048,48 +1048,48 @@ function OutingDetailContent() {
                   </div>
 
                   <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Neighbourhood / Area
                     </label>
                     <input
                       type="text"
                       value={editArea}
                       onChange={(e) => setEditArea(e.target.value)}
-                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[14px] text-white focus:outline-none focus:border-amber-400"
+                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[14px] text-white focus:outline-none focus:border-amber-400 box-border"
                       required
                     />
                   </div>
                 </div>
 
                 {/* SEPARATE DATE & TIME INPUTS */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 pb-1">
                   <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Outing Date
                     </label>
                     <input
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1">
+                    <label className="block text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4] mb-1.5">
                       Outing Time
                     </label>
                     <input
                       type="time"
                       value={editTime}
                       onChange={(e) => setEditTime(e.target.value)}
-                      className="w-full rounded-[14px] border border-white/20 bg-[#0D1D15] p-3 text-[13.5px] text-white focus:outline-none focus:border-amber-400"
+                      className="w-full h-11 rounded-[14px] border border-white/20 bg-[#0D1D15] px-3 py-2 text-[13.5px] text-white focus:outline-none focus:border-amber-400 box-border"
                     />
                   </div>
                 </div>
 
                 {/* MANAGE INVITED MEMBERS SECTION */}
-                <div className="pt-3 border-t border-white/10 space-y-3">
+                <div className="mt-4 pt-4 border-t border-white/15 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] font-bold uppercase tracking-wider text-[#A6AAA4]">
                       Invited Members ({members.length} Total)
@@ -1106,7 +1106,7 @@ function OutingDetailContent() {
                     </button>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {members.map((m) => (
                       <div
                         key={m.user_id}
@@ -1116,7 +1116,7 @@ function OutingDetailContent() {
                           <img
                             src={m.avatar_url}
                             alt={m.display_name}
-                            className="h-8 w-8 rounded-full object-cover"
+                            className="h-8 w-8 rounded-full object-cover shrink-0"
                           />
                           <div>
                             <span className="font-bold text-[#F3F0E9] flex items-center gap-1.5">
@@ -1147,7 +1147,7 @@ function OutingDetailContent() {
                           <button
                             type="button"
                             onClick={() => handleRemoveMember(m.user_id)}
-                            className="text-[11px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2.5 py-0.5"
+                            className="text-[11px] font-bold text-red-300 hover:text-red-200 bg-red-500/10 border border-red-400/30 rounded-full px-2.5 py-0.5 shrink-0"
                           >
                             Remove ✕
                           </button>
@@ -1159,7 +1159,7 @@ function OutingDetailContent() {
               </div>
 
               {/* Fixed Footer */}
-              <div className="border-t border-white/10 px-6 py-4 shrink-0 bg-[#15261C] flex justify-end gap-2">
+              <div className="border-t border-white/15 px-6 py-4 shrink-0 bg-[#15261C] flex justify-end gap-2.5">
                 <Button type="button" variant="secondary" size="md" onClick={() => setIsEditing(false)}>
                   Cancel
                 </Button>

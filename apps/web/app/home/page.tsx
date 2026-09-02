@@ -545,7 +545,7 @@ function HomeContent() {
                   {/* Event Cover Photo based on title & category */}
                   <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
                     <img
-                      src={getOutingCategoryImage((item as any).category, item.title)}
+                      src={getOutingCategoryImage((item as any).category, item.title, item.area)}
                       alt={item.title}
                       className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
                     />
@@ -739,7 +739,7 @@ function HomeContent() {
                   {/* Event Cover Photo based on title & category */}
                   <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
                     <img
-                      src={getOutingCategoryImage(item.category, item.title)}
+                      src={getOutingCategoryImage(item.category, item.title, item.area)}
                       alt={item.title}
                       className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
                     />
@@ -854,7 +854,7 @@ function HomeContent() {
                   {/* Event Cover Photo based on title & category */}
                   <div className="relative mt-3 h-40 w-full overflow-hidden rounded-[20px] bg-[#15261C] border border-white/15">
                     <img
-                      src={getOutingCategoryImage(item.category, item.title)}
+                      src={getOutingCategoryImage(item.category, item.title, item.area)}
                       alt={item.title}
                       className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
                     />

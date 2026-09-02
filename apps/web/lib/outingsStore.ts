@@ -21,71 +21,102 @@ export interface OutingItem {
   fitBadge?: string;
 }
 
-export function getOutingCategoryImage(category?: string, title?: string): string {
+export function getOutingCategoryImage(category?: string, title?: string, area?: string): string {
   const t = (title || '').toLowerCase();
+  const a = (area || '').toLowerCase();
   const cat = (category || '').toLowerCase();
+  const combined = `${t} ${a} ${cat}`;
 
-  // 1. Title Specific High-Resolution Photography Matching
-  if (t.includes('dating') || t.includes('singles') || t.includes('romance') || t.includes('match') || t.includes('relationship')) {
-    // Cozy candlelit discussion lounge atmosphere
-    return 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1080&auto=format&fit=crop&q=85';
+  // 1. Hyper-Specific Location & Landmark Matching
+  if (combined.includes('fort canning') || combined.includes('canning')) {
+    // Fort Canning Park green tree tunnel & lush heritage park
+    return 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('board game') || t.includes('game') || t.includes('catan') || t.includes('chess') || t.includes('tabletop')) {
-    // Tabletop board games setting
+  if (combined.includes('ubin') || combined.includes('pulau ubin')) {
+    // Pulau Ubin granite quarry lake & rustic Singapore nature trail
+    return 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (combined.includes('gardens by the bay') || combined.includes('supertree')) {
+    // Gardens by the Bay Supertrees & Flower Dome
+    return 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (combined.includes('sentosa') || combined.includes('tanjong') || combined.includes('siloso')) {
+    // Sentosa island tropical beach
+    return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (combined.includes('marina bay') || combined.includes('mbs') || combined.includes('bayfront')) {
+    // Marina Bay Sands & Singapore waterfront skyline
+    return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 2. Dating Apps / Mobile App Discussions vs Cozy Romance
+  if (
+    combined.includes('dating app') ||
+    combined.includes('online dating') ||
+    combined.includes('mobile dating') ||
+    combined.includes('app') ||
+    combined.includes('swipe') ||
+    combined.includes('tinder') ||
+    combined.includes('bumble') ||
+    combined.includes('hinge')
+  ) {
+    // Smartphone in hand displaying modern mobile dating app UI
+    return 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1080&auto=format&fit=crop&q=85';
+  }
+  if (
+    combined.includes('dating') ||
+    combined.includes('singles') ||
+    combined.includes('romance') ||
+    combined.includes('match') ||
+    combined.includes('relationship') ||
+    combined.includes('speed date')
+  ) {
+    // Cozy candlelit lounge dating atmosphere
+    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 3. Iconic Singapore City Skyline (Default for "Singapore" / "SG")
+  if (combined.includes('singapore') || combined.includes('sg') || combined.includes('cbd') || combined.includes('city')) {
+    // Iconic Singapore skyline & Marina Bay Sands night view
+    return 'https://images.unsplash.com/photo-1565967511849-76a4597470b8?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 4. Activity Specific High-Resolution Photography
+  if (combined.includes('board game') || combined.includes('catan') || combined.includes('chess') || combined.includes('tabletop')) {
     return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('ramen') || t.includes('sushi') || t.includes('japanese') || t.includes('noodle')) {
-    // Japanese dining bar
+  if (combined.includes('ramen') || combined.includes('sushi') || combined.includes('japanese') || combined.includes('noodle')) {
     return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('book') || t.includes('reading') || t.includes('library') || t.includes('literature') || t.includes('novel')) {
-    // Bookshop library
+  if (combined.includes('book') || combined.includes('reading') || combined.includes('library') || combined.includes('literature')) {
     return 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('coffee') || t.includes('cafe') || t.includes('latte') || t.includes('matcha') || t.includes('espresso')) {
-    // Specialty coffee & latte art
+  if (combined.includes('coffee') || combined.includes('cafe') || combined.includes('latte') || combined.includes('matcha')) {
     return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('cocktail') || t.includes('wine') || t.includes('drinks') || t.includes('speakeasy') || t.includes('bar') || t.includes('pub') || t.includes('beer')) {
-    // Speakeasy lounge bar
+  if (combined.includes('cocktail') || combined.includes('wine') || combined.includes('drinks') || combined.includes('speakeasy') || combined.includes('bar')) {
     return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('pottery') || t.includes('ceramic') || t.includes('craft') || t.includes('clay') || t.includes('paint')) {
-    // Pottery studio workshop
+  if (combined.includes('pottery') || combined.includes('ceramic') || combined.includes('craft') || combined.includes('clay') || combined.includes('paint')) {
     return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('hike') || t.includes('walk') || t.includes('bouldering') || t.includes('climb') || t.includes('run') || t.includes('park')) {
-    // Nature hiking trail
+  if (combined.includes('hike') || combined.includes('walk') || combined.includes('trail') || combined.includes('nature') || combined.includes('park')) {
     return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
   }
-  if (t.includes('museum') || t.includes('gallery') || t.includes('art') || t.includes('exhibition')) {
-    // Modern art gallery
+  if (combined.includes('museum') || combined.includes('gallery') || combined.includes('art') || combined.includes('exhibition')) {
     return 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1080&auto=format&fit=crop&q=85';
   }
 
-  // 2. Category Fallbacks with Ultra High-Res Photography
-  if (cat.includes('coffee')) {
-    return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('dining') || cat.includes('food')) {
-    return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('active') || cat.includes('outdoor')) {
-    return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('intellectual')) {
-    return 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('cultural') || cat.includes('art')) {
-    return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('nightlife') || cat.includes('drinks')) {
-    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
-  }
-  if (cat.includes('creative') || cat.includes('craft')) {
-    return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=1080&auto=format&fit=crop&q=85';
-  }
-  return 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1080&auto=format&fit=crop&q=85';
+  // 5. Category Fallbacks with Ultra High-Res Photography
+  if (cat.includes('coffee')) return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('dining') || cat.includes('food')) return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('active') || cat.includes('outdoor')) return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('intellectual')) return 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('cultural') || cat.includes('art')) return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('nightlife') || cat.includes('drinks')) return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1080&auto=format&fit=crop&q=85';
+  if (cat.includes('creative') || cat.includes('craft')) return 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=1080&auto=format&fit=crop&q=85';
+
+  return 'https://images.unsplash.com/photo-1565967511849-76a4597470b8?w=1080&auto=format&fit=crop&q=85';
 }
 
 import { getUserPitches, getJoinedOutingsLocal } from './userStore';
