@@ -13,8 +13,6 @@ export interface ProfileHeroProps {
   standingText?: string;
   instinctType?: string;
   instinctDescription?: string;
-  summaryHeadline?: string;
-  summaryText?: string;
   onEditProfile?: () => void;
   onDeepenPass?: () => void;
 }
@@ -29,8 +27,6 @@ export function ProfileHero({
   standingText = 'Good Standing',
   instinctType = 'Connector',
   instinctDescription = 'Actively brings people together',
-  summaryHeadline = 'Selective, curious & quietly adventurous',
-  summaryText = 'You build connection through smaller settings and shared experience.',
   onEditProfile,
   onDeepenPass,
 }: ProfileHeroProps) {
@@ -71,25 +67,7 @@ export function ProfileHero({
         </button>
       </div>
 
-      {/* 2. Top Summary of Who You Are */}
-      <div
-        className="rounded-[20px] p-4 border border-[rgba(239,185,78,0.20)] bg-[rgba(10,12,11,0.62)] backdrop-blur-xl shadow-md"
-        style={{
-          background: 'radial-gradient(120% 80% at 12% 0%, rgba(239,185,78,0.12) 0%, rgba(10,12,11,0.62) 62%)',
-        }}
-      >
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
-          Social Summary
-        </span>
-        <h3 className="font-['Bricolage_Grotesque'] text-lg font-semibold text-[#F5F2EA] mt-1">
-          {summaryHeadline}
-        </h3>
-        <p className="text-xs leading-relaxed text-[rgba(245,242,234,0.70)] mt-1">
-          {summaryText}
-        </p>
-      </div>
-
-      {/* 3. Tribe Standing & Type (Connector) */}
+      {/* 2. Tribe Standing & Type (Connector) */}
       <div className="flex flex-col gap-2.5 pt-1 border-t border-[rgba(245,242,234,0.08)]">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">

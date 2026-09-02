@@ -272,8 +272,6 @@ function ProfileContent() {
           standingText={currentStanding.label}
           instinctType={primaryInstinct.type}
           instinctDescription={primaryInstinct.description}
-          summaryHeadline={tribalReadData.headline}
-          summaryText={tribalReadData.summary}
           onEditProfile={() => setIsSettingsOpen(true)}
           onDeepenPass={() => router.push('/you/deeper')}
         />
