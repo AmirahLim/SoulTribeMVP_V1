@@ -50,7 +50,33 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
   }
 
-  // 2. Dating Apps / Mobile App Discussions vs Romance
+  // 2. Thematic & Specific Event Nights
+  if (
+    combined.includes('cowboy') ||
+    combined.includes('western') ||
+    combined.includes('country night') ||
+    combined.includes('country music') ||
+    combined.includes('saloon') ||
+    combined.includes('rodeo') ||
+    combined.includes('boots')
+  ) {
+    // Warm rustic country western bar & neon saloon vibe
+    return 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  if (
+    combined.includes('ladies night') ||
+    combined.includes('lady night') ||
+    combined.includes('girls night') ||
+    combined.includes('girl night') ||
+    combined.includes('women night') ||
+    combined.includes('ladies')
+  ) {
+    // Chic evening cocktail lounge & clinking glasses for ladies night out
+    return 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 3. Dating Apps / Mobile App Discussions vs Romance
   if (
     combined.includes('dating app') ||
     combined.includes('online dating') ||
@@ -72,11 +98,6 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     combined.includes('speed date')
   ) {
     return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
-  }
-
-  // 3. Iconic Singapore City Skyline
-  if (combined.includes('singapore') || combined.includes('sg') || combined.includes('cbd') || combined.includes('city')) {
-    return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
   }
 
   // 4. Activity Specific High-Resolution Photography
@@ -105,7 +126,12 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
     return 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1080&auto=format&fit=crop&q=85';
   }
 
-  // 5. Category Fallbacks
+  // 5. Iconic Singapore City Skyline (Fallback if no specific theme/activity matched)
+  if (combined.includes('singapore') || combined.includes('sg') || combined.includes('cbd') || combined.includes('city')) {
+    return 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1080&auto=format&fit=crop&q=85';
+  }
+
+  // 6. Category Fallbacks
   if (cat.includes('coffee')) return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('dining') || cat.includes('food')) return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1080&auto=format&fit=crop&q=85';
   if (cat.includes('active') || cat.includes('outdoor')) return 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1080&auto=format&fit=crop&q=85';

@@ -202,7 +202,6 @@ function OutingDetailContent() {
 
     setIsEditing(false);
     setActionMessage('Pitch details updated successfully!');
-    router.push('/home?tab=pitches');
   };
 
   const handleDeleteOuting = async () => {

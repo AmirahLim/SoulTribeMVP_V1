@@ -345,12 +345,6 @@ function PitchComposerContent() {
             visibility: visibility,
             max_participants: maxParticipants,
             state: 'open',
-            cover_image_url: selectedCover?.cover_image_url || null,
-            cover_image_thumb_url: selectedCover?.cover_image_thumb_url || null,
-            cover_image_alt: selectedCover?.cover_image_alt || null,
-            cover_photographer_name: selectedCover?.cover_photographer_name || null,
-            cover_photographer_url: selectedCover?.cover_photographer_url || null,
-            cover_download_location: selectedCover?.cover_download_location || null,
           })
           .select('*')
           .single();
