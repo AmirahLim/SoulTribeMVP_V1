@@ -12,6 +12,8 @@ import {
   scoreExperience,
   scoreGeography,
 } from '../matching/threads.ts';
+import { evaluateMechanism } from '../matching/mechanisms.ts';
+import type { ThreadKey } from '../matching/evaluation.ts';
 
 export interface ExplanationText {
   click_text: string;
@@ -250,6 +252,22 @@ export function generateMatchExplanation(
 
   for (const d of candidateThreads) {
     if (frictionParts.length >= 2) break;
+
+    const mech = evaluateMechanism(d.key as ThreadKey, d.score, vecA, vecB);
+
+    // If mechanism is COMPLEMENTARITY rather than FRICTION, treat as positive contrast
+    if (mech.mechanism === 'COMPLEMENTARITY' && d.score >= 0.40) {
+      if (clickParts.length < 2) {
+        if (d.key === 'personality') {
+          const valB = vecB.personality?.extraversion ?? 0.5;
+          clickParts.push(`Complementary social energy with ${nameB}; ${PHRASES.extraversion(valB)}.`);
+        } else if (d.key === 'communication') {
+          const respB = vecB.communication?.response_speed_self ?? 0.5;
+          clickParts.push(`Complementary communication style with ${nameB}; ${PHRASES.responseSpeed(respB)}.`);
+        }
+      }
+      continue;
+    }
 
     const isClearFriction = d.score < 0.55; // Tier 1 vs Tier 2
 

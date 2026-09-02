@@ -9,7 +9,10 @@ import {
   ProfileVector,
   getBondThreadPhrase,
   getHeadlineForAlignment,
+  evaluateMechanism,
+  calculateAsymmetricFit,
 } from '@soul-tribe/core';
+import type { ThreadKey } from '@soul-tribe/core';
 
 export const runtime = 'nodejs';
 
@@ -143,6 +146,7 @@ export async function POST(req: NextRequest) {
   const matchRes = score(viewerVec, candVec);
   const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
   const explanation = generateMatchExplanation(viewerVec, candVec);
+  const asymmetric = calculateAsymmetricFit(viewerVec, candVec, matchRes.resonance);
 
   const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
 
@@ -175,7 +179,8 @@ export async function POST(req: NextRequest) {
     }
 
     const alignment = contrib;
-    const headline = getHeadlineForAlignment(alignment);
+    const mech = evaluateMechanism(key as ThreadKey, alignment, viewerVec, candVec);
+    const headline = mech.outputState;
     const phrase = getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
@@ -185,6 +190,9 @@ export async function POST(req: NextRequest) {
       alignment,
       weight,
       phrase,
+      mechanism: mech.mechanism.toLowerCase() as 'alignment' | 'complementarity' | 'friction' | 'context',
+      frictionClass: mech.frictionLevel,
+      outputState: mech.outputState,
     };
   });
 
@@ -236,6 +244,9 @@ export async function POST(req: NextRequest) {
       logistics: matchRes.logistics,
       confidence: minConfidence,
       provisional: softRes.provisional,
+      fitAtoB: asymmetric.fitAtoB,
+      fitBtoA: asymmetric.fitBtoA,
+      imbalance: asymmetric.imbalance,
     },
     threads,
     rubText: explanation.friction_text,

@@ -18,6 +18,9 @@ interface ThreadReading {
   alignment?: number;
   weight: number;
   phrase?: string;
+  mechanism?: 'alignment' | 'complementarity' | 'friction' | 'context';
+  frictionClass?: string;
+  outputState?: string;
 }
 
 interface BondData {
@@ -27,6 +30,9 @@ interface BondData {
     logistics: number | null;
     confidence: number;
     provisional: boolean;
+    fitAtoB?: number | null;
+    fitBtoA?: number | null;
+    imbalance?: number;
   };
   threads: ThreadReading[];
   rubText: string;
@@ -149,11 +155,11 @@ function ViewBondContent() {
               const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
 
               if (!isKnown) {
-                return { key, status: 'unknown' as const, weight };
+                return { key, status: 'unknown' as const, weight, outputState: 'Not measured' };
               }
 
               const alignment = matchRes.contributions[key] ?? 0.5;
-              const headline = alignment >= 0.75 ? 'Closely aligned' : (alignment >= 0.55 ? 'Complementary' : (alignment >= 0.35 ? 'Different rhythms' : 'Likely friction'));
+              const headline = alignment >= 0.75 ? 'Strong alignment' : (alignment >= 0.55 ? 'Moderate' : (alignment >= 0.35 ? 'Complementary' : 'Potential friction'));
               return {
                 key,
                 status: 'known' as const,
@@ -161,6 +167,8 @@ function ViewBondContent() {
                 alignment,
                 weight,
                 phrase: alignment >= 0.75 ? 'Strong alignment in this connection thread.' : 'Balanced resonance in this connection thread.',
+                mechanism: alignment >= 0.75 ? 'alignment' : (alignment >= 0.50 ? 'complementarity' : 'friction'),
+                outputState: headline,
               };
             });
 
@@ -178,6 +186,9 @@ function ViewBondContent() {
                 logistics: matchRes.logistics,
                 confidence: Math.min(viewerVec.profile.confidence, candDemoVec.profile.confidence),
                 provisional: softRes.provisional,
+                fitAtoB: matchRes.fit_a_to_b,
+                fitBtoA: matchRes.fit_b_to_a,
+                imbalance: matchRes.imbalance_penalty,
               },
               threads,
               rubText: explanation.friction_text,
@@ -192,7 +203,6 @@ function ViewBondContent() {
       } finally {
         setLoading(false);
       }
-    }
 
     loadBond();
   }, [cleanPersonId]);
@@ -289,6 +299,19 @@ function ViewBondContent() {
               </div>
             </div>
           </div>
+
+          {/* DIRECTIONAL FIT & EXPECTATION IMBALANCE NOTE */}
+          {typeof bondData.overall.imbalance === 'number' && bondData.overall.imbalance > 0.12 && (
+            <div className="mt-3.5 rounded-[14px] border border-amber-400/30 bg-amber-500/10 p-3 text-[12px] text-amber-200">
+              <p className="font-semibold flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-300 shrink-0" />
+                Directional Expectation Note
+              </p>
+              <p className="mt-1 text-white/80 leading-normal">
+                This pairing currently suits one member slightly more than the other due to expectation differences in communication or depth pacing.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* THREAD READINGS: RESONANCE (TRIBAL THREAD) */}
@@ -403,6 +426,9 @@ function ViewBondContent() {
                   <div className="text-[12px] text-white/70 space-y-1 pt-2 border-t border-white/10">
                     <p>• Both members answered questions in this Connection Thread.</p>
                     <p>• Weight in total bond score: <strong className="text-white">{selectedThread.weight}%</strong></p>
+                    {selectedThread.mechanism && (
+                      <p>• Relationship mechanism: <strong className="text-emerald-300 capitalize">{selectedThread.mechanism}</strong></p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -440,6 +466,24 @@ function ThreadRow({ thread, onSelect }: { thread: ThreadReading; onSelect: (t: 
   const alignmentPct = isKnown ? Math.round((thread.alignment as number) * 100) : 0;
   const threadName = THREAD_NAMES[thread.key] || thread.key;
 
+  // Distinct visual treatment based on mechanism / outputState
+  let badgeStyle = 'bg-sky-500/15 border-sky-400/30 text-sky-300';
+  let badgeLabel = thread.headline || 'Moderate';
+
+  if (!isKnown) {
+    badgeStyle = 'bg-amber-500/10 border-dashed border-amber-400/30 text-amber-200';
+    badgeLabel = 'Not measured';
+  } else if (thread.mechanism === 'complementarity' || thread.outputState === 'Complementary') {
+    badgeStyle = 'bg-purple-500/20 border-purple-400/40 text-purple-300';
+    badgeLabel = '☯ Complementary';
+  } else if (thread.mechanism === 'friction' || thread.alignment! < 0.40) {
+    badgeStyle = 'bg-amber-500/20 border-amber-400/40 text-amber-300';
+    badgeLabel = thread.frictionClass ? `${thread.frictionClass} friction` : 'Potential friction';
+  } else if (thread.alignment! >= 0.75) {
+    badgeStyle = 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300';
+    badgeLabel = 'Strong alignment';
+  }
+
   return (
     <div
       onClick={() => onSelect(thread)}
@@ -450,11 +494,9 @@ function ThreadRow({ thread, onSelect }: { thread: ThreadReading; onSelect: (t: 
           <h4 className="text-[13.5px] font-bold text-white">
             {threadName}
           </h4>
-          {thread.headline && (
-            <span className="rounded-full bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-              {thread.headline}
-            </span>
-          )}
+          <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${badgeStyle}`}>
+            {badgeLabel}
+          </span>
         </div>
         <span className="text-[11px] font-semibold text-white/60">
           {thread.weight}% weight
@@ -469,7 +511,13 @@ function ThreadRow({ thread, onSelect }: { thread: ThreadReading; onSelect: (t: 
           </div>
           <div className="h-2 w-full rounded-full bg-white/15 overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#164014] via-[#074710] to-[#654422] transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${
+                thread.mechanism === 'complementarity'
+                  ? 'bg-gradient-to-r from-purple-600 via-indigo-500 to-sky-400'
+                  : thread.mechanism === 'friction'
+                  ? 'bg-gradient-to-r from-amber-600 via-rose-500 to-amber-400'
+                  : 'bg-gradient-to-r from-[#164014] via-[#074710] to-[#257321]'
+              }`}
               style={{ width: `${alignmentPct}%` }}
             />
           </div>
