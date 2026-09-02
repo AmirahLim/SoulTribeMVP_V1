@@ -9,19 +9,32 @@ export interface ColdStartOptions {
   explorationBonus?: number; // default 0.05 — max boost for under-exposed users
 }
 
+export const THREAD_QUESTION_COUNTS: Record<ThreadKey, number> = {
+  personality: 4,
+  communication: 5,
+  social_rhythm: 4,
+  intent: 2,
+  emotional: 7,
+  interests: 3,
+  values: 3,
+  lifestyle: 2,
+  experience: 3,
+  geography: 2,
+};
+
 export function confidenceFromCompleteness(vec: ProfileVector): number {
   if (!vec) return 0;
 
-  const personalityRatio = Math.min(1, Math.max(0, (vec.personality?.answered ?? 0) / 10));
-  const communicationRatio = Math.min(1, Math.max(0, (vec.communication?.answered ?? 0) / 10));
-  const socialRhythmRatio = Math.min(1, Math.max(0, (vec.social_rhythm?.answered ?? 0) / 5));
-  const intentRatio = Math.min(1, Math.max(0, (vec.intent?.answered ?? 0) / 3));
-  const emotionalRatio = Math.min(1, Math.max(0, (vec.emotional?.answered ?? 0) / 10));
-  const interestsRatio = Math.min(1, Math.max(0, (vec.interests?.length ?? 0) / 3));
-  const valuesRatio = Math.min(1, Math.max(0, (vec.values?.length ?? 0) / 3));
-  const lifestyleRatio = Math.min(1, Math.max(0, (vec.lifestyle?.answered ?? 0) / 5));
-  const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / 5));
-  const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / 2));
+  const personalityRatio = Math.min(1, Math.max(0, (vec.personality?.answered ?? 0) / THREAD_QUESTION_COUNTS.personality));
+  const communicationRatio = Math.min(1, Math.max(0, (vec.communication?.answered ?? 0) / THREAD_QUESTION_COUNTS.communication));
+  const socialRhythmRatio = Math.min(1, Math.max(0, (vec.social_rhythm?.answered ?? 0) / THREAD_QUESTION_COUNTS.social_rhythm));
+  const intentRatio = Math.min(1, Math.max(0, (vec.intent?.answered ?? 0) / THREAD_QUESTION_COUNTS.intent));
+  const emotionalRatio = Math.min(1, Math.max(0, (vec.emotional?.answered ?? 0) / THREAD_QUESTION_COUNTS.emotional));
+  const interestsRatio = Math.min(1, Math.max(0, (vec.interests?.length ?? 0) / THREAD_QUESTION_COUNTS.interests));
+  const valuesRatio = Math.min(1, Math.max(0, (vec.values?.length ?? 0) / THREAD_QUESTION_COUNTS.values));
+  const lifestyleRatio = Math.min(1, Math.max(0, (vec.lifestyle?.answered ?? 0) / THREAD_QUESTION_COUNTS.lifestyle));
+  const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / THREAD_QUESTION_COUNTS.experience));
+  const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / THREAD_QUESTION_COUNTS.geography));
 
   const ratios: Record<ThreadKey, number> = {
     personality: personalityRatio,
@@ -165,16 +178,16 @@ export function explorationBoost(
 export function nextBestQuestions(vec: ProfileVector, limit: number = 3): ThreadKey[] {
   const allThreads: ThreadKey[] = [...RESONANCE_THREADS, ...LOGISTICS_THREADS];
 
-  const personalityRatio = Math.min(1, Math.max(0, (vec.personality?.answered ?? 0) / 10));
-  const communicationRatio = Math.min(1, Math.max(0, (vec.communication?.answered ?? 0) / 10));
-  const socialRhythmRatio = Math.min(1, Math.max(0, (vec.social_rhythm?.answered ?? 0) / 5));
-  const intentRatio = Math.min(1, Math.max(0, (vec.intent?.answered ?? 0) / 3));
-  const emotionalRatio = Math.min(1, Math.max(0, (vec.emotional?.answered ?? 0) / 10));
-  const interestsRatio = Math.min(1, Math.max(0, (vec.interests?.length ?? 0) / 3));
-  const valuesRatio = Math.min(1, Math.max(0, (vec.values?.length ?? 0) / 3));
-  const lifestyleRatio = Math.min(1, Math.max(0, (vec.lifestyle?.answered ?? 0) / 5));
-  const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / 5));
-  const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / 2));
+  const personalityRatio = Math.min(1, Math.max(0, (vec.personality?.answered ?? 0) / THREAD_QUESTION_COUNTS.personality));
+  const communicationRatio = Math.min(1, Math.max(0, (vec.communication?.answered ?? 0) / THREAD_QUESTION_COUNTS.communication));
+  const socialRhythmRatio = Math.min(1, Math.max(0, (vec.social_rhythm?.answered ?? 0) / THREAD_QUESTION_COUNTS.social_rhythm));
+  const intentRatio = Math.min(1, Math.max(0, (vec.intent?.answered ?? 0) / THREAD_QUESTION_COUNTS.intent));
+  const emotionalRatio = Math.min(1, Math.max(0, (vec.emotional?.answered ?? 0) / THREAD_QUESTION_COUNTS.emotional));
+  const interestsRatio = Math.min(1, Math.max(0, (vec.interests?.length ?? 0) / THREAD_QUESTION_COUNTS.interests));
+  const valuesRatio = Math.min(1, Math.max(0, (vec.values?.length ?? 0) / THREAD_QUESTION_COUNTS.values));
+  const lifestyleRatio = Math.min(1, Math.max(0, (vec.lifestyle?.answered ?? 0) / THREAD_QUESTION_COUNTS.lifestyle));
+  const experienceRatio = Math.min(1, Math.max(0, (vec.experience?.answered ?? 0) / THREAD_QUESTION_COUNTS.experience));
+  const geographyRatio = Math.min(1, Math.max(0, (vec.geography?.answered ?? 0) / THREAD_QUESTION_COUNTS.geography));
 
   const ratios: Record<ThreadKey, number> = {
     personality: personalityRatio,
