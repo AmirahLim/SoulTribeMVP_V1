@@ -6,6 +6,7 @@ import {
   softGate,
   explorationBoost,
   nextBestQuestions,
+  confidenceFromCompleteness,
 } from '../coldstart.ts';
 
 function createMockVector(id: string, name: string): ProfileVector {
@@ -194,5 +195,22 @@ describe('Module 3 — Cold start & exposure fairness', () => {
     const res6 = softGate(ungated);
     assert.strictEqual(res6.eligible, true);
     assert.strictEqual(res6.provisional, false);
+  });
+
+  it('9. A member who completes every question Soul Tribe asks reaches 100% completeness (confidence 1.0)', () => {
+    const vec = createMockVector('full_user', 'Full User');
+    vec.personality.answered = 4;
+    vec.communication.answered = 5;
+    vec.social_rhythm.answered = 4;
+    vec.intent.answered = 2;
+    vec.emotional.answered = 7;
+    vec.interests = [{ user_id: 'full_user', node_id: 1, affinity: 'love' }, { user_id: 'full_user', node_id: 2, affinity: 'love' }, { user_id: 'full_user', node_id: 3, affinity: 'love' }];
+    vec.values = [{ user_id: 'full_user', value_key: 'authenticity', stance: 0.8, importance: 0.8, visibility: 'matching_only' }, { user_id: 'full_user', value_key: 'reliability', stance: 0.8, importance: 0.8, visibility: 'matching_only' }, { user_id: 'full_user', value_key: 'curiosity', stance: 0.8, importance: 0.8, visibility: 'matching_only' }];
+    vec.lifestyle.answered = 2;
+    vec.experience.answered = 3;
+    vec.geography.answered = 2;
+
+    const conf = confidenceFromCompleteness(vec);
+    assert.strictEqual(conf, 1.0, 'Completing all asked questions reaches 1.0 confidence');
   });
 });
