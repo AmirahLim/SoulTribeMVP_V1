@@ -19,10 +19,19 @@ export interface TribalReadData {
 
 export interface TribalReadProps {
   data?: TribalReadData;
+  label?: string; // e.g. "Mervyn's Tribal Read"
+  tone?: 'amber' | 'emerald';
+  showReadMore?: boolean;
   className?: string;
 }
 
-export function TribalRead({ data, className = '' }: TribalReadProps) {
+export function TribalRead({
+  data,
+  label = 'Your Tribal Read',
+  tone = 'amber',
+  showReadMore = true,
+  className = '',
+}: TribalReadProps) {
   const [openSheet, setOpenSheet] = useState(false);
 
   if (!data) return null;
@@ -31,13 +40,15 @@ export function TribalRead({ data, className = '' }: TribalReadProps) {
   const validSections = data.sections.filter((s) => s.markerCount >= 2);
   if (validSections.length === 0) return null;
 
-  const color1 = getThreadColor(data.topThreads[0]);
+  const isEmerald = tone === 'emerald';
+  const accentColor = isEmerald ? '#5BD99A' : '#EFB94E';
+  const washColor = isEmerald ? 'rgba(91,217,154,0.13)' : 'rgba(239,185,78,0.13)';
 
   return (
     <>
       {/* Dark Glass Card with Radial Wash */}
       <div
-        className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
+        className={`relative rounded-[26px] p-5.5 backdrop-blur-xl transition-all ${className}`}
         style={{
           backgroundColor: 'rgba(10,12,11,0.62)',
           border: '1px solid rgba(245,242,234,0.11)',
@@ -47,43 +58,50 @@ export function TribalRead({ data, className = '' }: TribalReadProps) {
         <div
           className="absolute inset-0 pointer-events-none opacity-85"
           style={{
-            background: `radial-gradient(120% 80% at 12% 0%, ${color1.wash} 0%, transparent 62%)`,
+            background: `radial-gradient(120% 80% at 12% 0%, ${washColor} 0%, transparent 62%)`,
           }}
         />
 
         <div className="relative z-10">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
-            Your Tribal Read
+          <p
+            className="text-[10px] font-bold tracking-widest uppercase mb-1"
+            style={{ color: accentColor }}
+          >
+            {label}
           </p>
-          <h2 className="font-['Bricolage_Grotesque'] text-[26px] font-semibold text-[#F5F2EA] leading-[1.16] mt-1">
-            Selective, curious &amp; <em className="not-italic text-[#EFB94E]">quietly adventurous</em>
+          <h2 className="font-['Bricolage_Grotesque'] text-[25px] font-semibold text-[#F5F2EA] leading-[1.18] mt-0.5">
+            {data.headline}
           </h2>
-          <p className="text-[14px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">
+          <p className="text-[13.5px] leading-relaxed text-[rgba(245,242,234,0.75)] mt-2">
             {data.summary}
           </p>
 
           {/* Pills */}
-          <div className="mt-3.5 flex flex-wrap gap-1.75">
+          <div className="mt-3.5 flex flex-wrap gap-2">
             {data.pills.map((pill, idx) => (
               <span
                 key={idx}
-                className={`text-[11.5px] px-3 py-1 rounded-full border ${
-                  idx === 0
-                    ? 'bg-[rgba(239,185,78,0.16)] border-[rgba(239,185,78,0.32)] text-[#EFB94E]'
-                    : 'bg-[rgba(255,255,255,0.06)] border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.70)]'
-                }`}
+                className="text-[11.5px] px-3 py-1 rounded-full border"
+                style={{
+                  backgroundColor: idx === 0 ? (isEmerald ? 'rgba(91,217,154,0.16)' : 'rgba(239,185,78,0.16)') : 'rgba(255,255,255,0.06)',
+                  borderColor: idx === 0 ? (isEmerald ? 'rgba(91,217,154,0.32)' : 'rgba(239,185,78,0.32)') : 'rgba(245,242,234,0.11)',
+                  color: idx === 0 ? accentColor : 'rgba(245,242,234,0.75)',
+                }}
               >
                 {pill}
               </span>
             ))}
           </div>
 
-          <button
-            onClick={() => setOpenSheet(true)}
-            className="mt-4 text-xs font-bold text-[#EFB94E] hover:underline"
-          >
-            Read More About Me →
-          </button>
+          {showReadMore && (
+            <button
+              onClick={() => setOpenSheet(true)}
+              className="mt-4 text-xs font-bold hover:underline"
+              style={{ color: accentColor }}
+            >
+              Read More About Me →
+            </button>
+          )}
         </div>
       </div>
 
@@ -93,22 +111,24 @@ export function TribalRead({ data, className = '' }: TribalReadProps) {
           <div className="relative max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-[28px] border border-[rgba(245,242,234,0.2)] bg-[#0A0C0B] p-6 text-[#F5F2EA] shadow-2xl">
             <div className="flex items-center justify-between border-b border-[rgba(245,242,234,0.1)] pb-4">
               <div>
-                <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">Full Tribal Read</p>
+                <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: accentColor }}>
+                  {label}
+                </p>
                 <h3 className="font-['Bricolage_Grotesque'] text-2xl font-bold">{data.headline}</h3>
               </div>
               <button
                 onClick={() => setOpenSheet(false)}
-                className="rounded-full border border-[rgba(245,242,234,0.2)] px-3.5 py-1 text-xs font-bold transition-all hover:bg-white/10"
+                className="rounded-full bg-white/10 p-2 text-[rgba(245,242,234,0.7)] hover:text-white"
               >
-                Close
+                ✕
               </button>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {validSections.map((sec, idx) => (
-                <div key={idx} className="rounded-xl border border-[rgba(245,242,234,0.1)] bg-[rgba(255,255,255,0.03)] p-4">
-                  <h4 className="text-[10px] font-bold tracking-wider uppercase text-[#EFB94E]">{sec.title}</h4>
-                  <p className="mt-1.5 text-xs leading-relaxed text-[rgba(245,242,234,0.70)]">{sec.content}</p>
+            <div className="mt-4 space-y-4 text-sm leading-relaxed text-[rgba(245,242,234,0.8)]">
+              {validSections.map((sec, i) => (
+                <div key={i} className="rounded-xl border border-[rgba(245,242,234,0.08)] bg-white/5 p-4">
+                  <h4 className="font-bold text-white mb-1">{sec.title}</h4>
+                  <p>{sec.content}</p>
                 </div>
               ))}
             </div>

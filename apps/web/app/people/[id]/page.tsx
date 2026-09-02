@@ -176,6 +176,9 @@ function PersonDetailContent() {
     { key: 'logistics', label: 'Availability', strength: 0.78, confidence: 0.8, sentence: `Available weekend mornings and weekday evenings.` },
   ];
 
+  const rawHandle = (rankedMatch as any)?.handle || cleanPersonId || 'mervyn';
+  const displayHandle = rawHandle.replace(/^[a-f0-9-]{20,}/i, memberFirstName.toLowerCase()).replace(/^@/, '');
+
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
@@ -221,14 +224,19 @@ function PersonDetailContent() {
               {memberName}
             </h1>
             <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">
-              @{cleanPersonId || 'mervyn'} · {rankedMatch?.homeArea || 'Bishan'}
+              @{displayHandle} · {rankedMatch?.homeArea || 'Bishan'}
             </p>
             <ReadPill label="Deep read · 61 signals" tone="emerald" className="mt-2" />
           </div>
         </div>
 
         {/* 3rd Person Tribal Read Card (Emerald Wash) */}
-        <TribalRead data={memberTribalReadData} />
+        <TribalRead
+          data={memberTribalReadData}
+          label={`${memberFirstName}'s Tribal Read`}
+          tone="emerald"
+          showReadMore={false}
+        />
 
         {/* Dynamic Friendship DNA Bloom */}
         <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-6">
