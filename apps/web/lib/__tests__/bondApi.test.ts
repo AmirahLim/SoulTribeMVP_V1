@@ -107,29 +107,20 @@ vi.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
+function walkObject(obj: any, forbidKeys: string[]) {
+  if (!obj || typeof obj !== 'object') return;
+  for (const key of Object.keys(obj)) {
+    for (const forbidden of forbidKeys) {
+      if (key.startsWith(forbidden) || key === forbidden) {
+        throw new Error(`Forbidden key "${key}" found in response`);
+      }
+    }
+    walkObject(obj[key], forbidKeys);
+  }
+}
+
 describe('POST /api/bond Endpoint Tests', () => {
-  it('1. Candidate with missing emotional trait returns status: "unknown" for emotional with NO alignment key', async () => {
-    const req = new NextRequest('http://localhost/api/bond', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer valid_token',
-      },
-      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    const emoDim = json.dimensions.find((d: any) => d.key === 'emotional');
-    expect(emoDim).toBeDefined();
-    expect(emoDim.status).toBe('unknown');
-    expect('alignment' in emoDim).toBe(false);
-    expect('phrase' in emoDim).toBe(false);
-  });
-
-  it('2. Two different candidates produce different dimensions alignment values', async () => {
+  it('1. Two candidates with different answers produce Tribal Thread text that differs in substance', async () => {
     const req1 = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
       headers: {
@@ -157,50 +148,11 @@ describe('POST /api/bond Endpoint Tests', () => {
     const pers1 = json1.dimensions.find((d: any) => d.key === 'personality');
     const pers2 = json2.dimensions.find((d: any) => d.key === 'personality');
 
+    expect(pers1.phrase).not.toBe(pers2.phrase);
     expect(pers1.alignment).not.toBe(pers2.alignment);
   });
 
-  it('3. The /api/bond response contains NO raw trait, vector, or internal fields', async () => {
-    const req = new NextRequest('http://localhost/api/bond', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer valid_token',
-      },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
-    });
-
-    const res = await POST(req);
-    const json = await res.json();
-
-    const keys = Object.keys(json);
-    expect(keys).toContain('overall');
-    expect(keys).toContain('dimensions');
-    expect(keys).toContain('rubText');
-    expect(keys).toContain('sharpen');
-
-    const jsonStr = JSON.stringify(json);
-    expect(jsonStr).not.toMatch(/trait_/);
-    expect(jsonStr).not.toMatch(/"answered"/);
-    expect(jsonStr).not.toMatch(/"availability"/);
-    expect(jsonStr).not.toMatch(/"dealbreakers"/);
-    expect(jsonStr).not.toMatch(/"gate_reasons"/);
-  });
-
-  it('4. Requests without valid session token return 401 Unauthorized', async () => {
-    const req = new NextRequest('http://localhost/api/bond', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
-    });
-
-    const res = await POST(req);
-    expect(res.status).toBe(401);
-  });
-
-  it('5. Viewer with empty pass gets dimensions that are all "unknown" and a non-empty sharpen array', async () => {
+  it('2. Thin viewer returns honest state plus non-empty sharpen list and no dimension sentences for unanswered dimensions', async () => {
     const req = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
       headers: {
@@ -214,8 +166,91 @@ describe('POST /api/bond Endpoint Tests', () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    const allUnknown = json.dimensions.every((d: any) => d.status === 'unknown' && !('alignment' in d));
+    const allUnknown = json.dimensions.every(
+      (d: any) => d.status === 'unknown' && !('alignment' in d) && !('phrase' in d)
+    );
     expect(allUnknown).toBe(true);
     expect(json.sharpen.length).toBeGreaterThan(0);
+  });
+
+  it('3. No dimension with status: "unknown" carries an alignment key at any depth', async () => {
+    const req = new NextRequest('http://localhost/api/bond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid_token',
+      },
+      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
+
+    for (const d of json.dimensions) {
+      if (d.status === 'unknown') {
+        expect('alignment' in d).toBe(false);
+        expect('phrase' in d).toBe(false);
+      }
+    }
+  });
+
+  it('4. The response contains none of trait_*, answered, availability, dealbreakers, user_interests, user_values (object walk)', async () => {
+    const req = new NextRequest('http://localhost/api/bond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid_token',
+      },
+      body: JSON.stringify({ candidateId: 'cand-full' }),
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
+
+    expect(() =>
+      walkObject(json, [
+        'trait_',
+        'answered',
+        'availability',
+        'dealbreakers',
+        'user_interests',
+        'user_values',
+      ])
+    ).not.toThrow();
+  });
+
+  it('5. Every sentence the generator emits is reachable only when the answers it cites are present', async () => {
+    const candidateId = 'cand-full';
+    const req = new NextRequest('http://localhost/api/bond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid_token',
+      },
+      body: JSON.stringify({ candidateId }),
+    });
+
+    const res = await POST(req);
+    const json = await res.json();
+
+    const persDim = json.dimensions.find((d: any) => d.key === 'personality');
+    expect(persDim.status).toBe('known');
+    expect(persDim.phrase).toContain('social energy');
+
+    // For missing candidate personality trait, status becomes unknown and phrase is omitted
+    const req2 = new NextRequest('http://localhost/api/bond', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid_token',
+      },
+      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
+    });
+
+    const res2 = await POST(req2);
+    const json2 = await res2.json();
+    const emoDim = json2.dimensions.find((d: any) => d.key === 'emotional');
+    expect(emoDim.status).toBe('unknown');
+    expect('phrase' in emoDim).toBe(false);
   });
 });

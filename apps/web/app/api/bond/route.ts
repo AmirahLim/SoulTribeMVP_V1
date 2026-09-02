@@ -8,6 +8,7 @@ import {
   nextBestQuestions,
   BASELINE_WEIGHTS,
   ProfileVector,
+  getBondDimensionPhrase,
 } from '@soul-tribe/core';
 
 export const runtime = 'nodejs';
@@ -25,70 +26,6 @@ function isDimAnswered(vec: ProfileVector, key: string): boolean {
   if (key === 'experience') return (vec.experience?.answered ?? 0) > 0;
   if (key === 'geography') return (vec.geography?.answered ?? 0) > 0;
   return false;
-}
-
-const DIM_PHRASES: Record<string, { high: string; mid: string; low: string }> = {
-  personality: {
-    high: 'High alignment in social energy and interaction pace.',
-    mid: 'Balanced contrast between introverted and extroverted rhythms.',
-    low: 'Opposite energy preferences that require conscious pacing.',
-  },
-  communication: {
-    high: 'Matching messaging styles and expectations for response speed.',
-    mid: 'Complementary text vs call preferences with workable rhythm.',
-    low: 'Different expectations around reply frequency and message length.',
-  },
-  intent: {
-    high: 'Shared goals for friendship depth and commitment.',
-    mid: 'Compatible openness to new connections and shared activities.',
-    low: 'Varying expectations around how quickly to build closeness.',
-  },
-  emotional: {
-    high: 'Identical comfort levels with vulnerability and deep topics.',
-    mid: 'Gradual, mutual opening pace as trust builds over time.',
-    low: 'Different comfort thresholds for sharing personal feelings early on.',
-  },
-  values: {
-    high: 'Strong alignment on core life principles and mutual respect.',
-    mid: 'Shared appreciation for authenticity and clear boundaries.',
-    low: 'Different priority focus on personal goals vs community.',
-  },
-  interests: {
-    high: 'Rich overlap in shared hobbies and outing preferences.',
-    mid: 'Mutual curiosity in trying new activities together.',
-    low: 'Distinct interests with opportunity for new discoveries.',
-  },
-  social_rhythm: {
-    high: 'Synchronized weekend availability and planning style.',
-    mid: 'Flexible schedule overlap on weekends and weekday evenings.',
-    low: 'Different planning horizons that require advance scheduling.',
-  },
-  lifestyle: {
-    high: 'Harmonious budget and social setting choices.',
-    mid: 'Compatible coffee and dining preferences.',
-    low: 'Varying setting and activity budget preferences.',
-  },
-  experience: {
-    high: 'Shared preference for intimate small-group outings.',
-    mid: 'Flexible comfort with both 1-on-1s and small groups.',
-    low: 'Different group size and environment preferences.',
-  },
-  geography: {
-    high: 'Close neighbourhood proximity in Singapore.',
-    mid: 'Convenient central MRT travel distance.',
-    low: 'Across-town location requiring intentional meetup spots.',
-  },
-};
-
-function getDimensionPhrase(key: string, alignment: number): string {
-  const bank = DIM_PHRASES[key] || {
-    high: 'Strong alignment in this dimension.',
-    mid: 'Balanced resonance in this dimension.',
-    low: 'Complementary difference in this dimension.',
-  };
-  if (alignment >= 0.75) return bank.high;
-  if (alignment >= 0.50) return bank.mid;
-  return bank.low;
 }
 
 const QUESTION_MAP: Record<string, { prompt: string; href: string }> = {
@@ -238,7 +175,7 @@ export async function POST(req: NextRequest) {
     }
 
     const alignment = contrib;
-    const phrase = getDimensionPhrase(key, alignment);
+    const phrase = getBondDimensionPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,

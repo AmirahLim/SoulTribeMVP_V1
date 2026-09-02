@@ -1,3 +1,5 @@
+import type { ProfileVector } from '../domain/types.ts';
+
 export interface PhraseLookup {
   openingPace(val: number): string;
   cadenceNeed(val: number): string;
@@ -158,3 +160,139 @@ export const PHRASES_YOU = {
     return 'enjoy active, high-movement outings';
   },
 };
+
+export function getBondDimensionPhrase(
+  key: string,
+  vecA: ProfileVector,
+  vecB: ProfileVector,
+  alignment: number
+): string {
+  const nameB = vecB.profile.display_name || 'Member';
+
+  if (key === 'personality') {
+    const extA = vecA.personality?.extraversion;
+    const extB = vecB.personality?.extraversion;
+    if (typeof extA === 'number' && typeof extB === 'number') {
+      const phrA = PHRASES_YOU.extraversion(extA);
+      const phrB = PHRASES.extraversion(extB);
+      if (Math.abs(extA - extB) <= 0.25) {
+        return `You both ${phrA}; your social energy paces comfortably together.`;
+      }
+      return `You ${phrA}, while ${nameB} ${phrB} — expect your interaction pace to vary naturally.`;
+    }
+  }
+
+  if (key === 'communication') {
+    const respA = vecA.communication?.response_speed_self;
+    const respB = vecB.communication?.response_speed_self;
+    if (typeof respA === 'number' && typeof respB === 'number') {
+      const phrA = PHRASES_YOU.responseSpeed(respA);
+      const phrB = PHRASES.responseSpeed(respB);
+      if (Math.abs(respA - respB) <= 0.25) {
+        return `You both ${phrA}; messaging expectations line up easily.`;
+      }
+      return `You ${phrA}, whereas ${nameB} ${phrB} — asynchronous communication works best.`;
+    }
+  }
+
+  if (key === 'social_rhythm') {
+    const planA = vecA.social_rhythm?.planning_horizon;
+    const planB = vecB.social_rhythm?.planning_horizon;
+    if (typeof planA === 'number' && typeof planB === 'number') {
+      const phrA = PHRASES_YOU.planningHorizon(planA);
+      const phrB = PHRASES.planningHorizon(planB);
+      if (Math.abs(planA - planB) <= 0.25) {
+        return `You both ${phrA}, making outing planning straightforward.`;
+      }
+      return `You ${phrA}, while ${nameB} ${phrB} — locking in outing dates early prevents schedule friction.`;
+    }
+  }
+
+  if (key === 'intent') {
+    const depthA = vecA.intent?.depth;
+    const depthB = vecB.intent?.depth;
+    if (typeof depthA === 'number' && typeof depthB === 'number') {
+      const phrA = PHRASES_YOU.depth(depthA);
+      const phrB = PHRASES.depth(depthB);
+      if (Math.abs(depthA - depthB) <= 1) {
+        return `You both ${phrA}; your friendship expectations are well-aligned.`;
+      }
+      return `You ${phrA}, whereas ${nameB} ${phrB} — setting clear boundaries around closeness helps.`;
+    }
+  }
+
+  if (key === 'emotional') {
+    const paceA = vecA.emotional?.er_opening_pace;
+    const paceB = vecB.emotional?.er_opening_pace;
+    if (typeof paceA === 'number' && typeof paceB === 'number') {
+      const phrA = PHRASES_YOU.openingPace(paceA);
+      const phrB = PHRASES.openingPace(paceB);
+      if (Math.abs(paceA - paceB) <= 0.25) {
+        return `You both ${phrA}; your comfort with opening up develops at a shared speed.`;
+      }
+      return `You ${phrA}, while ${nameB} ${phrB} — expect the first couple of meetings to feel uneven before it settles.`;
+    }
+  }
+
+  if (key === 'interests') {
+    const intA = vecA.interests?.map((i: any) => i.node_name || i.name) || [];
+    const intB = vecB.interests?.map((i: any) => i.node_name || i.name) || [];
+    const shared = intA.filter((name: string) => intB.includes(name));
+    if (shared.length > 0) {
+      return `You both chose ${shared.slice(0, 2).map((s: string) => `"${s}"`).join(' and ')}; shared activity themes come naturally.`;
+    }
+    if (intA.length > 0 && intB.length > 0) {
+      return `You highlighted "${intA[0]}" while ${nameB} tagged "${intB[0]}" — an opportunity to introduce new activities.`;
+    }
+  }
+
+  if (key === 'values') {
+    const valA = vecA.values?.map((v: any) => v.value_name || v.value_key) || [];
+    const valB = vecB.values?.map((v: any) => v.value_name || v.value_key) || [];
+    const shared = valA.filter((name: string) => valB.includes(name));
+    if (shared.length > 0) {
+      return `You both value ${shared.slice(0, 2).map((s: string) => `"${s}"`).join(' and ')}; core worldview stances resonate strongly.`;
+    }
+    if (valA.length > 0 && valB.length > 0) {
+      return `You prioritize "${valA[0]}" while ${nameB} values "${valB[0]}" — complementary life perspectives.`;
+    }
+  }
+
+  if (key === 'lifestyle') {
+    const bA = vecA.lifestyle?.budget_band;
+    const bB = vecB.lifestyle?.budget_band;
+    if (typeof bA === 'number' && typeof bB === 'number') {
+      const phrA = PHRASES_YOU.budgetBand(bA);
+      const phrB = PHRASES.budgetBand(bB);
+      if (Math.abs(bA - bB) <= 1) {
+        return `You both ${phrA}; outing venue choices match easily.`;
+      }
+      return `You ${phrA}, whereas ${nameB} ${phrB}.`;
+    }
+  }
+
+  if (key === 'experience') {
+    const gA = vecA.experience?.group_size_pref;
+    const gB = vecB.experience?.group_size_pref;
+    if (typeof gA === 'number' && typeof gB === 'number') {
+      const phrA = PHRASES_YOU.groupSize(gA);
+      const phrB = PHRASES.groupSize(gB);
+      if (Math.abs(gA - gB) <= 0.25) {
+        return `You both ${phrA}; preferred gathering environments match well.`;
+      }
+      return `You ${phrA}, while ${nameB} ${phrB}.`;
+    }
+  }
+
+  if (key === 'geography') {
+    const areaA = vecA.geography?.home_area || vecA.profile.home_area || 'Singapore';
+    const areaB = vecB.geography?.home_area || vecB.profile.home_area || 'Singapore';
+    if (areaA.toLowerCase() === areaB.toLowerCase()) {
+      return `You are both based in ${areaA}; local meetups require minimal travel.`;
+    }
+    return `You are based in ${areaA} while ${nameB} is in ${areaB}.`;
+  }
+
+  if (alignment >= 0.70) return `Strong alignment in ${key.replace('_', ' ')} based on your shared answers.`;
+  return `Balanced contrast in ${key.replace('_', ' ')} based on your reported preferences.`;
+}
