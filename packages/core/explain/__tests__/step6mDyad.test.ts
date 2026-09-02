@@ -116,10 +116,8 @@ describe('Step 6n — The Compositional Interpretation Layer', () => {
 
   it('1. The quiet-week rule fires for Marcus × Amirah (Regression Test for Fix 1 & 2)', () => {
     const explanation = generateMatchExplanation(marcus, amirah);
-    assert.ok(
-      explanation.click_text.includes('Neither of you will read a quiet week as rejection'),
-      `Quiet week rule must fire for Marcus x Amirah, got click_text: "${explanation.click_text}"`
-    );
+    const hasQuietWeek = explanation.dyadic_statements?.some((s) => s.id === 'dyad-quiet-week-alignment');
+    assert.strictEqual(hasQuietWeek, true, `Quiet week rule must fire for Marcus x Amirah, got dyadic_statements: ${JSON.stringify(explanation.dyadic_statements)}`);
   });
 
   it('2. Dyadic output is preferred over bare per-thread enumeration for well-answered pair', () => {

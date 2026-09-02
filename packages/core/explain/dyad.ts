@@ -19,9 +19,24 @@ export interface DyadicRule {
   level: 1 | 2 | 3 | 4;
   requiredA: string[];
   requiredB: string[];
-  generateText: (nameA: string, nameB: string) => { headline?: string; text: string };
+  variants: Array<(nameA: string, nameB: string) => { headline?: string; text: string }>;
   frictionType?: NamedFrictionType;
   severity?: FrictionSeverity;
+}
+
+/**
+ * Deterministic hash per pairing and rule ID.
+ * Ensures the exact same pair always gets the exact same phrasing variant,
+ * while different pairings select different variants across the rule set.
+ */
+export function hashPair(nameA: string, nameB: string, ruleId: string): number {
+  const str = `${nameA}:${nameB}:${ruleId}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 }
 
 export const DYADIC_RULES: DyadicRule[] = [
@@ -34,10 +49,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['spontaneous'],
     frictionType: 'PLANNING',
     severity: 'NOTICEABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Different planning rhythms',
-      text: `Getting the outing into the calendar may be harder than enjoying it once you're there. You like dates locked in early; ${nameB} prefers keeping plans flexible until closer to the day.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Different planning rhythms',
+        text: `Getting the outing into the calendar may be harder than enjoying it once you're there. You like dates locked in early; ${nameB} prefers keeping plans flexible until closer to the day.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Planning horizon contrast',
+        text: `You feel most relaxed with dates locked in early, whereas ${nameB} prefers leaving room for spontaneous flow.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Plan timing difference',
+        text: `Plan timing will take slight alignment; you prefer advance commitments while ${nameB} thrives on flexible, near-term plans.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Scheduling horizon difference',
+        text: `Locking in calendar dates early suits your rhythm, while ${nameB} prefers reserving decision making until near the event date.`,
+      }),
+    ],
   },
   {
     id: 'dyad-planning-spontaneous-advance',
@@ -47,10 +76,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['advance-planning'],
     frictionType: 'PLANNING',
     severity: 'NOTICEABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Different planning rhythms',
-      text: `You may prefer impromptu hangouts when free, while ${nameB} feels more relaxed when plans are locked in advance.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Different planning rhythms',
+        text: `You may prefer impromptu hangouts when free, while ${nameB} feels more relaxed when plans are locked in advance.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Spontaneous vs structured timing',
+        text: `You lean toward flexible spur-of-the-moment outings, whereas ${nameB} appreciates dates settled early.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Scheduling pace variance',
+        text: `Impromptu meetups appeal to your schedule, while ${nameB} operates best with advance calendar notices.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Plan timing contrast',
+        text: `You feel comfortable arranging hangouts at short notice, while ${nameB} feels more structured with advance dates.`,
+      }),
+    ],
   },
   // 1. PLANNING — Alignment
   {
@@ -59,10 +102,49 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['advance-planning'],
     requiredB: ['advance-planning'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Shared planning rhythm',
-      text: 'Both of you like locking in dates well ahead of time, making organizing catch-ups effortless.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Shared planning rhythm',
+        text: 'Both of you like locking in dates well ahead of time, making organizing catch-ups effortless.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Early calendar alignment',
+        text: 'You share a preference for early planning, so calendar dates get confirmed smoothly without last-minute scrambling.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Predictable scheduling pace',
+        text: 'Having outings planned weeks in advance feels comfortable to both of you.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Proactive calendar sync',
+        text: 'Locking in dates well ahead of time comes naturally to both of you, making planning effortless.',
+      }),
+    ],
+  },
+  {
+    id: 'dyad-planning-spontaneous-shared',
+    section: 'click',
+    level: 3,
+    requiredA: ['spontaneous'],
+    requiredB: ['spontaneous'],
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Fluid spontaneous rhythm',
+        text: 'Both of you enjoy impromptu, same-day hangouts, keeping plans fluid and low-friction.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Flexible outing style',
+        text: 'You share a flexible, spontaneous approach to outings, making last-minute catch-ups easy.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Unstructured schedule ease',
+        text: 'Neither of you requires weeks of advance notice, so spontaneous invitations feel natural.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Near-term hangout ease',
+        text: 'Spontaneous invitations and quick same-day check-ins work easily for both of your schedules.',
+      }),
+    ],
   },
 
   // 2. CONTACT — Friction
@@ -74,22 +156,75 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['low-contact'],
     frictionType: 'CONTACT',
     severity: 'NOTICEABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Asymmetric message frequency',
-      text: `You could read their quiet periods as low effort; ${nameB} simply finds messaging less central between meetups.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Asymmetric message frequency',
+        text: `You could read their quiet periods as low effort; ${nameB} simply finds messaging less central between meetups.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Messaging touchpoint gap',
+        text: `You tend to maintain active daily check-ins, while ${nameB} saves social energy for in-person catch-ups.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Contact cadence variance',
+        text: `Messaging frequency varies between you; ${nameB} prefers lower touchpoint frequency while you enjoy steady banter.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Messaging expectations difference',
+        text: `You keep in touch continuously between meetups, whereas ${nameB} focuses energy on face-to-face time.`,
+      }),
+    ],
   },
-  // 2. CONTACT — Alignment (The Quiet-Week Rule for Marcus & Amirah!)
+  // 2. CONTACT — Alignment (The Quiet-Week Rule)
   {
     id: 'dyad-quiet-week-alignment',
     section: 'click',
     level: 4,
     requiredA: ['low-contact'],
     requiredB: ['low-contact'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Low-pressure social pace',
-      text: 'Neither of you will read a quiet week as rejection.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Low-pressure social pace',
+        text: 'Neither of you will read a quiet week as rejection.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Unforced messaging rhythm',
+        text: 'Both of you appreciate a low-maintenance contact pace where long gaps between catch-ups feel natural.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Zero-pressure contact style',
+        text: 'Your messaging expectations match easily; quiet stretches between meetups carry zero social pressure.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Low-touchpoint comfort',
+        text: 'Neither of you feels anxious when messaging stays quiet for a few days between outings.',
+      }),
+    ],
+  },
+  {
+    id: 'dyad-contact-shared-frequent',
+    section: 'click',
+    level: 3,
+    requiredA: ['frequent-touchpoints'],
+    requiredB: ['frequent-touchpoints'],
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Active touchpoint alignment',
+        text: 'You both enjoy regular touchpoints between meetups to keep conversational momentum alive.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'High messaging engagement',
+        text: 'Daily check-ins and meme shares come naturally to both of you.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Vibrant contact cadence',
+        text: 'Your active messaging style keeps your connection vibrant between outings.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Shared messaging momentum',
+        text: 'Frequent check-ins and shared banter keep your connection active between face-to-face meetups.',
+      }),
+    ],
   },
 
   // 3. TEMPO — Friction
@@ -101,10 +236,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['async-pacer'],
     frictionType: 'TEMPO',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Differing reply pacing',
-      text: `You tend to reply in real time when free, whereas ${nameB} batch-processes messages when downtime allows.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Differing reply pacing',
+        text: `You tend to reply in real time when free, whereas ${nameB} batch-processes messages when downtime allows.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Response speed contrast',
+        text: `Response speeds differ slightly; you reply rapidly while ${nameB} answers in calm batches.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Asynchronous pacing difference',
+        text: `You prefer brisk back-and-forth chat, while ${nameB} takes time before replying without it signifying disinterest.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Reply rhythm variance',
+        text: `You reply promptly when free, while ${nameB} takes time to formulate thoughtful replies in batches.`,
+      }),
+    ],
   },
   // 3. TEMPO — Alignment
   {
@@ -113,10 +262,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['async-pacer'],
     requiredB: ['async-pacer'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Easy-going response pace',
-      text: 'Neither of you expects instant replies, keeping messaging low-stress.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Easy-going response pace',
+        text: 'Neither of you expects instant replies, keeping messaging low-stress.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Unhurried reply style',
+        text: 'You both process messages on your own timeline, keeping communication relaxed.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Low-stress response speed',
+        text: 'Your shared asynchronous reply style eliminates any pressure to respond immediately.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Calm message timing',
+        text: 'Taking hours or days to reply feels completely normal to both of you.',
+      }),
+    ],
   },
 
   // 4. ENERGY — Friction
@@ -128,10 +291,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['socially-selective'],
     frictionType: 'ENERGY',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Social battery contrast',
-      text: `You draw energy from lively group environments, while ${nameB} recharges in smaller, quieter catch-ups.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Social battery contrast',
+        text: `You draw energy from lively group environments, while ${nameB} recharges in smaller, quieter catch-ups.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Group environment preference',
+        text: `Group battery preferences differ; you feel energized by large groups, while ${nameB} prefers intimate settings.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Social energy dynamics',
+        text: `Your social battery thrives in bustling settings, whereas ${nameB} values quiet, selective social circles.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Social setting balance',
+        text: `You feel invigorated in larger group settings, while ${nameB} gains energy from small, quiet groups.`,
+      }),
+    ],
   },
   // 4. ENERGY — Alignment
   {
@@ -140,10 +317,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['socially-selective'],
     requiredB: ['socially-selective'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Grounded social energy',
-      text: 'You both protect your social battery for high-quality, intimate meetups.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Grounded social energy',
+        text: 'You both protect your social battery for high-quality, intimate meetups.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Intimate social battery',
+        text: 'Smaller, meaningful catch-ups suit both of your social batteries best.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Quiet atmosphere preference',
+        text: 'You share a preference for quiet, selective social spaces over crowded noise.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Selective social battery',
+        text: 'Both of your social batteries are tailored for calm, intentional conversations rather than noisy events.',
+      }),
+    ],
   },
 
   // 5. DEPTH — Friction
@@ -155,10 +346,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['casual-vibe'],
     frictionType: 'DEPTH',
     severity: 'STRUCTURAL',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Divergent depth expectations',
-      text: `You look for deep personal sharing early, while ${nameB} prefers keeping initial hangouts light and low-pressure.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Divergent depth expectations',
+        text: `You look for deep personal sharing early, while ${nameB} prefers keeping initial hangouts light and low-pressure.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Intent depth contrast',
+        text: `Friendship intent styles contrast; you seek deep connection quickly, whereas ${nameB} prefers casual exploration.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Sharing expectation gap',
+        text: `You value vulnerability upfront, while ${nameB} unfolds more gradually through casual hangouts.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Connection depth pace',
+        text: `You seek personal vulnerability upfront, whereas ${nameB} prefers building familiarity through light activity first.`,
+      }),
+    ],
   },
   // 5. DEPTH — Alignment
   {
@@ -167,10 +372,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['depth-oriented'],
     requiredB: ['depth-oriented'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Shared depth expectation',
-      text: 'Both of you value meaningful, authentic conversation over surface-level small talk.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Shared depth expectation',
+        text: 'Both of you value meaningful, authentic conversation over surface-level small talk.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Genuine connection goal',
+        text: 'You share a desire for genuine depth, making deep personal topics feel natural early on.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Authentic communication focus',
+        text: 'Connecting on real life experiences and personal values is important to both of you.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Depth-first connection',
+        text: 'Skipping superficial small talk in favor of real life experiences comes naturally to both of you.',
+      }),
+    ],
   },
 
   // 6. INITIATION — Alignment / Complementarity
@@ -180,10 +399,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['proactive-initiator'],
     requiredB: ['responsive-joiner'],
-    generateText: (_nameA, nameB) => ({
-      headline: 'Natural initiation balance',
-      text: `You naturally take charge of organizing outings, and ${nameB} gladly responds and follows through on invited plans.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Natural initiation balance',
+        text: `You naturally take charge of organizing outings, and ${nameB} gladly responds and follows through on invited plans.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Complementary planning roles',
+        text: `Your initiation styles complement each other: you enjoy setting up plans, and ${nameB} loves joining in.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Smooth organizer-joiner fit',
+        text: `Organizing hangouts flows smoothly because you take initiative and ${nameB} follows through reliably.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Initiator and attendee fit',
+        text: `You bring proactive organizing energy, and ${nameB} brings reliable, enthusiastic attendance.`,
+      }),
+    ],
   },
   // 6. INITIATION — Friction
   {
@@ -194,10 +427,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['responsive-joiner'],
     frictionType: 'INITIATION',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Dual invitation hesitation',
-      text: `Both of you tend to wait for invitations, so setting a first date might require one of you to take the first step.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Dual invitation hesitation',
+        text: `Both of you tend to wait for invitations, so setting a first date might require one of you to take the first step.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Shared initiation hesitation',
+        text: `Since you both lean toward joining rather than initiating, making the first plan may take a gentle push.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Passive scheduling barrier',
+        text: `You both prefer responding to invitations, so someone taking the initiative will unlock great meetups.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Shared invite waiting',
+        text: `Both of you tend to wait for others to extend plans, so taking the initiative will be key to meeting up.`,
+      }),
+    ],
   },
 
   // 7. SETTING — Friction
@@ -209,10 +456,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['active-setting'],
     frictionType: 'SETTING',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Environment preference contrast',
-      text: `You prefer cozy, low-noise venues, whereas ${nameB} feels energized in bustling, active settings.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Environment preference contrast',
+        text: `You prefer cozy, low-noise venues, whereas ${nameB} feels energized in bustling, active settings.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Venue ambience gap',
+        text: `Venue preferences contrast slightly; low-key cafes suit you best, while ${nameB} likes lively spots.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Outing noise tolerance difference',
+        text: `Choosing an outing setting will take balance between calm quiet spots and high-activity venues.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Noise level preference',
+        text: `Quiet coffee spots suit your listening style, while ${nameB} enjoys vibrant, bustling locations.`,
+      }),
+    ],
   },
   // 7. SETTING — Alignment
   {
@@ -221,10 +482,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['quiet-setting'],
     requiredB: ['quiet-setting'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Quiet venue alignment',
-      text: 'You both enjoy calm, comfortable spaces where conversation takes center stage.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Quiet venue alignment',
+        text: 'You both enjoy calm, comfortable spaces where conversation takes center stage.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Cozy atmosphere fit',
+        text: 'Cozy, low-noise venues provide the ideal backdrop for both of your catch-ups.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Low-noise setting preference',
+        text: 'Quiet atmospheres allow both of you to talk comfortably without competing against background noise.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Calm space alignment',
+        text: 'Low-key, comfortable venues provide the exact setting both of you prefer for conversation.',
+      }),
+    ],
   },
 
   // 8. ACTIVITY — Friction
@@ -236,10 +511,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['table-talk-enthusiast'],
     frictionType: 'ACTIVITY',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Focus format difference',
-      text: `You prefer structured activities as conversation anchors, while ${nameB} prefers unstructured table conversation.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Focus format difference',
+        text: `You prefer structured activities as conversation anchors, while ${nameB} prefers unstructured table conversation.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Outing structure preference',
+        text: `You enjoy having an active task during meetups, whereas ${nameB} prefers straightforward sit-down chats.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Activity vs talk orientation',
+        text: `Interactive hobbies give you an easy social focus, while ${nameB} prefers open-ended coffee table talk.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Outing focus orientation',
+        text: `You prefer structured activity themes, while ${nameB} prefers unstructured table conversation.`,
+      }),
+    ],
   },
   // 8. ACTIVITY — Alignment
   {
@@ -248,10 +537,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['activity-oriented'],
     requiredB: ['activity-oriented'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Shared activity anchor',
-      text: 'Doing something interactive together gives your connection an easy, natural starting point.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Shared activity anchor',
+        text: 'Doing something interactive together gives your connection an easy, natural starting point.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Interactive outing focus',
+        text: 'Hands-on activities and active experiences provide an easy foundation for your hangouts.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Activity-based social connection',
+        text: 'You both bond best while participating in a shared activity or project.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Shared activity orientation',
+        text: 'Interactive hobbies give your meetups an engaging, natural focus.',
+      }),
+    ],
   },
 
   // 9. EXPECTATION — Friction
@@ -263,10 +566,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['casual-vibe'],
     frictionType: 'EXPECTATION',
     severity: 'STRUCTURAL',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Friendship commitment gap',
-      text: `You seek regular, long-term friendship bonds, whereas ${nameB} approaches new connections with casual openness.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Friendship commitment gap',
+        text: `You seek regular, long-term friendship bonds, whereas ${nameB} approaches new connections with casual openness.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Relational goal contrast',
+        text: `Friendship goals differ; you look for durable ongoing connection, while ${nameB} keeps expectations relaxed.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Investment horizon variance',
+        text: `Investment expectations vary slightly: you value long-term commitment, while ${nameB} starts with casual meetups.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Friendship priority gap',
+        text: `You seek dedicated friendship commitment, whereas ${nameB} keeps plans open and low-expectation.`,
+      }),
+    ],
   },
   // 9. EXPECTATION — Alignment
   {
@@ -275,10 +592,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['commitment-seeking'],
     requiredB: ['commitment-seeking'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Shared friendship intention',
-      text: 'You are both looking to invest time into building a durable, regular friendship.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Shared friendship intention',
+        text: 'You are both looking to invest time into building a durable, regular friendship.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Mutual commitment focus',
+        text: 'Long-term friendship investment matters to both of you, creating strong mutual intent.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Aligned friendship goals',
+        text: 'Building a genuine, ongoing social connection is a shared goal for both of you.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Durable friendship focus',
+        text: 'Investing effort into a meaningful, long-term social bond is a shared priority.',
+      }),
+    ],
   },
 
   // 10. RECIPROCITY — Friction
@@ -290,10 +621,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['emotionally-private'],
     frictionType: 'RECIPROCITY',
     severity: 'NOTICEABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Sharing balance contrast',
-      text: `You open up early, while ${nameB} takes more time to build trust before sharing personal experiences.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Sharing balance contrast',
+        text: `You open up early, while ${nameB} takes more time to build trust before sharing personal experiences.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Emotional disclosure pace',
+        text: `Emotional opening pace differs; you share comfortably early on, while ${nameB} prefers gradual trust building.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Vulnerability timing difference',
+        text: `You express feelings openly, whereas ${nameB} observes quietly before revealing personal details.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Trust building speed',
+        text: `You share personal insights early on, while ${nameB} observes quietly until trust is established.`,
+      }),
+    ],
   },
   // 10. RECIPROCITY — Alignment
   {
@@ -302,10 +647,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['trust-first'],
     requiredB: ['trust-first'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Paced mutual trust',
-      text: 'Neither of you rushes emotional intimacy, allowing trust to develop naturally over time.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Paced mutual trust',
+        text: 'Neither of you rushes emotional intimacy, allowing trust to develop naturally over time.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Observant trust pace',
+        text: 'You both build trust through steady observation, keeping early hangouts comfortable and unforced.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Thoughtful vulnerability timing',
+        text: 'Pacing emotional closeness thoughtfully feels right to both of you.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Gradual trust development',
+        text: 'Allowing trust to deepen organically over time feels right to both of you.',
+      }),
+    ],
   },
 
   // 11. NOVELTY — Friction
@@ -317,10 +676,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['familiarity-comfort'],
     frictionType: 'NOVELTY',
     severity: 'NEGOTIABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Novelty preference difference',
-      text: `You enjoy exploring new places and activities, whereas ${nameB} finds comfort in familiar spots.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Novelty preference difference',
+        text: `You enjoy exploring new places and activities, whereas ${nameB} finds comfort in familiar spots.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Exploration vs comfort gap',
+        text: `Outing exploration styles contrast; you love discovering fresh venues, while ${nameB} likes reliable favorites.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Venue novelty preference',
+        text: `Balancing new experience discovery with comfortable go-to spots will keep your outings fun for both.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Outing novelty contrast',
+        text: `You seek novel venues and fresh activities, while ${nameB} enjoys returning to reliable favorites.`,
+      }),
+    ],
   },
   // 11. NOVELTY — Alignment
   {
@@ -329,10 +702,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['novelty-seeking'],
     requiredB: ['novelty-seeking'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Shared exploratory spirit',
-      text: 'Both of you love trying new venues and outing ideas, keeping meetups fresh.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Shared exploratory spirit',
+        text: 'Both of you love trying new venues and outing ideas, keeping meetups fresh.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'High curiosity for fresh spots',
+        text: 'Exploring unfamiliar spots and unique activities appeals to both of your adventurous sides.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Adventurous outing orientation',
+        text: 'Your shared curiosity for new experiences means outing ideas will never feel repetitive.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Exploratory outing mindset',
+        text: 'Trying new neighborhood spots and creative activity themes appeals equally to both of you.',
+      }),
+    ],
   },
 
   // 12. INTENSITY — Friction
@@ -344,10 +731,24 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredB: ['emotionally-private'],
     frictionType: 'INTENSITY',
     severity: 'NOTICEABLE',
-    generateText: (_nameA, nameB) => ({
-      headline: 'Expressive intensity contrast',
-      text: `You bring high emotional energy to conversations, while ${nameB} maintains a calmer, understated presence.`,
-    }),
+    variants: [
+      (_nameA, nameB) => ({
+        headline: 'Expressive intensity contrast',
+        text: `You bring high emotional energy to conversations, while ${nameB} maintains a calmer, understated presence.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Conversational energy variance',
+        text: `Conversational expressiveness differs; you bring animated energy, while ${nameB} is more reserved.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Expressive vs quiet listening fit',
+        text: `Your vivid storytelling contrasts comfortably with ${nameB}'s quiet listening style.`,
+      }),
+      (_nameA, nameB) => ({
+        headline: 'Emotional expressiveness gap',
+        text: `You bring animated emotional energy to conversations, whereas ${nameB} maintains an easygoing, understated presence.`,
+      }),
+    ],
   },
   // 12. INTENSITY — Alignment
   {
@@ -356,17 +757,30 @@ export const DYADIC_RULES: DyadicRule[] = [
     level: 3,
     requiredA: ['high-expressiveness'],
     requiredB: ['high-expressiveness'],
-    generateText: (_nameA, _nameB) => ({
-      headline: 'Vibrant conversational energy',
-      text: 'Conversations between you are animated, expressive, and full of energy.',
-    }),
+    variants: [
+      (_nameA, _nameB) => ({
+        headline: 'Vibrant conversational energy',
+        text: 'Conversations between you are animated, expressive, and full of energy.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Shared high enthusiasm',
+        text: 'You both bring high conversational enthusiasm, making interactions feel lively.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'High expressive resonance',
+        text: 'Shared expressiveness means conversation flows with high energy and active engagement.',
+      }),
+      (_nameA, _nameB) => ({
+        headline: 'Lively expressiveness fit',
+        text: 'High conversational energy and expressiveness make your interactions lively and engaging.',
+      }),
+    ],
   },
 ];
 
 /**
  * Layer 3 — Dyadic composition.
- * Takes markers from BOTH people and evaluates dyadic rules.
- * Emits statements only when ALL required markers from Person A and Person B are present.
+ * Evaluates markers from BOTH people and selects deterministic phrasing variants based on pair hash.
  */
 export function composeDyad(
   markersA: Marker[],
@@ -394,7 +808,9 @@ export function composeDyad(
       const sourcesB = matchB.map((m) => m.source);
       const allSources = Array.from(new Set([...sourcesA, ...sourcesB]));
 
-      const generated = rule.generateText(nameA, nameB);
+      // Select phrasing variant deterministically based on pair hash
+      const variantIdx = hashPair(nameA, nameB, rule.id) % rule.variants.length;
+      const generated = rule.variants[variantIdx](nameA, nameB);
 
       // Level 5 blocklist safety check
       if (containsLevel5Violation(generated.text) || (generated.headline && containsLevel5Violation(generated.headline))) {
@@ -422,7 +838,16 @@ export function composeDyad(
     const matchingB = interestsB.find((intB) => intB.key === intA.key);
     if (matchingB) {
       const interestName = intA.key.replace('interest-', '').replace(/-/g, ' ');
-      const text = `You both share a passion for ${interestName}. Meeting around a shared activity gives your connection an easy starting point.`;
+
+      const interestVariants = [
+        `You both share a passion for ${interestName}. Meeting around a shared activity gives your connection an easy starting point.`,
+        `Having a mutual interest in ${interestName} gives your first meetup a natural focus topic.`,
+        `Your shared curiosity for ${interestName} provides an instant anchor for outing ideas.`,
+        `Enjoying ${interestName} together provides a comfortable, interactive setting for your initial outing.`,
+      ];
+      const idx = hashPair(nameA, nameB, `interest-${intA.key}`) % interestVariants.length;
+      const text = interestVariants[idx];
+
       if (!containsLevel5Violation(text)) {
         statements.push({
           id: `shared-interest-${intA.key}`,
