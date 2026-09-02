@@ -1,4 +1,5 @@
 'use client';
+import { getGenderAvatarForName } from '@soul-tribe/core';
 
 export interface DeepProfileAnswers {
   // 1. Social Energy
@@ -337,7 +338,40 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   },
 };
 
-export const DEFAULT_PITCHES: PitchedOuting[] = [];
+export const DEFAULT_PITCHES: PitchedOuting[] = [
+  {
+    id: 'pitch-demo-1',
+    title: 'Saturday Pottery & Filter Coffee',
+    pitch: 'Hand-building ceramic mugs in a quiet Tiong Bahru studio followed by pour-over coffee.',
+    area: 'Tiong Bahru',
+    dateTime: 'Sat, 5 Sep · 3:00 PM',
+    hostName: 'Priya Sharma',
+    hostAvatar: getGenderAvatarForName('Priya Sharma'),
+    seatsTotal: 6,
+    seatsFilled: 3,
+    cohesionScore: 85,
+    joinedGuests: [
+      {
+        id: 'guest-mervyn',
+        name: 'Mervyn',
+        avatarUrl: getGenderAvatarForName('Mervyn'),
+        homeArea: 'Tiong Bahru',
+        status: 'Pending',
+        isDemo: true,
+      },
+      {
+        id: 'guest-samuel',
+        name: 'Samuel',
+        avatarUrl: getGenderAvatarForName('Samuel'),
+        homeArea: 'Tiong Bahru',
+        status: 'Confirmed',
+        isDemo: true,
+      },
+    ],
+    createdAt: new Date().toISOString(),
+    category: 'creative',
+  },
+];
 
 export function getUserProfile(): UserProfileData {
   if (typeof window === 'undefined') return DEFAULT_USER_PROFILE;
@@ -418,7 +452,7 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
 }
 
 export function getUserPitches(): PitchedOuting[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') return DEFAULT_PITCHES;
   try {
     const saved = localStorage.getItem('soul_tribe_user_pitches');
     if (saved) {
@@ -430,7 +464,7 @@ export function getUserPitches(): PitchedOuting[] {
   } catch (e) {
     console.error('Failed to read user pitches', e);
   }
-  return [];
+  return DEFAULT_PITCHES;
 }
 
 export function addUserPitch(newPitch: PitchedOuting): PitchedOuting[] {

@@ -127,12 +127,30 @@ export function getOutingCategoryImage(category?: string, title?: string, area?:
 
 import { getUserPitches, getJoinedOutingsLocal } from './userStore';
 
+export const DEFAULT_GOING_OUTINGS: OutingItem[] = [
+  {
+    id: 'demo-going-1',
+    title: 'Fort Canning Botanical Walk & Tea',
+    pitch: 'Morning walk through Fort Canning Park tree tunnel followed by quiet herbal tea.',
+    area: 'Fort Canning',
+    category: 'active',
+    dateTime: 'Sun, 6 Sep · 9:30 AM',
+    hostId: '00000000-0000-0000-0000-000000000003',
+    hostName: 'Chloe Tan',
+    hostAvatar: getGenderAvatarForName('Chloe Tan'),
+    isHostDemo: true,
+    seatsTotal: 6,
+    seatsFilled: 4,
+    state: 'accepted',
+  },
+];
+
 export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> {
   const localJoinedIds = new Set(getJoinedOutingsLocal());
 
   if (!checkIsSupabaseConfigured() || !userId) {
     const localPitches = getUserPitches();
-    return localPitches
+    const joinedLocal = localPitches
       .filter((p) => localJoinedIds.has(p.id))
       .map((p) => ({
         id: p.id,
@@ -146,7 +164,11 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         seatsTotal: p.seatsTotal,
         seatsFilled: p.seatsFilled,
         state: 'requested',
+        category: (p as any).category,
       }));
+
+    if (joinedLocal.length > 0) return joinedLocal;
+    return DEFAULT_GOING_OUTINGS;
   }
 
   try {
@@ -336,9 +358,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       });
     }
 
+    if (dbItems.length === 0) {
+      return DEFAULT_GOING_OUTINGS;
+    }
     return dbItems;
   } catch {
-    return [];
+    return DEFAULT_GOING_OUTINGS;
   }
 }
 

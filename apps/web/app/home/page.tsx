@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PitchCard, Button, ResonanceRead } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
-import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage } from '../../lib/outingsStore';
+import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage, DEFAULT_GOING_OUTINGS, DEFAULT_RADAR_OUTINGS } from '../../lib/outingsStore';
 import { motion } from 'framer-motion';
 import { Plus, Users, MapPin, Calendar, CheckCircle2, Sparkles, Compass, AlertCircle, Edit3, Trash2 } from 'lucide-react';
 import { getUserProfile, setUserProfile, UserProfileData, getUserPitches, PitchedOuting, DEFAULT_PITCHES, DEFAULT_USER_PROFILE, getJoinedOutingsLocal, addJoinedOutingLocal, removeJoinedOutingLocal, removeUserPitchLocal } from '../../lib/userStore';
@@ -127,9 +127,9 @@ function HomeContent() {
         const smallMode = isSmallCommunityMode(realCount);
 
         const [rankedMatchesData, goingData, radarData] = await Promise.all([
-          getRankedMatches(userProf),
-          fetchGoingOutings(user?.id),
-          fetchRadarOutings(user?.id),
+          getRankedMatches(userProf).catch(() => []),
+          fetchGoingOutings(user?.id).catch(() => DEFAULT_GOING_OUTINGS),
+          fetchRadarOutings(user?.id).catch(() => DEFAULT_RADAR_OUTINGS),
         ]);
 
         if (cancelled) return;
