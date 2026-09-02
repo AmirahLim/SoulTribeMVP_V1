@@ -2,6 +2,7 @@ import type { ProfileVector, OnboardingAnswers } from '../domain/types.ts';
 import { extractMarkers, type Marker } from './markers.ts';
 import { composeWithinPerson } from './withinPerson.ts';
 import { composeDyad, type DyadicStatement } from './dyad.ts';
+import { matchRelationalPattern, type RelationalPattern } from './patterns.ts';
 import { evaluateMechanism, type NamedFrictionType, type FrictionSeverity } from '../matching/mechanisms.ts';
 import { assertNoLevel5Violations } from './blocklist.ts';
 import { PHRASES, PHRASES_YOU } from './phrases.ts';
@@ -27,6 +28,12 @@ export interface ExplanationText {
   resonance_label: ResonanceLabel;
   evidence_count: number;
   evidence_label: string; // e.g. "Early read · based on 8 signals"
+  relational_pattern?: {
+    id: string;
+    name: string;
+    thesis: string;
+    manifestation: string;
+  };
   why_click?: string[];
   conversation_feel?: string[];
   friendship_path?: string[];
@@ -38,6 +45,48 @@ export const HONEST_EMPTY_FRICTION = {
   headline: 'No obvious friction yet',
   text: "From what you've both shared so far, there isn't a meaningful mismatch we'd flag. Your profiles are still developing, so this may sharpen as you answer more of your Tribal Pass.",
 };
+
+const SOURCE_TO_THREAD: Record<string, string> = {
+  q3GroupSize: 'personality',
+  groupSize: 'personality',
+  q3Energy: 'personality',
+  q4Social: 'communication',
+  messagingStyle: 'communication',
+  q5PlanningRhythm: 'social_rhythm',
+  q5Planning: 'social_rhythm',
+  q7Trust: 'emotional',
+  q7EmotionalPacing: 'emotional',
+  personality: 'personality',
+  communication: 'communication',
+  social_rhythm: 'social_rhythm',
+  intent: 'intent',
+  emotional: 'emotional',
+  interests: 'interests',
+  values: 'values',
+  lifestyle: 'lifestyle',
+  experience: 'experience',
+  geography: 'geography',
+};
+
+const FRICTION_TYPE_TO_THREAD: Record<string, string> = {
+  PLANNING: 'social_rhythm',
+  CONTACT: 'communication',
+  TEMPO: 'communication',
+  ENERGY: 'personality',
+  DEPTH: 'intent',
+  INITIATION: 'social_rhythm',
+  SETTING: 'experience',
+  ACTIVITY: 'interests',
+  EXPECTATION: 'intent',
+  RECIPROCITY: 'emotional',
+  NOVELTY: 'personality',
+  INTENSITY: 'emotional',
+};
+
+function getThreadFromSource(src: string): string {
+  const prefix = src.split('.')[0];
+  return SOURCE_TO_THREAD[prefix] || prefix;
+}
 
 function isThreadAnswered(vec: ProfileVector, key: string): boolean {
   if (!vec) return false;
@@ -83,19 +132,6 @@ function formatValueName(item: any): string {
   }
   return str;
 }
-
-const THREAD_LABELS: Record<string, string> = {
-  personality: 'personality & social energy',
-  communication: 'messaging & response pace',
-  social_rhythm: 'planning style',
-  intent: 'friendship depth expectations',
-  emotional: 'emotional opening pace',
-  interests: 'activity interests',
-  values: 'underlying core values',
-  lifestyle: 'lifestyle habits',
-  experience: 'outing preferences',
-  geography: 'preferred neighbourhoods',
-};
 
 const CLICK_THREAD_PRIORITY: Record<string, number> = {
   interests: 10,
@@ -148,6 +184,9 @@ export function generateMatchExplanation(
   const markersA = composeWithinPerson(rawMarkersA);
   const markersB = composeWithinPerson(rawMarkersB);
 
+  // Layer 5: Relational Pattern Matching
+  const pattern = matchRelationalPattern(markersA, markersB, nameA, nameB);
+
   // Layer 3: Dyadic Composition
   const dyadicStatements = composeDyad(markersA, markersB, nameA, nameB);
 
@@ -170,7 +209,7 @@ export function generateMatchExplanation(
 
   allAlignments.forEach((stmt) => {
     const isHighWeight = stmt.sources.some((src) => {
-      const t = src.split('.')[0];
+      const t = getThreadFromSource(src);
       return highWeightThreads.has(t);
     });
     if (isHighWeight) highWeightAlignments++;
@@ -198,23 +237,74 @@ export function generateMatchExplanation(
   // Track threads used in click/alignment to prevent thread contradiction
   const clickThreadsUsed = new Set<string>();
 
-  // PREFERENTIAL DYADIC OUTPUT ASSEMBLY FOR RAW ANSWERS
+  // STEP 1: CONSTRUCT CLICK_TEXT FIRST & RECORD ALL CLICK THREADS USED
   let click_text = '';
-  if (hasRawAnswers && (clickStatements.length > 0 || convStatements.length > 0 || pathStatements.length > 0)) {
+  let relational_pattern_output: ExplanationText['relational_pattern'] | undefined;
+
+  if (pattern) {
+    const thesisText = pattern.thesis(nameA, nameB);
+    const manifestText = pattern.manifestation(nameA, nameB);
+    relational_pattern_output = {
+      id: pattern.id,
+      name: pattern.name,
+      thesis: thesisText,
+      manifestation: manifestText,
+    };
+    click_text = `${thesisText} ${manifestText}`;
+
+    // Record threads used in pattern
+    const markerThreadMap: Record<string, string> = {
+      'socially-selective': 'personality',
+      'socially-expansive': 'personality',
+      'advance-planning': 'social_rhythm',
+      'spontaneous': 'social_rhythm',
+      'depth-oriented': 'intent',
+      'casual-vibe': 'intent',
+      'frequent-touchpoints': 'communication',
+      'low-contact': 'communication',
+      'async-pacer': 'communication',
+      'rapid-responder': 'communication',
+      'gradual-opening': 'emotional',
+      'fast-opening': 'emotional',
+      'quiet-setting': 'experience',
+      'active-setting': 'experience',
+      'trust-first': 'emotional',
+      'commitment-seeking': 'intent',
+      'proactive-initiator': 'social_rhythm',
+      'responsive-joiner': 'social_rhythm',
+    };
+    pattern.signature.bothRequire?.forEach((k) => {
+      const t = markerThreadMap[k] || k;
+      clickThreadsUsed.add(t);
+    });
+    pattern.signature.eitherRequire?.forEach((k) => {
+      const t = markerThreadMap[k] || k;
+      clickThreadsUsed.add(t);
+    });
+
+    const combinedAlignments = [...clickStatements, ...convStatements, ...pathStatements];
+    combinedAlignments.forEach((stmt) => {
+      stmt.sources.forEach((src) => {
+        const thread = getThreadFromSource(src);
+        if (thread) clickThreadsUsed.add(thread);
+      });
+    });
+
+    // Append COMPLEMENTARY dyadic statements if present
+    const compStatements = dyadicStatements.filter((s) => s.severity === 'COMPLEMENTARY');
+    if (compStatements.length > 0) {
+      click_text = `${click_text} ${compStatements.map((s) => s.text).join(' ')}`;
+    }
+  } else if (hasRawAnswers && (clickStatements.length > 0 || convStatements.length > 0 || pathStatements.length > 0)) {
     const combined = [...clickStatements, ...convStatements, ...pathStatements];
     click_text = Array.from(new Set(combined.map((s) => s.text))).join(' ');
 
     combined.forEach((stmt) => {
       stmt.sources.forEach((src) => {
-        const thread = src.split('.')[0];
+        const thread = getThreadFromSource(src);
         if (thread) clickThreadsUsed.add(thread);
       });
     });
-  }
-
-  let friction_text = '';
-  if (hasRawAnswers && frictionStatements.length > 0) {
-    friction_text = Array.from(new Set(frictionStatements.map((s) => s.text))).join(' ');
   }
 
   // THREAD FALLBACK FOR THIN PROFILES OR VECTOR-ONLY SYNTHETIC FIXTURES
@@ -325,6 +415,27 @@ export function generateMatchExplanation(
     }
   }
 
+  // STEP 2: CONSTRUCT FRICTION_TEXT AFTER ALL CLICK THREADS ARE FULLY KNOWN
+  let friction_text = '';
+  let activeFrictionStatement: DyadicStatement | undefined;
+
+  if (hasRawAnswers && frictionStatements.length > 0) {
+    const nonConflictingFriction = frictionStatements.filter((stmt) => {
+      const threadInSources = stmt.sources.some((src) => {
+        const t = getThreadFromSource(src);
+        return clickThreadsUsed.has(t);
+      });
+      const threadInFrictionType = stmt.frictionType
+        ? clickThreadsUsed.has(stmt.frictionType.toLowerCase()) || clickThreadsUsed.has(FRICTION_TYPE_TO_THREAD[stmt.frictionType] || '')
+        : false;
+      return !threadInSources && !threadInFrictionType;
+    });
+    if (nonConflictingFriction.length > 0) {
+      activeFrictionStatement = nonConflictingFriction[0];
+      friction_text = Array.from(new Set(nonConflictingFriction.map((s) => s.text))).join(' ');
+    }
+  }
+
   if (!friction_text) {
     // FILTER OUT threads that were already cited as click alignment or interests
     const eligibleThreads = evaluated.filter(
@@ -413,11 +524,11 @@ export function generateMatchExplanation(
   }
 
   // Headline (Dual phrase pair without percentages)
-  const clickHeadline = clickStatements[0]?.headline || convStatements[0]?.headline || 'Conversational resonance';
+  const clickHeadline = pattern?.name || clickStatements[0]?.headline || convStatements[0]?.headline || 'Conversational resonance';
   const isHonestEmpty = friction_text.startsWith("From what you've both shared");
   const frictionHeadline = isHonestEmpty
     ? HONEST_EMPTY_FRICTION.headline
-    : (frictionStatements[0]?.headline || 'Harmonious social rhythm');
+    : (activeFrictionStatement?.headline || 'Harmonious social rhythm');
 
   const headline = `${clickHeadline} · ${frictionHeadline}`;
 
@@ -434,6 +545,7 @@ export function generateMatchExplanation(
     resonance_label,
     evidence_count,
     evidence_label,
+    relational_pattern: relational_pattern_output,
     why_click: clickStatements.length > 0 ? clickStatements.map((s) => s.text) : undefined,
     conversation_feel: convStatements.length > 0 ? convStatements.map((s) => s.text) : undefined,
     friendship_path: pathStatements.length > 0 ? pathStatements.map((s) => s.text) : undefined,

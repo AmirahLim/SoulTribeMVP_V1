@@ -161,7 +161,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
       (_nameA, nameB) => ({
         headline: 'Messaging touchpoint gap',
-        text: `You tend to maintain active daily check-ins, while ${nameB} saves social energy for in-person catch-ups.`,
+        text: `You tend to maintain active daily check-ins, while ${nameB} saves enthusiasm for in-person catch-ups.`,
       }),
       (_nameA, nameB) => ({
         headline: 'Contact cadence variance',
