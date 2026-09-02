@@ -590,6 +590,7 @@ function HomeContent() {
                     cover_image_alt={item.cover_image_alt || item.title}
                     cover_photographer_name={item.cover_photographer_name}
                     cover_photographer_url={item.cover_photographer_url}
+                    title={item.title}
                     category={(item as any).category}
                     area={item.area}
                     className="mt-3"
@@ -794,6 +795,7 @@ function HomeContent() {
                     cover_image_alt={item.cover_image_alt || item.title}
                     cover_photographer_name={item.cover_photographer_name}
                     cover_photographer_url={item.cover_photographer_url}
+                    title={item.title}
                     category={item.category}
                     area={item.area}
                     className="mt-3"
@@ -925,6 +927,7 @@ function HomeContent() {
                     cover_image_alt={item.cover_image_alt || item.title}
                     cover_photographer_name={item.cover_photographer_name}
                     cover_photographer_url={item.cover_photographer_url}
+                    title={item.title}
                     category={item.category}
                     area={item.area}
                     className="mt-3"

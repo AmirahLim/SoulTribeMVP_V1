@@ -693,6 +693,7 @@ function PitchComposerContent() {
                 cover_image_alt={selectedCover?.cover_image_alt || title}
                 cover_photographer_name={selectedCover?.cover_photographer_name}
                 cover_photographer_url={selectedCover?.cover_photographer_url}
+                title={title}
                 category={activityCategory}
                 area={area}
               />

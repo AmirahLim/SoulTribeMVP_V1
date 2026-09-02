@@ -1,4 +1,5 @@
 import React from 'react';
+import { getOutingCategoryImage } from '../lib/outingsStore';
 
 export interface OutingCoverHeaderProps {
   cover_image_url?: string | null;
@@ -6,6 +7,7 @@ export interface OutingCoverHeaderProps {
   cover_image_alt?: string | null;
   cover_photographer_name?: string | null;
   cover_photographer_url?: string | null;
+  title?: string;
   category?: string;
   area?: string;
   className?: string;
@@ -17,6 +19,7 @@ export function OutingCoverHeader({
   cover_image_alt,
   cover_photographer_name,
   cover_photographer_url,
+  title,
   category,
   area,
   className = '',
@@ -25,25 +28,7 @@ export function OutingCoverHeader({
   const isBanner = aspect === 'banner';
   const containerHeightClass = isBanner ? 'h-44 sm:h-52' : 'h-36 sm:h-40';
 
-  // If no cover image exists, render themed placeholder / category color block without stock photo
-  if (!cover_image_url) {
-    return (
-      <div
-        className={`relative ${containerHeightClass} w-full overflow-hidden rounded-[20px] bg-gradient-to-br from-[#1b3829] via-[#0f241a] to-[#07130e] border border-white/15 p-4 flex flex-col justify-between shadow-inner ${className}`}
-      >
-        <div className="flex items-center justify-between">
-          {(area || category) && (
-            <div className="rounded-full bg-black/60 px-3 py-1 text-[11px] font-bold text-white/90 uppercase tracking-widest border border-white/20 backdrop-blur-md">
-              {area || 'Singapore'} {category ? `· ${category}` : ''}
-            </div>
-          )}
-        </div>
-        <div className="text-[12px] font-medium text-white/50 italic">
-          No cover photo assigned
-        </div>
-      </div>
-    );
-  }
+  const imageUrl = cover_image_url || getOutingCategoryImage(category, title || cover_image_alt || '', area);
 
   // Ensure UTM parameters are appended per Unsplash API licensing terms
   const photographerUrl = cover_photographer_url
@@ -59,8 +44,8 @@ export function OutingCoverHeader({
       className={`relative ${containerHeightClass} w-full overflow-hidden rounded-[20px] bg-black/60 border border-white/15 shadow-md ${className}`}
     >
       <img
-        src={cover_image_url}
-        alt={cover_image_alt || 'Outing cover image'}
+        src={imageUrl}
+        alt={cover_image_alt || title || 'Outing cover image'}
         className="h-full w-full object-cover opacity-90 transition-transform duration-300 hover:scale-105"
       />
 

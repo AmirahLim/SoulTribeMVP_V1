@@ -720,6 +720,7 @@ function OutingDetailContent() {
         cover_image_alt={outing.cover_image_alt || outing.title}
         cover_photographer_name={outing.cover_photographer_name}
         cover_photographer_url={outing.cover_photographer_url}
+        title={outing.title}
         category={outing.activity_category}
         area={outing.area}
         aspect="banner"
