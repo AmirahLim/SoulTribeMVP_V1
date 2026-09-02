@@ -125,7 +125,9 @@ export function generateMatchExplanation(
   const clickStatements = dyadicStatements.filter((s) => s.section === 'click');
   const convStatements = dyadicStatements.filter((s) => s.section === 'conversation');
   const pathStatements = dyadicStatements.filter((s) => s.section === 'friendship_path');
-  const frictionStatements = dyadicStatements.filter((s) => s.section === 'friction');
+
+  // ONLY NOTICEABLE and STRUCTURAL severity statements lead friction!
+  const frictionStatements = dyadicStatements.filter((s) => s.section === 'friction' && (s.severity === 'NOTICEABLE' || s.severity === 'STRUCTURAL'));
 
   const hasRawAnswers = (vecA.answers && Object.keys(vecA.answers).length > 0) || (vecB.answers && Object.keys(vecB.answers).length > 0);
 
@@ -260,9 +262,9 @@ export function generateMatchExplanation(
   }
 
   if (!friction_text) {
-    // FILTER OUT threads that were already cited as click alignment to prevent contradiction!
+    // FILTER OUT threads that were already cited as click alignment or interests (interests never lead friction alone)
     const eligibleThreads = evaluated.filter(
-      (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key) && !clickThreadsUsed.has(d.key)
+      (d) => isThreadAnswered(vecA, d.key) && isThreadAnswered(vecB, d.key) && !clickThreadsUsed.has(d.key) && d.key !== 'interests'
     );
 
     eligibleThreads.sort((a, b) => a.score - b.score);

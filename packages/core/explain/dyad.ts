@@ -26,8 +26,6 @@ export interface DyadicRule {
 
 /**
  * Deterministic hash per pairing and rule ID.
- * Ensures the exact same pair always gets the exact same phrasing variant,
- * while different pairings select different variants across the rule set.
  */
 export function hashPair(nameA: string, nameB: string, ruleId: string): number {
   const str = `${nameA}:${nameB}:${ruleId}`;
@@ -40,7 +38,7 @@ export function hashPair(nameA: string, nameB: string, ruleId: string): number {
 }
 
 export const DYADIC_RULES: DyadicRule[] = [
-  // 1. PLANNING — Friction
+  // 1. PLANNING — Friction (NOTICEABLE)
   {
     id: 'dyad-planning-advance-spontaneous',
     section: 'friction',
@@ -147,7 +145,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 2. CONTACT — Friction
+  // 2. CONTACT — Friction (NOTICEABLE)
   {
     id: 'dyad-contact-frequent-low',
     section: 'friction',
@@ -175,7 +173,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-  // 2. CONTACT — Alignment (The Quiet-Week Rule)
+  // 2. CONTACT — Alignment
   {
     id: 'dyad-quiet-week-alignment',
     section: 'click',
@@ -227,7 +225,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 3. TEMPO — Friction
+  // 3. TEMPO — Friction (NEGOTIABLE)
   {
     id: 'dyad-tempo-rapid-async',
     section: 'friction',
@@ -282,7 +280,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 4. ENERGY — Friction
+  // 4. ENERGY — Friction (NOTICEABLE)
   {
     id: 'dyad-energy-expansive-selective',
     section: 'friction',
@@ -290,7 +288,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredA: ['socially-expansive'],
     requiredB: ['socially-selective'],
     frictionType: 'ENERGY',
-    severity: 'NEGOTIABLE',
+    severity: 'NOTICEABLE',
     variants: [
       (_nameA, nameB) => ({
         headline: 'Social battery contrast',
@@ -337,7 +335,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 5. DEPTH — Friction
+  // 5. DEPTH — Friction (STRUCTURAL)
   {
     id: 'dyad-depth-oriented-casual',
     section: 'friction',
@@ -418,7 +416,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-  // 6. INITIATION — Friction
+  // 6. INITIATION — Friction (NEGOTIABLE)
   {
     id: 'dyad-initiation-dual-responsive',
     section: 'friction',
@@ -447,7 +445,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 7. SETTING — Friction
+  // 7. SETTING — Friction (NEGOTIABLE)
   {
     id: 'dyad-setting-quiet-active',
     section: 'friction',
@@ -502,62 +500,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 8. ACTIVITY — Friction
-  {
-    id: 'dyad-activity-focused-casual',
-    section: 'friction',
-    level: 3,
-    requiredA: ['activity-oriented'],
-    requiredB: ['table-talk-enthusiast'],
-    frictionType: 'ACTIVITY',
-    severity: 'NEGOTIABLE',
-    variants: [
-      (_nameA, nameB) => ({
-        headline: 'Focus format difference',
-        text: `You prefer structured activities as conversation anchors, while ${nameB} prefers unstructured table conversation.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Outing structure preference',
-        text: `You enjoy having an active task during meetups, whereas ${nameB} prefers straightforward sit-down chats.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Activity vs talk orientation',
-        text: `Interactive hobbies give you an easy social focus, while ${nameB} prefers open-ended coffee table talk.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Outing focus orientation',
-        text: `You prefer structured activity themes, while ${nameB} prefers unstructured table conversation.`,
-      }),
-    ],
-  },
-  // 8. ACTIVITY — Alignment
-  {
-    id: 'dyad-activity-shared-anchor',
-    section: 'friendship_path',
-    level: 3,
-    requiredA: ['activity-oriented'],
-    requiredB: ['activity-oriented'],
-    variants: [
-      (_nameA, _nameB) => ({
-        headline: 'Shared activity anchor',
-        text: 'Doing something interactive together gives your connection an easy, natural starting point.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'Interactive outing focus',
-        text: 'Hands-on activities and active experiences provide an easy foundation for your hangouts.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'Activity-based social connection',
-        text: 'You both bond best while participating in a shared activity or project.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'Shared activity orientation',
-        text: 'Interactive hobbies give your meetups an engaging, natural focus.',
-      }),
-    ],
-  },
-
-  // 9. EXPECTATION — Friction
+  // 8. EXPECTATION — Friction (STRUCTURAL)
   {
     id: 'dyad-expectation-commitment-casual',
     section: 'friction',
@@ -585,7 +528,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-  // 9. EXPECTATION — Alignment
+  // 8. EXPECTATION — Alignment
   {
     id: 'dyad-expectation-shared-commitment',
     section: 'click',
@@ -612,7 +555,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 10. RECIPROCITY — Friction
+  // 9. RECIPROCITY — Friction (NEGOTIABLE)
   {
     id: 'dyad-reciprocity-high-informal',
     section: 'friction',
@@ -620,7 +563,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     requiredA: ['vulnerable-sharer'],
     requiredB: ['emotionally-private'],
     frictionType: 'RECIPROCITY',
-    severity: 'NOTICEABLE',
+    severity: 'NEGOTIABLE',
     variants: [
       (_nameA, nameB) => ({
         headline: 'Sharing balance contrast',
@@ -640,7 +583,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-  // 10. RECIPROCITY — Alignment
+  // 9. RECIPROCITY — Alignment
   {
     id: 'dyad-reciprocity-shared-trust',
     section: 'conversation',
@@ -667,7 +610,7 @@ export const DYADIC_RULES: DyadicRule[] = [
     ],
   },
 
-  // 11. NOVELTY — Friction
+  // 10. NOVELTY — Friction (NEGOTIABLE)
   {
     id: 'dyad-novelty-seeking-familiarity',
     section: 'friction',
@@ -695,7 +638,7 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-  // 11. NOVELTY — Alignment
+  // 10. NOVELTY — Alignment
   {
     id: 'dyad-novelty-shared-explorers',
     section: 'friendship_path',
@@ -721,66 +664,10 @@ export const DYADIC_RULES: DyadicRule[] = [
       }),
     ],
   },
-
-  // 12. INTENSITY — Friction
-  {
-    id: 'dyad-intensity-high-easygoing',
-    section: 'friction',
-    level: 3,
-    requiredA: ['high-expressiveness'],
-    requiredB: ['emotionally-private'],
-    frictionType: 'INTENSITY',
-    severity: 'NOTICEABLE',
-    variants: [
-      (_nameA, nameB) => ({
-        headline: 'Expressive intensity contrast',
-        text: `You bring high emotional energy to conversations, while ${nameB} maintains a calmer, understated presence.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Conversational energy variance',
-        text: `Conversational expressiveness differs; you bring animated energy, while ${nameB} is more reserved.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Expressive vs quiet listening fit',
-        text: `Your vivid storytelling contrasts comfortably with ${nameB}'s quiet listening style.`,
-      }),
-      (_nameA, nameB) => ({
-        headline: 'Emotional expressiveness gap',
-        text: `You bring animated emotional energy to conversations, whereas ${nameB} maintains an easygoing, understated presence.`,
-      }),
-    ],
-  },
-  // 12. INTENSITY — Alignment
-  {
-    id: 'dyad-intensity-shared-expressive',
-    section: 'conversation',
-    level: 3,
-    requiredA: ['high-expressiveness'],
-    requiredB: ['high-expressiveness'],
-    variants: [
-      (_nameA, _nameB) => ({
-        headline: 'Vibrant conversational energy',
-        text: 'Conversations between you are animated, expressive, and full of energy.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'Shared high enthusiasm',
-        text: 'You both bring high conversational enthusiasm, making interactions feel lively.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'High expressive resonance',
-        text: 'Shared expressiveness means conversation flows with high energy and active engagement.',
-      }),
-      (_nameA, _nameB) => ({
-        headline: 'Lively expressiveness fit',
-        text: 'High conversational energy and expressiveness make your interactions lively and engaging.',
-      }),
-    ],
-  },
 ];
 
 /**
  * Layer 3 — Dyadic composition.
- * Evaluates markers from BOTH people and selects deterministic phrasing variants based on pair hash.
  */
 export function composeDyad(
   markersA: Marker[],
@@ -808,11 +695,9 @@ export function composeDyad(
       const sourcesB = matchB.map((m) => m.source);
       const allSources = Array.from(new Set([...sourcesA, ...sourcesB]));
 
-      // Select phrasing variant deterministically based on pair hash
       const variantIdx = hashPair(nameA, nameB, rule.id) % rule.variants.length;
       const generated = rule.variants[variantIdx](nameA, nameB);
 
-      // Level 5 blocklist safety check
       if (containsLevel5Violation(generated.text) || (generated.headline && containsLevel5Violation(generated.headline))) {
         continue;
       }
@@ -856,6 +741,28 @@ export function composeDyad(
           sources: [intA.source, matchingB.source],
           headline: `Shared interest in ${interestName}`,
           text,
+        });
+      }
+    }
+  }
+
+  // COMPLEMENTARY Interest Divergence when both are novelty-open
+  const isNoveltyA = setA.has('novelty-seeking');
+  const isNoveltyB = setB.has('novelty-seeking');
+
+  if (isNoveltyA && isNoveltyB && interestsA.length > 0 && interestsB.length > 0) {
+    const sharedKeys = interestsA.filter(ia => interestsB.some(ib => ib.key === ia.key));
+    if (sharedKeys.length < Math.max(interestsA.length, interestsB.length)) {
+      const compText = "Your wider interests diverge, so after the obvious shared activities one of you may need to step into the other's world. Given you're both open to trying things, that may just as easily become the interesting part.";
+      if (!containsLevel5Violation(compText)) {
+        statements.push({
+          id: 'dyad-interest-divergence-novelty',
+          section: 'friendship_path',
+          level: 3,
+          sources: ['interests.divergence'],
+          headline: 'Complementary activity horizons',
+          text: compText,
+          severity: 'COMPLEMENTARY',
         });
       }
     }
