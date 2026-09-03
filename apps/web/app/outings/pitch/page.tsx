@@ -499,7 +499,7 @@ function PitchComposerContent() {
               Host Proposal Composer
             </span>
             <h1 className="mt-1 text-[28px] font-extrabold tracking-tight text-white drop-shadow-md">
-              Pitch an Outing
+              Pitch Outing
             </h1>
             <p className="mt-1 text-[14px] text-white/80">
               Design a small-group meetup for up to 6 people.

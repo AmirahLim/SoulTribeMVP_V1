@@ -561,7 +561,7 @@ function HomeContent() {
                 </p>
                 <Link href="/outings/pitch" className="mt-6">
                   <Button variant="primary" size="sm">
-                    <Plus className="mr-1.5 h-4 w-4" /> Pitch an Outing +
+                    <Plus className="mr-1.5 h-4 w-4" /> Pitch Outing
                   </Button>
                 </Link>
               </motion.div>
@@ -892,7 +892,7 @@ function HomeContent() {
                 </p>
                 <Link href="/outings/pitch" className="mt-6">
                   <Button variant="primary" size="sm">
-                    <Plus className="mr-1.5 h-4 w-4" /> Pitch an Outing +
+                    <Plus className="mr-1.5 h-4 w-4" /> Pitch Outing
                   </Button>
                 </Link>
               </motion.div>

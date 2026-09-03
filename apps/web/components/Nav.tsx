@@ -5,18 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Compass, Users, Calendar, User } from 'lucide-react';
 import { fetchInvitedOutings } from '../lib/outingsStore';
+import { useAuth } from '../lib/authContext';
 import { getUserProfile } from '../lib/userStore';
 
 export function Nav() {
   const pathname = usePathname();
+  const { user: authUser } = useAuth();
   const [pendingCount, setPendingCount] = useState<number>(0);
+
+  const userId = authUser?.id || getUserProfile()?.id;
 
   useEffect(() => {
     async function updateCount() {
       try {
-        const profile = getUserProfile();
-        if (profile?.id) {
-          const invited = await fetchInvitedOutings(profile.id);
+        if (userId) {
+          const invited = await fetchInvitedOutings(userId);
           setPendingCount(invited.length);
         } else {
           setPendingCount(0);
@@ -29,7 +32,7 @@ export function Nav() {
 
     window.addEventListener('soul-tribe-invites-changed', updateCount);
     return () => window.removeEventListener('soul-tribe-invites-changed', updateCount);
-  }, [pathname]);
+  }, [pathname, userId]);
 
   // Hide nav on landing and onboarding routes
   if (pathname === '/' || pathname.startsWith('/onboarding')) {
