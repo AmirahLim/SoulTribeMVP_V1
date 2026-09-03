@@ -20,10 +20,10 @@ import { getUserProfile } from '../../lib/userStore';
 import {
   fetchGoingOutings,
   fetchUserPitches,
-  fetchRadarOutings,
   OutingItem,
   getOutingCategoryImage,
 } from '../../lib/outingsStore';
+import { getPendingInvitesLocal, actionInviteLocal, PendingInviteItem } from '../../lib/invitesStore';
 import { getGenderAvatarForName } from '@soul-tribe/core';
 
 export default function OutingsPage() {
@@ -36,7 +36,7 @@ export default function OutingsPage() {
 
 type TabState = 'invited' | 'confirmed' | 'pitches' | 'past';
 
-function checkIsPast(item: OutingItem): boolean {
+function checkIsPast(item: { startsAt?: string; dateTime?: string; state?: string }): boolean {
   if (item.state === 'completed') return true;
   if (item.startsAt) {
     const time = new Date(item.startsAt).getTime();
@@ -61,9 +61,11 @@ function OutingsContent() {
   const [loading, setLoading] = useState(true);
   const [goingList, setGoingList] = useState<OutingItem[]>([]);
   const [pitchesList, setPitchesList] = useState<OutingItem[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInviteItem[]>([]);
+  const [joinedInvites, setJoinedInvites] = useState<PendingInviteItem[]>([]);
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<TabState>('confirmed');
+  const [activeTab, setActiveTab] = useState<TabState>('invited');
   const [hasSetDefaultTab, setHasSetDefaultTab] = useState(false);
 
   useEffect(() => {
@@ -76,6 +78,7 @@ function OutingsContent() {
 
         setGoingList(going);
         setPitchesList(pitches);
+        setPendingInvites(getPendingInvitesLocal());
       } catch (err) {
         console.error('Error loading outings:', err);
       } finally {
@@ -85,17 +88,7 @@ function OutingsContent() {
     loadAllOutings();
   }, [userId]);
 
-  // Derived Categorizations based on real data & dates
-
-  // 1. Pending Invitations (future dates, state === 'requested' / 'invited', user not host)
-  const pendingInvites = goingList.filter(
-    (item) =>
-      (item.state === 'requested' || item.state === 'invited') &&
-      item.hostId !== userId &&
-      !checkIsPast(item)
-  );
-
-  // Smart default tab logic: if pending invites exist -> default 'invited', else 'confirmed'
+  // Default tab logic: open Invited if pending invites exist, otherwise open Confirmed
   useEffect(() => {
     if (!loading && !hasSetDefaultTab) {
       if (pendingInvites.length > 0) {
@@ -107,13 +100,27 @@ function OutingsContent() {
     }
   }, [loading, pendingInvites.length, hasSetDefaultTab]);
 
-  // 2. Confirmed Upcoming Outings (future dates, state === 'accepted' or host's upcoming outing)
-  const confirmedOutings = goingList
-    .filter(
-      (item) =>
-        (item.state === 'accepted' || item.hostId === userId) &&
-        !checkIsPast(item)
-    );
+  // 2. Confirmed Outings (future dates)
+  const dbConfirmed = goingList.filter(
+    (item) => (item.state === 'accepted' || item.hostId === userId) && !checkIsPast(item)
+  );
+
+  const localConfirmedItems: OutingItem[] = joinedInvites.map((inv) => ({
+    id: inv.id,
+    title: inv.title,
+    pitch: inv.pitch,
+    area: inv.area,
+    dateTime: inv.dateTime,
+    hostId: 'host-invited',
+    hostName: inv.hostName,
+    hostAvatar: inv.hostAvatar,
+    seatsTotal: inv.seatsTotal,
+    seatsFilled: inv.seatsFilled + 1,
+    category: inv.category,
+    state: 'accepted',
+  }));
+
+  const confirmedOutings = [...dbConfirmed, ...localConfirmedItems];
 
   // Sort chronologically (soonest first)
   confirmedOutings.sort((a, b) => {
@@ -122,28 +129,45 @@ function OutingsContent() {
     return da - db;
   });
 
-  // 3. Your Pitches (proposed by current user)
+  // 3. Your Pitches
   const yourPitches = pitchesList.filter((item) => item.hostId === userId || !item.hostId);
 
-  // 4. Past Outings (past dates or completed state)
-  const pastOutings = goingList
+  // 4. Past Outings (including real Ladies Night event on Wed 2 Sept)
+  const dbPast = goingList
     .concat(pitchesList)
     .filter((item) => checkIsPast(item) || item.state === 'completed');
 
-  // Deduplicate past outings by id
-  const uniquePastOutings = Array.from(new Map(pastOutings.map((item) => [item.id, item])).values());
+  const defaultPastItems: OutingItem[] = [
+    {
+      id: 'ladies-night-past-1',
+      title: 'Ladies night',
+      pitch: 'Chic evening cocktail lounge & clinking glasses for ladies night out.',
+      area: 'Singapore · Central',
+      dateTime: 'Wed, 2 Sept, 8:34 pm',
+      hostId: 'yasmin-id',
+      hostName: 'Yasmin',
+      hostAvatar: getGenderAvatarForName('Yasmin'),
+      seatsTotal: 6,
+      seatsFilled: 4,
+      category: 'dining',
+      state: 'completed',
+    },
+  ];
 
-  // Accept / Join Invite Action
-  const handleJoinInvite = (outingId: string) => {
-    setGoingList((prev) =>
-      prev.map((item) => (item.id === outingId ? { ...item, state: 'accepted' } : item))
-    );
+  const combinedPast = [...dbPast, ...defaultPastItems];
+  const uniquePastOutings = Array.from(new Map(combinedPast.map((item) => [item.id, item])).values());
+
+  // Action Handlers
+  const handleJoinInvite = (invite: PendingInviteItem) => {
+    actionInviteLocal(invite.id);
+    setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id));
+    setJoinedInvites((prev) => [...prev, invite]);
     setActiveTab('confirmed');
   };
 
-  // Decline / Pass Invite Action
-  const handlePassInvite = (outingId: string) => {
-    setGoingList((prev) => prev.filter((item) => item.id !== outingId));
+  const handlePassInvite = (inviteId: string) => {
+    actionInviteLocal(inviteId);
+    setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
   };
 
   return (
@@ -244,7 +268,7 @@ function OutingsContent() {
           <div className="flex flex-col gap-4">
             {pendingInvites.length > 0 ? (
               pendingInvites.map((item) => {
-                const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
+                const coverImg = getOutingCategoryImage(item.category, item.title, item.area);
                 return (
                   <div
                     key={item.id}
@@ -259,7 +283,7 @@ function OutingsContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <img
-                            src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
+                            src={item.hostAvatar}
                             alt={item.hostName}
                             className="h-5 w-5 rounded-full object-cover border border-white/20"
                           />
@@ -292,13 +316,13 @@ function OutingsContent() {
 
                     {/* Invitation Context Reason */}
                     <div className="rounded-xl border border-[rgba(239,185,78,0.20)] bg-[rgba(239,185,78,0.08)] p-3 text-xs text-[rgba(245,242,234,0.80)] leading-relaxed">
-                      💡 <em>"{item.hostName} invited you based on your shared interest in Specialty Coffee & quiet 1-on-1 energy."</em>
+                      💡 <em>"{item.contextReason}"</em>
                     </div>
 
                     {/* Card Actions: Join, Pass, View Outing */}
                     <div className="flex items-center gap-2.5 pt-1">
                       <button
-                        onClick={() => handleJoinInvite(item.id)}
+                        onClick={() => handleJoinInvite(item)}
                         className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-2.5 px-3 text-xs font-bold text-[#F5F2EA] shadow-md hover:bg-[#38654D] transition-all"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD99A]" />
@@ -314,7 +338,7 @@ function OutingsContent() {
                       </button>
 
                       <Link
-                        href={`/outings/${item.id}`}
+                        href={`/outings/pitch`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline px-2 py-2"
                       >
                         <span>View Outing →</span>
@@ -416,7 +440,7 @@ function OutingsContent() {
                       </div>
 
                       <Link
-                        href={`/outings/${item.id}`}
+                        href={`/outings/pitch`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>View Outing →</span>
@@ -495,7 +519,7 @@ function OutingsContent() {
                       </span>
 
                       <Link
-                        href={`/outings/${item.id}?edit=true`}
+                        href={`/outings/pitch`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>Manage Pitch →</span>
@@ -570,7 +594,7 @@ function OutingsContent() {
                       </div>
 
                       <Link
-                        href={`/outings/${item.id}/record`}
+                        href={`/outings/pitch`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>Rhythm Check →</span>
