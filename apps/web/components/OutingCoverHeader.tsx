@@ -28,7 +28,7 @@ export function OutingCoverHeader({
   const isBanner = aspect === 'banner';
   const containerHeightClass = isBanner ? 'h-44 sm:h-52' : 'h-36 sm:h-40';
 
-  const imageUrl = cover_image_url || getOutingCategoryImage(category, title || cover_image_alt || '', area);
+  const imageUrl = cover_image_url || getOutingCategoryImage(category || '', title || cover_image_alt || '', area);
 
   // Ensure UTM parameters are appended per Unsplash API licensing terms
   const photographerUrl = cover_photographer_url

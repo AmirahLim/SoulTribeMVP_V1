@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
       age_pref_min,
       age_pref_max,
       status,
+      is_demo,
       trait_intent (*),
       trait_communication (*),
       trait_personality (*),
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
   const viewerRow = dbProfiles.find((p: any) => p.id === authUserId);
   const candRow = dbProfiles.find((p: any) => p.id === candidateId);
 
-  if (!viewerRow || !candRow) {
+  if (!viewerRow || !candRow || (candRow as any).is_demo || candRow.id.startsWith('00000000-0000-0000-0000-')) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 

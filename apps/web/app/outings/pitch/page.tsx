@@ -200,14 +200,17 @@ function PitchComposerContent() {
     async function loadCandidates() {
       const userProfile = getUserProfile();
       const list = await getRankedMatches(userProfile, { limit: 30 });
-      setCandidates(list);
+      const nonDemoList = list.filter(
+        (c) => !c.isDemo && !/^00000000-0000-0000-0000-/.test(c.id)
+      );
+      setCandidates(nonDemoList);
 
       if (initialInviteId) {
-        const match = list.find((m) => m.id === initialInviteId);
+        const match = nonDemoList.find((m) => m.id === initialInviteId);
         if (match) setSelectedGuests([match]);
-      } else if (list.length > 0) {
+      } else if (nonDemoList.length > 0) {
         const maxGuests = maxParticipants - 1;
-        setSelectedGuests(list.slice(0, maxGuests));
+        setSelectedGuests(nonDemoList.slice(0, maxGuests));
       }
     }
     loadCandidates();
@@ -371,16 +374,26 @@ function PitchComposerContent() {
           return;
         }
 
-        // Insert invited guests into outing_members if any
+        // Insert invited guests into outing_members if any (excluding demo profiles)
+        const failedGuestNames: string[] = [];
         for (const guest of selectedGuests) {
-          if (guest.id) {
-            await client.from('outing_members').insert({
+          if (guest.id && !guest.isDemo && !/^00000000-0000-0000-0000-/.test(guest.id)) {
+            const { error: gErr } = await client.from('outing_members').insert({
               outing_id: newOuting.id,
               user_id: guest.id,
               role: 'guest',
               state: 'invited',
             });
+            if (gErr) {
+              failedGuestNames.push(guest.name || 'Member');
+            }
           }
+        }
+
+        if (failedGuestNames.length > 0) {
+          setErrorMessage(`Failed to send invitations to: ${failedGuestNames.join(', ')}.`);
+          setIsSubmitting(false);
+          return;
         }
 
         const newPitchObj: PitchedOuting = {

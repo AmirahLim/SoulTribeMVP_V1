@@ -326,7 +326,7 @@ function OutingDetailContent() {
           // 1. Load real outing by ID from outings table
           const { data: dbOuting } = await client
             .from('outings')
-            .select('*')
+            .select('*, is_demo')
             .eq('id', outingId)
             .single();
 
@@ -334,11 +334,15 @@ function OutingDetailContent() {
             // 2. Load host profile from profiles table
             const { data: hostProfile } = await client
               .from('profiles')
-              .select('display_name, avatar_url, home_area')
+              .select('display_name, avatar_url, home_area, is_demo')
               .eq('id', dbOuting.host_id)
               .single();
 
-            const isHostDemo = Boolean((dbOuting as any).is_demo || (hostProfile as any)?.is_demo);
+            const isHostDemo = Boolean(
+              (dbOuting as any).is_demo ||
+              (hostProfile as any)?.is_demo ||
+              (dbOuting.host_id && String(dbOuting.host_id).startsWith('00000000-0000-0000-0000-'))
+            );
 
             const loadedOuting: OutingData = {
               ...dbOuting,
@@ -352,7 +356,7 @@ function OutingDetailContent() {
             // 3. Load real members joined with profiles from outing_members table
             const { data: dbMembers } = await client
               .from('outing_members')
-              .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
+              .select('user_id, role, state, is_demo, profiles(id, display_name, avatar_url, home_area, is_demo)')
               .eq('outing_id', outingId);
 
             const formattedMembers: OutingMember[] = (dbMembers || []).map((m: any) => {
@@ -366,93 +370,75 @@ function OutingDetailContent() {
                 display_name: dName,
                 avatar_url: p?.avatar_url || (isViewer ? profile.avatarUrl : '') || getGenderAvatarForName(dName),
                 home_area: p?.home_area || (isViewer ? profile.homeArea : '') || 'Singapore',
-                isDemo: Boolean(m.is_demo || p?.is_demo),
+                isDemo: Boolean(m.is_demo || p?.is_demo || (m.user_id && String(m.user_id).startsWith('00000000-0000-0000-0000-'))),
               };
             });
 
-            // Merge local pitch joined guests (e.g. Mervyn, Samuel) if not present in dbMembers
-            const localPitch = getUserPitches().find((p) => p.id === outingId);
-            if (localPitch?.joinedGuests) {
-              localPitch.joinedGuests.forEach((g) => {
-                if (!formattedMembers.some((m) => m.user_id === g.id)) {
-                  formattedMembers.push({
-                    user_id: g.id,
-                    role: 'guest',
-                    state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
-                    display_name: g.name || 'Member',
-                    avatar_url: g.avatarUrl || getGenderAvatarForName(g.name || 'Member'),
-                    home_area: g.homeArea || 'Singapore',
-                    isDemo: g.isDemo,
-                  });
-                }
-              });
-            }
-
-            if (formattedMembers.length > 0) {
-              setMembers(formattedMembers);
-              setLoading(false);
-              return;
-            }
+            setMembers(formattedMembers);
+            setLoading(false);
+            return;
           }
         } catch {
           // Fallthrough
         }
       }
 
-      // Check local store fallback
-      const localPitches = getUserPitches();
-      const localPitch = localPitches.find((p) => p.id === outingId);
+      // Check local store fallback for offline pitch- IDs ONLY
+      if (outingId && outingId.startsWith('pitch-')) {
+        const localPitches = getUserPitches();
+        const localPitch = localPitches.find((p) => p.id === outingId);
 
-      if (localPitch) {
-        const hName = localPitch.hostName || profile.displayName || 'Host';
-        setOuting({
-          id: localPitch.id,
-          host_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
-          hostName: hName,
-          hostAvatar: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
-          isHostDemo: localPitch.isHostDemo,
-          title: localPitch.title,
-          pitch: localPitch.pitch,
-          area: localPitch.area,
-          activity_category: (localPitch as any).activity_category || (localPitch as any).category || 'coffee',
-          starts_at: localPitch.createdAt || new Date().toISOString(),
-          duration_minutes: 120,
-          budget_band: 2,
-          orientation: 'conversation_first',
-          setting: 'General',
-          max_participants: localPitch.seatsTotal || 6,
-          state: 'open',
-          cover_image_url: localPitch.cover_image_url,
-          cover_image_thumb_url: localPitch.cover_image_thumb_url,
-          cover_image_alt: localPitch.cover_image_alt,
-          cover_photographer_name: localPitch.cover_photographer_name,
-          cover_photographer_url: localPitch.cover_photographer_url,
-          cover_download_location: localPitch.cover_download_location,
-        });
+        if (localPitch) {
+          const hName = localPitch.hostName || profile.displayName || 'Host';
+          setOuting({
+            id: localPitch.id,
+            host_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
+            hostName: hName,
+            hostAvatar: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
+            isHostDemo: localPitch.isHostDemo,
+            title: localPitch.title,
+            pitch: localPitch.pitch,
+            area: localPitch.area,
+            activity_category: (localPitch as any).activity_category || (localPitch as any).category || 'coffee',
+            starts_at: localPitch.createdAt || new Date().toISOString(),
+            duration_minutes: 120,
+            budget_band: 2,
+            orientation: 'conversation_first',
+            setting: 'General',
+            max_participants: localPitch.seatsTotal || 6,
+            state: 'open',
+            cover_image_url: localPitch.cover_image_url,
+            cover_image_thumb_url: localPitch.cover_image_thumb_url,
+            cover_image_alt: localPitch.cover_image_alt,
+            cover_photographer_name: localPitch.cover_photographer_name,
+            cover_photographer_url: localPitch.cover_photographer_url,
+            cover_download_location: localPitch.cover_download_location,
+          });
 
-        const localMembers: OutingMember[] = [
-          {
-            user_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
-            role: 'host',
-            state: 'accepted',
-            display_name: hName,
-            avatar_url: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
-            home_area: profile.homeArea || 'Singapore',
-          },
-          ...(localPitch.joinedGuests || []).map((g) => ({
-            user_id: g.id,
-            role: 'guest' as const,
-            state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
-            display_name: g.name || 'Member',
-            avatar_url: g.avatarUrl || getGenderAvatarForName(g.name || 'Member'),
-            home_area: g.homeArea || 'Singapore',
-            isDemo: g.isDemo,
-          })),
-        ];
+          const localMembers: OutingMember[] = [
+            {
+              user_id: localPitch.hostId || profile.id || '00000000-0000-0000-0000-000000000001',
+              role: 'host',
+              state: 'accepted',
+              display_name: hName,
+              avatar_url: localPitch.hostAvatar || profile.avatarUrl || getGenderAvatarForName(hName),
+              home_area: profile.homeArea || 'Singapore',
+            },
+            ...(localPitch.joinedGuests || []).map((g) => ({
+              user_id: g.id,
+              role: 'guest' as const,
+              state: (g.status === 'Confirmed' ? 'accepted' : 'invited') as any,
+              display_name: g.name || 'Member',
+              avatar_url: g.avatarUrl || getGenderAvatarForName(g.name || 'Member'),
+              home_area: g.homeArea || 'Singapore',
+              isDemo: g.isDemo,
+            })),
+          ];
 
-        setMembers(localMembers);
-        setLoading(false);
-        return;
+          setMembers(localMembers);
+          setLoading(false);
+          return;
+        }
       }
 
       setOuting(null);

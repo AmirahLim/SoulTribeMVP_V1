@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         age_pref_min,
         age_pref_max,
         status,
+        is_demo,
         trait_intent (*),
         trait_communication (*),
         trait_personality (*),
@@ -127,6 +128,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json([], { status: 200 });
     }
 
+    // Exclude demo candidates server side
+    const nonDemoProfiles = dbProfiles.filter(
+      (p: any) => !p.is_demo && !p.id.startsWith('00000000-0000-0000-0000-')
+    );
+
     const blockedUserIds = (blocks || []).map((b: any) =>
       b.blocker_id === authUserId ? b.blocked_id : b.blocker_id
     );
@@ -134,7 +140,7 @@ export async function POST(req: NextRequest) {
       r.reporter_id === authUserId ? r.reported_id : r.reporter_id
     );
 
-    const candidatesPool = dbProfiles.filter((p) => p.id !== authUserId);
+    const candidatesPool = nonDemoProfiles.filter((p) => p.id !== authUserId);
 
     const context: MatchContext = {
       blockedUserIds,
