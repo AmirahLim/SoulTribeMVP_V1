@@ -10,9 +10,14 @@ import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import Link from 'next/link';
 
+import { ProfileHero } from '../../components/profile/ProfileHero';
 import { PassArcCanvas } from '../../components/profile/PassArcCanvas';
 import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
 import { TribalRead, TribalReadData } from '../../components/profile/TribalRead';
+import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
+import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
+import { ConnectionNotes } from '../../components/profile/ConnectionNotes';
+import { SocialInstincts } from '../../components/profile/SocialInstincts';
 import { ValuesConstellationCanvas, ValueNode } from '../../components/profile/ValuesConstellationCanvas';
 import { InterestGraphCanvas, InterestNode } from '../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
@@ -59,12 +64,36 @@ interface MyRead {
     bio?: string;
   };
   confidence: number;
+  passCompletionPct?: number;
   threadsExplored: number;
   threadsTotal: 10;
   threads: MyReadThread[];
   markers: string[];
   signalsCount?: number;
   tribalRead?: TribalReadData;
+  tension?: {
+    headline: string;
+    explanation: string;
+    threadsInvolved: string[];
+  };
+  boundaries?: {
+    punctualityStance?: string;
+    cancellationStance?: string;
+    groupSizeBoundary?: string;
+    locationBoundary?: string;
+  };
+  connectionNotes?: Array<{
+    id: string;
+    hook: string;
+    statement: string;
+    explanation: string;
+    whatItLooksLike?: string;
+    sourceThreads?: string[];
+  }>;
+  socialInstinct?: {
+    type: any;
+    description: string;
+  };
   outingPreferences?: MyReadOutingPrefs;
   interests: InterestNode[];
   values: ValueNode[];
@@ -233,6 +262,10 @@ function ProfileContent() {
   // Connection threads excludes values and interests which have dedicated cards below
   const connectionThreads = threads.filter((t) => t.key !== 'interests' && t.key !== 'values');
 
+  // Local standing calculation
+  const localProfile = getUserProfile();
+  const currentStanding = calculateTribeStanding(localProfile.outingsAttended || 0, localProfile.outingsHosted || 0);
+
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
@@ -247,47 +280,29 @@ function ProfileContent() {
 
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-        {/* 1. Header (Matching Reference Design) */}
-        <div className="flex items-center gap-3.5 py-4">
-          <div className="relative h-[60px] w-[60px] shrink-0 rounded-full bg-gradient-to-br from-[#5A4030] to-[#2A211A] shadow-[0_8px_24px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] p-[2px]">
-            <div className="absolute -inset-[2px] rounded-full -z-10 blur-[6px] opacity-55 bg-[conic-gradient(from_210deg,#5BD99A,#EFB94E,#5BD99A)]" />
-            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
-              {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.display_name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#2D523E] text-xl font-bold text-[#F5F2EA]">
-                  {(profile.display_name || 'U').charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col">
-            <h1 className="font-sans text-[25px] font-extrabold text-[#F5F2EA] leading-tight tracking-tight">
-              {profile.display_name || 'Member'}
-            </h1>
-            <div className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">
-              @{profile.handle || 'member'} · {profile.home_area || 'Singapore'}
-            </div>
-          </div>
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="ml-auto w-9 h-9 rounded-full grid place-items-center bg-[rgba(255,255,255,0.06)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.70)] hover:text-[#F5F2EA] transition-all"
-            title="Edit Profile"
-            aria-label="Edit Profile"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-        </div>
+        {/* 1. Restored Profile Hero (with real data, no hardcoded defaults) */}
+        <ProfileHero
+          displayName={profile.display_name}
+          handle={profile.handle}
+          homeArea={profile.home_area}
+          bio={profile.bio}
+          avatarUrl={profile.avatar_url}
+          passCompletionPct={myRead.passCompletionPct}
+          standingText={currentStanding.label}
+          instinctType={myRead.socialInstinct?.type}
+          instinctDescription={myRead.socialInstinct?.description}
+          onEditProfile={() => setIsSettingsOpen(true)}
+          onDeepenPass={() => router.push('/you/deeper')}
+        />
 
         {/* 2. Pass Arc (Drawn Arc Canvas) */}
         <PassArcCanvas
           exploredPct={myRead.threadsExplored / myRead.threadsTotal}
-          signalsText={`Developing read · ${myRead.signalsCount || 34} signals`}
+          signalsText={
+            typeof myRead.signalsCount === 'number' && myRead.signalsCount > 0
+              ? `Developing read · ${myRead.signalsCount} signals`
+              : `Developing read · ${myRead.threadsExplored} explored`
+          }
         />
 
         {/* 3. Friendship DNA Bloom */}
@@ -303,7 +318,12 @@ function ProfileContent() {
           <TribalRead data={myRead.tribalRead} label="Your Tribal Read" tone="amber" />
         )}
 
-        {/* 5. Connection Threads */}
+        {/* 5. The Interesting Part (cross-thread tension) — only when data exists */}
+        {myRead.tension && (
+          <TheInterestingPart tension={myRead.tension} />
+        )}
+
+        {/* 6. Connection Threads */}
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between px-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
@@ -354,7 +374,28 @@ function ProfileContent() {
           })}
         </div>
 
-        {/* 6. What Matters (Values Constellation Canvas) */}
+        {/* 7. Boundaries & Social Principles — only when data exists */}
+        {myRead.boundaries && (
+          <BoundariesMatching
+            voice="first"
+            punctualityStance={myRead.boundaries.punctualityStance}
+            cancellationStance={myRead.boundaries.cancellationStance}
+            groupSizeBoundary={myRead.boundaries.groupSizeBoundary}
+            locationBoundary={myRead.boundaries.locationBoundary}
+          />
+        )}
+
+        {/* 8. Connection Notes — only when data exists */}
+        {myRead.connectionNotes && myRead.connectionNotes.length > 0 && (
+          <ConnectionNotes notes={myRead.connectionNotes} />
+        )}
+
+        {/* 9. Social Instincts — only when data exists */}
+        {myRead.socialInstinct && (
+          <SocialInstincts primaryInstinct={myRead.socialInstinct} />
+        )}
+
+        {/* 10. What Matters (Values Constellation Canvas) */}
         <div className="flex flex-col">
           <div className="flex items-baseline justify-between px-1 mb-3">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
@@ -366,7 +407,7 @@ function ProfileContent() {
           />
         </div>
 
-        {/* 7. I'm Into (Interest Graph Canvas) */}
+        {/* 11. I'm Into (Interest Graph Canvas) */}
         <div className="flex flex-col">
           <div className="flex items-baseline justify-between px-1 mb-3">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
@@ -381,7 +422,7 @@ function ProfileContent() {
           />
         </div>
 
-        {/* 8. Outing DNA (Triad Radar Canvas) */}
+        {/* 12. Outing DNA (Triad Radar Canvas) */}
         {myRead.outingPreferences && (
           <div className="flex flex-col">
             <div className="flex items-baseline justify-between px-1 mb-3">
@@ -399,7 +440,7 @@ function ProfileContent() {
           </div>
         )}
 
-        {/* 9. Hosted Pitches */}
+        {/* 13. Hosted Pitches */}
         {userPitches.length > 0 && (
           <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.11)] shadow-xl">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
@@ -422,10 +463,9 @@ function ProfileContent() {
           </div>
         )}
 
-        {/* 10. Footer */}
+        {/* 14. Clean Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
-          Visual profile · your background, your brand colours<br />
-          Content is illustrative — the engine supplies the words.
+          Soul Tribe · Singapore
         </p>
       </div>
 

@@ -18,6 +18,7 @@ import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../li
 import { fetchUserPitches, OutingItem } from '../../../lib/outingsStore';
 import { ThreadCard } from '../../../components/profile/ThreadCard';
 import { TribalRead } from '../../../components/profile/TribalRead';
+import { BoundariesMatching } from '../../../components/profile/BoundariesMatching';
 import { ValuesConstellationCanvas } from '../../../components/profile/ValuesConstellationCanvas';
 import { InterestGraphCanvas } from '../../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../../components/profile/OutingTriadCanvas';
@@ -310,10 +311,21 @@ function PersonDetailContent() {
           </div>
         </GlassCard>
 
+        {/* Boundaries & Social Principles (Public in 3rd person) */}
+        {selfProfile?.boundaries && (
+          <BoundariesMatching
+            voice="third"
+            memberName={memberFirstName}
+            punctualityStance={selfProfile.boundaries.punctualityStance}
+            cancellationStance={selfProfile.boundaries.cancellationStance}
+            groupSizeBoundary={selfProfile.boundaries.groupSizeBoundary}
+            locationBoundary={selfProfile.boundaries.locationBoundary}
+          />
+        )}
+
         {/* Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
-          Member profile · third person read<br />
-          Content is illustrative — the engine supplies the words.
+          Member profile · third person read
         </p>
 
       </div>

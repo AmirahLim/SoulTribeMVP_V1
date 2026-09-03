@@ -9,7 +9,7 @@ export interface ProfileHeroProps {
   homeArea: string;
   bio?: string;
   avatarUrl?: string;
-  passCompletionPct: number;
+  passCompletionPct?: number;
   standingText?: string;
   instinctType?: string;
   instinctDescription?: string;
@@ -23,33 +23,35 @@ export function ProfileHero({
   homeArea,
   bio,
   avatarUrl,
-  passCompletionPct = 100,
-  standingText = 'Good Standing',
+  passCompletionPct,
+  standingText,
   instinctType,
   instinctDescription,
   onEditProfile,
   onDeepenPass,
 }: ProfileHeroProps) {
   return (
-    <div className="flex flex-col gap-5 w-full pt-1">
+    <div className="flex flex-col gap-7 w-full pt-1">
       {/* 1. Identity Header Row */}
-      <div className="flex items-center gap-4 pb-1">
+      <div className="flex items-center gap-5 pb-3">
         <div className="relative h-[64px] w-[64px] shrink-0 rounded-full bg-gradient-to-br from-[#5A4030] to-[#2A211A] shadow-[0_8px_24px_rgba(0,0,0,0.6)] p-[2px]">
           <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
             {avatarUrl ? (
               <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[#2D523E] text-xl font-bold text-[#F5F2EA]">
-                {displayName.charAt(0)}
+                {(displayName || 'M').charAt(0)}
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex flex-col gap-0.5">
-          <div className="text-[10.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
-            TRIBAL PASS · {passCompletionPct}% COMPLETE
-          </div>
+        <div className="flex flex-col gap-1.5">
+          {typeof passCompletionPct === 'number' && (
+            <div className="text-[10.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
+              TRIBAL PASS · {passCompletionPct}% COMPLETE
+            </div>
+          )}
           <h1 className="font-sans text-[26px] font-bold text-[#F5F2EA] leading-tight">
             {displayName}
           </h1>
@@ -68,10 +70,10 @@ export function ProfileHero({
       </div>
 
       {/* 2. Tribe Standing & Connector Active Level */}
-      <div className="flex flex-col gap-3 pt-3 border-t border-[rgba(245,242,234,0.12)]">
+      <div className="flex flex-col gap-4 pt-6 border-t border-[rgba(245,242,234,0.12)]">
         <div className="flex items-center justify-between">
           <span className="text-[10.5px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.50)]">
-            TRIBE STANDING
+            TRIBE STANDING {standingText ? `· ${standingText.toUpperCase()}` : ''}
           </span>
           <button
             onClick={onEditProfile}
@@ -84,30 +86,27 @@ export function ProfileHero({
 
         {/* Connector Active Level Card — only when instinct data exists */}
         {instinctType && (
-        <div
-          className="flex items-start justify-between rounded-[22px] border border-[rgba(245,242,234,0.12)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-md"
-          style={{ padding: '20px 20px' }}
-        >
-          <div className="flex flex-col gap-2 flex-1 pr-4 pl-1.5 py-0.5">
-            <div className="flex items-center gap-2.5">
-              <span className="text-lg">🤝</span>
-              <h3 className="font-sans text-lg font-bold text-[#F5F2EA]">
-                {instinctType}
-              </h3>
-              <span className="rounded-full border border-[rgba(45,82,62,0.45)] bg-[rgba(45,82,62,0.25)] px-3 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider">
-                ACTIVE LEVEL
-              </span>
+          <div className="flex items-start justify-between rounded-[22px] border border-[rgba(245,242,234,0.12)] bg-[rgba(10,12,11,0.62)] p-6 backdrop-blur-xl shadow-md">
+            <div className="flex flex-col gap-3 flex-1 pr-4 pl-1.5 py-0.5">
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">🤝</span>
+                <h3 className="font-sans text-lg font-bold text-[#F5F2EA]">
+                  {instinctType}
+                </h3>
+                <span className="rounded-full border border-[rgba(45,82,62,0.45)] bg-[rgba(45,82,62,0.25)] px-3 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider">
+                  ACTIVE LEVEL
+                </span>
+              </div>
+              {instinctDescription && (
+                <p className="text-[13px] leading-relaxed text-[rgba(245,242,234,0.75)]">
+                  {instinctDescription}
+                </p>
+              )}
             </div>
-            {instinctDescription && (
-            <p className="text-[13px] leading-relaxed text-[rgba(245,242,234,0.75)]">
-              {instinctDescription}
-            </p>
-            )}
+            <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[rgba(245,242,234,0.70)] shrink-0 mt-0.5">
+              <Bookmark className="h-4 w-4" />
+            </button>
           </div>
-          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[rgba(245,242,234,0.70)] shrink-0 mt-0.5">
-            <Bookmark className="h-4 w-4" />
-          </button>
-        </div>
         )}
       </div>
 
@@ -121,10 +120,10 @@ export function ProfileHero({
       )}
 
       {/* Action Buttons: Dark Forest Green Deepen Pass Button */}
-      <div className="flex items-center gap-3.5 pt-1">
+      <div className="flex items-center gap-3 mt-5">
         <button
           onClick={onEditProfile}
-          className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[rgba(245,242,234,0.20)] bg-[rgba(255,255,255,0.05)] py-3.5 px-4 text-xs font-bold text-[#F5F2EA] backdrop-blur-md transition-all hover:bg-white/10"
+          className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[rgba(245,242,234,0.20)] bg-[rgba(255,255,255,0.05)] py-4 px-4 text-xs font-bold text-[#F5F2EA] backdrop-blur-md transition-all hover:bg-white/10"
         >
           <Calendar className="h-3.5 w-3.5" />
           <span>Edit Availability &amp; Answers</span>
@@ -132,7 +131,7 @@ export function ProfileHero({
 
         <button
           onClick={onDeepenPass}
-          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-3.5 px-4 text-xs font-bold text-[#F5F2EA] shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-all hover:bg-[#38654D]"
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-4 px-4 text-xs font-bold text-[#F5F2EA] shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-all hover:bg-[#38654D]"
         >
           <span>Deepen Pass →</span>
         </button>

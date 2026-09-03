@@ -428,7 +428,31 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  const response = {
+  // Derive optional sections only when real answers exist behind them
+  const tension = selfProfile.contradiction;
+  const connectionNotes = (selfProfile.connectionNotes && selfProfile.connectionNotes.length > 0)
+    ? selfProfile.connectionNotes
+    : undefined;
+  const socialInstinct = markers.length > 0 ? selfProfile.primaryInstinct : undefined;
+
+  const hasBoundaryData =
+    vec.personality?.conscientiousness !== undefined ||
+    vec.social_rhythm?.planning_horizon !== undefined ||
+    vec.experience?.group_size_pref !== undefined ||
+    (Boolean(vec.geography?.home_area) && (vec.geography?.answered || 0) > 0);
+
+  const boundaries = hasBoundaryData
+    ? {
+        punctualityStance: vec.personality?.conscientiousness !== undefined ? selfProfile.boundaries.punctualityStance : undefined,
+        cancellationStance: vec.social_rhythm?.planning_horizon !== undefined ? selfProfile.boundaries.cancellationStance : undefined,
+        groupSizeBoundary: vec.experience?.group_size_pref !== undefined ? selfProfile.boundaries.groupSizeBoundary : undefined,
+        locationBoundary: (Boolean(vec.geography?.home_area) && (vec.geography?.answered || 0) > 0)
+          ? selfProfile.boundaries.locationBoundary
+          : undefined,
+      }
+    : undefined;
+
+  const response: Record<string, any> = {
     profile: {
       id: row.id,
       display_name: row.display_name || '',
@@ -438,16 +462,22 @@ export async function GET(req: NextRequest) {
       bio: row.bio || undefined,
     },
     confidence: topConfidence,
+    passCompletionPct: Math.round((threadsExplored / 10) * 100),
     threadsExplored,
     threadsTotal: 10,
     threads,
     markers: markerKeys,
-    signalsCount: markers.length || 34,
+    signalsCount: markers.length,
     tribalRead: selfProfile.tribalRead,
     outingPreferences: selfProfile.outingPreferences,
     interests,
     values,
   };
+
+  if (tension) response.tension = tension;
+  if (boundaries) response.boundaries = boundaries;
+  if (connectionNotes) response.connectionNotes = connectionNotes;
+  if (socialInstinct) response.socialInstinct = socialInstinct;
 
   return NextResponse.json(response);
 }

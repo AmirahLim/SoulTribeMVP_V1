@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe Bond View</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+
+<style>
+:root{
+  --amber:#EFB94E;        /* YOU */
+  --emerald:#5BD99A;      /* THEM */
+  --ink:#F5F2EA;
+  --ink-2:rgba(245,242,234,.70);
+  --ink-3:rgba(245,242,234,.44);
+  --ink-4:rgba(245,242,234,.22);
+  --card:rgba(10,12,11,.62);
+  --edge:rgba(245,242,234,.11);
+  --lip:rgba(245,242,234,.22);
+  --r:26px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#070908;color:var(--ink);font-family:"Inter","Helvetica Neue",Arial,sans-serif;
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-photo{position:absolute;inset:0;filter:blur(2px);
+  background:
+    radial-gradient(70% 46% at 22% 14%, rgba(176,124,66,.50) 0%, transparent 62%),
+    radial-gradient(58% 40% at 84% 34%, rgba(120,86,58,.42) 0%, transparent 64%),
+    radial-gradient(80% 50% at 46% 82%, rgba(88,74,52,.38) 0%, transparent 66%),
+    radial-gradient(50% 34% at 70% 96%, rgba(58,88,74,.30) 0%, transparent 60%),
+    linear-gradient(180deg,#1A1410 0%,#100C0A 40%,#080A09 100%);}
+.bg-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,5,.80),rgba(4,6,5,.62) 42%,rgba(4,6,5,.95))}
+.bg-grain{position:absolute;inset:0;opacity:.26;mix-blend-mode:overlay}
+
+.wrap{position:relative;z-index:1;max-width:470px;margin:0 auto;padding:0 18px 90px}
+h1,h2,h3{font-family:"Inter",sans-serif;font-weight:800;margin:0;letter-spacing:-.03em;text-wrap:balance}
+.lab{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.lab.a{color:var(--amber)} .lab.e{color:var(--emerald)}
+
+.card{border-radius:var(--r);padding:20px;position:relative;overflow:hidden;
+  background:var(--card);border:1px solid var(--edge);backdrop-filter:blur(24px) saturate(115%);
+  box-shadow:0 22px 48px -26px rgba(0,0,0,.9), inset 0 1px 0 var(--lip)}
+.card::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 12% 0%, var(--wash,transparent) 0%, transparent 62%)}
+.card > *{position:relative;z-index:1}
+.sec{margin-top:24px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 12px}
+
+/* ============ NAV BETWEEN THE TWO MODES ============ */
+.modebar{display:flex;gap:8px;padding:20px 0 4px}
+.mode{flex:1;text-align:center;font-size:12px;font-weight:600;padding:10px;border-radius:100px;
+  background:rgba(255,255,255,.05);border:1px solid var(--edge);color:var(--ink-3)}
+.mode.on{background:rgba(245,242,234,.10);border-color:rgba(245,242,234,.24);color:var(--ink)}
+.divider{display:flex;align-items:center;gap:14px;margin:44px 0 6px}
+.divider span{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-4);white-space:nowrap}
+.divider i{flex:1;height:1px;background:rgba(245,242,234,.12)}
+
+/* ============ THEIR PROFILE (same system, third person) ============ */
+.phead{display:flex;gap:14px;align-items:center;padding:16px 0 14px}
+.pfp{width:58px;height:58px;border-radius:50%;flex:0 0 58px;position:relative;
+  background:linear-gradient(150deg,#33503F,#1B2C22);box-shadow:0 8px 22px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.2)}
+.pfp::after{content:"";position:absolute;inset:-2px;border-radius:50%;z-index:-1;filter:blur(6px);
+  background:conic-gradient(from 200deg,var(--emerald),rgba(91,217,154,.3),var(--emerald));opacity:.6}
+.pname{font-size:23px;line-height:1.1}
+.psub{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.readpill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:100px;font-size:11px;
+  background:rgba(91,217,154,.12);border:1px solid rgba(91,217,154,.28);color:var(--emerald);margin-top:8px}
+.readpill i{width:5px;height:5px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald)}
+
+.stmt{font-family:"Inter",sans-serif;font-size:23px;line-height:1.18;margin:2px 0 10px}
+.body{font-size:13.5px;color:var(--ink-2);margin:0}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.pill{font-size:11.5px;padding:5px 11px;border-radius:100px;background:rgba(255,255,255,.06);border:1px solid var(--edge);color:var(--ink-2)}
+.pill.e{background:rgba(91,217,154,.12);border-color:rgba(91,217,154,.28);color:var(--emerald)}
+
+.mini{display:flex;gap:12px;align-items:center}
+.mini .txt .t{font-size:15px;font-family:"Inter",sans-serif}
+.mini .txt .s{font-size:12px;color:var(--ink-3);margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{font-size:12.5px;padding:7px 12px;border-radius:100px;background:rgba(255,255,255,.055);border:1px solid var(--edge);color:var(--ink-2)}
+.tag.hot{background:rgba(91,217,154,.12);border-color:rgba(91,217,154,.3);color:var(--emerald)}
+.locked{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-4);padding:13px 0 2px}
+
+/* ============ BOND: everything is paired ============ */
+.who{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 0 2px}
+.who .f{width:52px;height:52px;border-radius:50%;position:relative}
+.who .f.you{background:linear-gradient(150deg,#5A4030,#2A211A);box-shadow:0 0 0 2px rgba(239,185,78,.55),0 8px 20px rgba(0,0,0,.6)}
+.who .f.them{background:linear-gradient(150deg,#33503F,#1B2C22);box-shadow:0 0 0 2px rgba(91,217,154,.55),0 8px 20px rgba(0,0,0,.6)}
+.who .amp{font-family:"Inter",sans-serif;font-size:20px;color:var(--ink-3)}
+
+#weave{display:block;margin:0 auto}
+.weave-key{display:flex;justify-content:center;gap:18px;font-size:11px;color:var(--ink-3);margin-top:-6px}
+.weave-key b{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+.thesis{font-family:"Inter",sans-serif;font-size:26px;line-height:1.16;margin:4px 0 10px}
+.thesis em{font-style:normal;color:var(--amber)}
+
+/* the paired thread row — the core bond object */
+.trow{padding:15px 0;border-top:1px solid rgba(245,242,234,.08)}
+.trow:first-of-type{border-top:0}
+.trow-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.trow-n{font-size:14.5px;font-weight:600}
+.mech{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;padding:4px 9px;border-radius:100px;white-space:nowrap}
+.mech.align{background:rgba(91,217,154,.14);color:var(--emerald);border:1px solid rgba(91,217,154,.3)}
+.mech.comp{background:rgba(150,190,255,.13);color:#9FC3FF;border:1px solid rgba(150,190,255,.3)}
+.mech.fric{background:rgba(239,185,78,.14);color:var(--amber);border:1px solid rgba(239,185,78,.32)}
+.mech.none{background:rgba(245,242,234,.06);color:var(--ink-4);border:1px solid var(--edge)}
+
+.pair{position:relative;height:26px}
+.pair .track{position:absolute;left:0;right:0;top:11px;height:4px;border-radius:3px;background:rgba(245,242,234,.09)}
+.pair .span{position:absolute;top:11px;height:4px;border-radius:3px}
+.pair .dot{position:absolute;top:13px;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%)}
+.pair .dot.you{background:var(--amber);box-shadow:0 0 0 4px rgba(239,185,78,.16),0 0 12px rgba(239,185,78,.85)}
+.pair .dot.them{background:var(--emerald);box-shadow:0 0 0 4px rgba(91,217,154,.16),0 0 12px rgba(91,217,154,.85)}
+.ends{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-4);margin-top:2px;letter-spacing:.04em}
+.tnote{font-size:12.5px;color:var(--ink-2);margin:9px 0 0;line-height:1.5}
+.tnote b{color:var(--ink);font-weight:600}
+
+/* friction block */
+.fr-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fr-type{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+.fr-sev{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:100px;
+  background:rgba(239,185,78,.13);border:1px solid rgba(239,185,78,.3);color:var(--amber)}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.side{border-radius:14px;padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--edge)}
+.side .k{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;margin-bottom:5px}
+.side.you .k{color:var(--amber)} .side.them .k{color:var(--emerald)}
+.side .v{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+
+/* meeting ground */
+#venn{display:block;margin:0 auto}
+.vkey{display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--ink-3);margin-top:4px}
+
+.foot{text-align:center;font-size:11.5px;color:var(--ink-4);margin-top:34px;line-height:1.7}
+@media (prefers-reduced-motion:no-preference){
+  .fade{animation:r .6s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes r{from{opacity:.6;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <div class="bg-photo"></div><div class="bg-scrim"></div>
+  <svg class="bg-grain"><filter id="gr"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(#gr)"/></svg>
+</div>
+
+<div class="wrap">
+
+  <!-- ================= THEIR PROFILE ================= -->
+  <div class="modebar">
+    <span class="mode on">Their profile</span>
+    <span class="mode">View Bond</span>
+  </div>
+
+  <div class="phead fade">
+    <div class="pfp"></div>
+    <div>
+      <h1 class="pname">Mervyn Tang</h1>
+      <div class="psub">@mervyn · Bishan</div>
+      <span class="readpill"><i></i>Deep read · 61 signals</span>
+    </div>
+  </div>
+
+  <div class="card fade" style="--wash:rgba(91,217,154,.13)">
+    <p class="lab e" style="margin-bottom:8px">His Tribal Read</p>
+    <h2 class="stmt">Steady, wry &amp; slow to open</h2>
+    <p class="body">Mervyn builds trust before disclosure. He's more likely to become close through a repeated Saturday than a long first conversation.</p>
+    <div class="pills">
+      <span class="pill e">Gradual opener</span><span class="pill">Low-maintenance</span><span class="pill">Banter-led</span>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h"><p class="lab">His Threads</p><p class="lab">7 of 10</p></div>
+    <div class="card fade" style="--wash:rgba(91,217,154,.10);margin-bottom:12px">
+      <div class="mini">
+        <canvas id="hisEnergy" width="150" height="150" aria-hidden="true"></canvas>
+        <div class="txt"><div class="t">Social Energy</div><div class="s">Intimate · Selective · Dry</div></div>
+      </div>
+    </div>
+    <div class="card fade" style="--wash:rgba(91,217,154,.08)">
+      <p class="lab" style="margin-bottom:11px">He's Into</p>
+      <div class="tags">
+        <span class="tag hot">Trail running</span><span class="tag">Specialty coffee</span>
+        <span class="tag">Vinyl</span><span class="tag">Hawker archaeology</span>
+      </div>
+      <div class="locked">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Connection Notes are visible once you've shared an outing.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"><i></i><span>the same person, seen together</span><i></i></div>
+
+  <!-- ================= VIEW BOND ================= -->
+  <div class="modebar" style="padding-top:12px">
+    <span class="mode">Their profile</span>
+    <span class="mode on">View Bond</span>
+  </div>
+
+  <div class="who fade">
+    <div class="f you"></div><span class="amp">&amp;</span><div class="f them"></div>
+  </div>
+
+  <div class="fade">
+    <canvas id="weave" aria-label="Your two signatures, woven"></canvas>
+    <div class="weave-key">
+      <span><b style="background:#EFB94E"></b>You</span>
+      <span><b style="background:#5BD99A"></b>Mervyn</span>
+      <span><b style="background:#FFF6E0"></b>Where you overlap</span>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="card fade" style="--wash:rgba(239,185,78,.13)">
+      <p class="lab a" style="margin-bottom:8px">Why you might click</p>
+      <h2 class="thesis">Quality time over <em>constant contact</em></h2>
+      <p class="body">Neither of you needs a full calendar to feel close, but when you do make time you want it to count. You're both planners who prefer smaller rooms — which removes the two things that usually kill a new friendship before it starts.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h"><p class="lab">Thread by thread</p><p class="lab">8 comparable</p></div>
+    <div class="card fade">
+
+      <div class="trow">
+        <div class="trow-h"><span class="trow-n">Social Energy</span><span class="mech align">Aligned</span></div>
+        <div class="pair">
+          <div class="track"></div>
+          <div class="span" style="left:26%;width:8%;background:linear-gradient(90deg,rgba(239,185,78,.6),rgba(91,217,154,.6))"></div>
+          <div class="dot you" style="left:26%"></div><div class="dot them" style="left:34%"></div>
+        </div>
+        <div class="ends"><span>Selective 1:1</span><span>Expansive groups</span></div>
+        <p class="tnote">You both top out around four people. <b>Neither of you will be the one pushing for the bigger table.</b></p>
+      </div>
+
+      <div class="trow">
+        <div class="trow-h"><span class="trow-n">Social Rhythm</span><span class="mech fric">Planning friction</span></div>
+        <div class="pair">
+          <div class="track"></div>
+          <div class="span" style="left:22%;width:54%;background:linear-gradient(90deg,rgba(239,185,78,.55),rgba(239,185,78,.18),rgba(91,217,154,.55))"></div>
+          <div class="dot you" style="left:22%"></div><div class="dot them" style="left:76%"></div>
+        </div>
+        <div class="ends"><span>Weeks ahead</span><span>Same day</span></div>
+        <p class="tnote">The widest gap between you. <b>Getting it into the calendar will be harder than enjoying it once you're there.</b></p>
+      </div>
+
+      <div class="trow">
+        <div class="trow-h"><span class="trow-n">Social Initiative</span><span class="mech comp">Complementary</span></div>
+        <div class="pair">
+          <div class="track"></div>
+          <div class="span" style="left:24%;width:44%;background:linear-gradient(90deg,rgba(239,185,78,.5),rgba(159,195,255,.45),rgba(91,217,154,.5))"></div>
+          <div class="dot you" style="left:24%"></div><div class="dot them" style="left:68%"></div>
+        </div>
+        <div class="ends"><span>Waits to be asked</span><span>Makes the plan</span></div>
+        <p class="tnote">A difference that helps. <b>Mervyn tends to make the plan; you tend to say yes.</b> That pairing usually works — until nobody does either.</p>
+      </div>
+
+      <div class="trow">
+        <div class="trow-h"><span class="trow-n">Emotional Openness</span><span class="mech align">Aligned</span></div>
+        <div class="pair">
+          <div class="track"></div>
+          <div class="span" style="left:30%;width:6%;background:linear-gradient(90deg,rgba(239,185,78,.6),rgba(91,217,154,.6))"></div>
+          <div class="dot you" style="left:30%"></div><div class="dot them" style="left:36%"></div>
+        </div>
+        <div class="ends"><span>Takes time</span><span>Opens fast</span></div>
+        <p class="tnote">Both slow openers. <b>Neither of you will expect the other to be vulnerable early</b>, which usually makes the first few meetings easier.</p>
+      </div>
+
+      <div class="trow">
+        <div class="trow-h"><span class="trow-n">Conflict &amp; Repair</span><span class="mech none">Not measured</span></div>
+        <p class="tnote" style="margin-top:2px">Neither of you has answered these two questions yet. It's the biggest gap in this reading.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h"><p class="lab">Potential friction</p></div>
+    <div class="card fade" style="--wash:rgba(239,185,78,.14)">
+      <div class="fr-h"><span class="fr-type">Planning</span><span class="fr-sev">Noticeable</span></div>
+      <p class="body">You like dates locked in a week or two out. Mervyn decides closer to the day. Left alone, this is the thing most likely to keep a good pairing from actually meeting.</p>
+      <div class="sides">
+        <div class="side you"><div class="k">You may feel</div><div class="v">That he's vague, or that plans never quite firm up.</div></div>
+        <div class="side them"><div class="k">He may feel</div><div class="v">That committing early makes an easy thing feel like an obligation.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h"><p class="lab">Where you'd actually meet</p></div>
+    <div class="card fade" style="--wash:rgba(91,217,154,.11)">
+      <canvas id="venn" aria-label="Shared and separate interests"></canvas>
+      <div class="vkey"><span>Yours</span><span style="color:var(--ink)">Shared</span><span>His</span></div>
+      <p class="tnote" style="margin-top:12px">Specialty coffee is the obvious first move. <b>An activity gives this pairing somewhere to begin</b> — you're both slow openers, so a table with nothing on it does more work than either of you wants to do.</p>
+    </div>
+  </div>
+
+  <p class="foot">Bond view prototype · same ground and palette, paired everywhere<br>Content is illustrative — the engine supplies the words.</p>
+</div>
+
+<script>
+(function(){
+  var DPR=Math.min(window.devicePixelRatio||1,2);
+  function fit(c,w,h){c.width=w*DPR;c.height=h*DPR;c.style.width=w+'px';c.style.height=h+'px';
+    var x=c.getContext('2d');x.scale(DPR,DPR);return x;}
+  var A='239,185,78', E='91,217,154', C='245,242,234';
+
+  function petal(x,cx,cy,ang,len,wid,rgb,a){
+    x.save();x.translate(cx,cy);x.rotate(ang);
+    var g=x.createLinearGradient(0,0,0,-len);
+    g.addColorStop(0,'rgba('+rgb+','+(a*.10)+')');
+    g.addColorStop(.5,'rgba('+rgb+','+a+')');
+    g.addColorStop(1,'rgba('+rgb+','+(a*.08)+')');
+    x.fillStyle=g;x.beginPath();x.moveTo(0,0);
+    x.bezierCurveTo(wid,-len*.27,wid*.9,-len*.72,0,-len);
+    x.bezierCurveTo(-wid*.9,-len*.72,-wid,-len*.27,0,0);
+    x.closePath();x.fill();x.restore();
+  }
+  function bloom(x,cx,cy,depths,rgb,max,rot){
+    x.globalCompositeOperation='lighter';
+    for(var i=0;i<depths.length;i++){
+      var d=depths[i], ang=(i/depths.length)*Math.PI*2+rot+Math.sin(i*2.399)*.06;
+      if(d<=0){
+        x.save();x.translate(cx,cy);x.rotate(ang);
+        x.strokeStyle='rgba('+C+',0.10)';x.lineWidth=1;x.beginPath();x.moveTo(0,0);
+        x.bezierCurveTo(9,-max*.15,8,-max*.38,0,-max*.50);
+        x.bezierCurveTo(-8,-max*.38,-9,-max*.15,0,0);x.stroke();x.restore();continue;
+      }
+      var len=max*(.30+d*.70), wid=8+d*9;
+      petal(x,cx,cy,ang,len*1.06,wid*1.55,rgb,.07);
+      petal(x,cx,cy,ang,len,wid,rgb,.46);
+      petal(x,cx,cy,ang,len*.60,wid*.40,rgb,.26);
+    }
+  }
+
+  /* his energy mini-bloom on the profile half */
+  (function(){
+    var c=document.getElementById('hisEnergy'); if(!c) return;
+    var S=75,x=fit(c,S,S);
+    bloom(x,S/2,S/2,[.9,.7,.55,.85,.4,.9,0,.6,0,.75],E,S*.40,0);
+    var g=x.createRadialGradient(S/2,S/2,0,S/2,S/2,13);
+    g.addColorStop(0,'rgba(255,252,244,.9)');g.addColorStop(1,'rgba('+E+',0)');
+    x.fillStyle=g;x.beginPath();x.arc(S/2,S/2,13,0,Math.PI*2);x.fill();
+    x.globalCompositeOperation='source-over';
+  })();
+
+  /* THE WEAVE — two signatures overlapping */
+  (function(){
+    var c=document.getElementById('weave'); if(!c) return;
+    var W=Math.min(360,window.innerWidth-52), H=W*0.62, x=fit(c,W,H);
+    var max=H*.40, off=W*.13, cy=H/2;
+    var YOU  =[.92,.80,.66,.88,.58,.95,0,.72,0,.84];
+    var THEM =[.86,.74,.70,.60,.62,.40,0,.66,.55,.78];
+
+    // faint field rings behind
+    x.strokeStyle='rgba('+C+',0.05)';x.lineWidth=1;
+    [.45,.72,1].forEach(function(k){
+      x.beginPath();x.ellipse(W/2,cy,max*1.25*k,max*1.02*k,0,0,Math.PI*2);x.stroke();
+    });
+
+    bloom(x, W/2-off, cy, YOU,  A, max, -0.10);
+    bloom(x, W/2+off, cy, THEM, E, max,  0.10);
+
+    // the overlap reads as light, not as a third colour
+    var g=x.createRadialGradient(W/2,cy,0,W/2,cy,max*.62);
+    g.addColorStop(0,'rgba(255,248,232,.60)');
+    g.addColorStop(.45,'rgba(255,246,224,.16)');
+    g.addColorStop(1,'rgba(255,246,224,0)');
+    x.fillStyle=g;x.beginPath();x.arc(W/2,cy,max*.62,0,Math.PI*2);x.fill();
+    x.globalCompositeOperation='source-over';
+  })();
+
+  /* meeting ground */
+  (function(){
+    var c=document.getElementById('venn'); if(!c) return;
+    var W=Math.min(380,window.innerWidth-76), H=168, x=fit(c,W,H);
+    var r=H*.40, cy=H*.46, o=r*.52;
+    x.globalCompositeOperation='lighter';
+    var g1=x.createRadialGradient(W/2-o,cy,0,W/2-o,cy,r);
+    g1.addColorStop(0,'rgba('+A+',.30)');g1.addColorStop(1,'rgba('+A+',.06)');
+    x.fillStyle=g1;x.beginPath();x.arc(W/2-o,cy,r,0,Math.PI*2);x.fill();
+    var g2=x.createRadialGradient(W/2+o,cy,0,W/2+o,cy,r);
+    g2.addColorStop(0,'rgba('+E+',.30)');g2.addColorStop(1,'rgba('+E+',.06)');
+    x.fillStyle=g2;x.beginPath();x.arc(W/2+o,cy,r,0,Math.PI*2);x.fill();
+    x.globalCompositeOperation='source-over';
+    x.strokeStyle='rgba('+A+',.5)';x.lineWidth=1;x.beginPath();x.arc(W/2-o,cy,r,0,Math.PI*2);x.stroke();
+    x.strokeStyle='rgba('+E+',.5)';x.beginPath();x.arc(W/2+o,cy,r,0,Math.PI*2);x.stroke();
+
+    x.textAlign='center';x.font='400 11px Inter, sans-serif';
+    x.fillStyle='rgba('+C+',.62)';
+    x.fillText('Ceramics', W/2-o-r*.42, cy-6);
+    x.fillText('Analog film', W/2-o-r*.42, cy+12);
+    x.fillText('Trail running', W/2+o+r*.44, cy-6);
+    x.fillText('Vinyl', W/2+o+r*.44, cy+12);
+    x.font='600 12.5px Inter, sans-serif';
+    x.fillStyle='rgba(255,250,238,.98)';
+    x.fillText('Specialty', W/2, cy-3);
+    x.fillText('coffee', W/2, cy+13);
+  })();
+})();
+</script>
+</body>
+</html>
