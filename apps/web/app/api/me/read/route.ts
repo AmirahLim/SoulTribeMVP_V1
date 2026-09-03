@@ -12,6 +12,25 @@ import type { ProfileVector } from '@soul-tribe/core';
 
 export const runtime = 'nodejs';
 
+// ─── Value key humanizer ─────────────────────────────────────────────
+
+function humanizeValueKey(key: string): string {
+  if (!key) return '';
+  // Double underscore separates grouped values: 'curiosity__freedom__growth' → 'Curiosity, Freedom, Growth'
+  // Single underscore is word separator: 'open_mindedness' → 'Open mindedness'
+  // Long sentence keys: 'i_really_respect_people_who_can...' → trim to first few meaningful words
+  const parts = key.split('__').map((part) => {
+    const words = part.replace(/_/g, ' ').trim();
+    // If it's a sentence-length key (>40 chars), take first 5 words
+    if (words.length > 40) {
+      const shortened = words.split(' ').slice(0, 5).join(' ');
+      return shortened.charAt(0).toUpperCase() + shortened.slice(1);
+    }
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  });
+  return parts.filter(Boolean).join(', ');
+}
+
 // ─── Expected answer counts per thread (for evidence depth) ──────────
 
 const EXPECTED_ANSWERS: Record<string, number> = {
@@ -154,7 +173,7 @@ function buildNote(vec: ProfileVector, key: string): string | null {
     }
     case 'values': {
       if (vec.values && vec.values.length > 0) {
-        const names = vec.values.slice(0, 3).map((v) => v.value_key);
+        const names = vec.values.slice(0, 3).map((v) => humanizeValueKey(v.value_key));
         if (names.length === 1) return `You chose ${names[0]}.`;
         return `You chose ${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}.`;
       }
@@ -363,8 +382,9 @@ export async function GET(req: NextRequest) {
   const interests = (vec.interests || []).map((i) => ({
     name: i.node_name || i.node_path || '',
   }));
-  const values = (vec.values || []).map((v) => ({
-    name: v.value_key || '',
+  const rawValues = (row.user_values || []) as any[];
+  const values = rawValues.map((v: any) => ({
+    name: v.value_name || humanizeValueKey(v.value_key || ''),
   }));
 
   const response = {
