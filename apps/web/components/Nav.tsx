@@ -16,7 +16,7 @@ export function Nav() {
   const items = [
     { href: '/home', label: 'Home', icon: Compass },
     { href: '/people', label: 'People', icon: Users },
-    { href: '/outings/pitch', label: 'Outings', icon: Calendar },
+    { href: '/outings', label: 'Outings', icon: Calendar },
     { href: '/you', label: 'You', icon: User },
   ];
 
@@ -32,10 +32,10 @@ export function Nav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 text-[11px] font-bold transition-all ${
-                isActive ? 'text-[#F3F0E9]' : 'text-[#A6AAA4] hover:text-[#F3F0E9]'
+                isActive ? 'text-[#F5F2EA]' : 'text-[rgba(245,242,234,0.44)] hover:text-[#F5F2EA]'
               }`}
             >
-              <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.6]'}`} />
+              <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.4] text-[#3D7A5A]' : 'stroke-[1.6]'}`} />
               <span>{item.label}</span>
             </Link>
           );
