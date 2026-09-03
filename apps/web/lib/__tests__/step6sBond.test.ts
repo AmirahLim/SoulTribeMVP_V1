@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
-describe('Step 6s — Three Surfaces & Bond View Test Suite', () => {
+const BOND_PAGE_PATH = resolve(__dirname, '../../app/people/[id]/bond/page.tsx');
+const PROFILE_PAGE_PATH = resolve(__dirname, '../../app/people/[id]/page.tsx');
+
+describe('Step 6s — Bond View & Surface Wiring Guards', () => {
+  const bondPageSource = readFileSync(BOND_PAGE_PATH, 'utf-8');
+  const profilePageSource = readFileSync(PROFILE_PAGE_PATH, 'utf-8');
+
   it('1. Component Library Uniqueness — shared components imported from packages/ui', async () => {
     const uiExports = await import('@soul-tribe/ui');
     expect(uiExports.GlassCard).toBeDefined();
@@ -11,68 +19,35 @@ describe('Step 6s — Three Surfaces & Bond View Test Suite', () => {
     expect(uiExports.ThreadBloom).toBeDefined();
   });
 
-  it('2. Member Profile (/people/[id]) renders NO private-for-matching fields', () => {
-    const privateFields = [
-      'Exact Age Preferences',
-      'Availability Calendar Slots',
-      'Rhythm Check Feedback',
-      'Psychometric Trait Vectors',
-    ];
-
-    const sampleMemberProfileMarkup = `
-      <div class="member-profile">
-        <h1>Mervyn Tang</h1>
-        <p>Bishan · Singapore</p>
-        <div>He's Into: Trail running, Specialty coffee</div>
-        <div>Connection Notes are visible once you've shared an outing.</div>
-      </div>
-    `;
-
-    privateFields.forEach((field) => {
-      expect(sampleMemberProfileMarkup.includes(field)).toBe(false);
-    });
+  it('2. bond/page.tsx does NOT contain hardcoded youDepths/themDepths arrays', () => {
+    // These were the exact hardcoded depth arrays
+    expect(bondPageSource).not.toMatch(/const\s+youDepths\s*=\s*\[0\.92/);
+    expect(bondPageSource).not.toMatch(/const\s+themDepths\s*=\s*\[0\.86/);
   });
 
-  it('3. Member Profile uses third-person throughout, no first-person "You " prefix in Tribal Read', () => {
-    const tribalReadHeadline = "Steady, wry & slow to open";
-    const tribalReadSummary = "Mervyn builds trust before disclosure. He's more likely to become close through a repeated Saturday.";
-
-    expect(tribalReadSummary.startsWith("You ")).toBe(false);
-    expect(tribalReadSummary.includes("Mervyn")).toBe(true);
+  it('3. bond/page.tsx does NOT contain "Content is illustrative"', () => {
+    expect(bondPageSource).not.toContain('Content is illustrative');
   });
 
-  it('4. Bond Page contains distinct thesis and no duplicated individual Tribal Read prose', () => {
-    const memberTribalRead = "Mervyn builds trust before disclosure.";
-    const bondThesis = "Quality time over constant contact. Neither of you needs a full calendar to feel close.";
-
-    expect(bondThesis.includes(memberTribalRead)).toBe(false);
+  it('4. bond/page.tsx does NOT contain hardcoded masculine pronouns in friction cards', () => {
+    // "He may feel" and "he's" were hardcoded for Mervyn
+    expect(bondPageSource).not.toMatch(/He may feel/);
+    expect(bondPageSource).not.toMatch(/he's vague/i);
   });
 
-  it('5. Unanswered thread renders as "Not measured" with no track or dots', () => {
-    const unmeasuredMechanism = 'Not measured';
-    const isUnmeasured = unmeasuredMechanism === 'Not measured';
-
-    expect(isUnmeasured).toBe(true);
+  it('5. people/[id]/page.tsx does NOT contain hardcoded Mervyn fallback data', () => {
+    // These were the Mervyn-specific hardcoded strings
+    expect(profilePageSource).not.toContain("'Mervyn Tang'");
+    expect(profilePageSource).not.toContain('Mervyn builds trust before disclosure');
+    expect(profilePageSource).not.toContain('Trail running, specialty coffee, vinyl');
   });
 
-  it('6. Woven Bloom handles thin (0% depth) and deep profiles without throwing', () => {
-    const thinDepths = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const deepDepths = [0.95, 0.8, 0.7, 0.88, 0.9, 0.85, 0.75, 0.6, 0.8, 0.7];
-
-    expect(thinDepths.length).toBe(10);
-    expect(deepDepths.length).toBe(10);
+  it('6. people/[id]/page.tsx imports score and generateSelfProfile', () => {
+    expect(profilePageSource).toContain('score');
+    expect(profilePageSource).toContain('generateSelfProfile');
   });
 
-  it('7. NO percentage string appears anywhere on the Bond page', () => {
-    const sampleBondPageText = `
-      Mimeo & Mervyn Tang
-      Why you might click: Quality time over constant contact.
-      Social Energy: Aligned. You both top out around four people.
-      Social Rhythm: Planning friction.
-      Potential friction: Planning Noticeable.
-    `;
-
-    expect(sampleBondPageText.includes('%')).toBe(false);
-    expect(sampleBondPageText.includes('87% match')).toBe(false);
+  it('7. bond/page.tsx imports and calls generateMatchExplanation', () => {
+    expect(bondPageSource).toContain('generateMatchExplanation');
   });
 });

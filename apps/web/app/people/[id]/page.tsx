@@ -9,8 +9,8 @@ import {
   ReadPill,
   ThreadBloom,
 } from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode } from '../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
+import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode, getFitLabel } from '../../../lib/matching';
+import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, score, generateSelfProfile } from '@soul-tribe/core';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
@@ -95,30 +95,38 @@ function PersonDetailContent() {
 
             if (dbProfile) {
               const viewerVec = toProfileVector(user, user.id);
+              // Pass the FULL DB profile to toProfileVector — it reads trait_personality,
+              // trait_communication, etc. from (user as any).trait_* automatically.
               const candVec = toProfileVector({
                 displayName: dbProfile.display_name,
                 homeArea: dbProfile.home_area || 'Singapore',
                 avatarUrl: dbProfile.avatar_url,
                 bio: dbProfile.bio,
+                // Spread trait tables so toProfileVector can find them via (user as any).trait_*
+                ...dbProfile,
               } as any, dbProfile.id);
 
               const explanation = generateMatchExplanation(viewerVec, candVec);
+              const matchResult = score(viewerVec, candVec);
+              const minConf = Math.min(viewerVec.profile.confidence || 0, candVec.profile.confidence || 0);
 
               found = {
                 id: dbProfile.id,
-                name: dbProfile.display_name || 'Mervyn Tang',
-                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Mervyn Tang'),
-                homeArea: dbProfile.home_area || 'Bishan',
-                bio: dbProfile.bio || 'Mervyn builds trust before disclosure.',
-                rankScore: 0.82,
-                resonance: 0.82,
-                logistics: 0.85,
+                name: dbProfile.display_name || 'Member',
+                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Member'),
+                homeArea: dbProfile.home_area || 'Singapore',
+                bio: dbProfile.bio || '',
+                rankScore: matchResult.rank_score,
+                resonance: matchResult.resonance,
+                logistics: matchResult.logistics,
                 clickText: explanation.click_text,
                 rubText: explanation.friction_text,
-                fitLabel: 'Natural Resonance',
-                provisional: false,
+                fitLabel: getFitLabel(matchResult.rank_score, minConf < 0.55, minConf),
+                provisional: minConf < 0.55,
                 isDemo: false,
-              };
+              } as RankedMatch;
+              // Attach candVec for render-time selfProfile generation (not part of RankedMatch type)
+              (found as any)._candidateVec = candVec;
             }
           } catch (dbErr) {
             console.error('Direct Supabase profile lookup error:', dbErr);
@@ -146,34 +154,39 @@ function PersonDetailContent() {
     );
   }
 
-  const memberName = rankedMatch?.name || 'Mervyn Tang';
-  const memberFirstName = memberName.split(' ')[0] || 'Mervyn';
+  const memberName = rankedMatch?.name || 'Member';
+  const memberFirstName = memberName.split(' ')[0] || 'Member';
 
-  // 3rd Person Tribal Read Data
-  const memberTribalReadData = {
-    headline: 'Steady, wry & slow to open',
-    summary: `${memberFirstName} builds trust before disclosure. He's more likely to become close through a repeated Saturday than a long first conversation.`,
-    pills: ['Gradual opener', 'Low-maintenance', 'Banter-led'],
+  // Wire to self-profile synthesizer for 3rd-person view.
+  // If RLS blocks trait data, candidateVec will be thin and selfProfile
+  // will return "still developing" states — which is honest, not fake.
+  const candidateVec = (rankedMatch as any)?._candidateVec;
+  const selfProfile = candidateVec ? generateSelfProfile(candidateVec) : null;
+
+  // 3rd Person Tribal Read Data — from synthesizer or honest empty state
+  const memberTribalReadData = selfProfile ? {
+    ...selfProfile.tribalRead,
+    // Rewrite summary to 3rd person if it starts with "You"
+    summary: selfProfile.tribalRead.summary.replace(/^You /i, `${memberFirstName} `).replace(/\byou\b/g, memberFirstName.toLowerCase()),
+  } : {
+    headline: 'Still getting to know them',
+    summary: `${memberFirstName} hasn't shared enough data yet for a full profile read.`,
+    pills: [],
     topThreads: ['personality', 'communication'] as [string, string],
-    sections: [
-      { title: `How ${memberFirstName} connects`, content: `${memberFirstName} protects his social energy for focused, small-group meetups where real conversation can develop naturally.`, markerCount: 3 },
-      { title: `What ${memberFirstName} values`, content: `Shared activities like trail running or specialty coffee that provide an easy, low-pressure anchor.`, markerCount: 2 },
-    ],
+    sections: [],
   };
 
-  const memberDepths = [0.86, 0.74, 0.70, 0.60, 0.62, 0.40, 0, 0.66, 0.55, 0.78];
-
-  const bloomThreads = [
-    { key: 'personality', label: 'Social Energy', strength: 0.86, confidence: 0.8, sentence: `${memberFirstName} thrives in quiet, selective 1-on-1s and small groups.` },
-    { key: 'communication', label: 'Communication', strength: 0.74, confidence: 0.8, sentence: `${memberFirstName} prefers unhurried, low-maintenance reply paces.` },
-    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.7, confidence: 0.8, sentence: `${memberFirstName} makes plans closer to the day.` },
-    { key: 'intent', label: 'Friendship Style', strength: 0.6, confidence: 0.8, sentence: `${memberFirstName} maintains an independent, steady inner circle.` },
-    { key: 'emotional', label: 'Emotional Pacing', strength: 0.62, confidence: 0.8, sentence: `${memberFirstName} takes time to open up gradually.` },
-    { key: 'interests', label: 'Interests', strength: 0.4, confidence: 0.8, sentence: `Trail running, specialty coffee, vinyl, hawker archaeology.` },
-    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: "Hasn't shared Section 6 yet" },
-    { key: 'lifestyle', label: 'Play & Humour', strength: 0.66, confidence: 0.8, sentence: `${memberFirstName} appreciates dry humour and light banter.` },
-    { key: 'experience', label: 'Conversation', strength: 0.55, confidence: 0.8, sentence: `${memberFirstName} enjoys quiet coffee walks.` },
-    { key: 'logistics', label: 'Availability', strength: 0.78, confidence: 0.8, sentence: `Available weekend mornings and weekday evenings.` },
+  const bloomThreads = selfProfile ? selfProfile.bloomThreads : [
+    { key: 'personality', label: 'Social Energy', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'communication', label: 'Communication', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'intent', label: 'Friendship Style', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'emotional', label: 'Emotional Connection', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'interests', label: 'Interests', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'lifestyle', label: 'Play & Humour', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'experience', label: 'Conversation', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
+    { key: 'logistics', label: 'Availability', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
   ];
 
   const rawHandle = (rankedMatch as any)?.handle || cleanPersonId || 'mervyn';

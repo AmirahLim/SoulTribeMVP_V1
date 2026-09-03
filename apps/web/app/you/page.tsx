@@ -11,6 +11,9 @@ import {
 import { AuthGuard } from '../../components/AuthGuard';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
+import { generateSelfProfile } from '@soul-tribe/core';
+import type { SelfProfileData } from '@soul-tribe/core';
+import { toProfileVector } from '../../lib/profileAdapter';
 
 import { ProfileHero } from '../../components/profile/ProfileHero';
 import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
@@ -51,6 +54,9 @@ function ProfileContent() {
   const [editPhoto, setEditPhoto] = useState('');
 
   const [userPitches, setUserPitches] = useState<OutingItem[]>([]);
+  const [selfData, setSelfData] = useState<SelfProfileData | null>(null);
+  const [userValues, setUserValues] = useState<any[]>([]);
+  const [userInterests, setUserInterests] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadPitches() {
@@ -73,7 +79,7 @@ function ProfileContent() {
         const client = getSupabaseBrowserClient();
         client
           .from('profiles')
-          .select('*')
+          .select('*, trait_intent(*), trait_communication(*), trait_personality(*), trait_social_rhythm(*), trait_emotional(*), trait_experience(*), trait_lifestyle(*), trait_geography(*), user_interests(*), user_values(*)')
           .eq('id', authUser.id)
           .maybeSingle()
           .then(({ data: remoteProfile }) => {
@@ -91,6 +97,27 @@ function ProfileContent() {
               setEditArea(merged.homeArea);
               setEditBio(merged.bio || '');
               setEditPhoto(merged.avatarUrl);
+              
+              const vec = toProfileVector(remoteProfile, authUser.id);
+              const computed = generateSelfProfile(vec);
+              setSelfData(computed);
+              
+              if (remoteProfile.user_values) {
+                setUserValues(remoteProfile.user_values.map((v: any) => ({
+                  label: v.value_key,
+                  x: v.x_pos || 50,
+                  y: v.y_pos || 50,
+                  weight: v.importance || 0.5
+                })));
+              }
+              if (remoteProfile.user_interests) {
+                setUserInterests(remoteProfile.user_interests.map((i: any) => ({
+                  name: i.node_name || i.node_path,
+                  x: i.x_pos || 50,
+                  y: i.y_pos || 50,
+                  weight: i.interest_level || 0.5
+                })));
+              }
             }
           });
       } catch {
@@ -128,124 +155,16 @@ function ProfileContent() {
     }
   };
 
-  const currentStanding = calculateTribeStanding(profile.outingsAttended || 3, profile.outingsHosted || 1);
-  const passCompletionPct = profile.passCompletionPct !== undefined ? profile.passCompletionPct : 100;
-  const confidenceValue = 0.95;
+  const currentStanding = calculateTribeStanding(profile.outingsAttended || 0, profile.outingsHosted || 0);
+  const passCompletionPct = profile.passCompletionPct || 0;
 
-  // 10 Petals for Bloom
-  const bloomThreads = [
-    { key: 'personality', label: 'Social Energy', strength: 0.85, confidence: confidenceValue, sentence: 'Four people is where you stop scanning the room and start noticing one person.' },
-    { key: 'communication', label: 'Communication', strength: 0.9, confidence: confidenceValue, sentence: 'You surface in bursts. A quiet fortnight does not read as distance.' },
-    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0.75, confidence: confidenceValue, sentence: 'Plans land best a week or two out. Same-day invitations rarely stick.' },
-    { key: 'intent', label: 'Friendship Style', strength: 0.95, confidence: confidenceValue, sentence: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.' },
-    { key: 'emotional', label: 'Emotional Connection', strength: 0.8, confidence: confidenceValue, sentence: 'Paces trust thoughtfully over repeated catch-ups.' },
-    { key: 'interests', label: 'Interests', strength: 0.85, confidence: confidenceValue, sentence: 'Loves specialty coffee, ceramic craft, and analog film.' },
-    { key: 'values', label: 'Values', strength: 0.9, confidence: confidenceValue, sentence: 'Curiosity sits at the centre of most of your answers — the others orbit it.' },
-    { key: 'lifestyle', label: 'Play & Humour', strength: 0.8, confidence: confidenceValue, sentence: 'Appreciates light banter and novel outing spots.' },
-    { key: 'experience', label: 'Conversation', strength: 0.7, confidence: confidenceValue, sentence: 'Conversations start somewhere ordinary and end up somewhere neither planned.' },
-    { key: 'logistics', label: 'Availability', strength: 0.65, confidence: confidenceValue, sentence: 'Available weekday evenings and Saturday mornings.' },
-  ];
-
-  // Connection Threads list with drawn visual objects
-  const connectionThreadsList: ThreadData[] = [
-    {
-      key: 'personality',
-      name: 'Social Energy',
-      heroDescriptor: ['Intimate', 'Selective', 'Calm'],
-      strength: 0.85,
-      confidence: confidenceValue,
-      note: 'Four people is where you stop scanning the room and start noticing one person.',
-      naturalSetting: 'Low-noise coffee spots, quiet studios, 1-on-1 tea catch-ups.',
-      thriveWhen: 'Settings have minimal background noise and predictable party sizes.',
-      extraVisualData: { activeGroup: '3–4' },
-      signals: [
-        { key: 'q3', label: 'Prefers 1-on-1 or 3-4 people', evidenceLevel: 'DIRECT' },
-      ],
-    },
-    {
-      key: 'communication',
-      name: 'Communication',
-      heroDescriptor: ['Asynchronous', 'Low-pressure', 'Intentional'],
-      strength: 0.9,
-      confidence: confidenceValue,
-      note: "You surface in bursts. A quiet fortnight doesn't read as distance.",
-      naturalSetting: 'Thoughtful text threads, voice notes, and unhurried replies.',
-      thriveWhen: 'Friends share asynchronous digital touchpoints.',
-      signals: [
-        { key: 'q4', label: 'Low-maintenance reply pace', evidenceLevel: 'DIRECT' },
-      ],
-    },
-    {
-      key: 'intent',
-      name: 'Friendship Style',
-      heroDescriptor: ['Close', 'Independent', 'Steady'],
-      strength: 0.95,
-      confidence: confidenceValue,
-      note: 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.',
-      naturalSetting: 'Small inner circle with deep mutual trust.',
-      thriveWhen: 'Friendships allow long quiet stretches without guilt.',
-      extraVisualData: { mapX: 34, mapY: 36 },
-      signals: [
-        { key: 'q7', label: 'Observant first trust pacing', evidenceLevel: 'DIRECT' },
-      ],
-    },
-    {
-      key: 'social_rhythm',
-      name: 'Social Rhythm',
-      heroDescriptor: ['Structured', 'Advance-planned'],
-      strength: 0.75,
-      confidence: confidenceValue,
-      note: 'Plans land best a week or two out. Same-day invitations rarely stick.',
-      naturalSetting: 'Meetups confirmed 1–2 weeks in advance.',
-      thriveWhen: 'Calendars are settled early without last-minute scrambling.',
-      extraVisualData: { activeDays: ['W', 'S', 'S2'] },
-      signals: [
-        { key: 'q5', label: 'Planned 1-2 weeks in advance', evidenceLevel: 'DIRECT' },
-      ],
-    },
-  ];
-
-  const tribalReadData = {
-    headline: 'Selective, curious & quietly adventurous',
-    summary: 'You build connection through smaller settings and shared experience — conversations that start somewhere ordinary and end up somewhere neither of you planned.',
-    pills: ['Small-circle energy', 'Depth over frequency', 'Novelty-seeking'],
-    topThreads: ['personality', 'interests'] as [string, string],
-    sections: [
-      { title: 'Who you are socially', content: 'You protect your social energy for high-quality, focused meetups where real conversation can happen.', markerCount: 3 },
-      { title: 'You connect through', content: 'Hands-on shared activities, craft workshops, and quiet coffee walks that provide an easy anchor.', markerCount: 2 },
-      { title: "You're at your best with", content: 'Friends who respect your unhurried response pace and value planned dates locked in early.', markerCount: 3 },
-    ],
-  };
-
-  const contradictionTension = {
-    headline: 'Adventurous, but not chaotic.',
-    explanation: "You actively seek unfamiliar experiences, but prefer knowing they're happening ahead of time. Novelty energizes you; logistical uncertainty doesn't.",
-    threadsInvolved: ['interests', 'social_rhythm'],
-  };
-
-  const connectionNotesList: NoteItem[] = [
-    {
-      id: 'note-1',
-      hook: 'How to become friends with me',
-      statement: 'Invite me to low-key, focused activities first',
-      explanation: 'I feel most comfortable when there is a shared activity or quiet setting to ground our conversation.',
-      whatItLooksLike: 'A specialty coffee walk or ceramic workshop works better than a noisy lounge.',
-      sourceThreads: ['personality', 'interests'],
-    },
-    {
-      id: 'note-2',
-      hook: 'What makes me feel close',
-      statement: 'Thoughtful catch-ups without digital reply pressure',
-      explanation: 'Taking time to reply to messages is normal for me, and I appreciate friends who hold zero pressure around reply speed.',
-      whatItLooksLike: 'Picking up a text thread days later without awkwardness.',
-      sourceThreads: ['communication'],
-    },
-  ];
-
-  const primaryInstinct: InstinctItem = {
-    type: 'Connector',
-    description: 'bringing people together around shared crafts and quiet, quality experiences',
-  };
+  if (!selfData) {
+    return (
+      <div className="min-h-screen w-full bg-[#070908] flex items-center justify-center">
+        <p className="text-[rgba(245,242,234,0.44)] animate-pulse text-sm">Loading your social footprint...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
@@ -270,8 +189,8 @@ function ProfileContent() {
           avatarUrl={profile.avatarUrl}
           passCompletionPct={passCompletionPct}
           standingText={currentStanding.label}
-          instinctType={primaryInstinct.type}
-          instinctDescription={primaryInstinct.description}
+          instinctType={selfData?.primaryInstinct.type}
+          instinctDescription={selfData?.primaryInstinct.description}
           onEditProfile={() => setIsSettingsOpen(true)}
           onDeepenPass={() => router.push('/you/deeper')}
         />
@@ -284,17 +203,17 @@ function ProfileContent() {
           <p className="text-xs text-[rgba(245,242,234,0.70)] max-w-xs leading-relaxed mb-4">
             A dynamic visual representation of your social energy, rhythm, and values.
           </p>
-          <Bloom threads={bloomThreads} size={280} interactive />
+          <Bloom threads={selfData?.bloomThreads || []} size={280} interactive />
           <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-2">
-            Ten threads · six explored · <span className="text-[#EFB94E]">tap a petal</span>
+            Ten threads · {selfData?.bloomThreads.filter(t => t.strength > 0).length || 0} explored · <span className="text-[#EFB94E]">tap a petal</span>
           </p>
         </div>
 
         {/* 3. Your Tribal Read */}
-        <TribalRead data={tribalReadData} />
+        <TribalRead data={selfData?.tribalRead} />
 
         {/* 4. The Interesting Part (Cross-thread Tension) */}
-        <TheInterestingPart tension={contradictionTension} />
+        <TheInterestingPart tension={selfData?.contradiction} />
 
         {/* 5. Connection Threads (Drawn Objects) */}
         <div className="flex flex-col gap-3.5">
@@ -303,33 +222,33 @@ function ProfileContent() {
               Connection Threads
             </p>
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              6 of 10
+              {selfData?.connectionThreads?.length || 0} of 10
             </p>
           </div>
 
-          {connectionThreadsList.map((t) => (
-            <ThreadCard key={t.key} thread={t} />
+          {(selfData?.connectionThreads || []).map((t) => (
+            <ThreadCard key={t.key} thread={t as any} />
           ))}
         </div>
 
         {/* 6. What Matters (Values Constellation Canvas) */}
-        <ValuesConstellationCanvas />
+        <ValuesConstellationCanvas values={userValues} />
 
         {/* 7. I'm Into (Interest Graph Canvas) */}
-        <InterestGraphCanvas />
+        <InterestGraphCanvas nodes={userInterests} />
 
         {/* 8. Outing DNA (Triad Radar Canvas) */}
         <OutingTriadCanvas
-          descriptors={['Low-key', 'Creative', 'Exploratory']}
-          values={[0.85, 0.78, 0.72]}
-          instantYes="Pottery somewhere you've never been, then coffee that runs long"
-          usuallyYes={['Quiet museums', 'acoustic sets', 'neighbourhood walks']}
-          convinceMe={['Rooftop mixers']}
+          descriptors={selfData?.outingPreferences.descriptors}
+          values={selfData?.outingPreferences.values}
+          instantYes={selfData?.outingPreferences.instantYes}
+          usuallyYes={selfData?.outingPreferences.usuallyYes}
+          convinceMe={selfData?.outingPreferences.convinceMe}
         />
 
         {/* 9. Connection Notes & Social Instincts */}
-        <ConnectionNotes notes={connectionNotesList} />
-        <SocialInstincts primaryInstinct={primaryInstinct} />
+        <ConnectionNotes notes={selfData?.connectionNotes || []} />
+        <SocialInstincts primaryInstinct={selfData?.primaryInstinct} />
 
         {/* 10. Hosted Pitches List */}
         {userPitches.length > 0 && (
@@ -355,7 +274,7 @@ function ProfileContent() {
         )}
 
         {/* 11. Boundaries & Privacy */}
-        <BoundariesMatching />
+        <BoundariesMatching {...selfData?.boundaries} />
 
         {/* 12. Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">

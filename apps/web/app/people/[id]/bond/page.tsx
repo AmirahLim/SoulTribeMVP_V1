@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   GlassCard,
@@ -13,7 +13,8 @@ import {
 import { AuthGuard } from '../../../../components/AuthGuard';
 import { getUserProfile } from '../../../../lib/userStore';
 import { getRankedMatches, RankedMatch, toProfileVector } from '../../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation } from '@soul-tribe/core';
+import { getGenderAvatarForName, generateMatchExplanation, score, generateSelfProfile, getBondThreadPhrase } from '@soul-tribe/core';
+import type { ProfileVector, MatchResult, ExplanationText } from '@soul-tribe/core';
 
 export default function ViewBondPage() {
   return (
@@ -23,15 +24,44 @@ export default function ViewBondPage() {
   );
 }
 
+/** Thread keys in display order */
+const THREAD_KEYS = [
+  'personality', 'communication', 'social_rhythm', 'intent', 'emotional',
+  'interests', 'values', 'lifestyle', 'experience', 'geography',
+] as const;
+
+const THREAD_DISPLAY_NAMES: Record<string, string> = {
+  personality: 'Social Energy',
+  communication: 'Communication',
+  social_rhythm: 'Social Rhythm',
+  intent: 'Friendship Style',
+  emotional: 'Emotional Openness',
+  interests: 'Interests',
+  values: 'Values',
+  lifestyle: 'Play & Humour',
+  experience: 'Conversation',
+  geography: 'Availability',
+};
+
+function deriveMechanism(contrib: number | undefined): MechanismType {
+  if (contrib === undefined || contrib === null) return 'Not measured' as MechanismType;
+  if (contrib >= 0.7) return 'Aligned' as MechanismType;
+  if (contrib >= 0.4) return 'Complementary' as MechanismType;
+  return 'Planning friction' as MechanismType;
+}
+
 function ViewBondContent() {
   const params = useParams();
-  const router = useRouter();
 
   const rawId = params?.id;
   const personId = Array.isArray(rawId) ? rawId[0] : (rawId as string) || '';
   const cleanPersonId = personId ? decodeURIComponent(personId).trim().toLowerCase() : '';
 
   const [personMatch, setPersonMatch] = useState<RankedMatch | null>(null);
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
+  const [explanation, setExplanation] = useState<ExplanationText | null>(null);
+  const [viewerVec, setViewerVec] = useState<ProfileVector | null>(null);
+  const [candidateVec, setCandidateVec] = useState<ProfileVector | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +82,20 @@ function ViewBondContent() {
 
         if (found) {
           setPersonMatch(found);
+
+          // Build viewer vector from local profile
+          const vVec = toProfileVector(userProfile, userProfile.id);
+          setViewerVec(vVec);
+
+          // If the match has a cached candidate vec, use it for deeper data
+          const cVec = (found as any)?._candidateVec as ProfileVector | undefined;
+          if (cVec) {
+            setCandidateVec(cVec);
+            const mr = score(vVec, cVec);
+            setMatchResult(mr);
+            const expl = generateMatchExplanation(vVec, cVec);
+            setExplanation(expl);
+          }
         }
       } catch (err) {
         console.error('Failed to load bond profile:', err);
@@ -72,57 +116,86 @@ function ViewBondContent() {
     );
   }
 
-  const memberName = personMatch?.name || 'Mervyn Tang';
-  const memberFirstName = memberName.split(' ')[0] || 'Mervyn';
+  const memberName = personMatch?.name || 'Member';
+  const memberFirstName = memberName.split(' ')[0] || 'Member';
   const userProfile = getUserProfile();
-  const userName = userProfile.displayName || 'Mimeo';
+  const userName = userProfile.displayName || 'You';
 
-  const youDepths = [0.92, 0.80, 0.66, 0.88, 0.58, 0.95, 0, 0.72, 0, 0.84];
-  const themDepths = [0.86, 0.74, 0.70, 0.60, 0.62, 0.40, 0, 0.66, 0.55, 0.78];
+  // Derive bloom depths from selfProfile or default to 0
+  const viewerSelf = viewerVec ? generateSelfProfile(viewerVec) : null;
+  const candidateSelf = candidateVec ? generateSelfProfile(candidateVec) : null;
 
-  const pairedThreadsList = [
-    {
-      threadName: 'Social Energy',
-      mechanism: 'Aligned' as MechanismType,
-      youPos: 26,
-      themPos: 34,
-      leftEndLabel: 'Selective 1:1',
-      rightEndLabel: 'Expansive groups',
-      consequenceSentence: `You both top out around four people. Neither of you will be the one pushing for the bigger table.`,
-    },
-    {
-      threadName: 'Social Rhythm',
-      mechanism: 'Planning friction' as MechanismType,
-      youPos: 22,
-      themPos: 76,
-      leftEndLabel: 'Weeks ahead',
-      rightEndLabel: 'Same day',
-      consequenceSentence: `The widest gap between you. Getting it into the calendar will be harder than enjoying it once you're there.`,
-    },
-    {
-      threadName: 'Social Initiative',
-      mechanism: 'Complementary' as MechanismType,
-      youPos: 24,
-      themPos: 68,
-      leftEndLabel: 'Waits to be asked',
-      rightEndLabel: 'Makes the plan',
-      consequenceSentence: `A difference that helps. ${memberFirstName} tends to make the plan; you tend to say yes. That pairing usually works — until nobody does either.`,
-    },
-    {
-      threadName: 'Emotional Openness',
-      mechanism: 'Aligned' as MechanismType,
-      youPos: 30,
-      themPos: 36,
-      leftEndLabel: 'Takes time',
-      rightEndLabel: 'Opens fast',
-      consequenceSentence: `Both slow openers. Neither of you will expect the other to be vulnerable early, which usually makes the first few meetings easier.`,
-    },
-    {
-      threadName: 'Conflict & Repair',
-      mechanism: 'Not measured' as MechanismType,
-      consequenceSentence: `Neither of you has answered these two questions yet. It's the biggest gap in this reading.`,
-    },
-  ];
+  const youDepths = viewerSelf
+    ? viewerSelf.bloomThreads.map((t) => t.strength)
+    : new Array(10).fill(0);
+
+  const themDepths = candidateSelf
+    ? candidateSelf.bloomThreads.map((t) => t.strength)
+    : new Array(10).fill(0);
+
+  // Build paired threads from match result contributions
+  const contribs = matchResult?.contributions;
+  const pairedThreadsList = THREAD_KEYS
+    .map((key) => {
+      const contrib = contribs?.[key as keyof typeof contribs] as number | undefined;
+      if (contrib === undefined || contrib === null) return null;
+
+      const mechanism = deriveMechanism(contrib);
+      const displayName = THREAD_DISPLAY_NAMES[key] || key;
+
+      // Derive positions from viewer and candidate vectors
+      const youVal = getThreadPrimaryValue(key, viewerVec);
+      const themVal = getThreadPrimaryValue(key, candidateVec);
+      const youPos = youVal !== null ? Math.round(youVal * 100) : undefined;
+      const themPos = themVal !== null ? Math.round(themVal * 100) : undefined;
+
+      // Generate consequence sentence from engine
+      let consequenceSentence = '';
+      if (viewerVec && candidateVec) {
+        consequenceSentence = getBondThreadPhrase(key, viewerVec, candidateVec, contrib);
+      }
+
+      return {
+        threadName: displayName,
+        mechanism,
+        youPos,
+        themPos,
+        leftEndLabel: getLeftLabel(key),
+        rightEndLabel: getRightLabel(key),
+        consequenceSentence: consequenceSentence || `Thread data for ${displayName.toLowerCase()} is still developing.`,
+      };
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null);
+
+  // Thesis and friction text from match explanation or RankedMatch fallback
+  const clickText = explanation?.click_text || personMatch?.clickText || '';
+  const frictionText = explanation?.friction_text || personMatch?.rubText || '';
+
+  // Split click text into headline and body
+  const clickParts = clickText.split('. ');
+  const clickHeadline = clickParts[0] || 'Exploring your connection';
+  const clickBody = clickParts.slice(1).join('. ') || '';
+
+  // Split friction into label and body
+  const frictionParts = frictionText.split('. ');
+  const frictionLabel = frictionParts[0] || 'Potential friction';
+  const frictionBody = frictionParts.slice(1).join('. ') || frictionText;
+
+  // Venn interests from real user data
+  const viewerInterests = (viewerVec?.interests || []).map((i) => i.node_name || i.node_path || '');
+  const candidateInterests = (candidateVec?.interests || []).map((i) => i.node_name || i.node_path || '');
+
+  const sharedInterests = viewerInterests.filter((i) =>
+    candidateInterests.some((c) => c.toLowerCase() === i.toLowerCase())
+  );
+  const yourOnlyInterests = viewerInterests.filter(
+    (i) => !sharedInterests.some((s) => s.toLowerCase() === i.toLowerCase())
+  );
+  const theirOnlyInterests = candidateInterests.filter(
+    (i) => !sharedInterests.some((s) => s.toLowerCase() === i.toLowerCase())
+  );
+
+  const comparableCount = pairedThreadsList.length;
 
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
@@ -193,97 +266,147 @@ function ViewBondContent() {
             Why you might click
           </p>
           <h2 className="font-sans text-[26px] font-semibold text-[#F5F2EA] leading-[1.16]">
-            Quality time over <em className="not-italic text-[#EFB94E]">constant contact</em>
+            {clickHeadline}
           </h2>
-          <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">
-            Neither of you needs a full calendar to feel close, but when you do make time you want it to count. You're both planners who prefer smaller rooms — which removes the two things that usually kill a new friendship before it starts.
-          </p>
+          {clickBody && (
+            <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">
+              {clickBody}
+            </p>
+          )}
         </GlassCard>
 
         {/* Paired Thread Rows */}
-        <GlassCard>
-          <div className="flex items-baseline justify-between mb-3 border-b border-[rgba(245,242,234,0.08)] pb-2">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              Thread by thread
-            </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              8 comparable
-            </p>
-          </div>
-
-          <div className="flex flex-col">
-            {pairedThreadsList.map((t, idx) => (
-              <PairedThreadRow
-                key={idx}
-                threadName={t.threadName}
-                mechanism={t.mechanism}
-                youPos={t.youPos}
-                themPos={t.themPos}
-                leftEndLabel={t.leftEndLabel}
-                rightEndLabel={t.rightEndLabel}
-                consequenceSentence={t.consequenceSentence}
-                themName={memberFirstName}
-              />
-            ))}
-          </div>
-        </GlassCard>
-
-        {/* Potential Friction Card */}
-        <GlassCard wash="rgba(239,185,78,0.14)">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <span className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
-              Planning
-            </span>
-            <span className="text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[rgba(239,185,78,0.13)] border border-[rgba(239,185,78,0.30)] text-[#EFB94E]">
-              Noticeable
-            </span>
-          </div>
-
-          <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)]">
-            You like dates locked in a week or two out. {memberFirstName} decides closer to the day. Left alone, this is the thing most likely to keep a good pairing from actually meeting.
-          </p>
-
-          <div className="grid grid-cols-2 gap-2.5 mt-3.5">
-            <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3">
-              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#EFB94E] block mb-1">
-                You may feel
-              </span>
-              <p className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
-                That he's vague, or that plans never quite firm up.
+        {pairedThreadsList.length > 0 && (
+          <GlassCard>
+            <div className="flex items-baseline justify-between mb-3 border-b border-[rgba(245,242,234,0.08)] pb-2">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                Thread by thread
+              </p>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                {comparableCount} comparable
               </p>
             </div>
 
-            <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3">
-              <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#4E8B69] block mb-1">
-                He may feel
-              </span>
-              <p className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
-                That committing early makes an easy thing feel like an obligation.
-              </p>
+            <div className="flex flex-col">
+              {pairedThreadsList.map((t, idx) => (
+                <PairedThreadRow
+                  key={idx}
+                  threadName={t.threadName}
+                  mechanism={t.mechanism}
+                  youPos={t.youPos}
+                  themPos={t.themPos}
+                  leftEndLabel={t.leftEndLabel}
+                  rightEndLabel={t.rightEndLabel}
+                  consequenceSentence={t.consequenceSentence}
+                  themName={memberFirstName}
+                />
+              ))}
             </div>
-          </div>
-        </GlassCard>
+          </GlassCard>
+        )}
 
-        {/* Where You'd Actually Meet */}
-        <GlassCard wash="rgba(91,217,154,0.11)">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
-            Where you'd actually meet
-          </p>
-          <VennMeetingCanvas
-            yourInterests={['Ceramics', 'Analog film']}
-            sharedInterests={['Specialty coffee']}
-            theirInterests={['Trail running', 'Vinyl']}
-            noteSentence="Specialty coffee is the obvious first move. An activity gives this pairing somewhere to begin — you're both slow openers, so a table with nothing on it does more work than either of you wants to do."
-          />
-        </GlassCard>
+        {/* Potential Friction Card — from engine, not hardcoded */}
+        {frictionText && (
+          <GlassCard wash="rgba(239,185,78,0.14)">
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <span className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
+                Where you might rub
+              </span>
+              <span className="text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[rgba(239,185,78,0.13)] border border-[rgba(239,185,78,0.30)] text-[#EFB94E]">
+                Worth knowing
+              </span>
+            </div>
 
-        {/* Footer */}
+            <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)]">
+              {frictionText}
+            </p>
+          </GlassCard>
+        )}
+
+        {/* Where You'd Actually Meet — real interests */}
+        {(viewerInterests.length > 0 || candidateInterests.length > 0) && (
+          <GlassCard wash="rgba(91,217,154,0.11)">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
+              Where you'd actually meet
+            </p>
+            <VennMeetingCanvas
+              yourInterests={yourOnlyInterests.slice(0, 4)}
+              sharedInterests={sharedInterests.slice(0, 3)}
+              theirInterests={theirOnlyInterests.slice(0, 4)}
+              noteSentence={
+                sharedInterests.length > 0
+                  ? `${sharedInterests[0]} is the obvious starting point for your first hangout.`
+                  : viewerInterests.length > 0 && candidateInterests.length > 0
+                    ? `No shared interests yet — but that's sometimes how the best friendships start.`
+                    : `Add interests to your profile to see overlap.`
+              }
+            />
+          </GlassCard>
+        )}
+
+        {/* Footer — no "illustrative" disclaimer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
-          Bond view · same ground and palette, paired everywhere<br />
-          Content is illustrative — the engine supplies the words.
+          Bond view · same ground and palette, paired everywhere
         </p>
 
       </div>
     </div>
   );
+}
+
+// ─── Helper functions ────────────────────────────────────────────────
+
+function getThreadPrimaryValue(key: string, vec: ProfileVector | null): number | null {
+  if (!vec) return null;
+  switch (key) {
+    case 'personality': return vec.personality?.extraversion ?? null;
+    case 'communication': return vec.communication?.response_speed_self ?? null;
+    case 'social_rhythm': return vec.social_rhythm?.planning_horizon ?? null;
+    case 'intent': {
+      const d = vec.intent?.depth;
+      return typeof d === 'number' ? d / 4 : null;
+    }
+    case 'emotional': return vec.emotional?.er_opening_pace ?? null;
+    case 'interests': return vec.interests && vec.interests.length > 0 ? 0.5 : null;
+    case 'values': return vec.values && vec.values.length > 0 ? 0.5 : null;
+    case 'lifestyle': {
+      const b = vec.lifestyle?.budget_band;
+      return typeof b === 'number' ? b / 4 : null;
+    }
+    case 'experience': return vec.experience?.group_size_pref ?? null;
+    case 'geography': return null; // no continuum for geography
+    default: return null;
+  }
+}
+
+function getLeftLabel(key: string): string {
+  const labels: Record<string, string> = {
+    personality: 'Selective 1:1',
+    communication: 'Replies slowly',
+    social_rhythm: 'Weeks ahead',
+    intent: 'Casual',
+    emotional: 'Takes time',
+    interests: 'Few shared',
+    values: 'Different values',
+    lifestyle: 'Budget-friendly',
+    experience: 'Small groups',
+    geography: 'Close by',
+  };
+  return labels[key] || '';
+}
+
+function getRightLabel(key: string): string {
+  const labels: Record<string, string> = {
+    personality: 'Expansive groups',
+    communication: 'Replies fast',
+    social_rhythm: 'Same day',
+    intent: 'Deep',
+    emotional: 'Opens fast',
+    interests: 'Many shared',
+    values: 'Similar values',
+    lifestyle: 'Premium',
+    experience: 'Large groups',
+    geography: 'Far apart',
+  };
+  return labels[key] || '';
 }
