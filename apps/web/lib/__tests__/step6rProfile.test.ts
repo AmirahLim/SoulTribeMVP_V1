@@ -10,9 +10,10 @@ describe('Step 6r — Profile Wiring Regression Guards', () => {
   const youPageSource = readFileSync(YOU_PAGE_PATH, 'utf-8');
   const profilePageSource = readFileSync(PROFILE_PAGE_PATH, 'utf-8');
 
-  it('1. you/page.tsx imports generateSelfProfile from @soul-tribe/core', () => {
-    expect(youPageSource).toContain('generateSelfProfile');
-    expect(youPageSource).toContain('@soul-tribe/core');
+  it('1. you/page.tsx fetches /api/me/read for real data', () => {
+    expect(youPageSource).toContain('/api/me/read');
+    // Must NOT import generateSelfProfile directly — the route handles it
+    expect(youPageSource).not.toContain('generateSelfProfile');
   });
 
   it('2. you/page.tsx does NOT contain hardcoded bloom strengths', () => {

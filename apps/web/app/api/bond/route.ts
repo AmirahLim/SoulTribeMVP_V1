@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../lib/profileAdapter';
+import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import {
   score,
   softGate,
@@ -44,27 +45,8 @@ const QUESTION_MAP: Record<string, { prompt: string; href: string }> = {
   geography: { prompt: 'Set your preferred Singapore neighbourhoods', href: '/profile' },
 };
 
-function adaptRowToUserData(row: any): any {
-  return {
-    displayName: row.display_name,
-    homeArea: row.home_area || 'Singapore',
-    avatarUrl: row.avatar_url,
-    bio: row.bio,
-    birthYear: row.birth_year,
-    agePrefMin: row.age_pref_min,
-    agePrefMax: row.age_pref_max,
-    trait_intent: Array.isArray(row.trait_intent) ? row.trait_intent[0] : row.trait_intent,
-    trait_communication: Array.isArray(row.trait_communication) ? row.trait_communication[0] : row.trait_communication,
-    trait_personality: Array.isArray(row.trait_personality) ? row.trait_personality[0] : row.trait_personality,
-    trait_social_rhythm: Array.isArray(row.trait_social_rhythm) ? row.trait_social_rhythm[0] : row.trait_social_rhythm,
-    trait_emotional: Array.isArray(row.trait_emotional) ? row.trait_emotional[0] : row.trait_emotional,
-    trait_experience: Array.isArray(row.trait_experience) ? row.trait_experience[0] : row.trait_experience,
-    trait_lifestyle: Array.isArray(row.trait_lifestyle) ? row.trait_lifestyle[0] : row.trait_lifestyle,
-    trait_geography: Array.isArray(row.trait_geography) ? row.trait_geography[0] : row.trait_geography,
-    user_interests: row.user_interests || [],
-    user_values: row.user_values || [],
-  };
-}
+
+
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');

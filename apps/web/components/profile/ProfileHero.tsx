@@ -25,8 +25,8 @@ export function ProfileHero({
   avatarUrl,
   passCompletionPct = 100,
   standingText = 'Good Standing',
-  instinctType = 'Connector',
-  instinctDescription = 'Actively brings people together around shared crafts and quiet, quality experiences',
+  instinctType,
+  instinctDescription,
   onEditProfile,
   onDeepenPass,
 }: ProfileHeroProps) {
@@ -82,7 +82,8 @@ export function ProfileHero({
           </button>
         </div>
 
-        {/* Connector Active Level Card with Spacious Padding */}
+        {/* Connector Active Level Card — only when instinct data exists */}
+        {instinctType && (
         <div
           className="flex items-start justify-between rounded-[22px] border border-[rgba(245,242,234,0.12)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-md"
           style={{ padding: '20px 20px' }}
@@ -97,14 +98,17 @@ export function ProfileHero({
                 ACTIVE LEVEL
               </span>
             </div>
+            {instinctDescription && (
             <p className="text-[13px] leading-relaxed text-[rgba(245,242,234,0.75)]">
               {instinctDescription}
             </p>
+            )}
           </div>
           <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[rgba(245,242,234,0.70)] shrink-0 mt-0.5">
             <Bookmark className="h-4 w-4" />
           </button>
         </div>
+        )}
       </div>
 
       {/* Member Bio (ONLY rendered if explicitly provided by user!) */}

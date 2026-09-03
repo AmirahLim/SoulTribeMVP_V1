@@ -100,7 +100,7 @@ function OnboardingContent() {
   const bloomThreads = [
     { key: 'intent', label: 'Intent', strength: q1Finding.length / 3, confidence, sentence: `Seeking ${q1Finding[0] || 'close friends'}.` },
     { key: 'feeling', label: 'Relational', strength: q2Feelings.length / 4, confidence, sentence: `Values friendships where ${q2Feelings[0] || 'we can be ourselves'}.` },
-    { key: 'energy', label: 'Social Energy', strength: q3Energy !== null ? q3Energy : 0.5, confidence, sentence: `Thrives in ${q3GroupSize || 'intimate'} settings.` },
+    { key: 'energy', label: 'Social Energy', strength: q3Energy !== null ? 1 : 0, confidence, sentence: `Thrives in ${q3GroupSize || 'intimate'} settings.` },
     { key: 'contact', label: 'Communication', strength: q4Connected.length / 4, confidence, sentence: `Connects via ${q4Connected[0] || 'thoughtful check-ins'}.` },
     { key: 'rhythm', label: 'Rhythm', strength: q5Availability.length / 4, confidence, sentence: `Available for ${q5PlanningRhythm ? q5PlanningRhythm.toLowerCase() : 'flexible'} meetups.` },
     { key: 'curiosity', label: 'Interests', strength: q6Outings.length / 8, confidence, sentence: `Enjoys ${q6Outings.length > 0 ? q6Outings.slice(0, 2).join(', ') : 'exploring new places'}.` },

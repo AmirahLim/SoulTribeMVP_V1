@@ -131,7 +131,7 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
     case 'personality':
     case 'Social Energy':
       // Room diagram: four dot-clusters (1:1 / 3-4 / 5-8 / Crowd), member's setting lit in emerald
-      const activeGroup = thread.extraVisualData?.activeGroup || '3–4';
+      const activeGroup = thread.extraVisualData?.activeGroup as string | undefined;
 
       return (
         <div className="flex items-end gap-5 pt-2 pb-1">
