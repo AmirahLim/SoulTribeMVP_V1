@@ -36,17 +36,17 @@ const DEFAULT_INVITES: PendingInviteItem[] = [
     pitch: 'A fun evening listening to country music and having craft beer in Clarke Quay.',
     area: 'Clarke Quay · Nightlife',
     dateTime: 'Fri, 18 Sep · 8:00 PM',
-    hostName: 'Clara Lim',
-    hostAvatar: getGenderAvatarForName('Clara Lim'),
+    hostName: 'Samuel Nair',
+    hostAvatar: getGenderAvatarForName('Samuel Nair'),
     seatsTotal: 6,
     seatsFilled: 2,
     category: 'nightlife',
-    contextReason: 'Clara invited you based on your shared interest in Live Country Music & casual evening drinks.',
+    contextReason: 'Samuel invited you based on your shared interest in Live Country Music & casual evening drinks.',
   },
 ];
 
-const STORAGE_KEY = 'soul_tribe_pending_invites_v2';
-const ACTIONED_KEY = 'soul_tribe_actioned_invites_v2';
+const STORAGE_KEY = 'soul_tribe_pending_invites_v3';
+const ACTIONED_KEY = 'soul_tribe_actioned_invites_v3';
 
 export function getPendingInvitesLocal(): PendingInviteItem[] {
   if (typeof window === 'undefined') return DEFAULT_INVITES;
