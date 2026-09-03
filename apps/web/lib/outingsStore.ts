@@ -125,7 +125,12 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       const out = row.outings;
       if (!out) return false;
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
-      const isDemo = Boolean(out.is_demo || hostProfile?.is_demo);
+      const isDemo = Boolean(
+        row.is_demo ||
+        out.is_demo ||
+        hostProfile?.is_demo ||
+        (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
+      );
       if (userId && isDemo) return false;
       return true;
     })
@@ -264,6 +269,151 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
   const uniqueLocalJoined = localJoinedItems.filter((i) => !dbIds.has(i.id));
 
   return [...dbItems, ...uniqueLocalJoined];
+}
+
+/**
+ * Fetch outings the user has been invited to (state = 'invited').
+ * Propagates query errors so UI can render explicit error state.
+ * Hard demo rule: if userId is missing, returns []. Never falls back to local or default list.
+ */
+export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]> {
+  if (!checkIsSupabaseConfigured() || !userId) {
+    return [];
+  }
+
+  const client = getSupabaseBrowserClient();
+  const { data: memberRows, error } = await client
+    .from('outing_members')
+    .select(`
+      outing_id,
+      state,
+      role,
+      is_demo,
+      outings (
+        id,
+        host_id,
+        title,
+        pitch,
+        activity_category,
+        area,
+        starts_at,
+        max_participants,
+        is_demo,
+        profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
+        outing_members (user_id, state, is_demo)
+      )
+    `)
+    .eq('user_id', userId)
+    .eq('state', 'invited');
+
+  if (error) {
+    console.error('[SoulTribe] Supabase query error in fetchInvitedOutings:', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
+
+  if (!memberRows || memberRows.length === 0) {
+    return [];
+  }
+
+  return (memberRows || [])
+    .filter((row: any) => {
+      const out = row.outings;
+      if (!out) return false;
+      const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
+      const isDemo = Boolean(
+        row.is_demo ||
+        out.is_demo ||
+        hostProfile?.is_demo ||
+        (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
+      );
+      if (isDemo) return false;
+      return true;
+    })
+    .map((row: any) => {
+      const out = row.outings;
+      const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
+      const hostName = hostProfile?.display_name || '';
+      const hostAvatar = hostProfile?.avatar_url || '';
+      const members = Array.isArray(out.outing_members) ? out.outing_members : [];
+      const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
+      const isHostDemo = Boolean(
+        hostProfile?.is_demo ||
+        out.is_demo ||
+        (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
+      );
+
+      let dateTimeStr = '';
+      if (out.starts_at) {
+        const d = new Date(out.starts_at);
+        if (!isNaN(d.getTime())) {
+          dateTimeStr = d.toLocaleDateString('en-SG', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+        }
+      }
+
+      return {
+        id: out.id,
+        title: out.title,
+        pitch: out.pitch || '',
+        area: out.area || 'Singapore',
+        category: out.activity_category || 'coffee',
+        dateTime: dateTimeStr,
+        startsAt: out.starts_at,
+        hostId: out.host_id,
+        hostName,
+        hostAvatar,
+        isHostDemo,
+        seatsTotal: out.max_participants || 6,
+        seatsFilled,
+        state: 'invited',
+        cover_image_url: out.cover_image_url,
+        cover_image_thumb_url: out.cover_image_thumb_url,
+        cover_image_alt: out.cover_image_alt,
+        cover_photographer_name: out.cover_photographer_name,
+        cover_photographer_url: out.cover_photographer_url,
+        cover_download_location: out.cover_download_location,
+      };
+    });
+}
+
+export async function acceptInvite(outingId: string, userId: string): Promise<void> {
+  if (!checkIsSupabaseConfigured() || !userId || !outingId) return;
+  const client = getSupabaseBrowserClient();
+  const { error } = await client
+    .from('outing_members')
+    .update({ state: 'accepted', responded_at: new Date().toISOString() })
+    .eq('outing_id', outingId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('[SoulTribe] Failed to accept invitation:', error);
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
+}
+
+export async function declineInvite(outingId: string, userId: string): Promise<void> {
+  if (!checkIsSupabaseConfigured() || !userId || !outingId) return;
+  const client = getSupabaseBrowserClient();
+  const { error } = await client
+    .from('outing_members')
+    .update({ state: 'declined', responded_at: new Date().toISOString() })
+    .eq('outing_id', outingId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('[SoulTribe] Failed to decline invitation:', error);
+    throw new Error(`[Supabase ${error.code || 'ERROR'}] ${error.message}`);
+  }
 }
 
 /**
@@ -437,7 +587,11 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
   const dbItems: OutingItem[] = (dbOutings || [])
     .filter((out: any) => {
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
-      const isDemo = Boolean(out.is_demo || hostProfile?.is_demo);
+      const isDemo = Boolean(
+        out.is_demo ||
+        hostProfile?.is_demo ||
+        (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
+      );
       if (userId && isDemo) return false;
       return true;
     })
@@ -447,7 +601,11 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
       const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');
       const members = Array.isArray(out.outing_members) ? out.outing_members : [];
       const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
-      const isHostDemo = Boolean(hostProfile?.is_demo || out.is_demo);
+      const isHostDemo = Boolean(
+        hostProfile?.is_demo ||
+        out.is_demo ||
+        (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
+      );
 
       let dateTimeStr = '';
       if (out.starts_at) {

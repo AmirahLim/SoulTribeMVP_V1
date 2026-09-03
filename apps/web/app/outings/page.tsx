@@ -8,11 +8,10 @@ import {
   Users,
   Plus,
   Clock,
-  CheckCircle2,
-  XCircle,
   Sparkles,
   Bookmark,
   Smile,
+  AlertCircle,
 } from 'lucide-react';
 import { AuthGuard } from '../../components/AuthGuard';
 import { useAuth } from '../../lib/authContext';
@@ -20,10 +19,12 @@ import { getUserProfile } from '../../lib/userStore';
 import {
   fetchGoingOutings,
   fetchUserPitches,
+  fetchInvitedOutings,
+  acceptInvite,
+  declineInvite,
   OutingItem,
   getOutingCategoryImage,
 } from '../../lib/outingsStore';
-import { getPendingInvitesLocal, actionInviteLocal, PendingInviteItem } from '../../lib/invitesStore';
 import { getGenderAvatarForName } from '@soul-tribe/core';
 import { Button } from '@soul-tribe/ui';
 
@@ -44,10 +45,6 @@ function checkIsPast(item: { startsAt?: string; dateTime?: string; state?: strin
     if (!isNaN(time)) return time < Date.now();
   }
   if (item.dateTime) {
-    const lower = item.dateTime.toLowerCase();
-    if (lower.includes('2 sept') || lower.includes('2 sep') || lower.includes('aug') || lower.includes('jul')) {
-      return true;
-    }
     const parsed = Date.parse(item.dateTime);
     if (!isNaN(parsed) && parsed < Date.now()) return true;
   }
@@ -60,69 +57,61 @@ function OutingsContent() {
   const userId = authUser?.id || userProfile.id;
 
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [goingList, setGoingList] = useState<OutingItem[]>([]);
   const [pitchesList, setPitchesList] = useState<OutingItem[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<PendingInviteItem[]>([]);
-  const [joinedInvites, setJoinedInvites] = useState<PendingInviteItem[]>([]);
-  const [actionedJoinedIds, setActionedJoinedIds] = useState<Set<string>>(new Set());
+  const [invitedList, setInvitedList] = useState<OutingItem[]>([]);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabState>('invited');
   const [hasSetDefaultTab, setHasSetDefaultTab] = useState(false);
 
-  useEffect(() => {
-    async function loadAllOutings() {
-      try {
-        const [going, pitches] = await Promise.all([
-          fetchGoingOutings(userId).catch(() => []),
-          fetchUserPitches(userId).catch(() => []),
-        ]);
+  const loadAllOutings = async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const [going, pitches, invited] = await Promise.all([
+        fetchGoingOutings(userId),
+        fetchUserPitches(userId),
+        fetchInvitedOutings(userId),
+      ]);
 
-        setGoingList(going);
-        setPitchesList(pitches);
-        setPendingInvites(getPendingInvitesLocal());
-      } catch (err) {
-        console.error('Error loading outings:', err);
-      } finally {
-        setLoading(false);
-      }
+      setGoingList(going);
+      setPitchesList(pitches);
+      setInvitedList(invited);
+    } catch (err: any) {
+      console.error('[SoulTribe] Error loading outings:', {
+        code: err?.code,
+        message: err?.message,
+        hint: err?.hint,
+      });
+      setFetchError(err?.message || 'Outings could not be loaded');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadAllOutings();
   }, [userId]);
 
   // Default tab logic: open Invited if pending invites exist, otherwise open Confirmed
   useEffect(() => {
     if (!loading && !hasSetDefaultTab) {
-      if (pendingInvites.length > 0) {
+      if (invitedList.length > 0) {
         setActiveTab('invited');
       } else {
         setActiveTab('confirmed');
       }
       setHasSetDefaultTab(true);
     }
-  }, [loading, pendingInvites.length, hasSetDefaultTab]);
+  }, [loading, invitedList.length, hasSetDefaultTab]);
 
   // 2. Confirmed Outings (future dates)
-  const dbConfirmed = goingList.filter(
+  const confirmedOutings = goingList.filter(
     (item) => (item.state === 'accepted' || item.hostId === userId) && !checkIsPast(item)
   );
-
-  const localConfirmedItems: OutingItem[] = joinedInvites.map((inv) => ({
-    id: inv.id,
-    title: inv.title,
-    pitch: inv.pitch,
-    area: inv.area,
-    dateTime: inv.dateTime,
-    hostId: 'host-invited',
-    hostName: inv.hostName,
-    hostAvatar: inv.hostAvatar,
-    seatsTotal: inv.seatsTotal,
-    seatsFilled: inv.seatsFilled + 1,
-    category: inv.category,
-    state: 'accepted',
-  }));
-
-  const confirmedOutings = [...dbConfirmed, ...localConfirmedItems];
 
   // Sort chronologically (soonest first)
   confirmedOutings.sort((a, b) => {
@@ -134,48 +123,41 @@ function OutingsContent() {
   // 3. Your Pitches
   const yourPitches = pitchesList.filter((item) => item.hostId === userId || !item.hostId);
 
-  // 4. Past Outings (including real Ladies Night event on Wed 2 Sept with Yasmin's real female avatar)
-  const dbPast = goingList
+  // 4. Past Outings (from database only)
+  const pastOutings = goingList
     .concat(pitchesList)
     .filter((item) => checkIsPast(item) || item.state === 'completed');
 
-  const defaultPastItems: OutingItem[] = [
-    {
-      id: 'ladies-night-past-1',
-      title: 'Ladies night',
-      pitch: 'Chic evening cocktail lounge & clinking glasses for ladies night out.',
-      area: 'Singapore · Central',
-      dateTime: 'Wed, 2 Sept, 8:34 pm',
-      hostId: 'yasmin-id',
-      hostName: 'Yasmin',
-      hostAvatar: getGenderAvatarForName('Yasmin'),
-      seatsTotal: 6,
-      seatsFilled: 4,
-      category: 'dining',
-      state: 'completed',
-    },
-  ];
-
-  // Strictly deduplicate past outings by normalized title to prevent double "Ladies night" entries
-  const uniquePastMap = new Map<string, OutingItem>();
-  [...dbPast, ...defaultPastItems].forEach((item) => {
-    const titleKey = (item.title || '').trim().toLowerCase();
-    if (!uniquePastMap.has(titleKey)) {
-      uniquePastMap.set(titleKey, item);
-    }
-  });
-  const uniquePastOutings = Array.from(uniquePastMap.values());
-
   // Action Handlers
-  const handleJoinInvite = (invite: PendingInviteItem) => {
-    setActionedJoinedIds((prev) => new Set(prev).add(invite.id));
-    actionInviteLocal(invite.id);
-    setJoinedInvites((prev) => [...prev, invite]);
+  const handleJoinInvite = async (item: OutingItem) => {
+    if (!userId) return;
+    setActioningId(item.id);
+    try {
+      await acceptInvite(item.id, userId);
+      window.dispatchEvent(new Event('soul-tribe-invites-changed'));
+      await loadAllOutings();
+      setActiveTab('confirmed');
+    } catch (err: any) {
+      console.error('[SoulTribe] Failed to accept invite:', err);
+      setFetchError(`Failed to accept invitation: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setActioningId(null);
+    }
   };
 
-  const handlePassInvite = (inviteId: string) => {
-    actionInviteLocal(inviteId);
-    setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
+  const handlePassInvite = async (item: OutingItem) => {
+    if (!userId) return;
+    setActioningId(item.id);
+    try {
+      await declineInvite(item.id, userId);
+      window.dispatchEvent(new Event('soul-tribe-invites-changed'));
+      await loadAllOutings();
+    } catch (err: any) {
+      console.error('[SoulTribe] Failed to decline invite:', err);
+      setFetchError(`Failed to decline invitation: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setActioningId(null);
+    }
   };
 
   return (
@@ -211,6 +193,17 @@ function OutingsContent() {
           </Link>
         </div>
 
+        {/* Query Failure Error Banner */}
+        {fetchError && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-200 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-1">
+              <span className="font-bold text-rose-100">Outings could not be loaded</span>
+              <span>{fetchError}</span>
+            </div>
+          </div>
+        )}
+
         {/* 2. Segmented Navigation Tabs (4 States) */}
         <div className="flex items-center gap-1 p-1 rounded-full bg-[rgba(10,12,11,0.75)] border border-[rgba(245,242,234,0.11)] backdrop-blur-xl">
           {/* Invited Tab */}
@@ -223,9 +216,9 @@ function OutingsContent() {
             }`}
           >
             <span>Invited</span>
-            {pendingInvites.length > 0 && (
+            {invitedList.length > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#EFB94E] text-[10px] font-bold text-[#070908]">
-                {pendingInvites.length}
+                {invitedList.length}
               </span>
             )}
           </button>
@@ -272,10 +265,10 @@ function OutingsContent() {
         {/* TAB 1: INVITED */}
         {activeTab === 'invited' && (
           <div className="flex flex-col gap-4">
-            {pendingInvites.length > 0 ? (
-              pendingInvites.map((item) => {
-                const coverImg = getOutingCategoryImage(item.category, item.title, item.area);
-                const isJoined = actionedJoinedIds.has(item.id);
+            {invitedList.length > 0 ? (
+              invitedList.map((item) => {
+                const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
+                const isBusy = actioningId === item.id;
 
                 return (
                   <div
@@ -291,7 +284,7 @@ function OutingsContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <img
-                            src={item.hostAvatar}
+                            src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
                             alt={item.hostName}
                             className="h-5 w-5 rounded-full object-cover border border-white/20"
                           />
@@ -308,10 +301,12 @@ function OutingsContent() {
 
                     {/* Outing Context & Details */}
                     <div className="flex flex-col gap-1.5 pt-2 border-t border-[rgba(245,242,234,0.08)] text-xs text-[rgba(245,242,234,0.70)]">
-                      <div className="flex items-center gap-2 text-[#EFB94E] font-medium">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>{item.dateTime}</span>
-                      </div>
+                      {item.dateTime && (
+                        <div className="flex items-center gap-2 text-[#EFB94E] font-medium">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{item.dateTime}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-[rgba(245,242,234,0.44)]" />
                         <span>{item.area}</span>
@@ -322,34 +317,35 @@ function OutingsContent() {
                       </div>
                     </div>
 
-                    {/* Invitation Context Reason */}
-                    <div className="rounded-xl border border-[rgba(239,185,78,0.20)] bg-[rgba(239,185,78,0.08)] p-3 text-xs text-[rgba(245,242,234,0.80)] leading-relaxed">
-                      💡 <em>"{item.contextReason}"</em>
-                    </div>
+                    {/* Outing Pitch Description */}
+                    {item.pitch && (
+                      <div className="rounded-xl border border-[rgba(239,185,78,0.20)] bg-[rgba(239,185,78,0.08)] p-3 text-xs text-[rgba(245,242,234,0.80)] leading-relaxed">
+                        💡 <em>"{item.pitch}"</em>
+                      </div>
+                    )}
 
-                    {/* Card Actions: Join (toggles to Joined ✓), Pass, View Outing */}
+                    {/* Card Actions: Join, Pass, View Outing */}
                     <div className="flex items-center gap-2.5 pt-1">
                       <Button
-                        variant={isJoined ? 'secondary' : 'primary'}
+                        variant="primary"
                         size="sm"
                         className="flex-1"
+                        disabled={isBusy}
                         onClick={() => handleJoinInvite(item)}
                       >
-                        {isJoined ? 'Joined ✓' : 'Join'}
+                        {isBusy ? 'Joining...' : 'Join'}
                       </Button>
 
-                      {!isJoined && (
-                        <button
-                          onClick={() => handlePassInvite(item.id)}
-                          className="flex items-center justify-center gap-1 rounded-[12px] border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] h-9 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
-                        >
-                          <XCircle className="h-3.5 w-3.5" />
-                          <span>Pass</span>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handlePassInvite(item)}
+                        disabled={isBusy}
+                        className="flex items-center justify-center gap-1 rounded-[12px] border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] h-9 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all disabled:opacity-50"
+                      >
+                        <span>Pass</span>
+                      </button>
 
                       <Link
-                        href={`/outings/pitch`}
+                        href={`/outings/${item.id}`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline px-2 py-2"
                       >
                         <span>View Outing →</span>
@@ -397,7 +393,6 @@ function OutingsContent() {
 
                       <div className="flex items-center gap-1.5">
                         <span className="rounded-full bg-[rgba(45,82,62,0.25)] border border-[rgba(45,82,62,0.45)] px-2.5 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />
                           <span>Joined ✓</span>
                         </span>
 
@@ -428,30 +423,18 @@ function OutingsContent() {
                     {/* Attendee Stack & Count */}
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.08)]">
                       <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2 overflow-hidden">
-                          <img
-                            src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
-                            alt={item.hostName}
-                            className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0A0C0B] object-cover"
-                          />
-                          <img
-                            src={getGenderAvatarForName('Member 2')}
-                            alt="Attendee"
-                            className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0A0C0B] object-cover"
-                          />
-                          <img
-                            src={getGenderAvatarForName('Member 3')}
-                            alt="Attendee"
-                            className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0A0C0B] object-cover"
-                          />
-                        </div>
+                        <img
+                          src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
+                          alt={item.hostName}
+                          className="inline-block h-6 w-6 rounded-full ring-2 ring-[#0A0C0B] object-cover"
+                        />
                         <span className="text-xs text-[rgba(245,242,234,0.70)]">
-                          <strong>{item.seatsFilled}</strong> of {item.seatsTotal || 6} attending
+                          Hosted by <strong>{item.hostName || 'Member'}</strong>
                         </span>
                       </div>
 
                       <Link
-                        href={`/outings/pitch`}
+                        href={`/outings/${item.id}`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>View Outing →</span>
@@ -530,7 +513,7 @@ function OutingsContent() {
                       </span>
 
                       <Link
-                        href={`/outings/pitch`}
+                        href={`/outings/${item.id}`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>Manage Pitch →</span>
@@ -564,8 +547,8 @@ function OutingsContent() {
         {/* TAB 4: PAST */}
         {activeTab === 'past' && (
           <div className="flex flex-col gap-4">
-            {uniquePastOutings.length > 0 ? (
-              uniquePastOutings.map((item) => {
+            {pastOutings.length > 0 ? (
+              pastOutings.map((item) => {
                 const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
                 const hostAvatar = item.hostAvatar || getGenderAvatarForName(item.hostName);
 
@@ -604,7 +587,7 @@ function OutingsContent() {
                       </div>
 
                       <Link
-                        href={`/outings/pitch`}
+                        href={`/outings/${item.id}`}
                         className="flex items-center gap-1 text-xs font-bold text-[#EFB94E] hover:underline"
                       >
                         <span>Rhythm Check →</span>
