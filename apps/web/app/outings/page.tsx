@@ -25,6 +25,7 @@ import {
 } from '../../lib/outingsStore';
 import { getPendingInvitesLocal, actionInviteLocal, PendingInviteItem } from '../../lib/invitesStore';
 import { getGenderAvatarForName } from '@soul-tribe/core';
+import { Button } from '@soul-tribe/ui';
 
 export default function OutingsPage() {
   return (
@@ -154,8 +155,15 @@ function OutingsContent() {
     },
   ];
 
-  const combinedPast = [...dbPast, ...defaultPastItems];
-  const uniquePastOutings = Array.from(new Map(combinedPast.map((item) => [item.id, item])).values());
+  // Strictly deduplicate past outings by normalized title to prevent double "Ladies night" entries
+  const uniquePastMap = new Map<string, OutingItem>();
+  [...dbPast, ...defaultPastItems].forEach((item) => {
+    const titleKey = (item.title || '').trim().toLowerCase();
+    if (!uniquePastMap.has(titleKey)) {
+      uniquePastMap.set(titleKey, item);
+    }
+  });
+  const uniquePastOutings = Array.from(uniquePastMap.values());
 
   // Action Handlers
   const handleJoinInvite = (invite: PendingInviteItem) => {
@@ -171,7 +179,7 @@ function OutingsContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-28 font-['Karla',sans-serif]">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F3F0E9] pb-28 font-['Karla',sans-serif]">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -187,21 +195,19 @@ function OutingsContent() {
         {/* 1. Header & Top Action */}
         <div className="flex items-center justify-between pt-2">
           <div>
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#3D7A5A]">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
               SOUL TRIBE OUTINGS
             </span>
-            <h1 className="font-['Bricolage_Grotesque'] text-[26px] font-bold text-[#F5F2EA] leading-tight mt-0.5">
+            <h1 className="font-['Bricolage_Grotesque'] text-[26px] font-bold text-[#F3F0E9] leading-tight mt-0.5">
               Outings
             </h1>
           </div>
 
-          {/* Top-Right Action Button: ＋ Pitch an Outing */}
-          <Link
-            href="/outings/pitch"
-            className="flex items-center gap-1.5 rounded-full bg-[#2D523E] border border-[rgba(239,185,78,0.30)] px-3.5 py-2 text-xs font-bold text-[#F5F2EA] shadow-md hover:bg-[#38654D] transition-all"
-          >
-            <Plus className="h-3.5 w-3.5 text-[#EFB94E]" />
-            <span>Pitch an Outing</span>
+          {/* Top-Right Action Button: White Primary Button matching Home Page */}
+          <Link href="/outings/pitch">
+            <Button variant="primary" size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Pitch an Outing
+            </Button>
           </Link>
         </div>
 
@@ -212,8 +218,8 @@ function OutingsContent() {
             onClick={() => setActiveTab('invited')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'invited'
-                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F5F2EA] shadow-sm'
-                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F5F2EA]'
+                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F3F0E9] shadow-sm'
+                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F3F0E9]'
             }`}
           >
             <span>Invited</span>
@@ -229,8 +235,8 @@ function OutingsContent() {
             onClick={() => setActiveTab('confirmed')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'confirmed'
-                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F5F2EA] shadow-sm'
-                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F5F2EA]'
+                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F3F0E9] shadow-sm'
+                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F3F0E9]'
             }`}
           >
             <span>Confirmed</span>
@@ -241,8 +247,8 @@ function OutingsContent() {
             onClick={() => setActiveTab('pitches')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'pitches'
-                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F5F2EA] shadow-sm'
-                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F5F2EA]'
+                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F3F0E9] shadow-sm'
+                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F3F0E9]'
             }`}
           >
             <span>Your Pitches</span>
@@ -253,8 +259,8 @@ function OutingsContent() {
             onClick={() => setActiveTab('past')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'past'
-                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F5F2EA] shadow-sm'
-                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F5F2EA]'
+                ? 'bg-[rgba(45,82,62,0.35)] border border-[rgba(45,82,62,0.60)] text-[#F3F0E9] shadow-sm'
+                : 'text-[rgba(245,242,234,0.50)] hover:text-[#F3F0E9]'
             }`}
           >
             <span>Past</span>
@@ -288,11 +294,11 @@ function OutingsContent() {
                             className="h-5 w-5 rounded-full object-cover border border-white/20"
                           />
                           <span className="text-xs font-semibold text-[rgba(245,242,234,0.70)]">
-                            Invited by <strong className="text-[#F5F2EA]">{item.hostName}</strong>
+                            Invited by <strong className="text-[#F3F0E9]">{item.hostName}</strong>
                           </span>
                         </div>
 
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA] leading-tight mt-1">
+                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight mt-1">
                           {item.title}
                         </h3>
                       </div>
@@ -323,15 +329,15 @@ function OutingsContent() {
                     <div className="flex items-center gap-2.5 pt-1">
                       <button
                         onClick={() => handleJoinInvite(item)}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-2.5 px-3 text-xs font-bold text-[#F5F2EA] shadow-md hover:bg-[#38654D] transition-all"
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-2.5 px-3 text-xs font-bold text-[#F3F0E9] shadow-md hover:bg-[#38654D] transition-all"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#5BD99A]" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#4E8B69]" />
                         <span>Join</span>
                       </button>
 
                       <button
                         onClick={() => handlePassInvite(item.id)}
-                        className="flex items-center justify-center gap-1 rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] py-2.5 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F5F2EA] transition-all"
+                        className="flex items-center justify-center gap-1 rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] py-2.5 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
                       >
                         <XCircle className="h-3.5 w-3.5" />
                         <span>Pass</span>
@@ -353,7 +359,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Bookmark className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
+                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
                   No invites waiting on you.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">
@@ -405,7 +411,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA] leading-tight">
+                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.50)] mt-0.5 flex items-center gap-1">
@@ -455,7 +461,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Calendar className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
+                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
                   Nothing on the calendar yet.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">
@@ -503,7 +509,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA] leading-tight">
+                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.50)] mt-0.5 flex items-center gap-1">
@@ -534,18 +540,16 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
+                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
                   Got something in mind?
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed mb-1">
                   Propose an outing around your favorite activities or quiet coffee spots.
                 </p>
-                <Link
-                  href="/outings/pitch"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#2D523E] border border-[rgba(239,185,78,0.30)] px-4 py-2 text-xs font-bold text-[#F5F2EA] shadow-md hover:bg-[#38654D]"
-                >
-                  <Plus className="h-3.5 w-3.5 text-[#EFB94E]" />
-                  <span>Pitch an Outing</span>
+                <Link href="/outings/pitch">
+                  <Button variant="primary" size="sm">
+                    <Plus className="mr-1.5 h-4 w-4" /> Pitch an Outing
+                  </Button>
                 </Link>
               </div>
             )}
@@ -571,7 +575,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-base font-bold text-[#F5F2EA] leading-tight">
+                        <h3 className="font-['Bricolage_Grotesque'] text-base font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5">
@@ -609,7 +613,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Smile className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
+                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
                   Your outings will collect here.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">
