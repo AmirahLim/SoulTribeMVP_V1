@@ -1,14 +1,7 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Inter } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Nav } from '../components/Nav';
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
-  preload: false,
-});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -30,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${inter.variable}`}>
+    <html lang="en" className={`${inter.variable}`}>
       <body className="bg-black text-[#F3F0E9] antialiased selection:bg-white/20 selection:text-white">
         <AuthProvider>
           <main className="min-h-screen pb-20">{children}</main>

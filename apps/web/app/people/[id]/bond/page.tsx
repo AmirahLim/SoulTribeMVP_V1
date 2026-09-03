@@ -125,7 +125,7 @@ function ViewBondContent() {
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -164,7 +164,7 @@ function ViewBondContent() {
             </div>
           </div>
 
-          <span className="font-['Bricolage_Grotesque'] text-xl text-[rgba(245,242,234,0.44)]">
+          <span className="font-sans text-xl text-[rgba(245,242,234,0.44)]">
             &amp;
           </span>
 
@@ -192,7 +192,7 @@ function ViewBondContent() {
           <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E] mb-2">
             Why you might click
           </p>
-          <h2 className="font-['Bricolage_Grotesque'] text-[26px] font-semibold text-[#F5F2EA] leading-[1.16]">
+          <h2 className="font-sans text-[26px] font-semibold text-[#F5F2EA] leading-[1.16]">
             Quality time over <em className="not-italic text-[#EFB94E]">constant contact</em>
           </h2>
           <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)] mt-2">

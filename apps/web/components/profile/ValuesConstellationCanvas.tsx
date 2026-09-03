@@ -79,7 +79,7 @@ export function ValuesConstellationCanvas({
       ctx.arc(px, py, r, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.font = `${i === 0 ? '600 13px' : '400 11.5px'} Karla, sans-serif`;
+      ctx.font = `${i === 0 ? '600 13px' : '400 11.5px'} Inter, sans-serif`;
       ctx.fillStyle = i === 0 ? `rgba(${CREAM},0.97)` : `rgba(${CREAM},0.62)`;
       ctx.textAlign = 'center';
       ctx.fillText(v.label, px, py + r + 15);

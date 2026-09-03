@@ -85,7 +85,7 @@ export function InterestGraphCanvas({
       ctx.arc(px, py, r, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.font = `${hot ? '600 12.5px' : '400 11px'} Karla, sans-serif`;
+      ctx.font = `${hot ? '600 12.5px' : '400 11px'} Inter, sans-serif`;
       ctx.fillStyle = hot ? 'rgba(255,250,238,0.98)' : `rgba(${CREAM},0.60)`;
       ctx.textAlign = 'center';
       const ty = py < H * 0.5 ? py - r - 9 : py + r + 14;

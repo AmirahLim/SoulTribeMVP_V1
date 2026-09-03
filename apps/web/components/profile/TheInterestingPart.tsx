@@ -41,7 +41,7 @@ export function TheInterestingPart({ tension, className = '' }: TheInterestingPa
           The Interesting Part
         </span>
 
-        <h3 className="font-['Bricolage_Grotesque'] mt-1 text-2xl font-bold tracking-tight text-[#F5F2EA]">
+        <h3 className="font-sans mt-1 text-2xl font-bold tracking-tight text-[#F5F2EA]">
           {tension.headline}
         </h3>
 

@@ -161,7 +161,7 @@ function OutingsContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F3F0E9] pb-28 font-['Karla',sans-serif]">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F3F0E9] pb-28">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -180,7 +180,7 @@ function OutingsContent() {
             <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
               SOUL TRIBE OUTINGS
             </span>
-            <h1 className="font-['Bricolage_Grotesque'] text-[26px] font-bold text-[#F3F0E9] leading-tight mt-0.5">
+            <h1 className="font-sans text-[26px] font-bold text-[#F3F0E9] leading-tight mt-0.5">
               Outings
             </h1>
           </div>
@@ -293,7 +293,7 @@ function OutingsContent() {
                           </span>
                         </div>
 
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight mt-1">
+                        <h3 className="font-sans text-lg font-bold text-[#F3F0E9] leading-tight mt-1">
                           {item.title}
                         </h3>
                       </div>
@@ -360,7 +360,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Bookmark className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
+                <h3 className="font-sans text-lg font-bold text-[#F3F0E9]">
                   No invites waiting on you.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">
@@ -411,7 +411,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight">
+                        <h3 className="font-sans text-lg font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.50)] mt-0.5 flex items-center gap-1">
@@ -449,7 +449,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Calendar className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
+                <h3 className="font-sans text-lg font-bold text-[#F3F0E9]">
                   Nothing on the calendar yet.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">
@@ -497,7 +497,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9] leading-tight">
+                        <h3 className="font-sans text-lg font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.50)] mt-0.5 flex items-center gap-1">
@@ -528,7 +528,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Sparkles className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
+                <h3 className="font-sans text-lg font-bold text-[#F3F0E9]">
                   Got something in mind?
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed mb-1">
@@ -564,7 +564,7 @@ function OutingsContent() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-['Bricolage_Grotesque'] text-base font-bold text-[#F3F0E9] leading-tight">
+                        <h3 className="font-sans text-base font-bold text-[#F3F0E9] leading-tight">
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5">
@@ -602,7 +602,7 @@ function OutingsContent() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)]">
                   <Smile className="h-5 w-5" />
                 </div>
-                <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F3F0E9]">
+                <h3 className="font-sans text-lg font-bold text-[#F3F0E9]">
                   Your outings will collect here.
                 </h3>
                 <p className="text-xs text-[rgba(245,242,234,0.50)] max-w-xs leading-relaxed">

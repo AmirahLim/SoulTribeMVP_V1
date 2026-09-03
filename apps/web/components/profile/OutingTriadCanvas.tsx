@@ -114,7 +114,7 @@ export function OutingTriadCanvas({
         <div className="flex items-center gap-4">
           <canvas ref={canvasRef} aria-label={`Outing DNA triad: ${descriptors.join(', ')}`} />
           <div>
-            <h3 className="font-['Bricolage_Grotesque'] text-lg font-semibold text-[#F5F2EA] leading-tight">
+            <h3 className="font-sans text-lg font-semibold text-[#F5F2EA] leading-tight">
               {descriptors.join(' × ')}
             </h3>
           </div>

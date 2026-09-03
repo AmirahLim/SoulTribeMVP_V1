@@ -11,6 +11,7 @@ export * from './explain/phrases.ts';
 export * from './explain/generator.ts';
 export * from './explain/markers.ts';
 export * from './explain/withinPerson.ts';
+export * from './explain/selfProfile.ts';
 export * from './explain/dyad.ts';
 export * from './explain/blocklist.ts';
 export * from './geo/matrix.ts';

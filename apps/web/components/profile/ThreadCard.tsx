@@ -57,7 +57,7 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="font-['Bricolage_Grotesque'] text-xl font-semibold text-[#F5F2EA]">
+            <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">
               {colorSpec.name}
             </h3>
             <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5 tracking-wide">

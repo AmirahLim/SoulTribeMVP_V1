@@ -248,7 +248,7 @@ function ProfileContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -340,7 +340,7 @@ function ProfileContent() {
             <div className="flex flex-col gap-3">
               {userPitches.map((p) => (
                 <div key={p.id} className="rounded-xl border border-[rgba(245,242,234,0.08)] bg-[rgba(255,255,255,0.03)] p-3.5">
-                  <h4 className="font-['Bricolage_Grotesque'] text-sm font-semibold text-[#F5F2EA]">
+                  <h4 className="font-sans text-sm font-semibold text-[#F5F2EA]">
                     {p.title}
                   </h4>
                   <p className="text-xs text-[rgba(245,242,234,0.70)] mt-1 leading-relaxed">

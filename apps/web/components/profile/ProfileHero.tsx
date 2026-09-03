@@ -50,7 +50,7 @@ export function ProfileHero({
           <div className="text-[10.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
             TRIBAL PASS · {passCompletionPct}% COMPLETE
           </div>
-          <h1 className="font-['Bricolage_Grotesque'] text-[26px] font-bold text-[#F5F2EA] leading-tight">
+          <h1 className="font-sans text-[26px] font-bold text-[#F5F2EA] leading-tight">
             {displayName}
           </h1>
           <p className="text-[12.5px] text-[rgba(245,242,234,0.50)]">
@@ -90,7 +90,7 @@ export function ProfileHero({
           <div className="flex flex-col gap-2 flex-1 pr-4 pl-1.5 py-0.5">
             <div className="flex items-center gap-2.5">
               <span className="text-lg">🤝</span>
-              <h3 className="font-['Bricolage_Grotesque'] text-lg font-bold text-[#F5F2EA]">
+              <h3 className="font-sans text-lg font-bold text-[#F5F2EA]">
                 {instinctType}
               </h3>
               <span className="rounded-full border border-[rgba(45,82,62,0.45)] bg-[rgba(45,82,62,0.25)] px-3 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider">

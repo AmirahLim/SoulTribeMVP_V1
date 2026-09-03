@@ -40,7 +40,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
 
       <div className="relative z-10">
         <div>
-          <h3 className="font-['Bricolage_Grotesque'] text-xl font-semibold text-[#F5F2EA]">Connection Notes</h3>
+          <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">Connection Notes</h3>
           <p className="mt-0.5 text-xs text-[rgba(245,242,234,0.44)]">
             Little things worth knowing about being friends with me.
           </p>
@@ -88,7 +88,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
             <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
               {selectedNote.hook}
             </p>
-            <h4 className="font-['Bricolage_Grotesque'] mt-2 text-xl font-bold text-[#F5F2EA]">
+            <h4 className="font-sans mt-2 text-xl font-bold text-[#F5F2EA]">
               "{selectedNote.statement}"
             </h4>
             <p className="mt-3 text-xs leading-relaxed text-[rgba(245,242,234,0.70)]">

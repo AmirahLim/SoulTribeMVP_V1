@@ -55,7 +55,7 @@ export function SocialInstincts({
 
         {/* Prominent Primary Instinct (Behavioral Copy) */}
         <div>
-          <h4 className="font-['Bricolage_Grotesque'] text-xl font-semibold text-[#F5F2EA]">
+          <h4 className="font-sans text-xl font-semibold text-[#F5F2EA]">
             You often show up as a <span className="text-[#EFB94E] underline decoration-[#EFB94E]/40">{primaryInstinct.type}</span>
           </h4>
           <p className="mt-1.5 text-[13px] leading-relaxed text-[rgba(245,242,234,0.70)]">

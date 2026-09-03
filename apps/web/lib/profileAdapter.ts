@@ -135,8 +135,8 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     : (q2.some((f: string) => f.includes('Deep') || f.includes('meaningful')) ? 0.7 : socialVibeVal?.serious_playful);
   const intensity_easygoing = q2.some((f: string) => f.includes('Active') || f.includes('energetic')) ? 0.8 
     : (socialVibeVal?.intensity_easygoing);
-  const extraversion = typeof q3Energy === 'number' 
-    ? (q3Energy > 1 ? q3Energy / 100 : Math.max(0.1, Math.min(0.9, q3Energy))) 
+  const extraversion = typeof q3Energy === 'number'
+    ? (q3Energy > 1 ? q3Energy / 100 : q3Energy)
     : (mbtiMap?.extraversion);
 
   const personalityAnswered = persObj !== undefined

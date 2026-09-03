@@ -75,7 +75,7 @@ export function PassArcCanvas({ exploredPct = 0.42, signalsText = 'Developing re
         <p className="text-[11px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
           Tribal Pass
         </p>
-        <p className="font-['Bricolage_Grotesque'] text-[19px] font-semibold text-[#F5F2EA] mt-0.5">
+        <p className="font-sans text-[19px] font-semibold text-[#F5F2EA] mt-0.5">
           {passPctInt}% explored
         </p>
         <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5">

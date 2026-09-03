@@ -180,7 +180,7 @@ function PersonDetailContent() {
   const displayHandle = rawHandle.replace(/^[a-f0-9-]{20,}/i, memberFirstName.toLowerCase()).replace(/^@/, '');
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24 font-['Karla',sans-serif]">
+    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
@@ -220,7 +220,7 @@ function PersonDetailContent() {
           </div>
 
           <div>
-            <h1 className="font-['Bricolage_Grotesque'] text-[23px] font-bold text-[#F5F2EA] leading-tight">
+            <h1 className="font-sans text-[23px] font-bold text-[#F5F2EA] leading-tight">
               {memberName}
             </h1>
             <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">

@@ -70,7 +70,7 @@ export function TribalRead({
           >
             {label}
           </p>
-          <h2 className="font-['Bricolage_Grotesque'] text-[25px] font-semibold text-[#F5F2EA] leading-[1.18] mt-0.5">
+          <h2 className="font-sans text-[25px] font-semibold text-[#F5F2EA] leading-[1.18] mt-0.5">
             {data.headline}
           </h2>
           <p className="text-[13.5px] leading-relaxed text-[rgba(245,242,234,0.75)] mt-2">
@@ -115,7 +115,7 @@ export function TribalRead({
                 <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: accentColor }}>
                   {label}
                 </p>
-                <h3 className="font-['Bricolage_Grotesque'] text-2xl font-bold">{data.headline}</h3>
+                <h3 className="font-sans text-2xl font-bold">{data.headline}</h3>
               </div>
               <button
                 onClick={() => setOpenSheet(false)}
