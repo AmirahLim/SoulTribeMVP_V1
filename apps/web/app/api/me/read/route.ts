@@ -416,12 +416,32 @@ export async function GET(req: NextRequest) {
     };
   });
 
+  // Flatten, parse, and deduplicate values into clean single-word tags
   const rawValues = (row.user_values || []) as any[];
-  const values = rawValues.map((v: any, idx: number) => {
-    const pos = DEFAULT_VALUE_POSITIONS[idx % DEFAULT_VALUE_POSITIONS.length];
+  const distinctValueLabels: string[] = [];
+  for (const v of rawValues) {
+    const rawKey = (v.value_name || v.value_key || '') as string;
+    const parts = rawKey.split(/_{2,}|,|\/|\band\b/i);
+    for (const part of parts) {
+      let word = part.replace(/^_+|_+$/g, '').replace(/_+/g, ' ').trim();
+      if (!word) continue;
+      if (word.toLowerCase().includes('change their mind')) word = 'Open-mindedness';
+      else if (word.toLowerCase().includes('better information')) word = 'Adaptability';
+      else if (word.length > 20) word = word.split(' ')[0];
+      word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      if (!distinctValueLabels.includes(word)) {
+        distinctValueLabels.push(word);
+      }
+    }
+  }
+
+  // Top 5 unique values strictly mapped 1-to-1 to constellation positions
+  const topValues = distinctValueLabels.slice(0, 5);
+  const values = topValues.map((label, idx) => {
+    const pos = DEFAULT_VALUE_POSITIONS[idx];
     return {
-      label: v.value_name || humanizeValueKey(v.value_key || ''),
-      name: v.value_name || humanizeValueKey(v.value_key || ''),
+      label,
+      name: label,
       x: pos.x,
       y: pos.y,
       weight: pos.weight,

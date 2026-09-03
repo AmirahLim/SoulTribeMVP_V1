@@ -177,9 +177,29 @@ function ViewBondContent() {
   const clickBody = clickParts.slice(1).join('. ') || '';
 
   // Split friction into label and body
-  const frictionParts = frictionText.split('. ');
-  const frictionLabel = frictionParts[0] || 'Potential friction';
-  const frictionBody = frictionParts.slice(1).join('. ') || frictionText;
+  // Identify friction type and perspectives
+  let frictionType = 'DYNAMIC';
+  let youPerspective = 'That plans or expectations need clearer shape.';
+  let themPerspective = `That keeping things fluid makes meeting up feel more natural.`;
+
+  const lowerFric = frictionText.toLowerCase();
+  if (lowerFric.includes('plan') || lowerFric.includes('schedule') || lowerFric.includes('calendar') || lowerFric.includes('horizon')) {
+    frictionType = 'PLANNING';
+    youPerspective = 'That dates need locking in so plans never feel vague.';
+    themPerspective = `That committing too far in advance can feel restrictive.`;
+  } else if (lowerFric.includes('energy') || lowerFric.includes('crowd') || lowerFric.includes('introvert') || lowerFric.includes('extravert')) {
+    frictionType = 'SOCIAL PACING';
+    youPerspective = 'Preferring an intimate setting without background chaos.';
+    themPerspective = `Thriving when there is a lively buzz in the room.`;
+  } else if (lowerFric.includes('lead') || lowerFric.includes('initiative') || lowerFric.includes('ask') || lowerFric.includes('start')) {
+    frictionType = 'INITIATIVE';
+    youPerspective = 'Wondering who will take the first step to reach out.';
+    themPerspective = `Hoping the other person sets the time and place.`;
+  } else if (lowerFric.includes('open') || lowerFric.includes('vulnerab') || lowerFric.includes('trust')) {
+    frictionType = 'DISCLOSURE';
+    youPerspective = 'Taking time before moving into deeper topics.';
+    themPerspective = `Gauging the right moment to open up without forcing it.`;
+  }
 
   // Venn interests from real user data
   const viewerInterests = (viewerVec?.interests || []).map((i) => i.node_name || i.node_path || '');
@@ -229,11 +249,17 @@ function ViewBondContent() {
         <div className="flex items-center justify-center gap-4 py-2">
           <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#5A4030] to-[#2A211A] shadow-[0_0_0_2px_rgba(239,185,78,0.55),0_8px_20px_rgba(0,0,0,0.6)] p-[2px]">
             <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
-              <img
-                src={userProfile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}
-                alt={userName}
-                className="h-full w-full object-cover"
-              />
+              {userProfile.avatarUrl ? (
+                <img
+                  src={userProfile.avatarUrl}
+                  alt={userName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#5A4030] text-sm font-bold text-[#F5F2EA]">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           </div>
 
@@ -243,11 +269,17 @@ function ViewBondContent() {
 
           <div className="relative w-[52px] h-[52px] rounded-full bg-gradient-to-br from-[#33503F] to-[#1B2C22] shadow-[0_0_0_2px_rgba(91,217,154,0.55),0_8px_20px_rgba(0,0,0,0.6)] p-[2px]">
             <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
-              <img
-                src={personMatch?.avatarUrl || getGenderAvatarForName(memberName)}
-                alt={memberName}
-                className="h-full w-full object-cover"
-              />
+              {personMatch?.avatarUrl ? (
+                <img
+                  src={personMatch.avatarUrl}
+                  alt={memberName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#33503F] text-sm font-bold text-[#F5F2EA]">
+                  {memberFirstName.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -277,8 +309,8 @@ function ViewBondContent() {
 
         {/* Paired Thread Rows */}
         {pairedThreadsList.length > 0 && (
-          <GlassCard>
-            <div className="flex items-baseline justify-between mb-3 border-b border-[rgba(245,242,234,0.08)] pb-2">
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
               <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
                 Thread by thread
               </p>
@@ -286,65 +318,96 @@ function ViewBondContent() {
                 {comparableCount} comparable
               </p>
             </div>
-
-            <div className="flex flex-col">
-              {pairedThreadsList.map((t, idx) => (
-                <PairedThreadRow
-                  key={idx}
-                  threadName={t.threadName}
-                  mechanism={t.mechanism}
-                  youPos={t.youPos}
-                  themPos={t.themPos}
-                  leftEndLabel={t.leftEndLabel}
-                  rightEndLabel={t.rightEndLabel}
-                  consequenceSentence={t.consequenceSentence}
-                  themName={memberFirstName}
-                />
-              ))}
-            </div>
-          </GlassCard>
+            <GlassCard>
+              <div className="flex flex-col divide-y divide-[rgba(245,242,234,0.08)]">
+                {pairedThreadsList.map((t, idx) => (
+                  <PairedThreadRow
+                    key={idx}
+                    threadName={t.threadName}
+                    mechanism={t.mechanism}
+                    youPos={t.youPos}
+                    themPos={t.themPos}
+                    leftEndLabel={t.leftEndLabel}
+                    rightEndLabel={t.rightEndLabel}
+                    consequenceSentence={t.consequenceSentence}
+                    themName={memberFirstName}
+                  />
+                ))}
+              </div>
+            </GlassCard>
+          </div>
         )}
 
-        {/* Potential Friction Card — from engine, not hardcoded */}
+        {/* Potential Friction Card — from engine with side-by-side perspectives */}
         {frictionText && (
-          <GlassCard wash="rgba(239,185,78,0.14)">
-            <div className="flex items-center gap-2.5 mb-2.5">
-              <span className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
-                Where you might rub
-              </span>
-              <span className="text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[rgba(239,185,78,0.13)] border border-[rgba(239,185,78,0.30)] text-[#EFB94E]">
-                Worth knowing
-              </span>
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                Potential friction
+              </p>
             </div>
+            <GlassCard wash="rgba(239,185,78,0.14)">
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <span className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E]">
+                  {frictionType}
+                </span>
+                <span className="text-[9.5px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-[rgba(239,185,78,0.13)] border border-[rgba(239,185,78,0.30)] text-[#EFB94E]">
+                  Noticeable
+                </span>
+              </div>
 
-            <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)]">
-              {frictionText}
-            </p>
-          </GlassCard>
+              <p className="text-sm leading-relaxed text-[rgba(245,242,234,0.70)]">
+                {frictionText}
+              </p>
+
+              <div className="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-[rgba(245,242,234,0.08)]">
+                <div className="rounded-xl p-3 bg-[rgba(255,255,255,0.04)] border border-[rgba(245,242,234,0.11)]">
+                  <div className="text-[9.5px] font-bold tracking-widest uppercase text-[#EFB94E] mb-1">
+                    You may feel
+                  </div>
+                  <div className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
+                    {youPerspective}
+                  </div>
+                </div>
+                <div className="rounded-xl p-3 bg-[rgba(255,255,255,0.04)] border border-[rgba(245,242,234,0.11)]">
+                  <div className="text-[9.5px] font-bold tracking-widest uppercase text-[#5BD99A] mb-1">
+                    {memberFirstName} may feel
+                  </div>
+                  <div className="text-xs text-[rgba(245,242,234,0.70)] leading-relaxed">
+                    {themPerspective}
+                  </div>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
         )}
 
-        {/* Where You'd Actually Meet — real interests */}
+        {/* Where You'd Actually Meet */}
         {(viewerInterests.length > 0 || candidateInterests.length > 0) && (
-          <GlassCard wash="rgba(91,217,154,0.11)">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
-              Where you'd actually meet
-            </p>
-            <VennMeetingCanvas
-              yourInterests={yourOnlyInterests.slice(0, 4)}
-              sharedInterests={sharedInterests.slice(0, 3)}
-              theirInterests={theirOnlyInterests.slice(0, 4)}
-              noteSentence={
-                sharedInterests.length > 0
-                  ? `${sharedInterests[0]} is the obvious starting point for your first hangout.`
-                  : viewerInterests.length > 0 && candidateInterests.length > 0
-                    ? `No shared interests yet — but that's sometimes how the best friendships start.`
-                    : `Add interests to your profile to see overlap.`
-              }
-            />
-          </GlassCard>
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                Where you'd actually meet
+              </p>
+            </div>
+            <GlassCard wash="rgba(91,217,154,0.11)">
+              <VennMeetingCanvas
+                yourInterests={yourOnlyInterests.slice(0, 4)}
+                sharedInterests={sharedInterests.slice(0, 3)}
+                theirInterests={theirOnlyInterests.slice(0, 4)}
+                noteSentence={
+                  sharedInterests.length > 0
+                    ? `${sharedInterests[0]} is the obvious starting point for your first hangout.`
+                    : viewerInterests.length > 0 && candidateInterests.length > 0
+                      ? `No shared interests yet — but that's sometimes how the best friendships start.`
+                      : `Add interests to your profile to see overlap.`
+                }
+              />
+            </GlassCard>
+          </div>
         )}
 
-        {/* Footer — no "illustrative" disclaimer */}
+        {/* Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
           Bond view · same ground and palette, paired everywhere
         </p>

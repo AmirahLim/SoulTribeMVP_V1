@@ -50,6 +50,8 @@ export function ValuesConstellationCanvas({
     const AMBER = '239,185,78';
     const CREAM = '245,242,234';
 
+    ctx.clearRect(0, 0, W, H);
+
     // Draw connection lines from central node to satellites
     ctx.strokeStyle = `rgba(${AMBER},0.20)`;
     ctx.lineWidth = 1;
@@ -82,7 +84,8 @@ export function ValuesConstellationCanvas({
       ctx.font = `${i === 0 ? '600 13px' : '400 11.5px'} Inter, sans-serif`;
       ctx.fillStyle = i === 0 ? `rgba(${CREAM},0.97)` : `rgba(${CREAM},0.62)`;
       ctx.textAlign = 'center';
-      ctx.fillText(v.label, px, py + r + 15);
+      const textX = Math.max(48, Math.min(W - 48, px));
+      ctx.fillText(v.label, textX, py + r + 15);
     });
   }, [values]);
 
@@ -102,9 +105,6 @@ export function ValuesConstellationCanvas({
         }}
       />
       <div className="relative z-10">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-2">
-          What Matters
-        </p>
         <div className="w-full overflow-hidden flex justify-center">
           <canvas ref={canvasRef} aria-label="Your values, sized by how often they surface" />
         </div>

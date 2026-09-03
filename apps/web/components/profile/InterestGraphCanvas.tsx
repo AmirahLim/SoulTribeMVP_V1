@@ -52,6 +52,8 @@ export function InterestGraphCanvas({
     const EMERALD = '91,217,154';
     const CREAM = '245,242,234';
 
+    ctx.clearRect(0, 0, W, H);
+
     // Draw connection edges
     ctx.strokeStyle = `rgba(${EMERALD},0.22)`;
     ctx.lineWidth = 1;
@@ -109,14 +111,6 @@ export function InterestGraphCanvas({
         }}
       />
       <div className="relative z-10">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-            I'm Into
-          </p>
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
-            Rabbit Hole
-          </span>
-        </div>
         <div className="w-full overflow-hidden flex justify-center">
           <canvas ref={canvasRef} aria-label="Your interests and how they connect" />
         </div>

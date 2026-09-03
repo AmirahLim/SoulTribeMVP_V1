@@ -43,7 +43,7 @@ export function VennMeetingCanvas({
     const o = r * 0.52;
 
     const AMBER = '239,185,78';
-    const EMERALD = '45,82,62';
+    const EMERALD = '91,217,154';
     const CREAM = '245,242,234';
 
     ctx.globalCompositeOperation = 'lighter';
@@ -81,7 +81,7 @@ export function VennMeetingCanvas({
 
     // Text labels inside circles
     ctx.textAlign = 'center';
-    ctx.font = '400 11px Karla, sans-serif';
+    ctx.font = '400 11px Inter, sans-serif';
     ctx.fillStyle = `rgba(${CREAM},0.62)`;
 
     if (yourInterests[0]) ctx.fillText(yourInterests[0], W / 2 - o - r * 0.42, cy - 6);

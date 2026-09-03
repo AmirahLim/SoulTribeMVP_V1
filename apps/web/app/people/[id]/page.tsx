@@ -16,12 +16,13 @@ import { AuthGuard } from '../../../components/AuthGuard';
 import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../../lib/outingsStore';
-import { ThreadCard } from '../../../components/profile/ThreadCard';
+import { ThreadCard, ThreadData } from '../../../components/profile/ThreadCard';
 import { TribalRead } from '../../../components/profile/TribalRead';
 import { BoundariesMatching } from '../../../components/profile/BoundariesMatching';
 import { ValuesConstellationCanvas } from '../../../components/profile/ValuesConstellationCanvas';
 import { InterestGraphCanvas } from '../../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../../components/profile/OutingTriadCanvas';
+import { PassArcCanvas } from '../../../components/profile/PassArcCanvas';
 
 export default function PersonDetailPage() {
   return (
@@ -193,6 +194,71 @@ function PersonDetailContent() {
   const rawHandle = (rankedMatch as any)?.handle || cleanPersonId || 'mervyn';
   const displayHandle = rawHandle.replace(/^[a-f0-9-]{20,}/i, memberFirstName.toLowerCase()).replace(/^@/, '');
 
+  // Connection threads (excluding interests and values which have dedicated canvases)
+  const connectionThreads = (selfProfile?.connectionThreads || []).filter(
+    (t) => t.key !== 'interests' && t.key !== 'values'
+  );
+
+  const exploredThreadsCount = bloomThreads.filter((t) => t.strength > 0).length;
+
+  const DEFAULT_VALUE_POSITIONS = [
+    { x: 0.50, y: 0.46, weight: 1.0 },
+    { x: 0.24, y: 0.24, weight: 0.66 },
+    { x: 0.78, y: 0.28, weight: 0.62 },
+    { x: 0.72, y: 0.76, weight: 0.55 },
+    { x: 0.22, y: 0.72, weight: 0.58 },
+  ];
+
+  const DEFAULT_INTEREST_POSITIONS = [
+    { x: 0.50, y: 0.30, weight: 1.0, isRabbitHole: true },
+    { x: 0.20, y: 0.58, weight: 0.7 },
+    { x: 0.76, y: 0.56, weight: 0.75 },
+    { x: 0.38, y: 0.83, weight: 0.6 },
+    { x: 0.82, y: 0.20, weight: 0.55 },
+  ];
+
+  // Derive candidate interests
+  const candidateInterests = ((candidateVec?.interests || []) as any[]).map((item: any, idx: number) => {
+    const pos = DEFAULT_INTEREST_POSITIONS[idx % DEFAULT_INTEREST_POSITIONS.length];
+    return {
+      name: item.node_name || item.node_path || (typeof item === 'string' ? item : 'Interest'),
+      x: pos.x,
+      y: pos.y,
+      weight: pos.weight,
+      isRabbitHole: pos.isRabbitHole,
+    };
+  });
+
+  // Derive candidate values
+  const rawCandValues = ((candidateVec as any)?.user_values || []) as any[];
+  const candValueLabels: string[] = [];
+  for (const v of rawCandValues) {
+    const rawKey = (v.value_name || v.value_key || '') as string;
+    const parts = rawKey.split(/_{2,}|,|\/|\band\b/i);
+    for (const part of parts) {
+      let word = part.replace(/^_+|_+$/g, '').replace(/_+/g, ' ').trim();
+      if (!word) continue;
+      if (word.toLowerCase().includes('change their mind')) word = 'Open-mindedness';
+      else if (word.toLowerCase().includes('better information')) word = 'Adaptability';
+      else if (word.length > 20) word = word.split(' ')[0];
+      word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      if (!candValueLabels.includes(word)) {
+        candValueLabels.push(word);
+      }
+    }
+  }
+  const topCandValues = candValueLabels.slice(0, 5);
+  const candidateValues = topCandValues.map((label, idx) => {
+    const pos = DEFAULT_VALUE_POSITIONS[idx];
+    return {
+      label,
+      name: label,
+      x: pos.x,
+      y: pos.y,
+      weight: pos.weight,
+    };
+  });
+
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
       {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
@@ -244,6 +310,20 @@ function PersonDetailContent() {
           </div>
         </div>
 
+        {/* Pass Arc */}
+        <PassArcCanvas
+          exploredPct={exploredThreadsCount / 10}
+          signalsText={`Developing read · ${exploredThreadsCount} explored`}
+        />
+
+        {/* Dynamic Friendship DNA Bloom */}
+        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-4">
+          <Bloom threads={bloomThreads} size={280} interactive={false} />
+          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-1">
+            Ten threads · {exploredThreadsCount} explored
+          </p>
+        </div>
+
         {/* 3rd Person Tribal Read Card (Emerald Wash) */}
         <TribalRead
           data={memberTribalReadData}
@@ -252,64 +332,33 @@ function PersonDetailContent() {
           showReadMore={false}
         />
 
-        {/* Dynamic Friendship DNA Bloom */}
-        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-6">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-1">
-            FRIENDSHIP DNA BLOOM
-          </p>
-          <Bloom threads={bloomThreads} size={280} interactive={false} />
-        </div>
-
         {/* Member Connection Threads */}
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between px-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              His Threads
+              {memberFirstName}'s Threads
             </p>
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              7 of 10
+              {connectionThreads.length} of 10
             </p>
           </div>
 
-          <ThreadCard
-            thread={{
-              key: 'personality',
-              name: 'Social Energy',
-              heroDescriptor: ['Intimate', 'Selective', 'Calm'],
-              strength: 0.86,
-              confidence: 0.8,
-              note: `${memberFirstName} tops out around four people. He recharges in quiet settings.`,
-              extraVisualData: { activeGroup: '3–4' },
-            }}
-          />
+          {connectionThreads.map((t) => {
+            const threadData: ThreadData = {
+              key: t.key,
+              name: t.name,
+              strength: t.strength,
+              confidence: t.confidence,
+              heroDescriptor: t.heroDescriptor,
+              note: t.note,
+              naturalSetting: t.naturalSetting || '',
+              thriveWhen: t.thriveWhen || '',
+              signals: t.signals as any,
+              extraVisualData: t.extraVisualData,
+            };
+            return <ThreadCard key={t.key} thread={threadData} />;
+          })}
         </div>
-
-        {/* He's Into & Gated Connection Notes */}
-        <GlassCard wash="rgba(91,217,154,0.08)">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-2.5">
-            He's Into
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {['Trail running', 'Specialty coffee', 'Vinyl', 'Hawker archaeology'].map((tag, idx) => (
-              <span
-                key={idx}
-                className={`text-[12.5px] px-3 py-1.5 rounded-full border ${
-                  idx === 0
-                    ? 'bg-[rgba(91,217,154,0.12)] border-[rgba(91,217,154,0.30)] text-[#5BD99A] font-semibold'
-                    : 'bg-[rgba(255,255,255,0.055)] border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.70)]'
-                }`}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Gated Connection Notes Statement */}
-          <div className="flex items-center gap-2 text-[12.5px] text-[rgba(245,242,234,0.44)] pt-3.5 mt-3 border-t border-[rgba(245,242,234,0.08)]">
-            <span>🔒</span>
-            <span>Connection Notes are visible once you've shared an outing.</span>
-          </div>
-        </GlassCard>
 
         {/* Boundaries & Social Principles (Public in 3rd person) */}
         {selfProfile?.boundaries && (
@@ -322,6 +371,60 @@ function PersonDetailContent() {
             locationBoundary={selfProfile.boundaries.locationBoundary}
           />
         )}
+
+        {/* What Matters (Values Constellation Canvas) */}
+        {candidateValues.length > 0 && (
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                What Matters
+              </p>
+            </div>
+            <ValuesConstellationCanvas
+              values={candidateValues}
+              note={`${candidateValues[0].label} sits at the centre of most of ${memberFirstName}'s answers — the others orbit it.`}
+            />
+          </div>
+        )}
+
+        {/* They're Into (Interest Graph Canvas) */}
+        {candidateInterests.length > 0 && (
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                {memberFirstName} is Into
+              </p>
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
+                Rabbit hole
+              </p>
+            </div>
+            <InterestGraphCanvas nodes={candidateInterests} />
+          </div>
+        )}
+
+        {/* Outing DNA (Triad Radar Canvas) */}
+        {selfProfile?.outingPreferences && (
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                Outing DNA
+              </p>
+            </div>
+            <OutingTriadCanvas
+              descriptors={selfProfile.outingPreferences.descriptors}
+              values={selfProfile.outingPreferences.values}
+              instantYes={selfProfile.outingPreferences.instantYes}
+              usuallyYes={selfProfile.outingPreferences.usuallyYes}
+              convinceMe={selfProfile.outingPreferences.convinceMe}
+            />
+          </div>
+        )}
+
+        {/* Gated Connection Notes Statement */}
+        <div className="flex items-center gap-2 text-[12.5px] text-[rgba(245,242,234,0.44)] py-3.5 px-4 rounded-2xl bg-[rgba(10,12,11,0.50)] border border-[rgba(245,242,234,0.08)]">
+          <span>🔒</span>
+          <span>Connection Notes are visible once you've shared an outing with {memberFirstName}.</span>
+        </div>
 
         {/* Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">

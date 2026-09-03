@@ -404,6 +404,11 @@ function ProfileContent() {
           </div>
           <ValuesConstellationCanvas
             values={myRead.values?.length ? myRead.values : undefined}
+            note={
+              myRead.values?.length
+                ? `${myRead.values[0].label} sits at the centre of most of your answers — the others orbit it.`
+                : undefined
+            }
           />
         </div>
 
