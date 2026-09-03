@@ -7,6 +7,7 @@ export interface OutingItem {
   pitch: string;
   area: string;
   dateTime: string;
+  startsAt?: string;
   hostId: string;
   hostName: string;
   hostAvatar: string;
@@ -251,6 +252,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         area: out.area || 'Singapore',
         category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
+        startsAt: out.starts_at,
         hostId: out.host_id,
         hostName,
         hostAvatar,
@@ -320,6 +322,7 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
             area: out.area || 'Singapore',
             category: out.activity_category || 'coffee',
             dateTime: dateTimeStr,
+            startsAt: out.starts_at,
             hostId: out.host_id,
             hostName,
             hostAvatar,
@@ -427,6 +430,7 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       area: out.area || 'Singapore',
       category: out.activity_category || 'coffee',
       dateTime: dateTimeStr,
+      startsAt: out.starts_at,
       hostId: out.host_id,
       hostName,
       hostAvatar,
@@ -545,6 +549,7 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
         area: out.area || 'Singapore',
         category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
+        startsAt: out.starts_at,
         hostId: out.host_id,
         hostName,
         hostAvatar,

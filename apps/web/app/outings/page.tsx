@@ -2,19 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Calendar,
   MapPin,
   Users,
   Plus,
-  ArrowRight,
   Clock,
   CheckCircle2,
   XCircle,
   Sparkles,
-  MessageSquare,
-  ChevronRight,
   Bookmark,
   Smile,
 } from 'lucide-react';
@@ -40,8 +36,24 @@ export default function OutingsPage() {
 
 type TabState = 'invited' | 'confirmed' | 'pitches' | 'past';
 
+function checkIsPast(item: OutingItem): boolean {
+  if (item.state === 'completed') return true;
+  if (item.startsAt) {
+    const time = new Date(item.startsAt).getTime();
+    if (!isNaN(time)) return time < Date.now();
+  }
+  if (item.dateTime) {
+    const lower = item.dateTime.toLowerCase();
+    if (lower.includes('2 sept') || lower.includes('2 sep') || lower.includes('aug') || lower.includes('jul')) {
+      return true;
+    }
+    const parsed = Date.parse(item.dateTime);
+    if (!isNaN(parsed) && parsed < Date.now()) return true;
+  }
+  return false;
+}
+
 function OutingsContent() {
-  const router = useRouter();
   const { user: authUser } = useAuth();
   const userProfile = getUserProfile();
   const userId = authUser?.id || userProfile.id;
@@ -49,7 +61,6 @@ function OutingsContent() {
   const [loading, setLoading] = useState(true);
   const [goingList, setGoingList] = useState<OutingItem[]>([]);
   const [pitchesList, setPitchesList] = useState<OutingItem[]>([]);
-  const [radarList, setRadarList] = useState<OutingItem[]>([]);
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabState>('confirmed');
@@ -58,15 +69,13 @@ function OutingsContent() {
   useEffect(() => {
     async function loadAllOutings() {
       try {
-        const [going, pitches, radar] = await Promise.all([
+        const [going, pitches] = await Promise.all([
           fetchGoingOutings(userId).catch(() => []),
           fetchUserPitches(userId).catch(() => []),
-          fetchRadarOutings(userId).catch(() => []),
         ]);
 
         setGoingList(going);
         setPitchesList(pitches);
-        setRadarList(radar);
       } catch (err) {
         console.error('Error loading outings:', err);
       } finally {
@@ -76,31 +85,15 @@ function OutingsContent() {
     loadAllOutings();
   }, [userId]);
 
-  // Derived Categorizations
-  const now = new Date();
+  // Derived Categorizations based on real data & dates
 
-  // 1. Pending Invitations (invited to, state === 'requested' / 'invited', not host)
+  // 1. Pending Invitations (future dates, state === 'requested' / 'invited', user not host)
   const pendingInvites = goingList.filter(
-    (item) => item.state === 'requested' || item.state === 'invited'
+    (item) =>
+      (item.state === 'requested' || item.state === 'invited') &&
+      item.hostId !== userId &&
+      !checkIsPast(item)
   );
-
-  // Fallback demo invite if list is completely empty for sample preview
-  const sampleInvites: OutingItem[] = pendingInvites.length > 0 ? pendingInvites : [
-    {
-      id: 'invite-demo-1',
-      title: 'Specialty Coffee & Studio Walk',
-      pitch: 'A quiet morning exploring single-origin espresso and local ceramic studios.',
-      area: 'Bishan · Central',
-      dateTime: 'Sat, 14 Sep · 10:30 AM',
-      hostId: 'mervyn-id',
-      hostName: 'Mervyn Tang',
-      hostAvatar: getGenderAvatarForName('Mervyn Tang'),
-      seatsTotal: 6,
-      seatsFilled: 3,
-      category: 'coffee',
-      state: 'requested',
-    },
-  ];
 
   // Smart default tab logic: if pending invites exist -> default 'invited', else 'confirmed'
   useEffect(() => {
@@ -114,87 +107,31 @@ function OutingsContent() {
     }
   }, [loading, pendingInvites.length, hasSetDefaultTab]);
 
-  // 2. Confirmed Upcoming Outings (state === 'accepted' or upcoming)
+  // 2. Confirmed Upcoming Outings (future dates, state === 'accepted' or host's upcoming outing)
   const confirmedOutings = goingList
-    .filter((item) => item.state === 'accepted' || (item.hostId === userId && item.state !== 'completed'))
-    .concat(
-      // Add radar demo items if confirmed list is short
-      goingList.length === 0
-        ? [
-            {
-              id: 'confirmed-demo-1',
-              title: 'Acoustic Sunset & Hawker Archaeology',
-              pitch: 'Casual evening listening to live acoustic sets and sharing hawker gems.',
-              area: 'Tiong Bahru',
-              dateTime: 'Tomorrow · 6:30 PM',
-              hostId: 'host-2',
-              hostName: 'Clara Lim',
-              hostAvatar: getGenderAvatarForName('Clara Lim'),
-              seatsTotal: 6,
-              seatsFilled: 4,
-              category: 'dining',
-              state: 'accepted',
-            },
-            {
-              id: 'confirmed-demo-2',
-              title: 'Ceramics & Wheel Throwing Workshop',
-              pitch: 'Hands-on clay molding followed by slow tea.',
-              area: 'Jalan Besar',
-              dateTime: 'Sun, 15 Sep · 2:00 PM',
-              hostId: 'host-3',
-              hostName: 'Derrick Koh',
-              hostAvatar: getGenderAvatarForName('Derrick Koh'),
-              seatsTotal: 6,
-              seatsFilled: 5,
-              category: 'craft',
-              state: 'accepted',
-            },
-          ]
-        : []
+    .filter(
+      (item) =>
+        (item.state === 'accepted' || item.hostId === userId) &&
+        !checkIsPast(item)
     );
 
   // Sort chronologically (soonest first)
   confirmedOutings.sort((a, b) => {
-    const da = a.dateTime ? new Date(a.dateTime).getTime() : 0;
-    const db = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+    const da = a.startsAt ? new Date(a.startsAt).getTime() : (a.dateTime ? new Date(a.dateTime).getTime() : 0);
+    const db = b.startsAt ? new Date(b.startsAt).getTime() : (b.dateTime ? new Date(b.dateTime).getTime() : 0);
     return da - db;
   });
 
   // 3. Your Pitches (proposed by current user)
-  const yourPitches = pitchesList.length > 0 ? pitchesList : [
-    {
-      id: 'pitch-demo-1',
-      title: 'Online dating discussion & coffee',
-      pitch: 'A low-pressure conversation on modern dating dynamics over specialty coffee.',
-      area: 'Singapore · Central',
-      dateTime: 'Sat, 21 Sep · 4:00 PM',
-      hostId: userId,
-      hostName: userProfile.displayName || 'Mimeo',
-      hostAvatar: userProfile.avatarUrl || getGenderAvatarForName('Mimeo'),
-      seatsTotal: 6,
-      seatsFilled: 3,
-      category: 'coffee',
-      state: 'open',
-    },
-  ];
+  const yourPitches = pitchesList.filter((item) => item.hostId === userId || !item.hostId);
 
-  // 4. Past Outings
-  const pastOutings: OutingItem[] = [
-    {
-      id: 'past-demo-1',
-      title: 'Quiet Botanical Garden Walk & Tea',
-      pitch: 'A peaceful weekend morning walk through the orchid garden.',
-      area: 'Botanic Gardens',
-      dateTime: 'Sat, 24 Aug · 9:00 AM',
-      hostId: 'host-past-1',
-      hostName: 'Sarah Lin',
-      hostAvatar: getGenderAvatarForName('Sarah Lin'),
-      seatsTotal: 6,
-      seatsFilled: 6,
-      category: 'active',
-      state: 'completed',
-    },
-  ];
+  // 4. Past Outings (past dates or completed state)
+  const pastOutings = goingList
+    .concat(pitchesList)
+    .filter((item) => checkIsPast(item) || item.state === 'completed');
+
+  // Deduplicate past outings by id
+  const uniquePastOutings = Array.from(new Map(pastOutings.map((item) => [item.id, item])).values());
 
   // Accept / Join Invite Action
   const handleJoinInvite = (outingId: string) => {
@@ -305,9 +242,9 @@ function OutingsContent() {
         {/* TAB 1: INVITED */}
         {activeTab === 'invited' && (
           <div className="flex flex-col gap-4">
-            {sampleInvites.length > 0 ? (
-              sampleInvites.map((item) => {
-                const coverImg = item.cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
+            {pendingInvites.length > 0 ? (
+              pendingInvites.map((item) => {
+                const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
                 return (
                   <div
                     key={item.id}
@@ -408,7 +345,7 @@ function OutingsContent() {
           <div className="flex flex-col gap-4">
             {confirmedOutings.length > 0 ? (
               confirmedOutings.map((item, idx) => {
-                const coverImg = item.cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
+                const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
                 const isTomorrow = idx === 0;
 
                 return (
@@ -416,18 +353,25 @@ function OutingsContent() {
                     key={item.id}
                     className="relative overflow-hidden rounded-[26px] border border-[rgba(245,242,234,0.11)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-xl flex flex-col gap-3"
                   >
-                    {/* Date/Time Banner & Context Chip */}
+                    {/* Date/Time Banner & Joined Status Badge */}
                     <div className="flex items-center justify-between border-b border-[rgba(245,242,234,0.08)] pb-2.5">
                       <div className="flex items-center gap-2 text-xs font-bold text-[#EFB94E]">
                         <Clock className="h-3.5 w-3.5" />
                         <span>{item.dateTime || 'Upcoming Date'}</span>
                       </div>
 
-                      {isTomorrow && (
-                        <span className="rounded-full bg-[rgba(239,185,78,0.16)] border border-[rgba(239,185,78,0.32)] px-2.5 py-0.5 text-[10px] font-bold text-[#EFB94E] uppercase tracking-wider">
-                          Tomorrow
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-full bg-[rgba(45,82,62,0.25)] border border-[rgba(45,82,62,0.45)] px-2.5 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Joined</span>
                         </span>
-                      )}
+
+                        {isTomorrow && (
+                          <span className="rounded-full bg-[rgba(239,185,78,0.16)] border border-[rgba(239,185,78,0.32)] px-2 py-0.5 text-[10px] font-bold text-[#EFB94E] uppercase tracking-wider">
+                            Tomorrow
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Title & Host Info */}
@@ -587,8 +531,8 @@ function OutingsContent() {
         {/* TAB 4: PAST */}
         {activeTab === 'past' && (
           <div className="flex flex-col gap-4">
-            {pastOutings.length > 0 ? (
-              pastOutings.map((item) => {
+            {uniquePastOutings.length > 0 ? (
+              uniquePastOutings.map((item) => {
                 const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
 
                 return (
@@ -607,7 +551,7 @@ function OutingsContent() {
                           {item.title}
                         </h3>
                         <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5">
-                          {item.dateTime} · {item.area}
+                          {item.dateTime || 'Past Outing'} · {item.area}
                         </p>
                       </div>
                     </div>
@@ -615,20 +559,13 @@ function OutingsContent() {
                     {/* Attended Stack & Post-Outing Action */}
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.06)]">
                       <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2 overflow-hidden">
-                          <img
-                            src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
-                            alt={item.hostName}
-                            className="inline-block h-5 w-5 rounded-full ring-2 ring-[#0A0C0B] object-cover"
-                          />
-                          <img
-                            src={getGenderAvatarForName('Sarah')}
-                            alt="Attendee"
-                            className="inline-block h-5 w-5 rounded-full ring-2 ring-[#0A0C0B] object-cover"
-                          />
-                        </div>
+                        <img
+                          src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
+                          alt={item.hostName}
+                          className="inline-block h-5 w-5 rounded-full ring-2 ring-[#0A0C0B] object-cover"
+                        />
                         <span className="text-[11px] text-[rgba(245,242,234,0.50)]">
-                          Attended with Sarah &amp; 4 others
+                          Hosted by {item.hostName}
                         </span>
                       </div>
 

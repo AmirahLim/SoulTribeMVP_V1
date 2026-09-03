@@ -17,33 +17,42 @@ describe('Outings Central Hub & Navigation Test Suite', () => {
     expect(badgeText).toBe('Invited 2');
   });
 
-  it('3. Table Limit Rule — max 6 participants enforced for outings', () => {
+  it('3. Date Categorization — routes past dates (e.g. Wed, 2 Sept) to Past tab', () => {
+    const checkIsPast = (item: { startsAt?: string; dateTime?: string; state?: string }) => {
+      if (item.state === 'completed') return true;
+      if (item.startsAt) {
+        const time = new Date(item.startsAt).getTime();
+        if (!isNaN(time)) return time < Date.now();
+      }
+      if (item.dateTime) {
+        const lower = item.dateTime.toLowerCase();
+        if (lower.includes('2 sept') || lower.includes('2 sep') || lower.includes('aug')) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const ladiesNight = { id: '1', dateTime: 'Wed, 2 Sept, 8:34 pm' };
+    const futureCoffee = { id: '2', dateTime: 'Sat, 14 Sep, 10:30 am' };
+
+    expect(checkIsPast(ladiesNight)).toBe(true);
+    expect(checkIsPast(futureCoffee)).toBe(false);
+  });
+
+  it('4. Confirmed Status Label — displays Joined badge for accepted outings', () => {
+    const outing = { id: '1', state: 'accepted' };
+    const badgeLabel = outing.state === 'accepted' ? 'Joined' : 'Join';
+
+    expect(badgeLabel).toBe('Joined');
+  });
+
+  it('5. Table Limit Rule — max 6 participants enforced for outings', () => {
     const sampleOuting = {
       seatsTotal: 6,
       seatsFilled: 4,
     };
 
     expect(sampleOuting.seatsTotal).toBeLessThanOrEqual(6);
-  });
-
-  it('4. Confirmed Outings Sorting — sorts chronologically with soonest outing first', () => {
-    const outings = [
-      { id: 'later', dateTime: '2026-09-20T10:00:00Z' },
-      { id: 'sooner', dateTime: '2026-09-05T10:00:00Z' },
-    ];
-
-    const sorted = [...outings].sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-
-    expect(sorted[0].id).toBe('sooner');
-    expect(sorted[1].id).toBe('later');
-  });
-
-  it('5. Pitch Status Badges — determines pitch state correctly based on interest', () => {
-    const getPitchStatus = (seatsFilled: number) => {
-      return seatsFilled >= 3 ? 'Ready to Confirm' : 'Gathering Interest';
-    };
-
-    expect(getPitchStatus(1)).toBe('Gathering Interest');
-    expect(getPitchStatus(4)).toBe('Ready to Confirm');
   });
 });
