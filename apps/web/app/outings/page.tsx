@@ -64,6 +64,7 @@ function OutingsContent() {
   const [pitchesList, setPitchesList] = useState<OutingItem[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInviteItem[]>([]);
   const [joinedInvites, setJoinedInvites] = useState<PendingInviteItem[]>([]);
+  const [actionedJoinedIds, setActionedJoinedIds] = useState<Set<string>>(new Set());
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabState>('invited');
@@ -133,7 +134,7 @@ function OutingsContent() {
   // 3. Your Pitches
   const yourPitches = pitchesList.filter((item) => item.hostId === userId || !item.hostId);
 
-  // 4. Past Outings (including real Ladies Night event on Wed 2 Sept)
+  // 4. Past Outings (including real Ladies Night event on Wed 2 Sept with Yasmin's real female avatar)
   const dbPast = goingList
     .concat(pitchesList)
     .filter((item) => checkIsPast(item) || item.state === 'completed');
@@ -167,10 +168,13 @@ function OutingsContent() {
 
   // Action Handlers
   const handleJoinInvite = (invite: PendingInviteItem) => {
+    setActionedJoinedIds((prev) => new Set(prev).add(invite.id));
     actionInviteLocal(invite.id);
-    setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id));
-    setJoinedInvites((prev) => [...prev, invite]);
-    setActiveTab('confirmed');
+    setTimeout(() => {
+      setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id));
+      setJoinedInvites((prev) => [...prev, invite]);
+      setActiveTab('confirmed');
+    }, 600);
   };
 
   const handlePassInvite = (inviteId: string) => {
@@ -275,6 +279,8 @@ function OutingsContent() {
             {pendingInvites.length > 0 ? (
               pendingInvites.map((item) => {
                 const coverImg = getOutingCategoryImage(item.category, item.title, item.area);
+                const isJoined = actionedJoinedIds.has(item.id);
+
                 return (
                   <div
                     key={item.id}
@@ -325,23 +331,30 @@ function OutingsContent() {
                       💡 <em>"{item.contextReason}"</em>
                     </div>
 
-                    {/* Card Actions: Join, Pass, View Outing */}
+                    {/* Card Actions: Join (toggles to Joined ✓), Pass, View Outing */}
                     <div className="flex items-center gap-2.5 pt-1">
                       <button
                         onClick={() => handleJoinInvite(item)}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#2D523E] border border-[rgba(239,185,78,0.30)] py-2.5 px-3 text-xs font-bold text-[#F3F0E9] shadow-md hover:bg-[#38654D] transition-all"
+                        disabled={isJoined}
+                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-3 text-xs font-bold transition-all shadow-md ${
+                          isJoined
+                            ? 'bg-[rgba(45,82,62,0.40)] border border-[rgba(45,82,62,0.65)] text-[#4E8B69]'
+                            : 'bg-[#2D523E] border border-[rgba(239,185,78,0.30)] text-[#F3F0E9] hover:bg-[#38654D]'
+                        }`}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 text-[#4E8B69]" />
-                        <span>Join</span>
+                        <span>{isJoined ? 'Joined ✓' : 'Join'}</span>
                       </button>
 
-                      <button
-                        onClick={() => handlePassInvite(item.id)}
-                        className="flex items-center justify-center gap-1 rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] py-2.5 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
-                      >
-                        <XCircle className="h-3.5 w-3.5" />
-                        <span>Pass</span>
-                      </button>
+                      {!isJoined && (
+                        <button
+                          onClick={() => handlePassInvite(item.id)}
+                          className="flex items-center justify-center gap-1 rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] py-2.5 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          <span>Pass</span>
+                        </button>
+                      )}
 
                       <Link
                         href={`/outings/pitch`}
@@ -393,7 +406,7 @@ function OutingsContent() {
                       <div className="flex items-center gap-1.5">
                         <span className="rounded-full bg-[rgba(45,82,62,0.25)] border border-[rgba(45,82,62,0.45)] px-2.5 py-0.5 text-[10px] font-bold text-[#4E8B69] uppercase tracking-wider flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />
-                          <span>Joined</span>
+                          <span>Joined ✓</span>
                         </span>
 
                         {isTomorrow && (
@@ -562,6 +575,7 @@ function OutingsContent() {
             {uniquePastOutings.length > 0 ? (
               uniquePastOutings.map((item) => {
                 const coverImg = (item as any).cover_image_url || getOutingCategoryImage(item.category, item.title, item.area);
+                const hostAvatar = item.hostAvatar || getGenderAvatarForName(item.hostName);
 
                 return (
                   <div
@@ -588,7 +602,7 @@ function OutingsContent() {
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.06)]">
                       <div className="flex items-center gap-2">
                         <img
-                          src={item.hostAvatar || getGenderAvatarForName(item.hostName)}
+                          src={hostAvatar}
                           alt={item.hostName}
                           className="inline-block h-5 w-5 rounded-full ring-2 ring-[#0A0C0B] object-cover"
                         />

@@ -114,6 +114,9 @@ export const DIRECT_GENDER_AVATAR_MAP: Record<string, string> = {
   'Samantha Chen': FEMALE_AVATARS[7],
   'Amara Patel': FEMALE_AVATARS[8],
   'Vanessa Siew': FEMALE_AVATARS[9],
+  'Yasmin': FEMALE_AVATARS[2],
+  'Yasmin Ahmad': FEMALE_AVATARS[2],
+  'Clara Lim': FEMALE_AVATARS[1],
 
   'Marcus Tan': MALE_AVATARS[0],
   'Chen Wei': MALE_AVATARS[1],
@@ -145,7 +148,7 @@ export function getGenderAvatarForName(name: string): string {
   if (entry) {
     return entry.gender === 'female' ? FEMALE_AVATARS[0] : MALE_AVATARS[0];
   }
-  const isFemaleName = /^(priya|maya|aisha|sarah|hannah|chloe|rachel|fiona|nadia|grace|evelyn|jessica|zoe|claire|valerie|megan|tanya|samantha|amara|vanessa)/i.test(name);
+  const isFemaleName = /^(priya|maya|aisha|sarah|hannah|chloe|rachel|fiona|nadia|grace|evelyn|jessica|zoe|claire|valerie|megan|tanya|samantha|amara|vanessa|yasmin|clara)/i.test(name);
   return isFemaleName ? FEMALE_AVATARS[0] : MALE_AVATARS[0];
 }
 
