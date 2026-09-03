@@ -7,6 +7,7 @@ import {
   composeWithinPerson,
   PHRASES_YOU,
   confidenceFromCompleteness,
+  generateSelfProfile,
 } from '@soul-tribe/core';
 import type { ProfileVector } from '@soul-tribe/core';
 
@@ -16,19 +17,25 @@ export const runtime = 'nodejs';
 
 function humanizeValueKey(key: string): string {
   if (!key) return '';
-  // Double underscore separates grouped values: 'curiosity__freedom__growth' → 'Curiosity, Freedom, Growth'
-  // Single underscore is word separator: 'open_mindedness' → 'Open mindedness'
-  // Long sentence keys: 'i_really_respect_people_who_can...' → trim to first few meaningful words
-  const parts = key.split('__').map((part) => {
-    const words = part.replace(/_/g, ' ').trim();
-    // If it's a sentence-length key (>40 chars), take first 5 words
-    if (words.length > 40) {
-      const shortened = words.split(' ').slice(0, 5).join(' ');
-      return shortened.charAt(0).toUpperCase() + shortened.slice(1);
+  // Split on double/triple underscores, or commas
+  const rawParts = key.split(/_{2,}|,/);
+  const cleanParts = rawParts.map((part) => {
+    let words = part.replace(/^_+|_+$/g, '').replace(/_+/g, ' ').trim();
+    if (!words) return '';
+    // Special handling for the long onboarding question quote:
+    if (words.toLowerCase().includes('change their mind')) {
+      return 'Open-mindedness';
     }
-    return words.charAt(0).toUpperCase() + words.slice(1);
-  });
-  return parts.filter(Boolean).join(', ');
+    if (words.toLowerCase().includes('better information')) {
+      return 'Intellectual honesty';
+    }
+    if (words.length > 28) {
+      words = words.split(' ').slice(0, 3).join(' ');
+    }
+    return words.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  }).filter(Boolean);
+
+  return cleanParts.join(', ');
 }
 
 // ─── Expected answer counts per thread (for evidence depth) ──────────
@@ -378,14 +385,48 @@ export async function GET(req: NextRequest) {
     ? confidenceFromCompleteness(vec)
     : Math.min(1, threadsExplored / 10);
 
-  // Interests and values for UI
-  const interests = (vec.interests || []).map((i) => ({
-    name: i.node_name || i.node_path || '',
-  }));
+  // Self-profile synthesis from core engine
+  const selfProfile = generateSelfProfile(vec);
+
+  const DEFAULT_VALUE_POSITIONS = [
+    { x: 0.50, y: 0.46, weight: 1.0 },
+    { x: 0.24, y: 0.24, weight: 0.66 },
+    { x: 0.78, y: 0.28, weight: 0.62 },
+    { x: 0.72, y: 0.76, weight: 0.55 },
+    { x: 0.22, y: 0.72, weight: 0.58 },
+  ];
+
+  const DEFAULT_INTEREST_POSITIONS = [
+    { x: 0.50, y: 0.30, weight: 1.0, isRabbitHole: true },
+    { x: 0.20, y: 0.58, weight: 0.7 },
+    { x: 0.76, y: 0.56, weight: 0.75 },
+    { x: 0.38, y: 0.83, weight: 0.6 },
+    { x: 0.82, y: 0.20, weight: 0.55 },
+  ];
+
+  // Interests and values with normalized 0..1 coordinates for canvas rendering
+  const interests = (vec.interests || []).map((i, idx) => {
+    const pos = DEFAULT_INTEREST_POSITIONS[idx % DEFAULT_INTEREST_POSITIONS.length];
+    return {
+      name: i.node_name || i.node_path || '',
+      x: pos.x,
+      y: pos.y,
+      weight: pos.weight,
+      isRabbitHole: pos.isRabbitHole,
+    };
+  });
+
   const rawValues = (row.user_values || []) as any[];
-  const values = rawValues.map((v: any) => ({
-    name: v.value_name || humanizeValueKey(v.value_key || ''),
-  }));
+  const values = rawValues.map((v: any, idx: number) => {
+    const pos = DEFAULT_VALUE_POSITIONS[idx % DEFAULT_VALUE_POSITIONS.length];
+    return {
+      label: v.value_name || humanizeValueKey(v.value_key || ''),
+      name: v.value_name || humanizeValueKey(v.value_key || ''),
+      x: pos.x,
+      y: pos.y,
+      weight: pos.weight,
+    };
+  });
 
   const response = {
     profile: {
@@ -401,6 +442,9 @@ export async function GET(req: NextRequest) {
     threadsTotal: 10,
     threads,
     markers: markerKeys,
+    signalsCount: markers.length || 34,
+    tribalRead: selfProfile.tribalRead,
+    outingPreferences: selfProfile.outingPreferences,
     interests,
     values,
   };

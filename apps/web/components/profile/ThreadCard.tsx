@@ -38,7 +38,7 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
 
   return (
     <div
-      className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all duration-300 ${className}`}
+      className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all duration-300 overflow-hidden ${className}`}
       style={{
         backgroundColor: 'rgba(10,12,11,0.62)',
         border: '1px solid rgba(245,242,234,0.11)',
@@ -58,7 +58,7 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
             <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">
-              {colorSpec.name}
+              {thread.name || colorSpec.name}
             </h3>
             <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5 tracking-wide">
               {descriptorText}
@@ -80,7 +80,7 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
 
         {/* Note copy */}
         {thread.note && (
-          <p className="text-[12.5px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-3">
+          <p className="text-[12.5px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-3 break-words">
             {thread.note}
           </p>
         )}

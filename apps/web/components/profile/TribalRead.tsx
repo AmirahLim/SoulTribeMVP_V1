@@ -34,11 +34,10 @@ export function TribalRead({
 }: TribalReadProps) {
   const [openSheet, setOpenSheet] = useState(false);
 
-  if (!data) return null;
+  if (!data || !data.headline) return null;
 
   // Filter sections that synthesise at least 2 markers
-  const validSections = data.sections.filter((s) => s.markerCount >= 2);
-  if (validSections.length === 0) return null;
+  const validSections = (data.sections || []).filter((s) => s.markerCount >= 2);
 
   const isEmerald = tone === 'emerald';
   const accentColor = isEmerald ? '#4E8B69' : '#EFB94E';
@@ -94,7 +93,7 @@ export function TribalRead({
             ))}
           </div>
 
-          {showReadMore && (
+          {showReadMore && validSections.length > 0 && (
             <button
               onClick={() => setOpenSheet(true)}
               className="mt-4 text-xs font-bold hover:underline"

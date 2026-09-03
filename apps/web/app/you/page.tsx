@@ -4,21 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bloom } from '@soul-tribe/ui';
 import { useAuth } from '../../lib/authContext';
-import { getUserProfile, setUserProfile, UserProfileData, calculateTribeStanding } from '../../lib/userStore';
+import { getUserProfile, setUserProfile, calculateTribeStanding } from '../../lib/userStore';
 import { AuthGuard } from '../../components/AuthGuard';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import Link from 'next/link';
 
-import { ProfileHero } from '../../components/profile/ProfileHero';
+import { PassArcCanvas } from '../../components/profile/PassArcCanvas';
 import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
-import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
-import { TribalRead } from '../../components/profile/TribalRead';
-import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
-import { ConnectionNotes, NoteItem } from '../../components/profile/ConnectionNotes';
-import { SocialInstincts, InstinctItem } from '../../components/profile/SocialInstincts';
-import { ValuesConstellationCanvas } from '../../components/profile/ValuesConstellationCanvas';
-import { InterestGraphCanvas } from '../../components/profile/InterestGraphCanvas';
+import { TribalRead, TribalReadData } from '../../components/profile/TribalRead';
+import { ValuesConstellationCanvas, ValueNode } from '../../components/profile/ValuesConstellationCanvas';
+import { InterestGraphCanvas, InterestNode } from '../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
 
 // ─── MyRead types (mirrors api/me/read response) ────────────────────
@@ -45,6 +41,14 @@ interface MyReadThreadUnknown {
 
 type MyReadThread = MyReadThreadKnown | MyReadThreadUnknown;
 
+interface MyReadOutingPrefs {
+  descriptors?: string[];
+  values?: [number, number, number];
+  instantYes?: string;
+  usuallyYes?: string[];
+  convinceMe?: string[];
+}
+
 interface MyRead {
   profile: {
     id: string;
@@ -59,8 +63,11 @@ interface MyRead {
   threadsTotal: 10;
   threads: MyReadThread[];
   markers: string[];
-  interests: { name: string }[];
-  values: { name: string }[];
+  signalsCount?: number;
+  tribalRead?: TribalReadData;
+  outingPreferences?: MyReadOutingPrefs;
+  interests: InterestNode[];
+  values: ValueNode[];
 }
 
 export default function ProfilePage() {
@@ -124,7 +131,7 @@ function ProfileContent() {
 
         // Sync identity to local store
         if (data.profile) {
-          const merged = setUserProfile({
+          setUserProfile({
             displayName: data.profile.display_name,
             homeArea: data.profile.home_area,
             avatarUrl: data.profile.avatar_url,
@@ -149,7 +156,7 @@ function ProfileContent() {
   // Settings save handler
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = setUserProfile({
+    setUserProfile({
       displayName: editName.trim(),
       homeArea: editArea,
       bio: editBio,
@@ -213,7 +220,6 @@ function ProfileContent() {
 
   const profile = myRead.profile;
   const threads = myRead.threads;
-  const knownThreads = threads.filter((t): t is MyReadThreadKnown => t.status === 'known');
 
   // Bloom threads: known → use strength, unknown → ghost petal (strength 0)
   const bloomThreads = threads.map((t) => ({
@@ -224,26 +230,8 @@ function ProfileContent() {
     sentence: t.status === 'known' ? t.note : '',
   }));
 
-  // Tribe standing from real data
-  const localProfile = getUserProfile();
-  const currentStanding = calculateTribeStanding(localProfile.outingsAttended || 0, localProfile.outingsHosted || 0);
-
-  // Pass completion
-  const passCompletionPct = Math.round((myRead.threadsExplored / myRead.threadsTotal) * 100);
-
-  // Values and interests for canvases
-  const valueItems = myRead.values.map((v, i) => ({
-    label: v.name,
-    x: 30 + (i * 20) % 60,
-    y: 30 + (i * 15) % 50,
-    weight: 0.7,
-  }));
-  const interestItems = myRead.interests.map((n, i) => ({
-    name: n.name,
-    x: 25 + (i * 25) % 65,
-    y: 25 + (i * 18) % 55,
-    weight: 0.7,
-  }));
+  // Connection threads excludes values and interests which have dedicated cards below
+  const connectionThreads = threads.filter((t) => t.key !== 'interests' && t.key !== 'values');
 
   return (
     <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
@@ -259,45 +247,74 @@ function ProfileContent() {
 
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-        {/* 1. Profile Hero */}
-        <ProfileHero
-          displayName={profile.display_name}
-          handle={profile.handle}
-          homeArea={profile.home_area}
-          bio={profile.bio}
-          avatarUrl={profile.avatar_url}
-          passCompletionPct={passCompletionPct}
-          standingText={currentStanding.label}
-          onEditProfile={() => setIsSettingsOpen(true)}
-          onDeepenPass={() => router.push('/you/deeper')}
+        {/* 1. Header (Matching Reference Design) */}
+        <div className="flex items-center gap-3.5 py-4">
+          <div className="relative h-[60px] w-[60px] shrink-0 rounded-full bg-gradient-to-br from-[#5A4030] to-[#2A211A] shadow-[0_8px_24px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] p-[2px]">
+            <div className="absolute -inset-[2px] rounded-full -z-10 blur-[6px] opacity-55 bg-[conic-gradient(from_210deg,#5BD99A,#EFB94E,#5BD99A)]" />
+            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.display_name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#2D523E] text-xl font-bold text-[#F5F2EA]">
+                  {(profile.display_name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <h1 className="font-sans text-[25px] font-extrabold text-[#F5F2EA] leading-tight tracking-tight">
+              {profile.display_name || 'Member'}
+            </h1>
+            <div className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">
+              @{profile.handle || 'member'} · {profile.home_area || 'Singapore'}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="ml-auto w-9 h-9 rounded-full grid place-items-center bg-[rgba(255,255,255,0.06)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.70)] hover:text-[#F5F2EA] transition-all"
+            title="Edit Profile"
+            aria-label="Edit Profile"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 2. Pass Arc (Drawn Arc Canvas) */}
+        <PassArcCanvas
+          exploredPct={myRead.threadsExplored / myRead.threadsTotal}
+          signalsText={`Developing read · ${myRead.signalsCount || 34} signals`}
         />
 
-        {/* 2. Friendship DNA Bloom */}
-        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-6">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-1">
-            FRIENDSHIP DNA BLOOM
-          </p>
-          <p className="text-xs text-[rgba(245,242,234,0.70)] max-w-xs leading-relaxed mb-4">
-            A dynamic visual representation of your social energy, rhythm, and values.
-          </p>
+        {/* 3. Friendship DNA Bloom */}
+        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-4">
           <Bloom threads={bloomThreads} size={280} interactive />
-          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-2">
+          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-1">
             Ten threads · {myRead.threadsExplored} explored · <span className="text-[#EFB94E]">tap a petal</span>
           </p>
         </div>
 
-        {/* 3. Connection Threads */}
+        {/* 4. Your Tribal Read */}
+        {myRead.tribalRead && (
+          <TribalRead data={myRead.tribalRead} label="Your Tribal Read" tone="amber" />
+        )}
+
+        {/* 5. Connection Threads */}
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between px-1">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
               Connection Threads
             </p>
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              {myRead.threadsExplored} of {myRead.threadsTotal}
+              {connectionThreads.filter((t) => t.status === 'known').length} of {connectionThreads.length}
             </p>
           </div>
 
-          {threads.map((t) => {
+          {connectionThreads.map((t) => {
             if (t.status === 'unknown') {
               return (
                 <div
@@ -337,13 +354,52 @@ function ProfileContent() {
           })}
         </div>
 
-        {/* 4. What Matters (Values Constellation) */}
-        {valueItems.length > 0 && <ValuesConstellationCanvas values={valueItems} />}
+        {/* 6. What Matters (Values Constellation Canvas) */}
+        <div className="flex flex-col">
+          <div className="flex items-baseline justify-between px-1 mb-3">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              What Matters
+            </p>
+          </div>
+          <ValuesConstellationCanvas
+            values={myRead.values?.length ? myRead.values : undefined}
+          />
+        </div>
 
-        {/* 5. I'm Into (Interest Graph) */}
-        {interestItems.length > 0 && <InterestGraphCanvas nodes={interestItems} />}
+        {/* 7. I'm Into (Interest Graph Canvas) */}
+        <div className="flex flex-col">
+          <div className="flex items-baseline justify-between px-1 mb-3">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              I'm Into
+            </p>
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
+              Rabbit hole
+            </p>
+          </div>
+          <InterestGraphCanvas
+            nodes={myRead.interests?.length ? myRead.interests : undefined}
+          />
+        </div>
 
-        {/* 6. Hosted Pitches */}
+        {/* 8. Outing DNA (Triad Radar Canvas) */}
+        {myRead.outingPreferences && (
+          <div className="flex flex-col">
+            <div className="flex items-baseline justify-between px-1 mb-3">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+                Outing DNA
+              </p>
+            </div>
+            <OutingTriadCanvas
+              descriptors={myRead.outingPreferences.descriptors}
+              values={myRead.outingPreferences.values}
+              instantYes={myRead.outingPreferences.instantYes}
+              usuallyYes={myRead.outingPreferences.usuallyYes}
+              convinceMe={myRead.outingPreferences.convinceMe}
+            />
+          </div>
+        )}
+
+        {/* 9. Hosted Pitches */}
         {userPitches.length > 0 && (
           <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.11)] shadow-xl">
             <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
@@ -366,9 +422,10 @@ function ProfileContent() {
           </div>
         )}
 
-        {/* 7. Footer */}
+        {/* 10. Footer */}
         <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
-          Visual profile · your background, your brand colours
+          Visual profile · your background, your brand colours<br />
+          Content is illustrative — the engine supplies the words.
         </p>
       </div>
 
