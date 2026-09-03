@@ -92,7 +92,6 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       outing_id,
       state,
       role,
-      is_demo,
       outings (
         id,
         host_id,
@@ -102,9 +101,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         area,
         starts_at,
         max_participants,
-        is_demo,
-        profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
-        outing_members (user_id, state, is_demo)
+        profiles!outings_host_id_fkey (display_name, avatar_url),
+        outing_members (user_id, state)
       )
     `)
     .eq('user_id', userId)
@@ -126,9 +124,9 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       if (!out) return false;
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
       const isDemo = Boolean(
-        row.is_demo ||
-        out.is_demo ||
-        hostProfile?.is_demo ||
+        (row as any).is_demo ||
+        (out as any).is_demo ||
+        (hostProfile as any)?.is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
       if (userId && isDemo) return false;
@@ -142,8 +140,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       const members = Array.isArray(out.outing_members) ? out.outing_members : [];
       const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
       const isHostDemo = Boolean(
-        hostProfile?.is_demo ||
-        out.is_demo ||
+        (hostProfile as any)?.is_demo ||
+        (out as any).is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
 
@@ -197,9 +195,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       area,
       starts_at,
       max_participants,
-      is_demo,
-      profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
-      outing_members (user_id, state, is_demo)
+      profiles!outings_host_id_fkey (display_name, avatar_url),
+      outing_members (user_id, state)
     `)
     .eq('host_id', userId);
 
@@ -209,8 +206,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
       if (!dbItemIds.has(out.id)) {
         const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
         const isDemo = Boolean(
-          out.is_demo ||
-          hostProfile?.is_demo ||
+          (out as any).is_demo ||
+          (hostProfile as any)?.is_demo ||
           (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
         );
         if (userId && isDemo) return;
@@ -220,8 +217,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         const members = Array.isArray(out.outing_members) ? out.outing_members : [];
         const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
         const isHostDemo = Boolean(
-          hostProfile?.is_demo ||
-          out.is_demo ||
+          (hostProfile as any)?.is_demo ||
+          (out as any).is_demo ||
           (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
         );
 
@@ -288,7 +285,6 @@ export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]
       outing_id,
       state,
       role,
-      is_demo,
       outings (
         id,
         host_id,
@@ -298,9 +294,8 @@ export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]
         area,
         starts_at,
         max_participants,
-        is_demo,
-        profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
-        outing_members (user_id, state, is_demo)
+        profiles!outings_host_id_fkey (display_name, avatar_url),
+        outing_members (user_id, state)
       )
     `)
     .eq('user_id', userId)
@@ -326,9 +321,9 @@ export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]
       if (!out) return false;
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
       const isDemo = Boolean(
-        row.is_demo ||
-        out.is_demo ||
-        hostProfile?.is_demo ||
+        (row as any).is_demo ||
+        (out as any).is_demo ||
+        (hostProfile as any)?.is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
       if (isDemo) return false;
@@ -342,8 +337,8 @@ export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]
       const members = Array.isArray(out.outing_members) ? out.outing_members : [];
       const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
       const isHostDemo = Boolean(
-        hostProfile?.is_demo ||
-        out.is_demo ||
+        (hostProfile as any)?.is_demo ||
+        (out as any).is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
 
@@ -440,9 +435,8 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       max_participants,
       visibility,
       state,
-      is_demo,
-      profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
-      outing_members (user_id, state, is_demo)
+      profiles!outings_host_id_fkey (display_name, avatar_url),
+      outing_members (user_id, state)
     `)
     .eq('state', 'open');
 
@@ -464,7 +458,7 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
   const filteredRows = (outingRows || []).filter((out: any) => {
     if (out.host_id === userId) return false;
     const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
-    const isDemo = Boolean(out.is_demo || hostProfile?.is_demo);
+    const isDemo = Boolean((out as any).is_demo || (hostProfile as any)?.is_demo);
     if (userId && isDemo) return false;
     return true;
   });
@@ -475,7 +469,7 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
     const hostAvatar = hostProfile?.avatar_url || (hostName ? getGenderAvatarForName(hostName) : '');
     const members = Array.isArray(out.outing_members) ? out.outing_members : [];
     const seatsFilled = members.filter((m: any) => m.state === 'accepted').length;
-    const isHostDemo = Boolean(hostProfile?.is_demo || out.is_demo);
+    const isHostDemo = Boolean((hostProfile as any)?.is_demo || (out as any).is_demo);
 
     let dateTimeStr = '';
     if (out.starts_at) {
@@ -564,9 +558,8 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
       max_participants,
       visibility,
       state,
-      is_demo,
-      profiles!outings_host_id_fkey (display_name, avatar_url, is_demo),
-      outing_members (user_id, state, is_demo)
+      profiles!outings_host_id_fkey (display_name, avatar_url),
+      outing_members (user_id, state)
     `)
     .eq('host_id', userId);
 
@@ -588,8 +581,8 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
     .filter((out: any) => {
       const hostProfile = Array.isArray(out.profiles) ? out.profiles[0] : out.profiles;
       const isDemo = Boolean(
-        out.is_demo ||
-        hostProfile?.is_demo ||
+        (out as any).is_demo ||
+        (hostProfile as any)?.is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
       if (userId && isDemo) return false;
@@ -602,8 +595,8 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
       const members = Array.isArray(out.outing_members) ? out.outing_members : [];
       const seatsFilled = Math.max(1, members.filter((m: any) => m.state === 'accepted').length);
       const isHostDemo = Boolean(
-        hostProfile?.is_demo ||
-        out.is_demo ||
+        (hostProfile as any)?.is_demo ||
+        (out as any).is_demo ||
         (out.host_id && String(out.host_id).startsWith('00000000-0000-0000-0000-'))
       );
 

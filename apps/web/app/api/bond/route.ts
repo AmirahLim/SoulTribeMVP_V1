@@ -115,7 +115,6 @@ export async function POST(req: NextRequest) {
       age_pref_min,
       age_pref_max,
       status,
-      is_demo,
       trait_intent (*),
       trait_communication (*),
       trait_personality (*),

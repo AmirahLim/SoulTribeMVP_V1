@@ -326,7 +326,7 @@ function OutingDetailContent() {
           // 1. Load real outing by ID from outings table
           const { data: dbOuting } = await client
             .from('outings')
-            .select('*, is_demo')
+            .select('*')
             .eq('id', outingId)
             .single();
 
@@ -334,7 +334,7 @@ function OutingDetailContent() {
             // 2. Load host profile from profiles table
             const { data: hostProfile } = await client
               .from('profiles')
-              .select('display_name, avatar_url, home_area, is_demo')
+              .select('display_name, avatar_url, home_area')
               .eq('id', dbOuting.host_id)
               .single();
 
@@ -356,7 +356,7 @@ function OutingDetailContent() {
             // 3. Load real members joined with profiles from outing_members table
             const { data: dbMembers } = await client
               .from('outing_members')
-              .select('user_id, role, state, is_demo, profiles(id, display_name, avatar_url, home_area, is_demo)')
+              .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
               .eq('outing_id', outingId);
 
             const formattedMembers: OutingMember[] = (dbMembers || []).map((m: any) => {

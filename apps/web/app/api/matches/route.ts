@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
         age_pref_min,
         age_pref_max,
         status,
-        is_demo,
         trait_intent (*),
         trait_communication (*),
         trait_personality (*),
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     // Exclude demo candidates server side
     const nonDemoProfiles = dbProfiles.filter(
-      (p: any) => !p.is_demo && !p.id.startsWith('00000000-0000-0000-0000-')
+      (p: any) => !p.id.startsWith('00000000-0000-0000-0000-') && !p.is_demo
     );
 
     const blockedUserIds = (blocks || []).map((b: any) =>
