@@ -170,11 +170,7 @@ function OutingsContent() {
   const handleJoinInvite = (invite: PendingInviteItem) => {
     setActionedJoinedIds((prev) => new Set(prev).add(invite.id));
     actionInviteLocal(invite.id);
-    setTimeout(() => {
-      setPendingInvites((prev) => prev.filter((i) => i.id !== invite.id));
-      setJoinedInvites((prev) => [...prev, invite]);
-      setActiveTab('confirmed');
-    }, 600);
+    setJoinedInvites((prev) => [...prev, invite]);
   };
 
   const handlePassInvite = (inviteId: string) => {
@@ -333,23 +329,19 @@ function OutingsContent() {
 
                     {/* Card Actions: Join (toggles to Joined ✓), Pass, View Outing */}
                     <div className="flex items-center gap-2.5 pt-1">
-                      <button
+                      <Button
+                        variant={isJoined ? 'secondary' : 'primary'}
+                        size="sm"
+                        className="flex-1"
                         onClick={() => handleJoinInvite(item)}
-                        disabled={isJoined}
-                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-3 text-xs font-bold transition-all shadow-md ${
-                          isJoined
-                            ? 'bg-[rgba(45,82,62,0.40)] border border-[rgba(45,82,62,0.65)] text-[#4E8B69]'
-                            : 'bg-[#2D523E] border border-[rgba(239,185,78,0.30)] text-[#F3F0E9] hover:bg-[#38654D]'
-                        }`}
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[#4E8B69]" />
-                        <span>{isJoined ? 'Joined ✓' : 'Join'}</span>
-                      </button>
+                        {isJoined ? 'Joined ✓' : 'Join'}
+                      </Button>
 
                       {!isJoined && (
                         <button
                           onClick={() => handlePassInvite(item.id)}
-                          className="flex items-center justify-center gap-1 rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] py-2.5 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
+                          className="flex items-center justify-center gap-1 rounded-[12px] border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] h-9 px-3 text-xs font-semibold text-[rgba(245,242,234,0.70)] hover:text-[#F3F0E9] transition-all"
                         >
                           <XCircle className="h-3.5 w-3.5" />
                           <span>Pass</span>
