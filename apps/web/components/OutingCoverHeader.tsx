@@ -8,6 +8,7 @@ export interface OutingCoverHeaderProps {
   cover_photographer_name?: string | null;
   cover_photographer_url?: string | null;
   title?: string;
+  pitch?: string;
   category?: string;
   area?: string;
   className?: string;
@@ -20,6 +21,7 @@ export function OutingCoverHeader({
   cover_photographer_name,
   cover_photographer_url,
   title,
+  pitch,
   category,
   area,
   className = '',
@@ -28,7 +30,7 @@ export function OutingCoverHeader({
   const isBanner = aspect === 'banner';
   const containerHeightClass = isBanner ? 'h-44 sm:h-52' : 'h-36 sm:h-40';
 
-  const imageUrl = cover_image_url || getOutingCategoryImage(category || '', title || cover_image_alt || '', area);
+  const imageUrl = cover_image_url || getOutingCategoryImage(category || '', title || cover_image_alt || '', area, pitch);
 
   // Ensure UTM parameters are appended per Unsplash API licensing terms
   const photographerUrl = cover_photographer_url

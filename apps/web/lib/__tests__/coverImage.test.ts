@@ -121,4 +121,19 @@ describe('Step 6k — Outing Cover Images & Search API', () => {
     expect(hostCover.cover_photographer_name).toBeNull();
     expect(hostCover.cover_photographer_url).toBeNull();
   });
+
+  it('7. getOutingCategoryImage accurately reflects board games, coffee, ceramics, etc. and does not false-trigger beer on "night"', async () => {
+    const { getOutingCategoryImage } = await import('../outingsStore');
+    // Board games night must return board games image, NOT bar/beer
+    const boardGameImg = getOutingCategoryImage('cultural', 'Board Games Night', 'Singapore', 'Esther Perel card games');
+    expect(boardGameImg).toContain('photo-1610890716171');
+
+    // Coffee must return coffee
+    const coffeeImg = getOutingCategoryImage('coffee', 'Filter Coffee & Chats', 'Tiong Bahru');
+    expect(coffeeImg).toContain('photo-1501339847302');
+
+    // Pottery must return pottery
+    const potteryImg = getOutingCategoryImage('creative', 'Pottery & Ceramics', 'Jalan Besar');
+    expect(potteryImg).toContain('photo-1565193566173');
+  });
 });

@@ -26,26 +26,153 @@ export interface OutingItem {
   cover_download_location?: string;
 }
 
-export function getOutingCategoryImage(category: string, title?: string, area?: string): string {
+export function getOutingCategoryImage(category: string, title?: string, area?: string, pitch?: string): string {
   const cat = (category || '').toLowerCase();
   const t = (title || '').toLowerCase();
-  const a = (area || '').toLowerCase();
+  const p = (pitch || '').toLowerCase();
+  const combined = `${t} ${p}`;
 
-  if (t.includes('craft') || t.includes('beer') || t.includes('saloon') || t.includes('night') || cat === 'nightlife') {
-    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&auto=format&fit=crop&q=80';
+  // 1. Board Games, Card Games & Tabletop Gaming
+  if (
+    combined.includes('board game') ||
+    combined.includes('boardgame') ||
+    combined.includes('card game') ||
+    combined.includes('card games') ||
+    combined.includes('cards') ||
+    combined.includes('tabletop') ||
+    combined.includes('esther perel') ||
+    combined.includes('catan') ||
+    combined.includes('chess') ||
+    combined.includes('trivia') ||
+    combined.includes('monopoly') ||
+    combined.includes('gaming')
+  ) {
+    return 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800&auto=format&fit=crop&q=80';
   }
-  if (t.includes('ubin') || t.includes('cycle') || t.includes('cycling') || t.includes('trail') || t.includes('hike') || cat === 'active' || cat === 'outdoor') {
-    return 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&auto=format&fit=crop&q=80';
-  }
-  if (t.includes('coffee') || t.includes('cafe') || t.includes('espresso') || cat === 'coffee') {
+
+  // 2. Coffee, Cafe, Tea & Matcha
+  if (
+    combined.includes('coffee') ||
+    combined.includes('cafe') ||
+    combined.includes('espresso') ||
+    combined.includes('matcha') ||
+    combined.includes('tea') ||
+    cat === 'coffee'
+  ) {
     return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80';
   }
-  if (t.includes('pottery') || t.includes('ceramic') || t.includes('art') || cat === 'arts') {
+
+  // 3. Pottery, Ceramics, Crafts & Making
+  if (
+    combined.includes('pottery') ||
+    combined.includes('ceramic') ||
+    combined.includes('clay') ||
+    combined.includes('craft') ||
+    combined.includes('knit') ||
+    combined.includes('crochet') ||
+    combined.includes('woodwork') ||
+    cat === 'creative'
+  ) {
     return 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80';
   }
-  if (t.includes('dinner') || t.includes('food') || t.includes('ramen') || cat === 'dining') {
+
+  // 4. Books, Reading & Poetry
+  if (
+    combined.includes('book') ||
+    combined.includes('reading') ||
+    combined.includes('literature') ||
+    combined.includes('poetry')
+  ) {
+    return 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 5. Food, Dining, Cooking & Baking
+  if (
+    combined.includes('dinner') ||
+    combined.includes('dining') ||
+    combined.includes('food') ||
+    combined.includes('ramen') ||
+    combined.includes('sushi') ||
+    combined.includes('pasta') ||
+    combined.includes('pizza') ||
+    combined.includes('brunch') ||
+    combined.includes('hawker') ||
+    combined.includes('baking') ||
+    combined.includes('cook') ||
+    cat === 'dining'
+  ) {
     return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=80';
   }
+
+  // 6. Climbing & Bouldering
+  if (combined.includes('boulder') || combined.includes('climb')) {
+    return 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 7. Hiking, Walking, Nature & Cycling
+  if (
+    combined.includes('trail') ||
+    combined.includes('hike') ||
+    combined.includes('hiking') ||
+    combined.includes('cycle') ||
+    combined.includes('cycling') ||
+    combined.includes('bike') ||
+    combined.includes('ubin') ||
+    combined.includes('botanic') ||
+    combined.includes('park') ||
+    combined.includes('walk')
+  ) {
+    return 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 8. Art, Museums, Galleries & Exhibitions
+  if (
+    combined.includes('art') ||
+    combined.includes('gallery') ||
+    combined.includes('museum') ||
+    combined.includes('exhibition') ||
+    combined.includes('painting') ||
+    cat === 'cultural'
+  ) {
+    return 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 9. Vinyl, Music & Acoustic
+  if (
+    combined.includes('vinyl') ||
+    combined.includes('music') ||
+    combined.includes('jazz') ||
+    combined.includes('acoustic') ||
+    combined.includes('record')
+  ) {
+    return 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 10. Nightlife, Drinks, Cocktails & Bars
+  if (
+    combined.includes('cocktail') ||
+    combined.includes('wine') ||
+    combined.includes('beer') ||
+    combined.includes('brewery') ||
+    combined.includes('bar') ||
+    combined.includes('pub') ||
+    combined.includes('saloon') ||
+    cat === 'nightlife'
+  ) {
+    return 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&auto=format&fit=crop&q=80';
+  }
+
+  // 11. Active & Sports
+  if (
+    cat === 'active' ||
+    combined.includes('active') ||
+    combined.includes('workout') ||
+    combined.includes('tennis') ||
+    combined.includes('badminton')
+  ) {
+    return 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&auto=format&fit=crop&q=80';
+  }
+
   return 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80';
 }
 

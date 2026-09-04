@@ -28,4 +28,13 @@ describe('Pitch Outing — Constraint and Layout Verification', () => {
     expect(pitchSource).toContain('appearance-none [-webkit-appearance:none]');
     expect(pitchSource).toContain('overflow-hidden');
   });
+
+  it('4. pitch/page.tsx does not enforce 20 character minimum for pitch description in validateForm', () => {
+    const pitchSource = readFileSync(PITCH_PAGE_PATH, 'utf-8');
+    // Ensure validateForm only checks !cleanPitch
+    expect(pitchSource).toContain('if (!cleanPitch) {');
+    expect(pitchSource).toContain('Host Pitch (up to 600 chars)');
+    expect(pitchSource).toContain('dbPitch');
+  });
 });
+

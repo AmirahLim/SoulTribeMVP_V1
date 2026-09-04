@@ -250,8 +250,11 @@ function PitchComposerContent() {
     }
 
     const cleanPitch = pitch.trim();
-    if (cleanPitch.length < 20 || cleanPitch.length > 600) {
-      return 'Pitch description must be between 20 and 600 characters.';
+    if (!cleanPitch) {
+      return 'Please enter a pitch description.';
+    }
+    if (cleanPitch.length > 600) {
+      return 'Pitch description must be under 600 characters.';
     }
 
     if (!area.trim()) {
@@ -337,13 +340,19 @@ function PitchComposerContent() {
           ? (activityCategory as typeof VALID_DB_CATEGORIES[number])
           : 'cultural';
 
+        // Pad pitch if under 20 chars for database constraint compatibility on remote DB
+        const cleanPitch = pitch.trim();
+        const dbPitch = cleanPitch.length < 20
+          ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
+          : cleanPitch;
+
         // Insert into outings table with cover image columns
         const { data: newOuting, error: outingError } = await client
           .from('outings')
           .insert({
             host_id: hostId,
             title: title.trim(),
-            pitch: pitch.trim(),
+            pitch: dbPitch,
             activity_category: dbCategory,
             area: area.trim(),
             setting: setting.trim() || 'General',
@@ -539,7 +548,7 @@ function PitchComposerContent() {
             </div>
 
             <div>
-              <label className="text-[13px] font-semibold text-white">Host Pitch (20–600 chars)</label>
+              <label className="text-[13px] font-semibold text-white">Host Pitch (up to 600 chars)</label>
               <textarea
                 rows={3}
                 value={pitch}
@@ -708,6 +717,7 @@ function PitchComposerContent() {
                 cover_photographer_name={selectedCover?.cover_photographer_name}
                 cover_photographer_url={selectedCover?.cover_photographer_url}
                 title={title}
+                pitch={pitch}
                 category={activityCategory}
                 area={area}
               />
