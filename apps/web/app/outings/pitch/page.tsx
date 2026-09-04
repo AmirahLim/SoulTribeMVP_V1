@@ -250,11 +250,8 @@ function PitchComposerContent() {
     }
 
     const cleanPitch = pitch.trim();
-    if (!cleanPitch) {
-      return 'Please enter a pitch description.';
-    }
     if (cleanPitch.length > 600) {
-      return 'Pitch description must be under 600 characters.';
+      return 'Pitch description must be up to 600 characters.';
     }
 
     if (!area.trim()) {
@@ -340,11 +337,14 @@ function PitchComposerContent() {
           ? (activityCategory as typeof VALID_DB_CATEGORIES[number])
           : 'cultural';
 
-        // Pad pitch if under 20 chars for database constraint compatibility on remote DB
+        // Pad or synthesize pitch for database check constraint compatibility on remote DB
+        const cleanTitle = title.trim();
         const cleanPitch = pitch.trim();
-        const dbPitch = cleanPitch.length < 20
-          ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
-          : cleanPitch;
+        const dbPitch = cleanPitch.length >= 20
+          ? cleanPitch
+          : cleanPitch.length > 0
+            ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
+            : `${cleanTitle} meetup hosted by ${profile.displayName || 'Soul Tribe member'}`;
 
         // Insert into outings table with cover image columns
         const { data: newOuting, error: outingError } = await client
@@ -535,7 +535,7 @@ function PitchComposerContent() {
             </h3>
 
             <div>
-              <label className="text-[13px] font-semibold text-white">Outing Title (4–80 chars)</label>
+              <label className="text-[13px] font-semibold text-white">Outing Title (4–80 characters)</label>
               <input
                 type="text"
                 value={title}
@@ -544,20 +544,20 @@ function PitchComposerContent() {
                 className="mt-1 h-11 w-full rounded-[12px] border border-white/20 bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/50"
                 placeholder="e.g. Saturday Pottery & Filter Coffee"
               />
-              <span className="text-[10.5px] text-white/60 text-right block mt-1">{title.length}/80</span>
+              <span className="text-[10.5px] text-white/60 text-right block mt-1">{title.length}/80 characters</span>
             </div>
 
             <div>
-              <label className="text-[13px] font-semibold text-white">Host Pitch (up to 600 chars)</label>
+              <label className="text-[13px] font-semibold text-white">Host Pitch (Optional, up to 600 characters)</label>
               <textarea
                 rows={3}
                 value={pitch}
                 onChange={(e) => setPitch(e.target.value)}
                 maxLength={600}
                 className="mt-1 w-full rounded-[12px] border border-white/20 bg-black/60 p-3 text-[14px] text-white outline-none focus:border-white/50"
-                placeholder="Describe what you want to do..."
+                placeholder="Describe what you want to do (optional)..."
               />
-              <span className="text-[10.5px] text-white/60 text-right block mt-1">{pitch.length}/600</span>
+              <span className="text-[10.5px] text-white/60 text-right block mt-1">{pitch.length}/600 characters</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

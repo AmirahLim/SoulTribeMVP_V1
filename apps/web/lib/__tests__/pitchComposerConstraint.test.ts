@@ -29,11 +29,11 @@ describe('Pitch Outing — Constraint and Layout Verification', () => {
     expect(pitchSource).toContain('overflow-hidden');
   });
 
-  it('4. pitch/page.tsx does not enforce 20 character minimum for pitch description in validateForm', () => {
+  it('4. pitch/page.tsx makes pitch description fully optional and labels spell out characters', () => {
     const pitchSource = readFileSync(PITCH_PAGE_PATH, 'utf-8');
-    // Ensure validateForm only checks !cleanPitch
-    expect(pitchSource).toContain('if (!cleanPitch) {');
-    expect(pitchSource).toContain('Host Pitch (up to 600 chars)');
+    // Ensure validateForm has no pitch requirement
+    expect(pitchSource).not.toContain('Please enter a pitch description');
+    expect(pitchSource).toContain('Host Pitch (Optional, up to 600 characters)');
     expect(pitchSource).toContain('dbPitch');
   });
 });
