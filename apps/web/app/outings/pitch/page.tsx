@@ -414,7 +414,7 @@ function PitchComposerContent() {
         const newPitchObj: PitchedOuting = {
           id: newOuting.id,
           title: title.trim(),
-          pitch: pitch.trim(),
+          pitch: dbPitch,
           area: area.trim(),
           dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
           hostName: profile.displayName || 'You',
@@ -460,7 +460,7 @@ function PitchComposerContent() {
       const newPitchObj: PitchedOuting = {
         id: fallbackId,
         title: title.trim(),
-        pitch: pitch.trim(),
+        pitch: dbPitch,
         area: area.trim(),
         dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
         hostName: profile.displayName || 'You',
