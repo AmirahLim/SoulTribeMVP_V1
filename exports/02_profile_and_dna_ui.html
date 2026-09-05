@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe — Profile & Friendship DNA UI Export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --amber: #EFB94E;
+    --amber-dim: rgba(239, 185, 78, 0.16);
+    --emerald: #5BD99A;
+    --emerald-dim: rgba(91, 217, 154, 0.14);
+    --ink: #F5F2EA;
+    --ink-2: rgba(245, 242, 234, 0.70);
+    --ink-3: rgba(245, 242, 234, 0.44);
+    --ink-4: rgba(245, 242, 234, 0.22);
+    --card: rgba(10, 12, 11, 0.62);
+    --card-2: rgba(255, 255, 255, 0.045);
+    --edge: rgba(245, 242, 234, 0.11);
+    --lip: rgba(245, 242, 234, 0.22);
+    --r: 26px;
+    --r-2: 18px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #070908;
+    color: var(--ink);
+    font-family: "Inter", -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Ground ambient backdrop */
+  .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-photo {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(70% 46% at 22% 14%, rgba(176, 124, 66, 0.45) 0%, transparent 62%),
+      radial-gradient(58% 40% at 84% 34%, rgba(120, 86, 58, 0.38) 0%, transparent 64%),
+      radial-gradient(80% 50% at 46% 82%, rgba(88, 74, 52, 0.34) 0%, transparent 66%),
+      radial-gradient(50% 34% at 70% 96%, rgba(58, 88, 74, 0.28) 0%, transparent 60%),
+      linear-gradient(180deg, #1A1410 0%, #100C0A 40%, #080A09 100%);
+    filter: blur(2px);
+  }
+  .bg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(4,6,5,.75) 0%, rgba(4,6,5,.55) 40%, rgba(4,6,5,.95) 100%);
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 24px 18px 100px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.03em;
+  }
+  .lab {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .lab.amber { color: var(--amber); }
+  .lab.emerald { color: var(--emerald); }
+
+  /* Glass Card */
+  .card {
+    border-radius: var(--r);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(24px) saturate(115%);
+    -webkit-backdrop-filter: blur(24px) saturate(115%);
+    box-shadow: 0 22px 48px -26px rgba(0,0,0,.9), inset 0 1px 0 var(--lip);
+  }
+  .card::before {
+    content: "";
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 80% at 12% 0%, var(--wash, transparent) 0%, transparent 62%);
+  }
+  .card > * { position: relative; z-index: 1; }
+
+  .sec { margin-top: 26px; }
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0 4px 12px;
+  }
+
+  /* Mode Bar Switcher */
+  .modebar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .mode-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--edge);
+    color: var(--ink-3);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .mode-btn.active {
+    background: rgba(245, 242, 234, 0.12);
+    border-color: rgba(245, 242, 234, 0.28);
+    color: var(--ink);
+  }
+
+  /* Hero Identity */
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+  .avatar-wrap {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+  }
+  .avatar-wrap::before {
+    content: "";
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,185,78,.55) 0%, transparent 70%);
+    filter: blur(4px);
+  }
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    border: 2px solid var(--lip);
+  }
+  .hero-meta h1 { font-size: 22px; font-weight: 800; line-height: 1.2; }
+  .hero-meta .handle { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+  .badge-row { display: flex; gap: 8px; margin-top: 8px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--edge);
+  }
+  .pill.amber { color: var(--amber); border-color: rgba(239,185,78,.3); background: rgba(239,185,78,.08); }
+  .pill.emerald { color: var(--emerald); border-color: rgba(91,217,154,.3); background: rgba(91,217,154,.08); }
+
+  /* Thread Card */
+  .thread-card {
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--edge);
+    border-radius: var(--r-2);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .thread-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .thread-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .thread-desc { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+
+  /* Boundaries */
+  .bound-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
+  .bound-item {
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bound-label { font-size: 12px; color: var(--ink-3); text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em; }
+  .bound-val { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+  /* Bottom Navigation Bar */
+  .dock {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(7, 9, 8, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--edge);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 16px 22px;
+    z-index: 50;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: var(--ink-3);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .dock-item.active { color: var(--emerald); }
+  .dock-item svg { width: 20px; height: 20px; }
+</style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="bg-photo"></div>
+    <div class="bg-scrim"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Switcher Bar -->
+    <div class="modebar">
+      <button class="mode-btn active">Your Profile</button>
+      <a href="./03_bond_view_ui.html" class="mode-btn">View Bond ↗</a>
+    </div>
+
+    <!-- HERO PROFILE -->
+    <div class="card" style="--wash: rgba(239,185,78,0.12);">
+      <div class="hero-top">
+        <div class="avatar-wrap">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="Amirah" class="avatar-img">
+        </div>
+        <div class="hero-meta">
+          <h1>Amirah Lim</h1>
+          <div class="handle">@amirah · Tiong Bahru</div>
+          <div class="badge-row">
+            <span class="pill amber">Deep Read Active</span>
+            <span class="pill emerald">Pass: 84%</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 13.5px; color: var(--ink-2); line-height: 1.5; margin-top: 6px;">
+        High-warmth connector with an intuitive social style. Energised by intimate dinner conversations, ceramic making, and Sunday filter coffee walks.
+      </div>
+    </div>
+
+    <!-- PASS ARC -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Tribal Pass Calibration</span>
+        <span class="lab amber">34 of 40 Signals</span>
+      </div>
+      <div class="card" style="text-align: center; padding: 24px 18px;">
+        <canvas id="passArcCanvas" width="560" height="260" style="width: 280px; height: 130px;"></canvas>
+        <p style="font-size: 12.5px; color: var(--ink-2); margin-top: 8px;">
+          Your Friendship DNA is 84% calibrated across social pacing, room energy, and communication cadence.
+        </p>
+      </div>
+    </div>
+
+    <!-- FRIENDSHIP DNA BLOOM -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Friendship DNA Bloom</span>
+        <span class="lab emerald">10 Traits Measured</span>
+      </div>
+      <div class="card" style="text-align: center; padding: 24px 16px;">
+        <canvas id="bloomCanvas" width="640" height="640" style="width: 320px; height: 320px; margin: 0 auto; display: block;"></canvas>
+        <p style="font-size: 12.5px; color: var(--ink-2); margin-top: 14px;">
+          The organic petals map your 10 measured behavioral dimensions without rigid Myers-Briggs stereotyping.
+        </p>
+      </div>
+    </div>
+
+    <!-- 4 CONNECTION THREADS -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Behavioral Connection Threads</span>
+        <span class="lab">4 Measured</span>
+      </div>
+
+      <div class="thread-card">
+        <div class="thread-h">
+          <span class="thread-name">1. Social Energy & Room Navigation</span>
+          <span class="pill amber">Warm Anchor</span>
+        </div>
+        <div class="thread-desc">
+          You gravitate toward 3–4 person breakout circles rather than dominating large noisy halls.
+        </div>
+      </div>
+
+      <div class="thread-card">
+        <div class="thread-h">
+          <span class="thread-name">2. Communication Cadence</span>
+          <span class="pill emerald">Thoughtful Asynchronous</span>
+        </div>
+        <div class="thread-desc">
+          Replies are intentional and unrushed; you value deep contextual voice notes over transactional ping-pong.
+        </div>
+      </div>
+
+      <div class="thread-card">
+        <div class="thread-h">
+          <span class="thread-name">3. Friendship Style</span>
+          <span class="pill amber">Slow Burn & Durable</span>
+        </div>
+        <div class="thread-desc">
+          Takes a couple of shared outings to open up, but forms high-loyalty multi-year foundations.
+        </div>
+      </div>
+
+      <div class="thread-card">
+        <div class="thread-h">
+          <span class="thread-name">4. Social Rhythm & Week Cadence</span>
+          <span class="pill emerald">Curated Weekends</span>
+        </div>
+        <div class="thread-desc">
+          Weekday evenings reserved for decompression; best social energy is Saturday mornings and Sunday brunches.
+        </div>
+      </div>
+    </div>
+
+    <!-- PUBLIC BOUNDARIES -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Boundaries & Principles</span>
+        <span class="lab">Social Contract</span>
+      </div>
+      <div class="card">
+        <div class="bound-grid">
+          <div class="bound-item">
+            <span class="bound-label">Punctuality</span>
+            <span class="bound-val">On time (±10 mins notice)</span>
+          </div>
+          <div class="bound-item">
+            <span class="bound-label">Cancellations</span>
+            <span class="bound-val">24-hour advance heads-up</span>
+          </div>
+          <div class="bound-item">
+            <span class="bound-label">Preferred Group Size</span>
+            <span class="bound-val">3 to 6 people max</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHAT MATTERS CONSTELLATION -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">What Matters</span>
+        <span class="lab amber">Constellation</span>
+      </div>
+      <div class="card">
+        <canvas id="constellationCanvas" width="700" height="340" style="width: 350px; height: 170px; margin: 0 auto; display: block;"></canvas>
+        <p style="font-size: 12.5px; color: var(--ink-2); margin-top: 10px;">
+          Open-mindedness sits at the centre of most of your answers — the others orbit it.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM DOCK NAVIGATION -->
+  <div class="dock">
+    <a href="#" class="dock-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2 6.3-6.4 2 2-6.3z"/></svg>
+      <span>Explore</span>
+    </a>
+    <a href="#" class="dock-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>People</span>
+    </a>
+    <a href="./04_outings_and_pitch_ui.html" class="dock-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      <span>Outings</span>
+    </a>
+    <a href="#" class="dock-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>You</span>
+    </a>
+  </div>
+
+  <script>
+    // 1. Pass Arc Canvas Rendering
+    const arcC = document.getElementById('passArcCanvas');
+    const actx = arcC.getContext('2d');
+    actx.scale(2, 2);
+    const aw = 280, ah = 130, cx = aw / 2, cy = ah - 15, radius = 95;
+    
+    // Background track
+    actx.beginPath();
+    actx.arc(cx, cy, radius, Math.PI, 0, false);
+    actx.strokeStyle = 'rgba(245,242,234,0.12)';
+    actx.lineWidth = 10;
+    actx.lineCap = 'round';
+    actx.stroke();
+
+    // Progress arc (84%)
+    const pct = 0.84;
+    actx.beginPath();
+    actx.arc(cx, cy, radius, Math.PI, Math.PI + Math.PI * pct, false);
+    actx.strokeStyle = '#EFB94E';
+    actx.lineWidth = 10;
+    actx.lineCap = 'round';
+    actx.stroke();
+
+    // Center text
+    actx.font = '800 28px Inter, sans-serif';
+    actx.fillStyle = '#F5F2EA';
+    actx.textAlign = 'center';
+    actx.fillText('84%', cx, cy - 20);
+
+    actx.font = '600 11px Inter, sans-serif';
+    actx.fillStyle = '#EFB94E';
+    actx.fillText('EXPLORED', cx, cy);
+
+    // 2. Friendship DNA Bloom Canvas
+    const bc = document.getElementById('bloomCanvas');
+    const bctx = bc.getContext('2d');
+    bctx.scale(2, 2);
+    const bw = 160, bh = 160;
+    const traits = [
+      { name: 'Energy', val: 0.82 },
+      { name: 'Warmth', val: 0.88 },
+      { name: 'Pacing', val: 0.70 },
+      { name: 'Depth', val: 0.95 },
+      { name: 'Conflict', val: 0.65 },
+      { name: 'Curiosity', val: 0.90 },
+      { name: 'Loyalty', val: 0.92 },
+      { name: 'Directness', val: 0.75 },
+      { name: 'Structure', val: 0.60 },
+      { name: 'Autonomy', val: 0.78 }
+    ];
+
+    bctx.translate(bw, bh);
+    const numPetals = traits.length;
+    for (let i = 0; i < numPetals; i++) {
+      const angle = (i * 2 * Math.PI) / numPetals;
+      const t = traits[i];
+      bctx.save();
+      bctx.rotate(angle);
+
+      // Petal
+      const petalLength = 40 + t.val * 70;
+      const petalWidth = 24;
+
+      const grad = bctx.createLinearGradient(0, 0, 0, -petalLength);
+      grad.addColorStop(0, 'rgba(239,185,78,0.15)');
+      grad.addColorStop(1, 'rgba(239,185,78,0.75)');
+
+      bctx.beginPath();
+      bctx.moveTo(0, 0);
+      bctx.bezierCurveTo(-petalWidth, -petalLength * 0.4, -petalWidth * 0.8, -petalLength, 0, -petalLength);
+      bctx.bezierCurveTo(petalWidth * 0.8, -petalLength, petalWidth, -petalLength * 0.4, 0, 0);
+      bctx.fillStyle = grad;
+      bctx.fill();
+      bctx.strokeStyle = 'rgba(245,242,234,0.3)';
+      bctx.lineWidth = 1;
+      bctx.stroke();
+
+      bctx.restore();
+    }
+    // Center ring
+    bctx.beginPath();
+    bctx.arc(0, 0, 16, 0, Math.PI * 2);
+    bctx.fillStyle = '#070908';
+    bctx.fill();
+    bctx.strokeStyle = '#EFB94E';
+    bctx.lineWidth = 2.5;
+    bctx.stroke();
+
+    // 3. What Matters Constellation
+    const cc = document.getElementById('constellationCanvas');
+    const cctx = cc.getContext('2d');
+    cctx.scale(2, 2);
+    const cw = 350, ch = 170;
+    const values = [
+      { label: 'Open-mindedness', x: 0.50, y: 0.46, weight: 1.0 },
+      { label: 'Stability', x: 0.24, y: 0.24, weight: 0.66 },
+      { label: 'Adventure', x: 0.78, y: 0.28, weight: 0.62 },
+      { label: 'Family', x: 0.72, y: 0.76, weight: 0.55 },
+      { label: 'Curiosity', x: 0.22, y: 0.72, weight: 0.58 },
+    ];
+
+    // Constellation lines
+    cctx.strokeStyle = 'rgba(239,185,78,0.22)';
+    cctx.lineWidth = 1;
+    for (let i = 1; i < values.length; i++) {
+      cctx.beginPath();
+      cctx.moveTo(values[0].x * cw, values[0].y * ch);
+      cctx.lineTo(values[i].x * cw, values[i].y * ch);
+      cctx.stroke();
+    }
+
+    values.forEach((v, i) => {
+      const px = v.x * cw, py = v.y * ch;
+      const r = 4 + v.weight * 7;
+
+      // Glow
+      const g = cctx.createRadialGradient(px, py, 0, px, py, r * 3);
+      g.addColorStop(0, 'rgba(239,185,78,0.55)');
+      g.addColorStop(1, 'rgba(239,185,78,0)');
+      cctx.fillStyle = g;
+      cctx.beginPath();
+      cctx.arc(px, py, r * 3, 0, Math.PI * 2);
+      cctx.fill();
+
+      // Node
+      cctx.fillStyle = i === 0 ? '#FFFFFF' : '#EFB94E';
+      cctx.beginPath();
+      cctx.arc(px, py, r, 0, Math.PI * 2);
+      cctx.fill();
+
+      // Text
+      cctx.font = `${i === 0 ? '600 13px' : '400 11.5px'} Inter, sans-serif`;
+      cctx.fillStyle = i === 0 ? '#FFFFFF' : 'rgba(245,242,234,0.7)';
+      cctx.textAlign = 'center';
+      cctx.fillText(v.label, px, py + r + 15);
+    });
+  </script>
+</body>
+</html>

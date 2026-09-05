@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe — Outings Hub & Pitch Composer UI Export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --amber: #EFB94E;
+    --emerald: #5BD99A;
+    --ink: #F5F2EA;
+    --ink-2: rgba(245, 242, 234, 0.70);
+    --ink-3: rgba(245, 242, 234, 0.44);
+    --card: rgba(10, 12, 11, 0.62);
+    --edge: rgba(245, 242, 234, 0.11);
+    --lip: rgba(245, 242, 234, 0.22);
+    --r: 26px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #070908;
+    color: var(--ink);
+    font-family: "Inter", -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-photo {
+    position: absolute; inset: 0; filter: blur(2px);
+    background:
+      radial-gradient(70% 46% at 22% 14%, rgba(176, 124, 66, .45) 0%, transparent 62%),
+      radial-gradient(58% 40% at 84% 34%, rgba(120, 86, 58, .38) 0%, transparent 64%),
+      radial-gradient(80% 50% at 46% 82%, rgba(88, 74, 52, .34) 0%, transparent 66%),
+      radial-gradient(50% 34% at 70% 96%, rgba(58, 88, 74, .28) 0%, transparent 60%),
+      linear-gradient(180deg, #1A1410 0%, #100C0A 40%, #080A09 100%);
+  }
+  .bg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(4,6,5,.75) 0%, rgba(4,6,5,.55) 40%, rgba(4,6,5,.95) 100%);
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 24px 18px 100px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.03em;
+  }
+  .lab {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .lab.a { color: var(--amber); }
+  .lab.e { color: var(--emerald); }
+
+  .card {
+    border-radius: var(--r);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(24px) saturate(115%);
+    -webkit-backdrop-filter: blur(24px) saturate(115%);
+    box-shadow: 0 22px 48px -26px rgba(0,0,0,.9), inset 0 1px 0 var(--lip);
+  }
+
+  /* View Switcher: Feed vs Composer */
+  .view-switcher {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .view-tab {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--edge);
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+  .view-tab.active {
+    background: rgba(245,242,234,0.12);
+    border-color: rgba(245,242,234,0.3);
+    color: var(--ink);
+  }
+
+  /* Outing Feed Card */
+  .outing-item {
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--edge);
+    margin-bottom: 16px;
+  }
+  .cover-banner {
+    width: 100%;
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover-banner img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .tag-pos {
+    position: absolute; top: 10px; left: 10px;
+    background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  }
+  .outing-content { padding: 16px; }
+  .outing-h { font-size: 17px; font-weight: 800; line-height: 1.25; margin-bottom: 6px; }
+  .outing-meta { font-size: 12.5px; color: var(--ink-2); display: flex; gap: 12px; margin-bottom: 12px; }
+  .host-row { display: flex; justify-content: space-between; align-items: center; }
+  .host-info { display: flex; align-items: center; gap: 10px; }
+  .host-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+  .host-name { font-size: 13px; font-weight: 700; }
+
+  /* Form Styles (Composer) */
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-size: 13px; font-weight: 600; color: #FFF; margin-bottom: 6px;
+  }
+  .input-text, .select-input, .textarea-input {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.6);
+    color: #FFF;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .input-text:focus, .select-input:focus, .textarea-input:focus {
+    border-color: rgba(255,255,255,0.5);
+  }
+
+  /* Date / Time Inputs (iOS Safari containment) */
+  input[type="date"], input[type="time"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: block;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.6);
+    color: #FFF;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    font-family: inherit;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
+    text-align: left; padding: 0; margin: 0; width: 100%;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Suggested Slot Buttons */
+  .suggest-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .sug-pill {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .sug-pill.active {
+    background: rgba(239,185,78,0.25);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  /* Action Button */
+  .btn-submit {
+    width: 100%;
+    background: #FFF;
+    color: #000;
+    border: none;
+    padding: 16px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 20px;
+    letter-spacing: -0.01em;
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="bg-photo"></div>
+    <div class="bg-scrim"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- View Switcher -->
+    <div class="view-switcher">
+      <button class="view-tab" id="tabFeed" onclick="showView('feed')">Outings Hub (Feed)</button>
+      <button class="view-tab active" id="tabComposer" onclick="showView('composer')">Pitch Composer</button>
+    </div>
+
+    <!-- VIEW 1: COMPOSER -->
+    <div id="viewComposer">
+      <div style="margin-bottom: 16px;">
+        <span class="lab amber">Host Proposal Composer</span>
+        <h1 style="font-size: 26px; margin-top: 4px;">Pitch Outing</h1>
+        <p style="font-size: 13.5px; color: var(--ink-2); margin-top: 2px;">
+          Design a small-group meetup for up to 6 people.
+        </p>
+      </div>
+
+      <div class="card">
+        <!-- 1. Title & Description -->
+        <div class="form-group">
+          <label>Outing Title (4–80 characters)</label>
+          <input type="text" class="input-text" id="titleInput" value="Board Games Night" oninput="updatePreview()">
+          <span style="font-size: 10.5px; color: var(--ink-3); float: right; margin-top: 4px;">17/80 characters</span>
+        </div>
+
+        <div class="form-group" style="margin-top: 24px;">
+          <label>Host Pitch (Optional, up to 600 characters)</label>
+          <textarea rows="3" class="textarea-input" id="pitchInput" placeholder="Describe what you want to do (optional)..." oninput="updatePreview()">Esther Perel card games</textarea>
+          <span style="font-size: 10.5px; color: var(--ink-3); float: right; margin-top: 4px;">23/600 characters</span>
+        </div>
+
+        <!-- 2. Category & Area -->
+        <div class="grid-2" style="margin-top: 24px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Category</label>
+            <select class="select-input" id="catInput" onchange="updatePreview()">
+              <option value="cultural" selected>Intellectual & Deep Talk</option>
+              <option value="coffee">Coffee & Cafe</option>
+              <option value="dining">Dining & Food</option>
+              <option value="creative">Creative & Craft</option>
+              <option value="active">Active & Outdoor</option>
+              <option value="nightlife">Nightlife & Drinks</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Area</label>
+            <input type="text" class="input-text" value="Tiong Bahru">
+          </div>
+        </div>
+
+        <!-- 3. Date & Time (Contained) -->
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--edge);">
+          <div class="grid-2">
+            <div style="min-width:0; overflow:hidden;">
+              <label style="font-size: 13px; font-weight: 600; color: #FFF; display: block; margin-bottom: 6px;">Outing Date</label>
+              <input type="date" value="2026-09-11">
+            </div>
+            <div style="min-width:0; overflow:hidden;">
+              <label style="font-size: 13px; font-weight: 600; color: #FFF; display: block; margin-bottom: 6px;">Outing Time</label>
+              <input type="time" value="19:30">
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <span style="font-size: 11.5px; font-weight: 600; color: var(--amber);">Suggested Date & Time Slots:</span>
+            <div class="suggest-row">
+              <span class="sug-pill active">Fri, 11 Sep · 7:30 PM</span>
+              <span class="sug-pill">Sat, 5 Sep · 3:00 PM</span>
+              <span class="sug-pill">Sun, 6 Sep · 2:00 PM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Dynamic AI / Image Preview -->
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--edge);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 12.5px; font-weight: 700; color: #FFF;">Outing Cover Image Preview</span>
+            <span class="lab emerald">Auto-Matched</span>
+          </div>
+
+          <div class="cover-banner" style="border-radius: 16px; border: 1px solid var(--edge);">
+            <img id="coverImgPreview" src="https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800&auto=format&fit=crop&q=80" alt="Cover">
+            <div class="tag-pos" id="tagPreview">Tiong Bahru · Intellectual</div>
+          </div>
+          <p style="font-size: 11px; color: var(--ink-3); margin-top: 6px; text-align: right;">Photo via Unsplash</p>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-submit" type="button">Publish Outing Proposal →</button>
+      </div>
+    </div>
+
+    <!-- VIEW 2: FEED -->
+    <div id="viewFeed" style="display: none;">
+      <div style="margin-bottom: 16px;">
+        <span class="lab emerald">Outings Hub</span>
+        <h1 style="font-size: 26px; margin-top: 4px;">Small Group Gatherings</h1>
+        <p style="font-size: 13.5px; color: var(--ink-2); margin-top: 2px;">
+          Max 6 participants. Focused on shared context and rhythm.
+        </p>
+      </div>
+
+      <!-- Item 1: Board Games -->
+      <div class="outing-item">
+        <div class="cover-banner">
+          <img src="https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800&auto=format&fit=crop&q=80" alt="Board Games">
+          <div class="tag-pos">Tiong Bahru · Intellectual</div>
+        </div>
+        <div class="outing-content">
+          <div class="outing-h">Board Games Night</div>
+          <div class="outing-meta">
+            <span>📅 Fri, 11 Sep · 7:30 PM</span>
+            <span>👥 3 / 6 Joined</span>
+          </div>
+          <p style="font-size: 13px; color: var(--ink-2); margin-bottom: 14px;">
+            “Esther Perel card games and conversation prompts over tea.”
+          </p>
+          <div class="host-row">
+            <div class="host-info">
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="host-avatar" alt="Amirah">
+              <span class="host-name">Amirah Lim (Host)</span>
+            </div>
+            <span class="lab amber">Confirmed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Pottery -->
+      <div class="outing-item">
+        <div class="cover-banner">
+          <img src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80" alt="Pottery">
+          <div class="tag-pos">Jalan Besar · Creative</div>
+        </div>
+        <div class="outing-content">
+          <div class="outing-h">Weekend Pottery Wheel Session</div>
+          <div class="outing-meta">
+            <span>📅 Sat, 12 Sep · 3:00 PM</span>
+            <span>👥 4 / 6 Joined</span>
+          </div>
+          <p style="font-size: 13px; color: var(--ink-2); margin-bottom: 14px;">
+            “Molding ceramic mugs and casual afternoon matcha walk.”
+          </p>
+          <div class="host-row">
+            <div class="host-info">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" class="host-avatar" alt="Mervyn">
+              <span class="host-name">Mervyn Tan (Host)</span>
+            </div>
+            <span class="lab emerald">Open</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showView(view) {
+      const vComp = document.getElementById('viewComposer');
+      const vFeed = document.getElementById('viewFeed');
+      const tComp = document.getElementById('tabComposer');
+      const tFeed = document.getElementById('tabFeed');
+
+      if (view === 'composer') {
+        vComp.style.display = 'block';
+        vFeed.style.display = 'none';
+        tComp.classList.add('active');
+        tFeed.classList.remove('active');
+      } else {
+        vComp.style.display = 'none';
+        vFeed.style.display = 'block';
+        tComp.classList.remove('active');
+        tFeed.classList.add('active');
+      }
+    }
+
+    function updatePreview() {
+      const title = document.getElementById('titleInput').value.toLowerCase();
+      const pitch = document.getElementById('pitchInput').value.toLowerCase();
+      const img = document.getElementById('coverImgPreview');
+      const tag = document.getElementById('tagPreview');
+
+      if (title.includes('board') || title.includes('game') || pitch.includes('card') || pitch.includes('game')) {
+        img.src = 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800&auto=format&fit=crop&q=80';
+        tag.textContent = 'Tiong Bahru · Board Games';
+      } else if (title.includes('coffee') || pitch.includes('coffee')) {
+        img.src = 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80';
+        tag.textContent = 'Tiong Bahru · Coffee';
+      } else if (title.includes('pottery') || title.includes('ceramic')) {
+        img.src = 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&auto=format&fit=crop&q=80';
+        tag.textContent = 'Tiong Bahru · Creative';
+      } else {
+        img.src = 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80';
+        tag.textContent = 'Tiong Bahru · Community';
+      }
+    }
+  </script>
+</body>
+</html>

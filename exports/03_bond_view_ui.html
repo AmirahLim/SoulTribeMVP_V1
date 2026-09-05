@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe — Bond View UI Export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --amber: #EFB94E;        /* You */
+    --emerald: #5BD99A;      /* Them */
+    --ink: #F5F2EA;
+    --ink-2: rgba(245, 242, 234, 0.70);
+    --ink-3: rgba(245, 242, 234, 0.44);
+    --ink-4: rgba(245, 242, 234, 0.22);
+    --card: rgba(10, 12, 11, 0.62);
+    --edge: rgba(245, 242, 234, 0.11);
+    --lip: rgba(245, 242, 234, 0.22);
+    --r: 26px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #070908;
+    color: var(--ink);
+    font-family: "Inter", -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-photo {
+    position: absolute; inset: 0; filter: blur(2px);
+    background:
+      radial-gradient(70% 46% at 22% 14%, rgba(176, 124, 66, .45) 0%, transparent 62%),
+      radial-gradient(58% 40% at 84% 34%, rgba(120, 86, 58, .38) 0%, transparent 64%),
+      radial-gradient(80% 50% at 46% 82%, rgba(88, 74, 52, .34) 0%, transparent 66%),
+      radial-gradient(50% 34% at 70% 96%, rgba(58, 88, 74, .28) 0%, transparent 60%),
+      linear-gradient(180deg, #1A1410 0%, #100C0A 40%, #080A09 100%);
+  }
+  .bg-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(4,6,5,.75) 0%, rgba(4,6,5,.55) 40%, rgba(4,6,5,.95) 100%);
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 24px 18px 100px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Inter", sans-serif;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.03em;
+  }
+  .lab {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .lab.a { color: var(--amber); }
+  .lab.e { color: var(--emerald); }
+
+  .card {
+    border-radius: var(--r);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    backdrop-filter: blur(24px) saturate(115%);
+    -webkit-backdrop-filter: blur(24px) saturate(115%);
+    box-shadow: 0 22px 48px -26px rgba(0,0,0,.9), inset 0 1px 0 var(--lip);
+  }
+  .card::before {
+    content: "";
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 80% at 12% 0%, var(--wash, transparent) 0%, transparent 62%);
+  }
+  .card > * { position: relative; z-index: 1; }
+
+  .sec { margin-top: 26px; }
+  .sec-h {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0 4px 12px;
+  }
+
+  /* Mode Bar */
+  .modebar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .mode-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--edge);
+    color: var(--ink-3);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .mode-btn.active {
+    background: rgba(245, 242, 234, 0.12);
+    border-color: rgba(245, 242, 234, 0.28);
+    color: var(--ink);
+  }
+
+  /* Paired Avatars Header */
+  .paired-avatars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0 24px;
+  }
+  .p-avatar {
+    position: relative;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+  }
+  .p-avatar.you::before {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(239,185,78,.6) 0%, transparent 70%);
+    filter: blur(4px);
+  }
+  .p-avatar.them::before {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(91,217,154,.6) 0%, transparent 70%);
+    filter: blur(4px);
+  }
+  .p-img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+    position: relative; border: 2px solid var(--lip);
+  }
+  .amp {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ink-3);
+  }
+
+  /* Woven Bloom Key */
+  .bloom-key {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+  .key-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px;
+  }
+
+  /* Mechanism Pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 3px 9px; border-radius: 999px;
+  }
+  .pill.aligned { color: var(--emerald); background: rgba(91,217,154,.12); border: 1px solid rgba(91,217,154,.3); }
+  .pill.complement { color: var(--amber); background: rgba(239,185,78,.12); border: 1px solid rgba(239,185,78,.3); }
+  .pill.friction { color: #FFA384; background: rgba(255,163,132,.12); border: 1px solid rgba(255,163,132,.3); }
+
+  /* Thread Compare Row */
+  .t-row {
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--edge);
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .t-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .t-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .slider-box {
+    position: relative;
+    height: 24px;
+    background: rgba(255,255,255,.05);
+    border-radius: 12px;
+    margin: 12px 0 8px;
+    overflow: hidden;
+  }
+  .slider-line {
+    position: absolute; top: 11px; left: 16px; right: 16px; height: 2px; background: rgba(255,255,255,.1);
+  }
+  .dot {
+    position: absolute; top: 6px; width: 12px; height: 12px; border-radius: 50%;
+    transform: translateX(-50%);
+  }
+  .dot.you { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .dot.them { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+  .t-impact { font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+
+  /* Potential Friction Side-by-Side */
+  .sides-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .side-card {
+    background: rgba(255,255,255,.03);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .side-card.you { border: 1px solid rgba(239,185,78,.3); }
+  .side-card.them { border: 1px solid rgba(91,217,154,.3); }
+  .side-h { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .side-card.you .side-h { color: var(--amber); }
+  .side-card.them .side-h { color: var(--emerald); }
+  .side-desc { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+</style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="bg-photo"></div>
+    <div class="bg-scrim"></div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Switcher Bar -->
+    <div class="modebar">
+      <a href="./02_profile_and_dna_ui.html" class="mode-btn">Their Profile</a>
+      <button class="mode-btn active">View Bond</button>
+    </div>
+
+    <!-- PAIRED AVATARS -->
+    <div class="paired-avatars">
+      <div class="p-avatar you">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" alt="You" class="p-img">
+      </div>
+      <div class="amp">&</div>
+      <div class="p-avatar them">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80" alt="Mervyn" class="p-img">
+      </div>
+    </div>
+
+    <!-- DUAL WOVEN BLOOM CANVAS -->
+    <div class="card" style="text-align: center; padding: 24px 16px;">
+      <canvas id="wovenCanvas" width="640" height="480" style="width: 320px; height: 240px; margin: 0 auto; display: block;"></canvas>
+      <div class="bloom-key">
+        <span><i class="key-dot" style="background: var(--amber);"></i>You</span>
+        <span><i class="key-dot" style="background: var(--emerald);"></i>Mervyn</span>
+        <span><i class="key-dot" style="background: var(--ink);"></i>Where you overlap</span>
+      </div>
+    </div>
+
+    <!-- THESIS CARD -->
+    <div class="sec">
+      <div class="card" style="--wash: rgba(239,185,78,.14);">
+        <div class="lab a" style="margin-bottom: 6px;">Why You Might Click</div>
+        <h3 style="font-size: 18px; margin-bottom: 10px;">High conversational resonance in low-noise settings</h3>
+        <p style="font-size: 13.5px; color: var(--ink-2); line-height: 1.5;">
+          Both of you calibrate heavily toward thoughtful asynchronous communication and slow-burn loyalty. You will likely thrive in one-on-one pottery sessions or quiet neighborhood coffees rather than high-decibel parties.
+        </p>
+      </div>
+    </div>
+
+    <!-- THREAD BY THREAD -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Thread by Thread</span>
+        <span class="lab">4 Dimensions</span>
+      </div>
+
+      <!-- Thread 1 -->
+      <div class="t-row">
+        <div class="t-header">
+          <span class="t-title">Social Energy Room Layout</span>
+          <span class="pill aligned">Aligned</span>
+        </div>
+        <div class="slider-box">
+          <div class="slider-line"></div>
+          <div class="dot you" style="left: 32%;"></div>
+          <div class="dot them" style="left: 38%;"></div>
+        </div>
+        <div class="t-impact">
+          Both naturally migrate to quiet conversational perimeters. Neither drains the other to keep a conversation artificially lively.
+        </div>
+      </div>
+
+      <!-- Thread 2 -->
+      <div class="t-row">
+        <div class="t-header">
+          <span class="t-title">Communication Rhythm</span>
+          <span class="pill complement">Complementary</span>
+        </div>
+        <div class="slider-box">
+          <div class="slider-line"></div>
+          <div class="dot you" style="left: 45%;"></div>
+          <div class="dot them" style="left: 70%;"></div>
+        </div>
+        <div class="t-impact">
+          Mervyn sends occasional long voice memos; you reply concisely with high warmth. Different cadences that comfortably balance each other.
+        </div>
+      </div>
+
+      <!-- Thread 3 -->
+      <div class="t-row">
+        <div class="t-header">
+          <span class="t-title">Planning & Pacing Stance</span>
+          <span class="pill friction">Planning Friction</span>
+        </div>
+        <div class="slider-box">
+          <div class="slider-line"></div>
+          <div class="dot you" style="left: 25%;"></div>
+          <div class="dot them" style="left: 80%;"></div>
+        </div>
+        <div class="t-impact">
+          You prefer locking calendar dates 1–2 weeks ahead; Mervyn tends toward spontaneous Friday night proposals.
+        </div>
+      </div>
+    </div>
+
+    <!-- POTENTIAL FRICTION CARD -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Where You Might Rub</span>
+        <span class="lab" style="color:#FFA384">Noticeable</span>
+      </div>
+
+      <div class="card" style="border-color: rgba(255,163,132,.3);">
+        <p style="font-size: 13.5px; color: var(--ink); line-height: 1.45;">
+          Spontaneity vs. Advance Calendar Alignment. Different comfort zones around short-notice plans.
+        </p>
+
+        <div class="sides-grid">
+          <div class="side-card you">
+            <div class="side-h">You may feel</div>
+            <div class="side-desc">Rushed or disrespected when invitations arrive day-of.</div>
+          </div>
+          <div class="side-card them">
+            <div class="side-h">Mervyn may feel</div>
+            <div class="side-desc">Boxed-in or constrained by locking plans 2 weeks out.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHERE YOU'D ACTUALLY MEET -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="lab">Where You'd Actually Meet</span>
+        <span class="lab emerald">Shared Overlap</span>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 20px;">
+        <canvas id="vennCanvas" width="640" height="340" style="width: 320px; height: 170px; margin: 0 auto; display: block;"></canvas>
+        <p style="font-size: 12.5px; color: var(--ink-2); margin-top: 10px;">
+          Filter coffee walks in Tiong Bahru and weekend pottery workshops sit at the exact intersection of both your yes-lists.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. Dual Woven Bloom Rendering
+    const wc = document.getElementById('wovenCanvas');
+    const wctx = wc.getContext('2d');
+    wctx.scale(2, 2);
+    const ww = 320, wh = 240, wcx = ww / 2, wcy = wh / 2;
+
+    // You Bloom (Amber)
+    const petalsYou = 8;
+    for (let i = 0; i < petalsYou; i++) {
+      const angle = (i * 2 * Math.PI) / petalsYou;
+      wctx.save();
+      wctx.translate(wcx - 30, wcy);
+      wctx.rotate(angle);
+      wctx.beginPath();
+      wctx.ellipse(0, -45, 18, 45, 0, 0, Math.PI * 2);
+      wctx.fillStyle = 'rgba(239, 185, 78, 0.35)';
+      wctx.fill();
+      wctx.strokeStyle = 'rgba(239, 185, 78, 0.7)';
+      wctx.lineWidth = 1;
+      wctx.stroke();
+      wctx.restore();
+    }
+
+    // Them Bloom (Bright Emerald #5BD99A)
+    const petalsThem = 8;
+    for (let i = 0; i < petalsThem; i++) {
+      const angle = (i * 2 * Math.PI) / petalsThem;
+      wctx.save();
+      wctx.translate(wcx + 30, wcy);
+      wctx.rotate(angle);
+      wctx.beginPath();
+      wctx.ellipse(0, -45, 18, 45, 0, 0, Math.PI * 2);
+      wctx.fillStyle = 'rgba(91, 217, 154, 0.35)';
+      wctx.fill();
+      wctx.strokeStyle = 'rgba(91, 217, 154, 0.7)';
+      wctx.lineWidth = 1;
+      wctx.stroke();
+      wctx.restore();
+    }
+
+    // 2. Venn Diagram Canvas
+    const vc = document.getElementById('vennCanvas');
+    const vctx = vc.getContext('2d');
+    vctx.scale(2, 2);
+    const vw = 320, vh = 170;
+
+    // Left Circle (You - Amber)
+    vctx.beginPath();
+    vctx.arc(115, 85, 65, 0, Math.PI * 2);
+    vctx.fillStyle = 'rgba(239, 185, 78, 0.22)';
+    vctx.fill();
+    vctx.strokeStyle = 'rgba(239, 185, 78, 0.6)';
+    vctx.lineWidth = 1.5;
+    vctx.stroke();
+
+    // Right Circle (Them - Emerald)
+    vctx.beginPath();
+    vctx.arc(205, 85, 65, 0, Math.PI * 2);
+    vctx.fillStyle = 'rgba(91, 217, 154, 0.22)';
+    vctx.fill();
+    vctx.strokeStyle = 'rgba(91, 217, 154, 0.6)';
+    vctx.lineWidth = 1.5;
+    vctx.stroke();
+
+    // Labels
+    vctx.font = '700 11px Inter, sans-serif';
+    vctx.fillStyle = '#EFB94E';
+    vctx.textAlign = 'center';
+    vctx.fillText('Pottery', 85, 78);
+    vctx.fillText('Bouldering', 85, 96);
+
+    vctx.fillStyle = '#5BD99A';
+    vctx.fillText('Board Games', 235, 78);
+    vctx.fillText('Jazz Vinyl', 235, 96);
+
+    vctx.font = '800 11.5px Inter, sans-serif';
+    vctx.fillStyle = '#FFFFFF';
+    vctx.fillText('Filter Coffee', 160, 80);
+    vctx.fillText('& Art Walks', 160, 96);
+  </script>
+</body>
+</html>

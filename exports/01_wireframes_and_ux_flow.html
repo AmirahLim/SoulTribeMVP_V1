@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe — UX Architecture & Wireframe Blueprint Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #090B0A;
+    --surface: #111413;
+    --surface-card: #181C1B;
+    --border: #232A27;
+    --border-highlight: #34403B;
+    --blueprint: #2457E5;
+    --blueprint-dim: rgba(36, 87, 229, 0.12);
+    --amber: #EFB94E;
+    --emerald: #5BD99A;
+    --ink: #F5F2EA;
+    --ink-muted: #8E948B;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.5;
+    padding: 32px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    max-width: 1280px;
+    margin: 0 auto 40px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .brand-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 6px;
+    display: inline-block;
+  }
+  h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+  .subtitle { color: var(--ink-muted); font-size: 15px; margin-top: 4px; }
+  .meta-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: var(--emerald);
+  }
+
+  /* Quick Nav Links */
+  .quick-nav {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    max-width: 1280px;
+    margin: 0 auto 32px;
+    flex-wrap: wrap;
+  }
+  .nav-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  /* Core Section */
+  .section {
+    max-width: 1280px;
+    margin: 0 auto 60px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .step-num {
+    background: var(--amber);
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  /* UX Flow Diagram */
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .flow-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+  }
+  .flow-card .phase {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .flow-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .flow-card p { font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
+  .flow-card .artifact-tag {
+    margin-top: 14px;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--emerald);
+    background: rgba(91, 217, 154, 0.1);
+    border: 1px solid rgba(91, 217, 154, 0.25);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* Wireframe Layout Grid */
+  .wireframes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 32px;
+  }
+  .wireframe-frame {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 24px;
+  }
+  .wireframe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+  .wireframe-title { font-size: 16px; font-weight: 700; }
+  .wireframe-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber);
+  }
+
+  /* Blueprint Graphic Element */
+  .screen-mock {
+    background: #0D100F;
+    border: 2px dashed #2A3631;
+    border-radius: 20px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .wire-block {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    position: relative;
+  }
+  .wire-block.highlight {
+    border-color: rgba(239, 185, 78, 0.35);
+    background: rgba(239, 185, 78, 0.04);
+  }
+  .wire-block.emerald-hl {
+    border-color: rgba(91, 217, 154, 0.35);
+    background: rgba(91, 217, 154, 0.04);
+  }
+  .wire-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .wire-content { color: var(--ink); font-weight: 500; }
+  .wire-sub { color: #6D756B; font-size: 10px; margin-top: 4px; }
+  .wire-row { display: flex; gap: 8px; }
+  .wire-row > * { flex: 1; }
+
+  /* Design Laws Callout */
+  .law-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .law-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .law-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .law-card p { font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
+</style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <span class="brand-badge">Soul Tribe System Artifact</span>
+      <h1>UX Architecture & Wireframe Blueprint</h1>
+      <p class="subtitle">Complete system flow, interaction specifications, and structural wireframes for export.</p>
+    </div>
+    <div class="meta-tag">
+      v1.0 · Singapore Local Architecture
+    </div>
+  </header>
+
+  <div class="quick-nav">
+    <a href="#user-flow" class="nav-btn active">1. User Journeys & Flow</a>
+    <a href="#wireframes" class="nav-btn">2. Screen Blueprints</a>
+    <a href="#design-laws" class="nav-btn">3. Persistent Artifact Laws</a>
+    <a href="./02_profile_and_dna_ui.html" class="nav-btn" target="_blank">Export: Profile & DNA UI ↗</a>
+    <a href="./03_bond_view_ui.html" class="nav-btn" target="_blank">Export: Bond View UI ↗</a>
+    <a href="./04_outings_and_pitch_ui.html" class="nav-btn" target="_blank">Export: Outings & Pitch UI ↗</a>
+  </div>
+
+  <!-- SECTION 1: UX FLOW -->
+  <div class="section" id="user-flow">
+    <div class="section-title">
+      <span class="step-num">01</span>
+      <h2>System Information Architecture & UX Flow</h2>
+    </div>
+
+    <div class="flow-grid">
+      <div class="flow-card">
+        <div class="phase">Phase 01</div>
+        <h3>Friendship DNA</h3>
+        <p>10-axis behavioral assessment with continuous sliders. No MBTI box-traps. Calibrates energy, conflict, and communication cadence.</p>
+        <span class="artifact-tag">Friendship DNA Bloom</span>
+      </div>
+
+      <div class="flow-card">
+        <div class="phase">Phase 02</div>
+        <h3>Discovery & You</h3>
+        <p>Dynamic Self Profile (`/you`) & Member Directory (`/people`). Deep Tribal Read, pass arc progress, connection threads, and public boundaries.</p>
+        <span class="artifact-tag">Pass Arc & Threads</span>
+      </div>
+
+      <div class="flow-card">
+        <div class="phase">Phase 03</div>
+        <h3>Mutual Bond View</h3>
+        <p>Explores pairing dynamics between two members (`/people/[id]/bond`). Side-by-side behavioral mechanism comparison and honest friction analysis.</p>
+        <span class="artifact-tag">Woven Dual Bloom</span>
+      </div>
+
+      <div class="flow-card">
+        <div class="phase">Phase 04</div>
+        <h3>Outings Hub & Pitch</h3>
+        <p>Host-proposed small group outings capped at 6 participants. Real-time Unsplash cover matching, date/time suggestions, and match invitations.</p>
+        <span class="artifact-tag">Outing Proposal Card</span>
+      </div>
+
+      <div class="flow-card">
+        <div class="phase">Phase 05</div>
+        <h3>Post-Outing Rhythm</h3>
+        <p>After meetups, members complete a 2-question Rhythm Check that permanently modifies future match weights and unlocks mutual connection notes.</p>
+        <span class="artifact-tag">Rhythm Record</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: WIREFRAME BLUEPRINTS -->
+  <div class="section" id="wireframes">
+    <div class="section-title">
+      <span class="step-num">02</span>
+      <h2>Screen Wireframe Blueprints</h2>
+    </div>
+
+    <div class="wireframes-container">
+
+      <!-- WIREFRAME 1: YOU / PROFILE -->
+      <div class="wireframe-frame">
+        <div class="wireframe-header">
+          <div class="wireframe-title">1. Self & Member Profile (/you, /people/[id])</div>
+          <div class="wireframe-tag">PORTRAIT · 390px</div>
+        </div>
+
+        <div class="screen-mock">
+          <div class="wire-block">
+            <span class="wire-label">HEADER NAVIGATION</span>
+            <div class="wire-content">[Back] · Mode Switcher: "Their Profile" | "View Bond"</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">HERO IDENTITY</span>
+            <div class="wire-content">Avatar with Ambient Halo Aura · @handle · Area</div>
+            <div class="wire-sub">Tribe Standing Pill & Connector Badge</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">PASS ARC CANVAS</span>
+            <div class="wire-content">Radial Completion Arc (e.g. 84% Explored · 34 Signals)</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">FRIENDSHIP DNA BLOOM</span>
+            <div class="wire-content">10-petal organic Canvas Bloom (Energy, Conflict, Pacing)</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">TRIBAL READ</span>
+            <div class="wire-content">Synthesis Narrative (Emerald or Amber Wash Glass Frame)</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">4 CONNECTION THREADS</span>
+            <div class="wire-content">1. Social Energy (Room Layout Diagram)</div>
+            <div class="wire-content">2. Communication (Rhythm Pulse Wave)</div>
+            <div class="wire-content">3. Friendship Style (2-Axis Map)</div>
+            <div class="wire-content">4. Social Rhythm (Week Schedule Strip)</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">PUBLIC BOUNDARIES</span>
+            <div class="wire-content">Punctuality · Cancellation Stance · Group Size Boundary</div>
+          </div>
+
+          <div class="wire-row">
+            <div class="wire-block">
+              <span class="wire-label">WHAT MATTERS</span>
+              <div class="wire-content">Constellation Canvas</div>
+            </div>
+            <div class="wire-block">
+              <span class="wire-label">THEY'RE INTO</span>
+              <div class="wire-content">Interest Nodes Graph</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIREFRAME 2: BOND VIEW -->
+      <div class="wireframe-frame">
+        <div class="wireframe-header">
+          <div class="wireframe-title">2. Bond View (/people/[id]/bond)</div>
+          <div class="wireframe-tag">PORTRAIT · 390px</div>
+        </div>
+
+        <div class="screen-mock">
+          <div class="wire-block">
+            <span class="wire-label">MODE SWITCHER</span>
+            <div class="wire-content">Toggle: "Their Profile" | "[View Bond]"</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">PAIRED AVATARS</span>
+            <div class="wire-content">User (Amber #EFB94E) & Member (Emerald #5BD99A)</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">WOVEN BLOOM CANVAS (#weave)</span>
+            <div class="wire-content">Dual Intersecting Petals · Overlap Zone (Cream)</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">CLICK THESIS CARD</span>
+            <div class="wire-content">"Why you might click" · Natural shared environment</div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">THREAD BY THREAD MECHANISMS</span>
+            <div class="wire-content">Paired Dot Sliders · Mechanism Pill (Aligned/Complementary)</div>
+            <div class="wire-sub">Dynamic behavioral impact copy for each thread</div>
+          </div>
+
+          <div class="wire-block emerald-hl">
+            <span class="wire-label">POTENTIAL FRICTION (HONEST LAW)</span>
+            <div class="wire-content">Severity Pill: "Noticeable" / "Subtle"</div>
+            <div class="wire-row" style="margin-top:8px">
+              <div class="wire-block" style="border-color:rgba(239,185,78,.4)">You May Feel (Amber)</div>
+              <div class="wire-block" style="border-color:rgba(91,217,154,.4)">They May Feel (Emerald)</div>
+            </div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">WHERE YOU'D ACTUALLY MEET</span>
+            <div class="wire-content">Venn Diagram Canvas (Your Interests ∩ Theirs)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WIREFRAME 3: OUTINGS & PITCH COMPOSER -->
+      <div class="wireframe-frame">
+        <div class="wireframe-header">
+          <div class="wireframe-title">3. Outings & Pitch (/outings/pitch)</div>
+          <div class="wireframe-tag">PORTRAIT · 390px</div>
+        </div>
+
+        <div class="screen-mock">
+          <div class="wire-block">
+            <span class="wire-label">HEADER & CANCEL</span>
+            <div class="wire-content">← Cancel Proposal · "Pitch Outing"</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">1. TITLE & HOST PITCH</span>
+            <div class="wire-content">Title Input (4–80 characters)</div>
+            <div class="wire-content" style="margin-top:6px">Host Pitch: Optional (up to 600 characters)</div>
+          </div>
+
+          <div class="wire-row">
+            <div class="wire-block">
+              <span class="wire-label">CATEGORY</span>
+              <div class="wire-content">Select: Coffee / Dining / Deep Talk / Cultural / Craft / Active</div>
+            </div>
+            <div class="wire-block">
+              <span class="wire-label">AREA</span>
+              <div class="wire-content">Text: e.g. Tiong Bahru</div>
+            </div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">DATE & TIME (OVERFLOW-SAFE)</span>
+            <div class="wire-row">
+              <div class="wire-content">[ Date Picker ]</div>
+              <div class="wire-content">[ Time Picker ]</div>
+            </div>
+            <div class="wire-sub" style="margin-top:6px">Suggested Slots: [Fri 7:30 PM] [Sat 3:00 PM] [Sun 2:00 PM]</div>
+          </div>
+
+          <div class="wire-block highlight">
+            <span class="wire-label">AI / LIVE COVER PHOTO PREVIEW</span>
+            <div class="wire-content">Dynamic Context-Matched Image (Board games, Coffee, Pottery)</div>
+            <div class="wire-row" style="margin-top:6px">
+              <div class="wire-content">[Try Another]</div>
+              <div class="wire-content">[Upload Custom]</div>
+            </div>
+          </div>
+
+          <div class="wire-block">
+            <span class="wire-label">2. INVITE MATCHES</span>
+            <div class="wire-content">Guest List with Avatars · Max 6 People Hard Cap Enforced</div>
+          </div>
+
+          <div class="wire-block emerald-hl">
+            <span class="wire-label">PRIMARY ACTION</span>
+            <div class="wire-content" style="text-align:center; font-weight:700">Publish Outing Proposal →</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECTION 3: DESIGN LAWS -->
+  <div class="section" id="design-laws">
+    <div class="section-title">
+      <span class="step-num">03</span>
+      <h2>Non-Negotiable Product Design Laws</h2>
+    </div>
+
+    <div class="law-grid">
+      <div class="law-card">
+        <h4>1. Persistent Artifacts</h4>
+        <p>Every feature must produce a durable record. Outings create Outing Records; profiles produce Friendship DNA; post-outing feedback yields a Rhythm Record.</p>
+      </div>
+
+      <div class="law-card">
+        <h4>2. No Marketplace / Dating Mechanics</h4>
+        <p>No swiping. No hot-or-not. No raw match percentages (e.g. "98%"). Compatibility is expressed through human-readable shapes and behavioral mechanisms.</p>
+      </div>
+
+      <div class="law-card">
+        <h4>3. Always Show Friction</h4>
+        <p>Every match explanation and bond analysis must include an honest "Where you might rub" section. A match with only positives is a bug.</p>
+      </div>
+
+      <div class="law-card">
+        <h4>4. Hard 6-Person Outing Cap</h4>
+        <p>Free-tier outings are capped at 6 participants including the host. Enforced in database schema triggers, API endpoints, and user interfaces.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

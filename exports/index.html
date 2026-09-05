@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soul Tribe — Design & UX Export Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #070908;
+    --surface: #0E1210;
+    --surface-card: #151A18;
+    --border: #232B28;
+    --amber: #EFB94E;
+    --emerald: #5BD99A;
+    --ink: #F5F2EA;
+    --ink-muted: #8E948B;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.5;
+    padding: 40px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+  .brand {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; }
+  .desc { font-size: 16px; color: var(--ink-muted); max-width: 680px; }
+
+  /* Export Cards Grid */
+  .export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .export-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .export-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 242, 234, 0.25);
+  }
+  .card-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--emerald);
+    background: rgba(91, 217, 154, 0.1);
+    border: 1px solid rgba(91, 217, 154, 0.2);
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  .card-h { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .card-p { font-size: 14px; color: var(--ink-muted); line-height: 1.5; margin-bottom: 20px; }
+
+  .features-list {
+    list-style: none;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .features-list li {
+    font-size: 12.5px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .features-list li::before {
+    content: "→";
+    color: var(--amber);
+    font-weight: bold;
+  }
+
+  .btn-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .btn-open:hover { opacity: 0.9; }
+
+  /* Info Banner */
+  .info-banner {
+    background: rgba(239, 185, 78, 0.05);
+    border: 1px solid rgba(239, 185, 78, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .info-title { font-size: 14px; font-weight: 700; color: var(--amber); margin-bottom: 2px; }
+  .info-sub { font-size: 13px; color: var(--ink-muted); }
+  .file-path {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #000;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="brand">Soul Tribe Singapore</span>
+      <h1>UX, UI & Wireframe Export Suite</h1>
+      <p class="desc">
+        Complete standalone HTML package exporting the design system, information architecture, wireframe blueprints, and high-fidelity interactive screens.
+      </p>
+    </header>
+
+    <div class="export-grid">
+
+      <!-- CARD 1 -->
+      <div class="export-card">
+        <div>
+          <span class="card-tag">SYSTEM BLUEPRINT · SPEC</span>
+          <h2 class="card-h">01. Wireframes & UX Architecture</h2>
+          <p class="card-p">
+            Information architecture, 5-phase user journey, wireframe schematics, and non-negotiable design laws.
+          </p>
+          <ul class="features-list">
+            <li>End-to-end UX flow diagram</li>
+            <li>5 structural screen wireframe blueprints</li>
+            <li>Design law specifications & constraint callouts</li>
+          </ul>
+        </div>
+        <a href="./01_wireframes_and_ux_flow.html" class="btn-open">Launch Blueprint View ↗</a>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="export-card">
+        <div>
+          <span class="card-tag">PROFILE EXPERIENCE · UI</span>
+          <h2 class="card-h">02. Profile & Friendship DNA</h2>
+          <p class="card-p">
+            Interactive high-fidelity rendering of the Self Profile (/you) and Member Profile (/people/[id]).
+          </p>
+          <ul class="features-list">
+            <li>Pass Arc Canvas (84% Explored, 34 Signals)</li>
+            <li>10-petal organic Friendship DNA Bloom</li>
+            <li>4 Behavioral Connection Threads & Public Boundaries</li>
+            <li>What Matters Constellation Canvas</li>
+          </ul>
+        </div>
+        <a href="./02_profile_and_dna_ui.html" class="btn-open">Launch Profile UI ↗</a>
+      </div>
+
+      <!-- CARD 3 -->
+      <div class="export-card">
+        <div>
+          <span class="card-tag">MUTUAL DYNAMICS · UI</span>
+          <h2 class="card-h">03. Bond View & Friction</h2>
+          <p class="card-p">
+            High-fidelity compatibility view between two members (/people/[id]/bond) matching soultribebond.html.
+          </p>
+          <ul class="features-list">
+            <li>Paired Avatars with amber & emerald halo rings</li>
+            <li>Dual Woven Bloom Canvas (#5BD99A bright emerald)</li>
+            <li>Thread by Thread sliders & mechanism badges</li>
+            <li>Potential Friction Card with side-by-side perspectives</li>
+            <li>Where You'd Actually Meet Venn diagram canvas</li>
+          </ul>
+        </div>
+        <a href="./03_bond_view_ui.html" class="btn-open">Launch Bond View UI ↗</a>
+      </div>
+
+      <!-- CARD 4 -->
+      <div class="export-card">
+        <div>
+          <span class="card-tag">MEETUPS & PITCH · UI</span>
+          <h2 class="card-h">04. Outings Hub & Pitch Composer</h2>
+          <p class="card-p">
+            High-fidelity outings explorer and proposal composer with live AI cover matching.
+          </p>
+          <ul class="features-list">
+            <li>Outings Feed with attendee counts and status badges</li>
+            <li>Composer with optional pitch description</li>
+            <li>iOS Safari-contained date & time inputs</li>
+            <li>Instant date & time suggestion pills</li>
+            <li>Dynamic activity cover photo matching (board games, coffee, etc.)</li>
+          </ul>
+        </div>
+        <a href="./04_outings_and_pitch_ui.html" class="btn-open">Launch Outings UI ↗</a>
+      </div>
+
+    </div>
+
+    <div class="info-banner">
+      <div>
+        <div class="info-title">Standalone Offline Capability</div>
+        <div class="info-sub">All HTML files are self-contained with embedded CSS and Canvas graphics. They open directly in any browser without a web server or build step.</div>
+      </div>
+      <div class="file-path">exports/</div>
+    </div>
+  </div>
+
+</body>
+</html>
