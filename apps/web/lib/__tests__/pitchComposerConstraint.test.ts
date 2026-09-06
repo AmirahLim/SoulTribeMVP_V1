@@ -34,7 +34,7 @@ describe('Pitch Outing — Constraint and Layout Verification', () => {
     // Ensure validateForm has no pitch requirement
     expect(pitchSource).not.toContain('Please enter a pitch description');
     expect(pitchSource).toContain('Host Pitch (Optional, up to 600 characters)');
-    expect(pitchSource).toContain('dbPitch');
+    expect(pitchSource).toContain("rpc('create_pitch'");
   });
 });
 

@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const candidateId = body.candidateId;
 
-  if (!candidateId || typeof candidateId !== 'string') {
+  if (!candidateId || typeof candidateId !== 'string' || !/^[0-9a-f-]{36}$/i.test(candidateId)) {
     return NextResponse.json({ error: 'candidateId is required' }, { status: 400 });
   }
 
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
       age_pref_min,
       age_pref_max,
       status,
+      is_demo,
       trait_intent (*),
       trait_communication (*),
       trait_personality (*),
@@ -121,13 +122,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
+  const [blocked, reported] = await Promise.all([
+    adminClient.from('blocks').select('blocker_id,blocked_id').or(`blocker_id.eq.${authUserId},blocked_id.eq.${authUserId}`),
+    adminClient.from('reports').select('reporter_id,reported_id').or(`reporter_id.eq.${authUserId},reported_id.eq.${authUserId}`),
+  ]);
+  if (blocked.error || reported.error) return NextResponse.json({ error: 'Unable to verify access' }, { status: 503 });
+  if (viewerRow.status !== 'active' || candRow.status !== 'active' ||
+      blocked.data?.some(b => b.blocker_id === candidateId || b.blocked_id === candidateId) ||
+      reported.data?.some(r => r.reporter_id === candidateId || r.reported_id === candidateId)) {
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+  }
+
   // Build ProfileVectors
   const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
   const candVec = toProfileVector(adaptRowToUserData(candRow), candidateId);
 
   const matchRes = score(viewerVec, candVec);
   const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
-  const explanation = generateMatchExplanation(viewerVec, candVec);
+  const explanation = generateMatchExplanation({ ...viewerVec, values: viewerVec.values?.filter(v => v.visibility === 'public') }, { ...candVec, values: candVec.values?.filter(v => v.visibility === 'public') });
   const asymmetric = calculateAsymmetricFit(viewerVec, candVec, matchRes.resonance);
 
   const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
@@ -148,7 +160,7 @@ export async function POST(req: NextRequest) {
   const threads = threadKeys.map((key) => {
     const isAnsweredA = isThreadAnswered(viewerVec, key);
     const isAnsweredB = isThreadAnswered(candVec, key);
-    const isKnown = isAnsweredA && isAnsweredB;
+    const isKnown = isAnsweredA && isAnsweredB && (key !== 'values' || (viewerVec.values?.every(v => v.visibility === 'public') && candVec.values?.every(v => v.visibility === 'public')));
     const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
 
     const contrib = matchRes.contributions[key];
@@ -220,6 +232,8 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({
+    candidate: { id: candRow.id, displayName: candRow.display_name, bio: candRow.bio, homeArea: candRow.home_area },
+    clickText: explanation.click_text,
     overall: {
       rankScore: softRes.adjustedScore,
       resonance: matchRes.resonance,

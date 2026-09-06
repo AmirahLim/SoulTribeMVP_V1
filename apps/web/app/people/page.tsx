@@ -216,7 +216,7 @@ function PeopleListContent() {
                         <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-3.5">
                           <Link href={`/people/${person.id}/bond`}>
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4E6E4C]/50 bg-[#15261C]/80 px-3.5 py-1.5 text-[12px] font-bold text-emerald-200 shadow-md backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-[#15261C]">
-                              <Sparkles className="h-3.5 w-3.5 text-emerald-400" /> View Bond
+                              <Sparkles className="h-3.5 w-3.5 text-emerald-400" /> Connection Notes
                             </span>
                           </Link>
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-black shadow-md transition-transform group-hover:scale-105">

@@ -7,6 +7,10 @@
  */
 export function adaptRowToUserData(row: any): any {
   return {
+    id: row.id,
+    status: row.status,
+    tier: row.tier,
+    version: row.profile_version,
     displayName: row.display_name,
     homeArea: row.home_area || 'Singapore',
     avatarUrl: row.avatar_url,

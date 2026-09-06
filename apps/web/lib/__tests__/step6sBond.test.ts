@@ -42,12 +42,13 @@ describe('Step 6s — Bond View & Surface Wiring Guards', () => {
     expect(profilePageSource).not.toContain('Trail running, specialty coffee, vinyl');
   });
 
-  it('6. people/[id]/page.tsx imports score and generateSelfProfile', () => {
-    expect(profilePageSource).toContain('score');
-    expect(profilePageSource).toContain('generateSelfProfile');
+  it('6. people/[id]/page.tsx links to server-backed Connection Notes', () => {
+    expect(profilePageSource).toContain('Read Connection Notes');
+    expect(profilePageSource).not.toContain('generateSelfProfile');
   });
 
-  it('7. bond/page.tsx imports and calls generateMatchExplanation', () => {
-    expect(bondPageSource).toContain('generateMatchExplanation');
+  it('7. Connection Notes reads the authenticated server explanation', () => {
+    expect(bondPageSource).toContain("fetch('/api/bond'");
+    expect(bondPageSource).not.toContain('_candidateVec');
   });
 });

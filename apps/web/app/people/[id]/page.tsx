@@ -1,29 +1,21 @@
 'use client';
-
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Bloom,
-  GlassCard,
-  ReadPill,
-  ThreadBloom,
-} from '@soul-tribe/ui';
-import { getRankedMatches, RankedMatch, toProfileVector, countRealMembers, isSmallCommunityMode, getFitLabel } from '../../../lib/matching';
-import { DEMO_PROFILES, getGenderAvatarForName, generateMatchExplanation, score, generateSelfProfile } from '@soul-tribe/core';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { AuthGuard } from '../../../components/AuthGuard';
-import { getUserProfile, calculateTribeStanding } from '../../../lib/userStore';
-import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
-import { fetchUserPitches, OutingItem } from '../../../lib/outingsStore';
-import { ThreadCard, ThreadData } from '../../../components/profile/ThreadCard';
-import { TribalRead } from '../../../components/profile/TribalRead';
-import { BoundariesMatching } from '../../../components/profile/BoundariesMatching';
-import { ValuesConstellationCanvas } from '../../../components/profile/ValuesConstellationCanvas';
-import { InterestGraphCanvas } from '../../../components/profile/InterestGraphCanvas';
-import { OutingTriadCanvas } from '../../../components/profile/OutingTriadCanvas';
-import { PassArcCanvas } from '../../../components/profile/PassArcCanvas';
+import { useAuth } from '../../../lib/authContext';
+import { getSupabaseBrowserClient } from '../../../lib/supabase';
+import { SafetyActions } from '../../../components/outings/SafetyActions';
 
+type PublicProfile = {
+  id: string;
+  display_name: string;
+  handle: string;
+  avatar_url?: string;
+  bio?: string;
+  home_area?: string;
+  user_values?: { value_key: string }[];
+};
 export default function PersonDetailPage() {
   return (
     <AuthGuard>
@@ -31,407 +23,161 @@ export default function PersonDetailPage() {
     </AuthGuard>
   );
 }
-
 function PersonDetailContent() {
-  const params = useParams();
-  const router = useRouter();
-
-  const rawId = params?.id;
-  const personId = Array.isArray(rawId) ? rawId[0] : (rawId as string) || '';
-  const cleanPersonId = personId ? decodeURIComponent(personId).trim().toLowerCase() : '';
-
-  const [rankedMatch, setRankedMatch] = useState<RankedMatch | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [memberPitches, setMemberPitches] = useState<OutingItem[]>([]);
-
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [status, setStatus] = useState('Loading profile…');
+  const [attempt, setAttempt] = useState(0);
+  const [pitches, setPitches] = useState<
+    { id: string; title: string; area: string }[]
+  >([]);
   useEffect(() => {
-    async function loadMemberPitches() {
-      if (!cleanPersonId) return;
-      const pitches = await fetchUserPitches(cleanPersonId);
-      setMemberPitches(pitches);
+    let active = true;
+    setProfile(null);
+    setStatus('Loading profile…');
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        id,
+      )
+    ) {
+      setStatus('Profile unavailable.');
+      return;
     }
-    loadMemberPitches();
-  }, [cleanPersonId]);
-
-  useEffect(() => {
-    async function loadMatch() {
-      if (!cleanPersonId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const user = getUserProfile();
-        const matches = await getRankedMatches(user, { limit: 40 });
-        let found = matches.find((m) => {
-          const mId = (m.id || '').toLowerCase();
-          const mName = (m.name || '').toLowerCase().replace(/\s+/g, '');
-          return (
-            mId === cleanPersonId ||
-            (mId && mId.includes(cleanPersonId)) ||
-            (cleanPersonId && cleanPersonId.includes(mId)) ||
-            (mName && cleanPersonId.includes(mName))
-          );
-        });
-
-        if (!found && checkIsSupabaseConfigured()) {
-          try {
-            const client = getSupabaseBrowserClient();
-            const { data: dbProfile } = await client
-              .from('profiles')
-              .select(`
-                *,
-                trait_intent (*),
-                trait_communication (*),
-                trait_personality (*),
-                trait_social_rhythm (*),
-                trait_emotional (*),
-                trait_experience (*),
-                trait_lifestyle (*),
-                trait_geography (*),
-                user_interests (*),
-                user_values (*)
-              `)
-              .or(`id.eq.${cleanPersonId},handle.ilike.${cleanPersonId}`)
-              .maybeSingle();
-
-            if (dbProfile) {
-              const viewerVec = toProfileVector(user, user.id);
-              // Pass the FULL DB profile to toProfileVector — it reads trait_personality,
-              // trait_communication, etc. from (user as any).trait_* automatically.
-              const candVec = toProfileVector({
-                displayName: dbProfile.display_name,
-                homeArea: dbProfile.home_area || 'Singapore',
-                avatarUrl: dbProfile.avatar_url,
-                bio: dbProfile.bio,
-                // Spread trait tables so toProfileVector can find them via (user as any).trait_*
-                ...dbProfile,
-              } as any, dbProfile.id);
-
-              const explanation = generateMatchExplanation(viewerVec, candVec);
-              const matchResult = score(viewerVec, candVec);
-              const minConf = Math.min(viewerVec.profile.confidence || 0, candVec.profile.confidence || 0);
-
-              found = {
-                id: dbProfile.id,
-                name: dbProfile.display_name || 'Member',
-                avatarUrl: dbProfile.avatar_url || getGenderAvatarForName(dbProfile.display_name || 'Member'),
-                homeArea: dbProfile.home_area || 'Singapore',
-                bio: dbProfile.bio || '',
-                rankScore: matchResult.rank_score,
-                resonance: matchResult.resonance,
-                logistics: matchResult.logistics,
-                clickText: explanation.click_text,
-                rubText: explanation.friction_text,
-                fitLabel: getFitLabel(matchResult.rank_score, minConf < 0.55, minConf),
-                provisional: minConf < 0.55,
-                isDemo: false,
-              } as RankedMatch;
-              // Attach candVec for render-time selfProfile generation (not part of RankedMatch type)
-              (found as any)._candidateVec = candVec;
-            }
-          } catch (dbErr) {
-            console.error('Direct Supabase profile lookup error:', dbErr);
-          }
+    // Explicit public projection, governed by bilateral block/status RLS.
+    getSupabaseBrowserClient()
+      .from('profiles')
+      .select(
+        'id,display_name,handle,avatar_url,bio,home_area,user_values(value_key)',
+      )
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) setStatus('Unable to load this profile.');
+        else if (!data) setStatus('Profile unavailable.');
+        else {
+          setProfile(data as PublicProfile);
+          setStatus('');
         }
-
-        if (found) {
-          setRankedMatch(found);
-        }
-      } catch (err) {
-        console.error('Failed to load match detail:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadMatch();
-  }, [cleanPersonId]);
-
-  if (loading) {
-    return (
-      <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] flex flex-col items-center justify-center p-6 text-center">
-        <div className="h-10 w-10 rounded-full border-2 border-white/20 border-t-[#5BD99A] animate-spin" />
-        <p className="mt-4 text-xs font-medium text-[rgba(245,242,234,0.70)]">Loading profile...</p>
-      </div>
-    );
-  }
-
-  const memberName = rankedMatch?.name || 'Member';
-  const memberFirstName = memberName.split(' ')[0] || 'Member';
-
-  // Wire to self-profile synthesizer for 3rd-person view.
-  // If RLS blocks trait data, candidateVec will be thin and selfProfile
-  // will return "still developing" states — which is honest, not fake.
-  const candidateVec = (rankedMatch as any)?._candidateVec;
-  const selfProfile = candidateVec ? generateSelfProfile(candidateVec) : null;
-
-  // 3rd Person Tribal Read Data — from synthesizer or honest empty state
-  const memberTribalReadData = selfProfile ? {
-    ...selfProfile.tribalRead,
-    // Rewrite summary to 3rd person if it starts with "You"
-    summary: selfProfile.tribalRead.summary.replace(/^You /i, `${memberFirstName} `).replace(/\byou\b/g, memberFirstName.toLowerCase()),
-  } : {
-    headline: 'Still getting to know them',
-    summary: `${memberFirstName} hasn't shared enough data yet for a full profile read.`,
-    pills: [],
-    topThreads: ['personality', 'communication'] as [string, string],
-    sections: [],
-  };
-
-  const bloomThreads = selfProfile ? selfProfile.bloomThreads : [
-    { key: 'personality', label: 'Social Energy', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'communication', label: 'Communication', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'social_rhythm', label: 'Social Rhythm', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'intent', label: 'Friendship Style', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'emotional', label: 'Emotional Connection', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'interests', label: 'Interests', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'values', label: 'Values', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'lifestyle', label: 'Play & Humour', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'experience', label: 'Conversation', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-    { key: 'logistics', label: 'Availability', strength: 0, confidence: 0, sentence: 'Not enough data yet.' },
-  ];
-
-  const rawHandle = (rankedMatch as any)?.handle || cleanPersonId || 'mervyn';
-  const displayHandle = rawHandle.replace(/^[a-f0-9-]{20,}/i, memberFirstName.toLowerCase()).replace(/^@/, '');
-
-  // Connection threads (excluding interests and values which have dedicated canvases)
-  const connectionThreads = (selfProfile?.connectionThreads || []).filter(
-    (t) => t.key !== 'interests' && t.key !== 'values'
-  );
-
-  const exploredThreadsCount = bloomThreads.filter((t) => t.strength > 0).length;
-
-  const DEFAULT_VALUE_POSITIONS = [
-    { x: 0.50, y: 0.46, weight: 1.0 },
-    { x: 0.24, y: 0.24, weight: 0.66 },
-    { x: 0.78, y: 0.28, weight: 0.62 },
-    { x: 0.72, y: 0.76, weight: 0.55 },
-    { x: 0.22, y: 0.72, weight: 0.58 },
-  ];
-
-  const DEFAULT_INTEREST_POSITIONS = [
-    { x: 0.50, y: 0.30, weight: 1.0, isRabbitHole: true },
-    { x: 0.20, y: 0.58, weight: 0.7 },
-    { x: 0.76, y: 0.56, weight: 0.75 },
-    { x: 0.38, y: 0.83, weight: 0.6 },
-    { x: 0.82, y: 0.20, weight: 0.55 },
-  ];
-
-  // Derive candidate interests
-  const candidateInterests = ((candidateVec?.interests || []) as any[]).map((item: any, idx: number) => {
-    const pos = DEFAULT_INTEREST_POSITIONS[idx % DEFAULT_INTEREST_POSITIONS.length];
-    return {
-      name: item.node_name || item.node_path || (typeof item === 'string' ? item : 'Interest'),
-      x: pos.x,
-      y: pos.y,
-      weight: pos.weight,
-      isRabbitHole: pos.isRabbitHole,
+      });
+    getSupabaseBrowserClient()
+      .from('outings')
+      .select('id,title,area')
+      .eq('host_id', id)
+      .in('state', ['open', 'confirmed'])
+      .order('starts_at')
+      .limit(6)
+      .then(({ data }) => {
+        if (active) setPitches(data || []);
+      });
+    return () => {
+      active = false;
     };
-  });
-
-  // Derive candidate values
-  const rawCandValues = ((candidateVec as any)?.user_values || []) as any[];
-  const candValueLabels: string[] = [];
-  for (const v of rawCandValues) {
-    const rawKey = (v.value_name || v.value_key || '') as string;
-    const parts = rawKey.split(/_{2,}|,|\/|\band\b/i);
-    for (const part of parts) {
-      let word = part.replace(/^_+|_+$/g, '').replace(/_+/g, ' ').trim();
-      if (!word) continue;
-      if (word.toLowerCase().includes('change their mind')) word = 'Open-mindedness';
-      else if (word.toLowerCase().includes('better information')) word = 'Adaptability';
-      else if (word.length > 20) word = word.split(' ')[0];
-      word = word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-      if (!candValueLabels.includes(word)) {
-        candValueLabels.push(word);
-      }
-    }
-  }
-  const topCandValues = candValueLabels.slice(0, 5);
-  const candidateValues = topCandValues.map((label, idx) => {
-    const pos = DEFAULT_VALUE_POSITIONS[idx];
-    return {
-      label,
-      name: label,
-      x: pos.x,
-      y: pos.y,
-      weight: pos.weight,
-    };
-  });
-
+  }, [id, attempt]);
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
-      {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <img
-          src="/user-you-bg.jpg"
-          alt="Canvas Ground Background"
-          className="absolute inset-0 h-full w-full object-cover blur-[2px] opacity-75"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(4,6,5,0.80)] via-[rgba(4,6,5,0.60)] to-[rgba(4,6,5,0.95)]" />
+    <main className="min-h-screen bg-ground-paper text-ink-espresso px-5 pt-8 pb-28">
+      <div className="max-w-2xl mx-auto space-y-8">
+        <Link href="/people" className="inline-block py-3 underline text-sm">
+          Back to people
+        </Link>
+        {status && (
+          <div role="status">
+            <p>{status}</p>
+            <button
+              className="py-3 underline"
+              onClick={() => setAttempt((n) => n + 1)}
+            >
+              Try again
+            </button>
+          </div>
+        )}
+        {profile && (
+          <>
+            <header className="flex gap-5 items-center">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt=""
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-ground-sand flex items-center justify-center text-3xl font-serif">
+                  {profile.display_name.charAt(0)}
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-accent-sage tracking-widest uppercase">
+                  Soul Tribe
+                </p>
+                <h1 className="font-serif text-4xl mt-2">
+                  {profile.display_name}
+                </h1>
+                <p className="text-sm text-ink-bark mt-2">
+                  @{profile.handle} · {profile.home_area}
+                </p>
+              </div>
+            </header>
+            <section className="rounded-3xl p-6 bg-ground-card border border-ink-espresso/10 shadow-e1">
+              <h2 className="font-serif text-2xl">In their own words</h2>
+              <p className="mt-3 leading-relaxed whitespace-pre-wrap text-ink-bark">
+                {profile.bio || 'They haven’t added an introduction yet.'}
+              </p>
+            </section>
+            {!!profile.user_values?.length && (
+              <section className="bg-ground-mist rounded-3xl p-6">
+                <h2 className="font-serif text-2xl">What they’ve shared</h2>
+                <div className="flex flex-wrap gap-3 mt-4">
+                  {profile.user_values.map((v) => (
+                    <span
+                      key={v.value_key}
+                      className="rounded-full bg-ground-card px-4 py-2 text-sm"
+                    >
+                      {v.value_key.replaceAll('_', ' ')}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+            <section className="rounded-3xl bg-ground-sand p-6">
+              <h2 className="font-serif text-2xl">
+                What could friendship feel like?
+              </h2>
+              <p className="mt-3 text-ink-bark leading-relaxed">
+                Explore your shared rhythms, possible differences and the
+                threads that are still taking shape.
+              </p>
+              <Link
+                href={`/people/${profile.id}/bond`}
+                className="inline-block mt-4 rounded-full bg-accent-sage text-ink-chalk px-6 py-3"
+              >
+                Read Connection Notes
+              </Link>
+            </section>
+            <Link
+              href={`/outings/pitch?inviteId=${profile.id}`}
+              className="inline-block py-3 underline"
+            >
+              Invite them to an outing
+            </Link>
+            {!!pitches.length && (
+              <section>
+                <h2 className="font-serif text-2xl">Their open Pitches</h2>
+                {pitches.map((p) => (
+                  <Link
+                    className="block py-4 border-b"
+                    key={p.id}
+                    href={`/outings/${p.id}`}
+                  >
+                    {p.title} · {p.area}
+                  </Link>
+                ))}
+              </section>
+            )}
+            {user && <SafetyActions userId={user.id} targetId={profile.id} />}
+          </>
+        )}
       </div>
-
-      {/* WRAPPER */}
-      <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-
-        {/* Mode Switcher Bar */}
-        <div className="flex gap-2 pt-2">
-          <button className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(245,242,234,0.10)] border border-[rgba(245,242,234,0.24)] text-[#F5F2EA]">
-            Their profile
-          </button>
-          <Link
-            href={`/people/${encodeURIComponent(cleanPersonId)}/bond`}
-            className="flex-1 text-center text-xs font-semibold py-2.5 rounded-full bg-[rgba(255,255,255,0.05)] border border-[rgba(245,242,234,0.11)] text-[rgba(245,242,234,0.44)] hover:text-[#F5F2EA] transition-all"
-          >
-            View Bond
-          </Link>
-        </div>
-
-        {/* Member Header Row */}
-        <div className="flex items-center gap-3.5 pt-2">
-          <div className="relative h-[58px] w-[58px] shrink-0 rounded-full bg-gradient-to-br from-[#33503F] to-[#1B2C22] shadow-[0_8px_22px_rgba(0,0,0,0.6)] p-[2px]">
-            <div className="relative h-full w-full overflow-hidden rounded-full border border-white/20">
-              <img
-                src={rankedMatch?.avatarUrl || getGenderAvatarForName(memberName)}
-                alt={memberName}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          </div>
-
-          <div>
-            <h1 className="font-sans text-[23px] font-bold text-[#F5F2EA] leading-tight">
-              {memberName}
-            </h1>
-            <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-0.5">
-              @{displayHandle} · {rankedMatch?.homeArea || 'Bishan'}
-            </p>
-            <ReadPill label="Deep read · 61 signals" tone="emerald" className="mt-2" />
-          </div>
-        </div>
-
-        {/* Pass Arc */}
-        <PassArcCanvas
-          exploredPct={exploredThreadsCount / 10}
-          signalsText={`Developing read · ${exploredThreadsCount} explored`}
-        />
-
-        {/* Dynamic Friendship DNA Bloom */}
-        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-4">
-          <Bloom threads={bloomThreads} size={280} interactive={false} />
-          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-1">
-            Ten threads · {exploredThreadsCount} explored
-          </p>
-        </div>
-
-        {/* 3rd Person Tribal Read Card (Emerald Wash) */}
-        <TribalRead
-          data={memberTribalReadData}
-          label={`${memberFirstName}'s Tribal Read`}
-          tone="emerald"
-          showReadMore={false}
-        />
-
-        {/* Member Connection Threads */}
-        <div className="flex flex-col gap-3.5">
-          <div className="flex items-baseline justify-between px-1">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              {memberFirstName}'s Threads
-            </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-              {connectionThreads.length} of 10
-            </p>
-          </div>
-
-          {connectionThreads.map((t) => {
-            const threadData: ThreadData = {
-              key: t.key,
-              name: t.name,
-              strength: t.strength,
-              confidence: t.confidence,
-              heroDescriptor: t.heroDescriptor,
-              note: t.note,
-              naturalSetting: t.naturalSetting || '',
-              thriveWhen: t.thriveWhen || '',
-              signals: t.signals as any,
-              extraVisualData: t.extraVisualData,
-            };
-            return <ThreadCard key={t.key} thread={threadData} />;
-          })}
-        </div>
-
-        {/* Boundaries & Social Principles (Public in 3rd person) */}
-        {selfProfile?.boundaries && (
-          <BoundariesMatching
-            voice="third"
-            memberName={memberFirstName}
-            punctualityStance={selfProfile.boundaries.punctualityStance}
-            cancellationStance={selfProfile.boundaries.cancellationStance}
-            groupSizeBoundary={selfProfile.boundaries.groupSizeBoundary}
-            locationBoundary={selfProfile.boundaries.locationBoundary}
-          />
-        )}
-
-        {/* What Matters (Values Constellation Canvas) */}
-        {candidateValues.length > 0 && (
-          <div className="flex flex-col">
-            <div className="flex items-baseline justify-between px-1 mb-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-                What Matters
-              </p>
-            </div>
-            <ValuesConstellationCanvas
-              values={candidateValues}
-              note={`${candidateValues[0].label} sits at the centre of most of ${memberFirstName}'s answers — the others orbit it.`}
-            />
-          </div>
-        )}
-
-        {/* They're Into (Interest Graph Canvas) */}
-        {candidateInterests.length > 0 && (
-          <div className="flex flex-col">
-            <div className="flex items-baseline justify-between px-1 mb-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-                {memberFirstName} is Into
-              </p>
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
-                Rabbit hole
-              </p>
-            </div>
-            <InterestGraphCanvas nodes={candidateInterests} />
-          </div>
-        )}
-
-        {/* Outing DNA (Triad Radar Canvas) */}
-        {selfProfile?.outingPreferences && (
-          <div className="flex flex-col">
-            <div className="flex items-baseline justify-between px-1 mb-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
-                Outing DNA
-              </p>
-            </div>
-            <OutingTriadCanvas
-              descriptors={selfProfile.outingPreferences.descriptors}
-              values={selfProfile.outingPreferences.values}
-              instantYes={selfProfile.outingPreferences.instantYes}
-              usuallyYes={selfProfile.outingPreferences.usuallyYes}
-              convinceMe={selfProfile.outingPreferences.convinceMe}
-            />
-          </div>
-        )}
-
-        {/* Gated Connection Notes Statement */}
-        <div className="flex items-center gap-2 text-[12.5px] text-[rgba(245,242,234,0.44)] py-3.5 px-4 rounded-2xl bg-[rgba(10,12,11,0.50)] border border-[rgba(245,242,234,0.08)]">
-          <span>🔒</span>
-          <span>Connection Notes are visible once you've shared an outing with {memberFirstName}.</span>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
-          Member profile · third person read
-        </p>
-
-      </div>
-    </div>
+    </main>
   );
 }

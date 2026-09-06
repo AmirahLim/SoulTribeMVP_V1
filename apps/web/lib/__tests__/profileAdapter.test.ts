@@ -161,3 +161,20 @@ describe('Part 5 — Profile Adapter Tests', () => {
     expect(toProfileVector(fastUser).emotional?.er_opening_pace).toBeGreaterThan(0.5);
   });
 });
+
+describe('Evidence and privacy boundaries', () => {
+  it('preserves matching-only stance and importance and removes private values', () => {
+    const user: any = { displayName: 'Member', deepProfile: {}, status: 'under_review', user_values: [
+      { value_key: 'growth', stance: 0.2, importance: 0.4, visibility: 'matching_only' },
+      { value_key: 'private_value', stance: 0.9, importance: 1, visibility: 'private' },
+    ] };
+    const vector = toProfileVector(user);
+    expect(vector.values).toEqual([user.user_values[0]]);
+    expect(vector.profile.status).toBe('under_review');
+  });
+  it('does not turn desired friend qualities into personal values or reliability', () => {
+    const vector = toProfileVector({ displayName: 'Member', q8Qualities: ['Reliability'], deepProfile: {} } as any);
+    expect(vector.values).toBeUndefined();
+    expect(vector.emotional?.reliability_self).toBeUndefined();
+  });
+});

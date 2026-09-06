@@ -9,6 +9,8 @@ import {
   recordEvent,
 } from '@soul-tribe/core';
 import type { MatchContext } from '@soul-tribe/core';
+import { reflectionBoost, REFLECTION_RANKING_VERSION } from '../../../lib/reflectionRanking';
+import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import { toProfileVector } from '../../../lib/profileAdapter';
 
 export const runtime = 'nodejs';
@@ -92,9 +94,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Part 4.2: Cap to 200 profiles and select specific columns
-    const { data: dbProfiles, error: fetchErr } = await adminClient
-      .from('profiles')
-      .select(`
+    const profileSelection = `
         id,
         display_name,
         avatar_url,
@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
         age_pref_min,
         age_pref_max,
         status,
+        is_demo,
         trait_intent (*),
         trait_communication (*),
         trait_personality (*),
@@ -114,7 +115,10 @@ export async function POST(req: NextRequest) {
         trait_geography (*),
         user_interests (*, interest_nodes (name)),
         user_values (*)
-      `)
+      `;
+    const { data: dbProfiles, error: fetchErr } = await adminClient
+      .from('profiles')
+      .select(profileSelection)
       .eq('status', 'active')
       .limit(200);
 
@@ -141,103 +145,43 @@ export async function POST(req: NextRequest) {
 
     const candidatesPool = nonDemoProfiles.filter((p) => p.id !== authUserId);
 
+    const body = await req.json().catch(() => ({}));
+    const allowedCategories = ['coffee', 'dining', 'active', 'cultural', 'nightlife', 'creative', 'intellectual'];
+    if (body.activityCategory && !allowedCategories.includes(body.activityCategory)) return NextResponse.json({ error: 'Unknown activity category' }, { status: 400 });
     const context: MatchContext = {
+      activity_category: body.activityCategory,
       blockedUserIds,
       reportedUserIds,
       candidatePoolSize: candidatesPool.length,
     };
 
     // 3. Find viewer profile
-    const viewerRow = dbProfiles.find((p) => p.id === authUserId);
+    const { data: viewerRow, error: viewerError } = await adminClient.from('profiles').select(profileSelection).eq('id', authUserId).eq('status', 'active').maybeSingle();
+    if (viewerError) return NextResponse.json({ error: 'Unable to load your profile' }, { status: 503 });
     if (!viewerRow) {
       return NextResponse.json([], { status: 200 });
     }
 
-    const viewerVec = toProfileVector(
-      {
-        displayName: viewerRow.display_name,
-        homeArea: viewerRow.home_area || 'Singapore',
-        avatarUrl: viewerRow.avatar_url,
-        bio: viewerRow.bio,
-        birthYear: viewerRow.birth_year,
-        agePrefMin: viewerRow.age_pref_min,
-        agePrefMax: viewerRow.age_pref_max,
-        trait_intent: Array.isArray(viewerRow.trait_intent) ? viewerRow.trait_intent[0] : viewerRow.trait_intent,
-        trait_communication: Array.isArray(viewerRow.trait_communication) ? viewerRow.trait_communication[0] : viewerRow.trait_communication,
-        trait_personality: Array.isArray(viewerRow.trait_personality) ? viewerRow.trait_personality[0] : viewerRow.trait_personality,
-        trait_social_rhythm: Array.isArray(viewerRow.trait_social_rhythm) ? viewerRow.trait_social_rhythm[0] : viewerRow.trait_social_rhythm,
-        trait_emotional: Array.isArray(viewerRow.trait_emotional) ? viewerRow.trait_emotional[0] : viewerRow.trait_emotional,
-        trait_experience: Array.isArray(viewerRow.trait_experience) ? viewerRow.trait_experience[0] : viewerRow.trait_experience,
-        trait_lifestyle: Array.isArray(viewerRow.trait_lifestyle) ? viewerRow.trait_lifestyle[0] : viewerRow.trait_lifestyle,
-        trait_geography: Array.isArray(viewerRow.trait_geography) ? viewerRow.trait_geography[0] : viewerRow.trait_geography,
-        user_interests: viewerRow.user_interests || [],
-        user_values: viewerRow.user_values || [],
-      } as any,
-      authUserId
-    );
+    const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
 
+    const { data: learningPreference } = await adminClient.from('recommendation_preferences').select('use_reflections').eq('user_id', authUserId).maybeSingle();
+    const { data: ownReflections } = learningPreference?.use_reflections
+      ? await adminClient.from('rhythm_checks').select('about_id,would_meet_again').eq('author_id', authUserId).limit(200)
+      : { data: [] };
     // 4. Candidate Scoring & Explanation
-    const candidates = dbProfiles.filter((p) => p.id !== authUserId);
+    const candidates = candidatesPool;
     const rankedMatches = [];
     const candidateVecMap = new Map();
     const matchResMap = new Map();
 
     for (const candRow of candidates) {
-      const intentRow = Array.isArray(candRow.trait_intent) ? candRow.trait_intent[0] : candRow.trait_intent;
-      const commRow = Array.isArray(candRow.trait_communication) ? candRow.trait_communication[0] : candRow.trait_communication;
-      const persRow = Array.isArray(candRow.trait_personality) ? candRow.trait_personality[0] : candRow.trait_personality;
-      const rhythmRow = Array.isArray(candRow.trait_social_rhythm) ? candRow.trait_social_rhythm[0] : candRow.trait_social_rhythm;
-      const emoRow = Array.isArray(candRow.trait_emotional) ? candRow.trait_emotional[0] : candRow.trait_emotional;
-      const expRow = Array.isArray(candRow.trait_experience) ? candRow.trait_experience[0] : candRow.trait_experience;
-      const lifeRow = Array.isArray(candRow.trait_lifestyle) ? candRow.trait_lifestyle[0] : candRow.trait_lifestyle;
-      const geoRow = Array.isArray(candRow.trait_geography) ? candRow.trait_geography[0] : candRow.trait_geography;
-
-      const candInterests = (candRow.user_interests || [])
-        .map((i: any) => i.interest_nodes?.name || i.node_name || i.name)
-        .filter(Boolean);
-
-      const candValues = (candRow.user_values || [])
-        .map((v: any) => v.value_key || v.value_name || v.name)
-        .filter(Boolean);
-
-      const candVec = toProfileVector(
-        {
-          displayName: candRow.display_name,
-          homeArea: candRow.home_area || geoRow?.home_area || 'Singapore',
-          avatarUrl: candRow.avatar_url,
-          bio: candRow.bio,
-          birthYear: candRow.birth_year,
-          agePrefMin: candRow.age_pref_min,
-          agePrefMax: candRow.age_pref_max,
-          q1Finding: intentRow?.intents,
-          q2Feelings: commRow?.conv_styles,
-          q3Energy: persRow?.extraversion,
-          q3GroupSize: expRow?.group_size_pref,
-          q4Connected: commRow?.mediums,
-          q5PlanningRhythm: rhythmRow?.planning_horizon,
-          q5Availability: rhythmRow?.availability,
-          q6Outings: candInterests,
-          q7EmotionalPacing: emoRow?.er_opening_pace,
-          q8Qualities: candValues,
-          trait_intent: intentRow,
-          trait_communication: commRow,
-          trait_personality: persRow,
-          trait_social_rhythm: rhythmRow,
-          trait_emotional: emoRow,
-          trait_experience: expRow,
-          trait_lifestyle: lifeRow,
-          trait_geography: geoRow,
-          user_interests: candRow.user_interests || [],
-          user_values: candRow.user_values || [],
-        } as any,
-        candRow.id
-      );
+      const candVec = toProfileVector(adaptRowToUserData(candRow), candRow.id);
 
       const matchRes = score(viewerVec, candVec, context);
       const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
       if (!softRes.eligible) continue;
 
-      const explanation = generateMatchExplanation(viewerVec, candVec);
+      const explanation = generateMatchExplanation({ ...viewerVec, values: viewerVec.values?.filter(v => v.visibility === 'public') }, { ...candVec, values: candVec.values?.filter(v => v.visibility === 'public') });
 
       candidateVecMap.set(candRow.id, candVec);
       matchResMap.set(candRow.id, matchRes);
@@ -249,7 +193,7 @@ export async function POST(req: NextRequest) {
         avatarUrl: candRow.avatar_url || getGenderAvatarForName(candRow.display_name || 'Member'),
         homeArea: candRow.home_area || 'Singapore',
         bio: candRow.bio || 'Member in Singapore',
-        rankScore: softRes.adjustedScore,
+        rankScore: Math.min(1, softRes.adjustedScore + reflectionBoost(Boolean(learningPreference?.use_reflections), candRow.id, ownReflections || [])),
         resonance: matchRes.resonance,
         logistics: matchRes.logistics,
         clickText: explanation.click_text,
@@ -280,6 +224,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Aggregate audit keeps private feedback out of client-visible text.
+    await adminClient.from('interaction_events').insert({ actor_id: authUserId, event_type: 'recommendations_generated', engine_version: REFLECTION_RANKING_VERSION,
+      payload: { count: rankedMatches.length, reflections_enabled: Boolean(learningPreference?.use_reflections) } });
     return NextResponse.json(rankedMatches, { status: 200 });
   } catch (err: any) {
     console.error('[SoulTribe API] Exception during match scoring:', err);

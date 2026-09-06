@@ -1,4 +1,5 @@
 'use client';
+import { OutingUpdates } from '../../components/outings/OutingUpdates';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -38,11 +39,11 @@ export default function OutingsPage() {
 
 type TabState = 'invited' | 'confirmed' | 'pitches' | 'past';
 
-function checkIsPast(item: { startsAt?: string; dateTime?: string; state?: string }): boolean {
-  if (item.state === 'completed') return true;
+function checkIsPast(item: { startsAt?: string; dateTime?: string; state?: string; outingState?: string; durationMinutes?: number }): boolean {
+  if (item.state === 'completed' || item.outingState === 'completed') return true;
   if (item.startsAt) {
     const time = new Date(item.startsAt).getTime();
-    if (!isNaN(time)) return time < Date.now();
+    if (!isNaN(time)) return time + (item.durationMinutes || 60) * 60000 < Date.now();
   }
   if (item.dateTime) {
     const parsed = Date.parse(item.dateTime);
@@ -110,7 +111,7 @@ function OutingsContent() {
 
   // 2. Confirmed Outings (future dates)
   const confirmedOutings = goingList.filter(
-    (item) => (item.state === 'accepted' || item.hostId === userId) && !checkIsPast(item)
+    (item) => (item.state === 'accepted' || item.hostId === userId) && !checkIsPast(item) && item.outingState !== 'cancelled'
   );
 
   // Sort chronologically (soonest first)
@@ -174,6 +175,8 @@ function OutingsContent() {
 
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-5">
+        <OutingUpdates userId={userId} />
+        {goingList.filter(item => item.state === 'requested' && !checkIsPast(item)).map(item => <Link key={item.id} href={`/outings/${item.id}`} className="block p-4 border rounded-xl mb-3">Awaiting host approval · {item.title}</Link>)}
         {/* 1. Header & Top Action */}
         <div className="flex items-center justify-between pt-2">
           <div>

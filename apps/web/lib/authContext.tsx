@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from './supabase';
-import { runSilentDeeperPassBackfill } from './silentBackfill';
+import { hydrateProfile } from './profileHydration';
+import { setProfileCacheAccount } from './userStore';
 
 export interface AuthContextType {
   user: User | null;
@@ -36,59 +37,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [profileError, setProfileError] = useState('');
   const isConfigured = checkIsSupabaseConfigured();
 
   useEffect(() => {
+    if (!isConfigured) { setLoading(false); return; }
     let mounted = true;
-
-    async function initAuth() {
-      if (!isConfigured) {
-        if (mounted) setLoading(false);
-        return;
-      }
-
-      try {
-        const client = getSupabaseBrowserClient();
-        const { data: { session: initialSession } } = await client.auth.getSession();
-
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-          setLoading(false);
-
-          if (initialSession?.user?.id) {
-            runSilentDeeperPassBackfill(initialSession.user.id).catch(() => {});
-          }
-        }
-
-        const { data: { subscription } } = client.auth.onAuthStateChange(
-          (_event, currentSession) => {
-            if (mounted) {
-              setSession(currentSession);
-              setUser(currentSession?.user ?? null);
-              setLoading(false);
-
-              if (currentSession?.user?.id) {
-                runSilentDeeperPassBackfill(currentSession.user.id).catch(() => {});
-              }
-            }
-          }
-        );
-
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (err) {
-        console.error('Supabase Auth init error:', err);
-        if (mounted) setLoading(false);
-      }
-    }
-
-    initAuth();
-
-    return () => {
-      mounted = false;
+    let generation = 0;
+    let account: string | null | undefined;
+    const client = getSupabaseBrowserClient();
+    const applySession = async (next: Session | null) => {
+      if (!mounted) return;
+      const nextAccount = next?.user?.id ?? null;
+      if (nextAccount === account) { setSession(next); return; }
+      account = nextAccount;
+      const current = ++generation;
+      setLoading(true); setProfileError('');
+      setProfileCacheAccount(nextAccount);
+      try { if (nextAccount) await hydrateProfile(nextAccount); }
+      catch (error) { if (mounted && current === generation) setProfileError('Unable to load your saved profile. Please reload before editing.'); }
+      if (!mounted || current !== generation) return;
+      setSession(next); setUser(next?.user ?? null); setLoading(false);
     };
+    // Defer queries outside the Supabase auth callback to avoid its session lock.
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, next) => {
+      setTimeout(() => { void applySession(next); }, 0);
+    });
+    client.auth.getSession().then(({ data }) => { if (account === undefined) void applySession(data.session); });
+    return () => { mounted = false; generation++; subscription.unsubscribe(); };
   }, [isConfigured]);
 
   const signInWithOtp = async (
@@ -232,6 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const client = getSupabaseBrowserClient();
         await client.auth.signOut();
       }
+      setProfileCacheAccount(null);
       setSession(null);
       setUser(null);
     } catch (err) {
@@ -255,7 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
       }}
     >
-      {children}
+      {profileError ? <div role="alert" className="min-h-screen p-8 bg-ground-paper text-ink-espresso"><p>{profileError}</p><button onClick={() => window.location.reload()} className="p-3 underline">Reload</button></div> : children}
     </AuthContext.Provider>
   );
 }

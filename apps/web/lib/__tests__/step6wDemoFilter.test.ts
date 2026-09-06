@@ -156,6 +156,6 @@ describe('Step 6w — Demo Filter & Real Member Database Strictness', () => {
 
     expect(content).toContain('.filter(');
     expect(content).toContain('isDemo');
-    expect(content).toContain('failedGuestNames');
+    expect(content).toContain('outingError');
   });
 });

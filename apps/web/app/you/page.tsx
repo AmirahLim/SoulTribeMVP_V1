@@ -1,4 +1,6 @@
 'use client';
+import { AnswerPortrait } from '../../components/profile/AnswerPortrait';
+import { ReflectionPreferences } from '../../components/outings/ReflectionPreferences';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -305,6 +307,7 @@ function ProfileContent() {
           }
         />
 
+        <AnswerPortrait profile={localProfile} />
         {/* 3. Friendship DNA Bloom */}
         <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-4">
           <Bloom threads={bloomThreads} size={280} interactive />
@@ -385,6 +388,7 @@ function ProfileContent() {
           />
         )}
 
+        {authUser?.id && <ReflectionPreferences userId={authUser.id} />}
         {/* 8. Connection Notes — only when data exists */}
         {myRead.connectionNotes && myRead.connectionNotes.length > 0 && (
           <ConnectionNotes notes={myRead.connectionNotes} />

@@ -38,7 +38,8 @@ function PitchComposerContent() {
   const [pitchDate, setPitchDate] = useState<string>('');
   const [pitchTime, setPitchTime] = useState<string>('');
   const [durationMinutes, setDurationMinutes] = useState<number>(120);
-  const [maxParticipants] = useState<number>(6);
+  const [maxParticipants, setMaxParticipants] = useState<number>(6);
+  const [hostType, setHostType] = useState<'individual' | 'community'>('individual');
   const [setting, setSetting] = useState<string>('General');
 
   // Cover Image Search & Host Override State
@@ -199,7 +200,7 @@ function PitchComposerContent() {
   useEffect(() => {
     async function loadCandidates() {
       const userProfile = getUserProfile();
-      const list = await getRankedMatches(userProfile, { limit: 30 });
+      const list = await getRankedMatches(userProfile, { limit: 30, activityCategory });
       const nonDemoList = list.filter(
         (c) => !c.isDemo && !/^00000000-0000-0000-0000-/.test(c.id)
       );
@@ -208,20 +209,17 @@ function PitchComposerContent() {
       if (initialInviteId) {
         const match = nonDemoList.find((m) => m.id === initialInviteId);
         if (match) setSelectedGuests([match]);
-      } else if (nonDemoList.length > 0) {
-        const maxGuests = maxParticipants - 1;
-        setSelectedGuests(nonDemoList.slice(0, maxGuests));
       }
     }
     loadCandidates();
-  }, [initialInviteId]);
+  }, [initialInviteId, activityCategory]);
 
   const toggleGuest = (candidate: RankedMatch) => {
     if (selectedGuests.some((g) => g.id === candidate.id)) {
       setSelectedGuests(selectedGuests.filter((g) => g.id !== candidate.id));
     } else {
       if (selectedGuests.length + 1 >= maxParticipants) {
-        alert(`Free tier outings are capped at ${maxParticipants} total participants including host.`);
+        alert(`This outing has room for ${maxParticipants} people including you.`);
         return;
       }
       setSelectedGuests([...selectedGuests, candidate]);
@@ -262,8 +260,8 @@ function PitchComposerContent() {
       return 'Budget band must be between 0 and 4.';
     }
 
-    if (maxParticipants > 6) {
-      return 'Free tier outings are capped at 6 participants maximum.';
+    if (!Number.isInteger(maxParticipants) || maxParticipants < 2) {
+      return 'Choose a capacity of at least two, including you.';
     }
 
     if (!pitchDate || !pitchTime) {
@@ -337,90 +335,31 @@ function PitchComposerContent() {
           ? (activityCategory as typeof VALID_DB_CATEGORIES[number])
           : 'cultural';
 
-        // Pad or synthesize pitch for database check constraint compatibility on remote DB
-        const cleanTitle = title.trim();
-        const cleanPitch = pitch.trim();
-        const dbPitch = cleanPitch.length >= 20
-          ? cleanPitch
-          : cleanPitch.length > 0
-            ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
-            : `${cleanTitle} meetup hosted by ${profile.displayName || 'Soul Tribe member'}`;
-
-        // Insert into outings table with cover image columns
-        const { data: newOuting, error: outingError } = await client
-          .from('outings')
-          .insert({
-            host_id: hostId,
-            title: title.trim(),
-            pitch: dbPitch,
-            activity_category: dbCategory,
-            area: area.trim(),
-            setting: setting.trim() || 'General',
-            starts_at: startsAtIso,
-            duration_minutes: durationMinutes,
-            budget_band: budgetBand,
-            orientation: orientation,
-            visibility: visibility,
-            max_participants: maxParticipants,
-            state: 'open',
-          })
-          .select('*')
-          .single();
-
-        if (outingError || !newOuting) {
-          setErrorMessage(outingError?.message || 'Failed to insert outing into database');
-          setIsSubmitting(false);
+        const { data: newId, error: outingError } = await client.rpc('create_pitch', {
+          p_outing: {
+            title: title.trim(), pitch: pitch.trim(), activity_category: dbCategory,
+            area: area.trim(), setting: setting.trim() || 'General', starts_at: startsAtIso,
+            duration_minutes: durationMinutes, budget_band: budgetBand, orientation, visibility,
+            max_participants: maxParticipants, host_type: hostType, ...selectedCover,
+          },
+          p_invitees: selectedGuests.filter(g => g.id && !g.isDemo && !/^00000000-0000-0000-0000-/.test(g.id)).map(g => g.id),
+        });
+        if (outingError || !newId) {
+          setErrorMessage(outingError?.message || 'Unable to create the outing.');
           return;
         }
-
-        // Insert host's own row into outing_members (role: host, state: accepted)
-        const { error: memberError } = await client
-          .from('outing_members')
-          .insert({
-            outing_id: newOuting.id,
-            user_id: hostId,
-            role: 'host',
-            state: 'accepted',
-          });
-
-        if (memberError) {
-          setErrorMessage(`Outing created, but failed to insert host membership: ${memberError.message}`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Insert invited guests into outing_members if any (excluding demo profiles)
-        const failedGuestNames: string[] = [];
-        for (const guest of selectedGuests) {
-          if (guest.id && !guest.isDemo && !/^00000000-0000-0000-0000-/.test(guest.id)) {
-            const { error: gErr } = await client.from('outing_members').insert({
-              outing_id: newOuting.id,
-              user_id: guest.id,
-              role: 'guest',
-              state: 'invited',
-            });
-            if (gErr) {
-              failedGuestNames.push(guest.name || 'Member');
-            }
-          }
-        }
-
-        if (failedGuestNames.length > 0) {
-          setErrorMessage(`Failed to send invitations to: ${failedGuestNames.join(', ')}.`);
-          setIsSubmitting(false);
-          return;
-        }
+        const newOuting = { id: newId as string };
 
         const newPitchObj: PitchedOuting = {
           id: newOuting.id,
           title: title.trim(),
-          pitch: dbPitch,
+          pitch: pitch.trim(),
           area: area.trim(),
           dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
           hostName: profile.displayName || 'You',
           hostAvatar: profile.avatarUrl || getGenderAvatarForName(profile.displayName || 'You'),
           seatsTotal: maxParticipants,
-          seatsFilled: 1 + selectedGuests.length,
+          seatsFilled: 1,
           cohesionScore: 85,
           joinedGuests: selectedGuests.map((g) => ({
             id: g.id,
@@ -460,7 +399,7 @@ function PitchComposerContent() {
       const newPitchObj: PitchedOuting = {
         id: fallbackId,
         title: title.trim(),
-        pitch: dbPitch,
+        pitch: pitch.trim(),
         area: area.trim(),
         dateTime: new Date(startsAtIso).toLocaleString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }),
         hostName: profile.displayName || 'You',
@@ -509,6 +448,16 @@ function PitchComposerContent() {
         </button>
 
         <form onSubmit={handleCreateOuting} className="flex flex-col gap-6">
+          <div className="flex gap-4">
+            <label>Hosting as
+              <select value={hostType} onChange={e => setHostType(e.target.value as 'individual' | 'community')} className="block bg-brand-ground p-3">
+                <option value="individual">Individual</option><option value="community">Community</option>
+              </select>
+            </label>
+            <label>Capacity, including you
+              <input type="number" min={2} value={maxParticipants} onChange={e => setMaxParticipants(Number(e.target.value))} className="block bg-brand-ground p-3 w-28" />
+            </label>
+          </div>
           <div>
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
               Host Proposal Composer
@@ -517,7 +466,7 @@ function PitchComposerContent() {
               Pitch Outing
             </h1>
             <p className="mt-1 text-[14px] text-white/80">
-              Design a small-group meetup for up to 6 people.
+              Plan an intentional gathering with room for everyone.
             </p>
           </div>
 

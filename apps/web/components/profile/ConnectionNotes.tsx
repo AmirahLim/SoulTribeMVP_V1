@@ -40,7 +40,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
 
       <div className="relative z-10">
         <div>
-          <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">Connection Notes</h3>
+          <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">Your Social Signature</h3>
           <p className="mt-0.5 text-xs text-[rgba(245,242,234,0.44)]">
             Little things worth knowing about being friends with me.
           </p>

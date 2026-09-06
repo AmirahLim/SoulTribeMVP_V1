@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 const mockDbProfiles = [
   {
-    id: 'viewer-1',
+    id: '11111111-1111-4111-8111-000000000001',
     display_name: 'Viewer One',
     avatar_url: 'https://example.com/v1.jpg',
     home_area: 'Singapore',
@@ -25,7 +25,7 @@ const mockDbProfiles = [
     user_values: [{ value_name: 'Authenticity' }],
   },
   {
-    id: 'cand-full',
+    id: '11111111-1111-4111-8111-000000000002',
     display_name: 'Cand Full',
     avatar_url: 'https://example.com/c1.jpg',
     home_area: 'Singapore',
@@ -46,7 +46,7 @@ const mockDbProfiles = [
     user_values: [{ value_name: 'Authenticity' }],
   },
   {
-    id: 'cand-no-emotional',
+    id: '11111111-1111-4111-8111-000000000003',
     display_name: 'Cand No Emo',
     avatar_url: 'https://example.com/c2.jpg',
     home_area: 'Singapore',
@@ -67,7 +67,7 @@ const mockDbProfiles = [
     user_values: [{ value_name: 'Humor' }],
   },
   {
-    id: 'viewer-empty',
+    id: '11111111-1111-4111-8111-000000000004',
     display_name: 'Viewer Empty',
     avatar_url: 'https://example.com/ve.jpg',
     home_area: 'Singapore',
@@ -91,13 +91,14 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
     auth: {
       getUser: vi.fn(async (token: string) => {
-        if (token === 'valid_token') return { data: { user: { id: 'viewer-1' } }, error: null };
-        if (token === 'empty_token') return { data: { user: { id: 'viewer-empty' } }, error: null };
+        if (token === 'valid_token') return { data: { user: { id: '11111111-1111-4111-8111-000000000001' } }, error: null };
+        if (token === 'empty_token') return { data: { user: { id: '11111111-1111-4111-8111-000000000004' } }, error: null };
         return { data: { user: null }, error: new Error('Invalid token') };
       }),
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
+        or: vi.fn(async () => ({ data: [], error: null })),
         in: vi.fn(async (_col: string, ids: string[]) => {
           const profiles = mockDbProfiles.filter((p) => ids.includes(p.id));
           return { data: profiles, error: null };
@@ -127,7 +128,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000002' }),
     });
 
     const req2 = new NextRequest('http://localhost/api/bond', {
@@ -136,7 +137,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000003' }),
     });
 
     const res1 = await POST(req1);
@@ -159,7 +160,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer empty_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000002' }),
     });
 
     const res = await POST(req);
@@ -181,7 +182,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000003' }),
     });
 
     const res = await POST(req);
@@ -203,7 +204,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000002' }),
     });
 
     const res = await POST(req);
@@ -222,7 +223,7 @@ describe('POST /api/bond Endpoint Tests', () => {
   });
 
   it('5. Every sentence the generator emits is reachable only when the answers it cites are present', async () => {
-    const candidateId = 'cand-full';
+    const candidateId = '11111111-1111-4111-8111-000000000002';
     const req = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
       headers: {
@@ -247,7 +248,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-no-emotional' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000003' }),
     });
 
     const res2 = await POST(req2);
@@ -265,7 +266,7 @@ describe('POST /api/bond Endpoint Tests', () => {
         'Content-Type': 'application/json',
         Authorization: 'Bearer valid_token',
       },
-      body: JSON.stringify({ candidateId: 'cand-full' }),
+      body: JSON.stringify({ candidateId: '11111111-1111-4111-8111-000000000002' }),
     });
 
     const res = await POST(req);

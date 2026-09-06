@@ -1,0 +1,189 @@
+import { PGlite } from '@electric-sql/pglite';
+import { ltree } from '@electric-sql/pglite/contrib/ltree';
+import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
+import { readFile, readdir } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const db = new PGlite({ extensions: { ltree, uuid_ossp } });
+await db.exec(`
+ create role authenticated; create role anon; create role service_role bypassrls;
+ create schema auth; create table auth.users(id uuid primary key);
+ create function auth.uid() returns uuid language sql as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+ create function auth.role() returns text language sql as $$ select nullif(current_setting('request.jwt.claim.role',true),'') $$;
+ grant usage on schema auth to authenticated,anon; grant execute on all functions in schema auth to authenticated,anon;
+ create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(id uuid,name text,bucket_id text);
+ create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;
+ grant usage on schema public to authenticated; alter default privileges in schema public grant select,insert,update,delete on tables to authenticated;
+ alter default privileges in schema public grant usage,select on sequences to authenticated;
+`);
+for (const file of (
+  await readdir(new URL('../supabase/migrations/', import.meta.url))
+).sort()) {
+  try {
+    await db.exec(
+      await readFile(
+        new URL('../supabase/migrations/' + file, import.meta.url),
+        'utf8',
+      ),
+    );
+  } catch (e) {
+    console.error('Migration failed:', file, e.message);
+    process.exit(1);
+  }
+}
+console.log('All committed migrations apply.');
+const host = '10000000-0000-4000-8000-000000000001',
+  guest = '10000000-0000-4000-8000-000000000002',
+  other = '10000000-0000-4000-8000-000000000003';
+const outing = '20000000-0000-4000-8000-000000000001';
+for (const [i, id] of [host, guest, other].entries())
+  await db.query(`insert into auth.users values($1);`, [id]);
+async function as(id) {
+  await db.exec(
+    `reset role; set request.jwt.claim.role='authenticated'; set request.jwt.claim.sub='${id}'; set role authenticated;`,
+  );
+}
+async function fails(sql, pattern, params = []) {
+  await assert.rejects(db.query(sql, params), pattern);
+}
+for (const [i, id] of [host, guest, other].entries()) {
+  await as(id);
+  await db.query(`select save_profile_bundle($1,'{}','{}',null)`, [
+    {
+      handle: 'member_' + i,
+      display_name: 'Member ' + i,
+      home_area: 'Singapore',
+      birth_year: 1995,
+    },
+  ]);
+}
+await as(host);
+await fails(`update profiles set tier='host_plus' where id=$1`, /Protected/, [
+  host,
+]);
+await fails(`update profiles set status='banned' where id=$1`, /Protected/, [
+  host,
+]);
+await db.query(
+  `insert into outings(id,host_id,title,pitch,activity_category,area,starts_at,duration_minutes,budget_band,orientation,setting,max_participants,visibility,state) values($1,$2,'Coffee plan','Coffee together in a public cafe','coffee','Central',now()+interval '1 day',60,1,'either','quiet',2,'requestable','open')`,
+  [outing, host],
+);
+assert.equal(
+  (
+    await db.query(
+      `select count(*)::int n from outing_members where outing_id=$1`,
+      [outing],
+    )
+  ).rows[0].n,
+  1,
+);
+await fails(
+  `insert into outing_members(outing_id,user_id,state) values($1,$2,'accepted')`,
+  /approval/,
+  [outing, guest],
+);
+await db.query(
+  `insert into outing_members(outing_id,user_id,state) values($1,$2,'invited')`,
+  [outing, guest],
+);
+await db.query(
+  `insert into outing_logistics values($1,'Public cafe','Meet by the entrance','public',now())`,
+  [outing],
+);
+await as(guest);
+assert.equal((await db.query(`select * from outing_logistics`)).rows.length, 0);
+await fails(
+  `insert into outing_messages(outing_id,author_id,body) values($1,$2,'hello')`,
+  /row-level security/,
+  [outing, guest],
+);
+await db.query(
+  `update outing_members set state='accepted' where outing_id=$1 and user_id=$2`,
+  [outing, guest],
+);
+assert.equal((await db.query(`select * from outing_logistics`)).rows.length, 1);
+await db.query(
+  `insert into outing_messages(outing_id,author_id,body) values($1,$2,'See you there')`,
+  [outing, guest],
+);
+await as(other);
+await db.query(
+  `insert into outing_members(outing_id,user_id,state) values($1,$2,'requested')`,
+  [outing, other],
+);
+await fails(
+  `update outing_members set state='accepted' where outing_id=$1 and user_id=$2`,
+  /Invalid membership/,
+  [outing, other],
+);
+await as(host);
+await fails(
+  `update outing_members set state='accepted' where outing_id=$1 and user_id=$2`,
+  /OUTING_FULL/,
+  [outing, other],
+);
+await as(guest);
+await db.query(
+  `update outing_members set state='withdrawn' where outing_id=$1 and user_id=$2`,
+  [outing, guest],
+);
+assert.equal((await db.query(`select * from outing_logistics`)).rows.length, 0);
+assert.equal((await db.query(`select * from outing_messages`)).rows.length, 0);
+await as(host);
+await db.query(
+  `update outing_members set state='accepted' where outing_id=$1 and user_id=$2`,
+  [outing, other],
+);
+// Private answer ownership and transactional rollback.
+await db.query(`select save_profile_bundle(null,$1,$2,null)`, [
+  { deep_profile: { private: 'owner text' } },
+  { trait_personality: { extraversion: 0.3 } },
+]);
+await fails(`select save_profile_bundle(null,$1,$2,null)`, /Unsupported/, [
+  { deep_profile: { private: 'should roll back' } },
+  { profiles: { status: 'banned' } },
+]);
+assert.equal(
+  (
+    await db.query(
+      `select deep_profile from profile_answers where user_id=$1`,
+      [host],
+    )
+  ).rows[0].deep_profile.private,
+  'owner text',
+);
+await as(guest);
+assert.equal(
+  (await db.query(`select * from profile_answers where user_id=$1`, [host]))
+    .rows.length,
+  0,
+);
+await as(other);
+await fails(
+  `insert into rhythm_checks(outing_id,author_id,about_id,would_meet_again) values($1,$2,$3,5)`,
+  /Shared attendance/,
+  [outing, other, host],
+);
+await db.query(`insert into blocks(blocker_id,blocked_id) values($1,$2)`, [
+  other,
+  host,
+]);
+assert.equal(
+  (await db.query(`select * from profiles where id=$1`, [host])).rows.length,
+  0,
+);
+assert.equal((await db.query(`select * from outing_messages`)).rows.length, 0);
+await as(host);
+assert.equal(
+  (await db.query(`select * from profiles where id=$1`, [other])).rows.length,
+  0,
+);
+await db.query(`update outings set state='cancelled' where id=$1`, [outing]);
+assert.ok(
+  (await db.query(`select * from outing_history where outing_id=$1`, [outing]))
+    .rows.length > 0,
+);
+console.log(
+  'Passed consent, capacity, membership revocation, account protection, bilateral block, private answers, rollback, reflection eligibility and retained history checks.',
+);
+await db.close();

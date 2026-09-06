@@ -137,3 +137,13 @@ describe('Step 6k — Outing Cover Images & Search API', () => {
     expect(potteryImg).toContain('photo-1565193566173');
   });
 });
+
+it('never forwards the Unsplash credential to an arbitrary destination', async () => {
+  process.env.UNSPLASH_ACCESS_KEY = 'test-secret';
+  const fetch = vi.fn(); globalThis.fetch = fetch;
+  for (const url of ['https://example.com/photos/a/download', 'http://api.unsplash.com/photos/a/download', 'https://api.unsplash.com@evil.example/photos/a/download', 'https://api.unsplash.com/photos/a/download/extra']) {
+    const res = await triggerDownloadPOST(new Request('http://localhost/api', { method: 'POST', body: JSON.stringify({ downloadLocation: url }) }));
+    expect(res.status).toBe(400);
+  }
+  expect(fetch).not.toHaveBeenCalled();
+});
