@@ -35,9 +35,9 @@ export function BoundariesMatching({
     <div
       className={`rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       <div className="flex items-center justify-between mb-1">
@@ -49,7 +49,7 @@ export function BoundariesMatching({
         </span>
       </div>
 
-      <p className="text-xs text-[rgba(245,242,234,0.70)] mb-4">
+      <p className="text-xs text-[#536657] mb-4">
         {isThirdPerson
           ? `${name} shares clear social expectations for comfortable meetups.`
           : 'Clear social expectations that create predictable, comfortable meetups.'}
@@ -62,20 +62,20 @@ export function BoundariesMatching({
           <div className="rounded-xl border border-[rgba(239,185,78,0.25)] bg-[rgba(239,185,78,0.08)] p-3.5 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <Clock className="h-4 w-4 text-[#EFB94E]" />
-                <h4 className="text-xs font-bold text-[#EFB94E]">
+                <Clock className="h-4 w-4 text-[#826044]" />
+                <h4 className="text-xs font-bold text-[#826044]">
                   {isThirdPerson ? `${name} on Punctuality` : 'Punctuality Stance'}
                 </h4>
               </div>
-              <p className="text-xs font-semibold text-[#F5F2EA]">
+              <p className="text-xs font-semibold text-[#203B30]">
                 {punctualityStance}
               </p>
             </div>
             <div className="mt-3 flex items-center gap-1.5">
-              <span className="h-1.5 flex-1 rounded-full bg-[#EFB94E]" />
-              <span className="h-1.5 flex-1 rounded-full bg-[#EFB94E]" />
-              <span className="h-1.5 flex-1 rounded-full bg-[rgba(245,242,234,0.15)]" />
-              <span className="h-1.5 flex-1 rounded-full bg-[rgba(245,242,234,0.15)]" />
+              <span className="h-1.5 flex-1 rounded-full bg-[#826044]" />
+              <span className="h-1.5 flex-1 rounded-full bg-[#826044]" />
+              <span className="h-1.5 flex-1 rounded-full bg-[rgba(32,59,48,0.18)]" />
+              <span className="h-1.5 flex-1 rounded-full bg-[rgba(32,59,48,0.18)]" />
             </div>
           </div>
         )}
@@ -90,25 +90,25 @@ export function BoundariesMatching({
                   {isThirdPerson ? `${name} on Cancellations` : 'Cancellation Stance'}
                 </h4>
               </div>
-              <p className="text-xs font-semibold text-[#F5F2EA]">
+              <p className="text-xs font-semibold text-[#203B30]">
                 {cancellationStance}
               </p>
             </div>
             <div className="mt-3 flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-[#4E8B69]" />
-              <span className="text-[11px] text-[rgba(245,242,234,0.70)]">Graceful &amp; low pressure</span>
+              <span className="text-[11px] text-[#536657]">Graceful &amp; low pressure</span>
             </div>
           </div>
         )}
 
         {/* 3. Group Size Boundary Card */}
         {groupSizeBoundary && (
-          <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3.5">
+          <div className="rounded-xl border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.04)] p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <Users className="h-4 w-4 text-[rgba(245,242,234,0.70)]" />
-              <h4 className="text-xs font-bold text-[#F5F2EA]">Table Limit</h4>
+              <Users className="h-4 w-4 text-[#536657]" />
+              <h4 className="text-xs font-bold text-[#203B30]">Table Limit</h4>
             </div>
-            <p className="text-xs text-[rgba(245,242,234,0.70)]">
+            <p className="text-xs text-[#536657]">
               {groupSizeBoundary}
             </p>
           </div>
@@ -116,12 +116,12 @@ export function BoundariesMatching({
 
         {/* 4. Geography Boundary Card */}
         {locationBoundary && (
-          <div className="rounded-xl border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] p-3.5">
+          <div className="rounded-xl border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.04)] p-3.5">
             <div className="flex items-center gap-2 mb-1.5">
-              <MapPin className="h-4 w-4 text-[rgba(245,242,234,0.70)]" />
-              <h4 className="text-xs font-bold text-[#F5F2EA]">Match Area</h4>
+              <MapPin className="h-4 w-4 text-[#536657]" />
+              <h4 className="text-xs font-bold text-[#203B30]">Match Area</h4>
             </div>
-            <p className="text-xs text-[rgba(245,242,234,0.70)]">
+            <p className="text-xs text-[#536657]">
               {locationBoundary}
             </p>
           </div>

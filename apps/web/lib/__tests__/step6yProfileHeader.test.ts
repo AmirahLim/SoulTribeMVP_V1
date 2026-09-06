@@ -54,7 +54,7 @@ describe('Step 6y — Profile Header, Spacing, and Public Boundaries', () => {
     expect(youSource).toContain('<PassArcCanvas');
     expect(youSource).toContain('<BoundariesMatching');
     expect(youSource).toContain('<ConnectionNotes');
-    expect(youSource).toContain('<SocialInstincts');
+    expect(youSource).not.toContain('<SocialInstincts');
     expect(youSource).toContain('<TheInterestingPart');
   });
 

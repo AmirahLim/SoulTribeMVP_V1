@@ -48,9 +48,9 @@ export function InterestGraphCanvas({
     ctx.scale(dpr, dpr);
     const W = containerWidth;
     const H = containerHeight;
-    const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
-    const CREAM = '245,242,234';
+    const AMBER = '130,96,68';
+    const EMERALD = '56,101,77';
+    const CREAM = '32,59,48';
 
     ctx.clearRect(0, 0, W, H);
 
@@ -88,7 +88,7 @@ export function InterestGraphCanvas({
       ctx.fill();
 
       ctx.font = `${hot ? '600 12.5px' : '400 11px'} Inter, sans-serif`;
-      ctx.fillStyle = hot ? 'rgba(255,250,238,0.98)' : `rgba(${CREAM},0.60)`;
+      ctx.fillStyle = hot ? 'rgba(32,59,48,0.98)' : `rgba(${CREAM},0.60)`;
       ctx.textAlign = 'center';
       const ty = py < H * 0.5 ? py - r - 9 : py + r + 14;
       ctx.fillText(n.name, Math.max(52, Math.min(W - 52, px)), ty);
@@ -99,9 +99,9 @@ export function InterestGraphCanvas({
     <div
       className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       <div
