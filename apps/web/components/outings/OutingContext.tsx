@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
 
 type Message = {
@@ -23,6 +23,8 @@ export function OutingContext({
   const [details, setDetails] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [logisticsLoaded, setLogisticsLoaded] = useState(false);
+  const hasLoadedLogistics = useRef(false);
   const load = async () => {
     const client = getSupabaseBrowserClient();
     const [chat, logistics] = await Promise.all([
@@ -32,19 +34,24 @@ export function OutingContext({
         .eq('outing_id', outingId)
         .order('created_at', { ascending: false })
         .limit(50),
-      client
+      // Hosts keep their draft while refreshing the conversation or sending.
+      isHost && logisticsLoaded ? Promise.resolve(null) : client
         .from('outing_logistics')
         .select('venue_name,meeting_details')
         .eq('outing_id', outingId)
         .maybeSingle(),
     ]);
-    if (chat.error || logistics.error) {
+    if (chat.error || logistics?.error) {
       setNotice('Unable to load outing details. Please try again.');
       return;
     }
     setMessages((chat.data || []).reverse());
-    setVenue(logistics.data?.venue_name || '');
-    setDetails(logistics.data?.meeting_details || '');
+    if (logistics && (!isHost || !hasLoadedLogistics.current)) {
+      setVenue(logistics.data?.venue_name || '');
+      setDetails(logistics.data?.meeting_details || '');
+      setLogisticsLoaded(true);
+      hasLoadedLogistics.current = true;
+    }
   };
   useEffect(() => {
     void load();
@@ -65,6 +72,7 @@ export function OutingContext({
     setBusy(false);
   };
   const save = async () => {
+    if (busy || !logisticsLoaded) return;
     setBusy(true);
     const { error } = await getSupabaseBrowserClient()
       .from('outing_logistics')
@@ -94,6 +102,7 @@ export function OutingContext({
           <label className="block">
             Public venue
             <input
+              disabled={busy || !logisticsLoaded}
               value={venue}
               onChange={(e) => setVenue(e.target.value)}
               maxLength={200}
@@ -103,6 +112,7 @@ export function OutingContext({
           <label className="block">
             Where to meet
             <textarea
+              disabled={busy || !logisticsLoaded}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               maxLength={2000}
@@ -111,7 +121,7 @@ export function OutingContext({
           </label>
           <button
             onClick={save}
-            disabled={busy}
+            disabled={busy || !logisticsLoaded}
             className="p-3 border rounded-lg"
           >
             Save meeting details

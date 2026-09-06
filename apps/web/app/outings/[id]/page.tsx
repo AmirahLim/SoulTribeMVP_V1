@@ -895,7 +895,7 @@ function OutingDetailContent() {
 
         {/* HOST PENDING REQUESTS CONTROL PANEL */}
         {checkIsSupabaseConfigured() && new Date(outing.starts_at).getTime() < Date.now() && <ContinuationCheck outingId={outingId} userId={viewerId} peers={members} />}
-        {checkIsSupabaseConfigured() && members.some(m => m.user_id === viewerId && m.state === 'accepted') && outing.state !== 'cancelled' && <OutingContext outingId={outingId} userId={viewerId} isHost={isHost} />}
+        {checkIsSupabaseConfigured() && members.some(m => m.user_id === viewerId && m.state === 'accepted') && outing.state !== 'cancelled' && <OutingContext key={`${outingId}:${viewerId}`} outingId={outingId} userId={viewerId} isHost={isHost} />}
         {checkIsSupabaseConfigured() && !isHost && <SafetyActions userId={viewerId} targetId={outing.host_id} outingId={outingId} />}
         {isHost && pendingRequests.length > 0 && (
           <div className="rounded-[24px] border border-amber-400/30 bg-amber-500/10 p-5 shadow-lg space-y-3">

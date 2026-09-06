@@ -34,4 +34,17 @@ Only public venues are supported in protected logistics. Fine-grained reveal pol
 
 TypeScript, core/web tests and local database security checks are available through the root scripts and CI. Local database checks use PGlite and Supabase auth/storage shims. They check fresh migration application, consent, capacity exhaustion, access revocation, account protection, bilateral blocks, private answer ownership, rollback and reflection eligibility. They do not simulate simultaneous network clients or audit the live database.
 
-A production build passed during development. Browser visual and keyboard QA, staging Supabase integration, simultaneous acceptance tests and deployment smoke checks remain release gates. This branch is not merged or deployed.
+A production build passed on both the foundations commit and the follow-up code. TypeScript, the existing test suites and database checks also passed again after the follow-up. Review found and fixed a host-draft loss issue: refreshing chat or sending a message must not reload unsaved meeting details. Editing/saving stays disabled until the initial logistics read succeeds, and the context resets when the outing or viewer changes. The interactive regression scenario still needs browser verification.
+
+Browser visual and keyboard QA was attempted against the local production server, but the connected browser refused the address with `ERR_BLOCKED_BY_CLIENT`. This is not a passing browser check. Staging Supabase integration, simultaneous acceptance tests and deployment smoke checks remain release gates. This branch is not merged or deployed.
+
+## Remaining release work
+
+- Browser QA on a reachable preview: verify mobile layouts, keyboard focus, form labels, failure/retry states, and the host-draft scenario (edit venue, refresh chat, send a message, then save; the draft must survive).
+- Staging integration: compare the existing schema with migration history before applying changes. Use separate host, invitee and nonmember test accounts to check consent, private logistics/chat, bilateral blocking and revocation after removal.
+- Concurrent acceptance: send two acceptance requests from separate clients for one remaining seat. Exactly one may succeed, capacity must remain valid, and a retry must not create duplicate history or notifications.
+- Historical data audit: identify the provenance of stored sample-derived answers before proposing any remediation. Do not automatically delete or reinterpret ambiguous answers.
+- Publish the branch and open a PR against `main` after the GitHub integration has write access. The previous attempt returned 403, `Resource not accessible by integration`; no PR was created. Do not merge.
+- Deployment and smoke checks remain pending. The current authorization covers implementation and a PR, not a production rollout.
+
+Waitlist automation, final Standing presentation, expanded venue rules, verification and payments remain open product decisions, not silently assigned implementation tasks.
