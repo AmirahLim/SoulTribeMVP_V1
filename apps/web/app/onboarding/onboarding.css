@@ -1,4 +1,6 @@
 /* Scoped to onboarding: shared signup/read styles remain unchanged. */
+.ob-immersive[data-step="2"] .ob-photo::after { background: linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.6) 35%,rgba(0,0,0,.82) 100%); }
+.ob-immersive[data-step="2"] .ob-context-line { font-size: 16px; font-weight: 400; line-height: 1.65; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .ob-context-line { font-size: 13px; font-weight: 300; line-height: 1.6; max-width: 490px; margin: 0 auto 16px; text-wrap: balance; color: white; }
 .ob-immersive[data-step="5"] .ob-photo::after, .ob-immersive[data-step="6"] .ob-photo::after { background: linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.48) 30%,rgba(0,0,0,.78) 100%); }
 @media(max-width:600px) { .ob-preview-nav { max-width: 150px; } }

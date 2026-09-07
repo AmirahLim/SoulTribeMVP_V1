@@ -99,7 +99,7 @@ export default function OnboardingPage() {
   }
   function qualityChips() { return <div className="ob-choices">{[...FRIEND_QUALITIES,'Other'].map(quality=><button type="button" key={quality} aria-pressed={(draft.desiredQualities??[]).includes(quality)} onClick={()=>{
     const previous=draft.desiredQualities??[];
-    if(!previous.includes(quality)&&previous.length===3){setError('Pick up to 3 qualities. Remove one to try another.');return;}
+    if(!previous.includes(quality)&&previous.length===5){setError('Pick up to 5 qualities. Remove one to try another.');return;}
     const values=previous.includes(quality)?previous.filter(q=>q!==quality):[...previous,quality];
     setError('');setDraft({...draft,desiredQualities:values,qualityOther:values.includes('Other')?draft.qualityOther:''});
   }}>{quality==='Other'?'Other +':quality}</button>)}</div>; }
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
               : draft.step === 3
                 ? "Pick up to 2 settings where you feel most like yourself."
                 : draft.step === 4
-                  ? "Pick up to 3."
+                  ? "Pick up to 5."
                   : draft.step === 5 ? "" : draft.step === 6
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}

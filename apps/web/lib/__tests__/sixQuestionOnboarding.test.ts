@@ -7,7 +7,8 @@ describe('Six question onboarding',()=>{
   const d={...emptyDraft(),desiredQualities:['Curious','Reliable','Other'],qualityOther:'Patient'};
   expect(validStep(d,4)).toBe(true);expect(validStep({...d,qualityOther:'   '},4)).toBe(false);
   expect(isDraft({...d,qualityOther:'x'.repeat(121)})).toBe(false);
-  expect(isDraft({...d,desiredQualities:[...d.desiredQualities,'Playful']})).toBe(false);
+  expect(isDraft({...d,desiredQualities:['Free-spirit','Intellectually curious','Ambitious','Reliable','Other']})).toBe(true);
+  expect(isDraft({...d,desiredQualities:['Free-spirit','Intellectually curious','Ambitious','Reliable','Other','Playful']})).toBe(false);
   expect(validStep({...d,outings:[...OUTINGS.slice(0,4),'Other'],outingOther:'Stargazing'},6)).toBe(true);
   expect(isDraft({...d,outings:[...OUTINGS.slice(0,5),'Other']})).toBe(false);
  });

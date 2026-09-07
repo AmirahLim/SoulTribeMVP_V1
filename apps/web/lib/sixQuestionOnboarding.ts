@@ -1,5 +1,6 @@
-import { emptyDraft as legacyEmpty, isDraft as legacyIsDraft, validStep as legacyValid, completeDraft as legacyComplete, microInsight as legacyInsight, FRIEND_QUALITIES, OUTINGS as OLD_OUTINGS, type BaselineDraft as LegacyDraft } from './baselineOnboarding';
-export { AREAS, CLICKS, FRIEND_QUALITIES, QUALITY_DETAILS, GROUPS, groupChoices, INTENTS, TRAVEL } from './baselineOnboarding';
+import { emptyDraft as legacyEmpty, isDraft as legacyIsDraft, validStep as legacyValid, completeDraft as legacyComplete, microInsight as legacyInsight, FRIEND_QUALITIES as LEGACY_QUALITIES, OUTINGS as OLD_OUTINGS, type BaselineDraft as LegacyDraft } from './baselineOnboarding';
+export { AREAS, CLICKS, QUALITY_DETAILS, GROUPS, groupChoices, INTENTS, TRAVEL } from './baselineOnboarding';
+export const FRIEND_QUALITIES = [...LEGACY_QUALITIES, 'Free-spirit', 'Intellectually curious', 'Ambitious'];
 export const OUTINGS = ['Specialty Coffee','Food Hunts','Ideas & Deep Dives','Drinks & Bar Hopping','Indie Cinema','Pottery & Making','Vinyl & Analog Culture','Nature & Hiking','Live Music & Gigs','Games Nights','Beach & Island Days','Photo Walks','Parties & Nightlife','Water Sports','Sports & Fitness'];
 export const RHYTHM = [
  {key:'connectionChoice',other:'connectionOther',title:'Staying connected',prompt:'',choices:['A few times a week','About once a week','Every couple of weeks',"Weeks/Months can pass, we’re still good"]},
@@ -18,12 +19,12 @@ export function isDraft(value:unknown):value is BaselineDraft {
  if(d.flowVersion===undefined)return legacyIsDraft(d);
  if(d.flowVersion!==3||!Number.isInteger(d.step)||d.step<1||d.step>7)return false;
  const shape={...d,step:Math.min(d.step,6),desiredQualities:[],outings:[]};
- return legacyIsDraft(shape)&&multi(d.desiredQualities,FRIEND_QUALITIES,d.qualityOther,3)&&multi(d.outings,OUTINGS,d.outingOther,5)&&RHYTHM.every(r=>['','Other',...r.choices].includes(d[r.key] as never)&&textValid(d[r.other]));
+ return legacyIsDraft(shape)&&multi(d.desiredQualities,FRIEND_QUALITIES,d.qualityOther,5)&&multi(d.outings,OUTINGS,d.outingOther,5)&&RHYTHM.every(r=>['','Other',...r.choices].includes(d[r.key] as never)&&textValid(d[r.other]));
 }
 export function validStep(d:BaselineDraft,step:number):boolean {
  if(d.flowVersion!==3)return legacyValid(d,step);
  if(step<=3)return legacyValid(d,step);
- if(step===4)return multi(d.desiredQualities,FRIEND_QUALITIES,d.qualityOther,3,true);
+ if(step===4)return multi(d.desiredQualities,FRIEND_QUALITIES,d.qualityOther,5,true);
  if(step===5)return ACTIVE_RHYTHM.every(r=>r.choices.includes(d[r.key] as never)||(d[r.key]==='Other'&&textValid(d[r.other])&&!!d[r.other]?.trim()));
  if(step===6)return multi(d.outings,OUTINGS,d.outingOther,5,true);
  return legacyValid(d,6);
