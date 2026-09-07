@@ -45,7 +45,7 @@ function PeopleListContent() {
         const realCount = await countRealMembers(effectiveCity);
         const isSmall = isSmallCommunityMode(realCount);
 
-        const ranked = await getRankedMatches(effectiveUser, { userId: authUser?.id, area: effectiveCity });
+        const ranked = await getRankedMatches(effectiveUser, { userId: authUser?.id, area: effectiveCity, discovery: 'community' });
         if (cancelled) return;
 
         setRealMemberCount(realCount);

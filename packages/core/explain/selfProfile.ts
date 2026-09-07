@@ -13,6 +13,7 @@ import type { Marker } from './markers.ts';
 import { extractMarkers } from './markers.ts';
 import { composeWithinPerson } from './withinPerson.ts';
 import { PHRASES_YOU } from './phrases.ts';
+import { synthesizeSocialRead } from './socialSynthesis.ts';
 
 // ─── Output Types ────────────────────────────────────────────────────
 
@@ -726,7 +727,7 @@ export function generateSelfProfile(vec: ProfileVector): SelfProfileData {
   }
 
   // Step 4: Generate tribal read
-  const tribalRead = generateTribalRead(markers, vec);
+  const tribalRead = synthesizeSocialRead(markers);
 
   // Step 5: Detect contradictions
   let contradiction: ContradictionData | undefined;

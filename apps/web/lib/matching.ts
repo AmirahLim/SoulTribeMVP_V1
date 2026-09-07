@@ -63,7 +63,7 @@ export const realCandidateSource: ScoredMatchSource = {
     _opts?: { area?: string; limit?: number; activityCategory?: string }
   ): Promise<RankedMatch[]> {
     if (!checkIsSupabaseConfigured()) {
-      return [];
+      throw new Error('Member discovery is not configured. Please contact support.');
     }
 
     try {
@@ -76,7 +76,7 @@ export const realCandidateSource: ScoredMatchSource = {
           const demoVecs = await demoCandidateSource.getCandidates(_opts);
           return scoreDemoCandidates(_viewerVec, demoVecs);
         }
-        return [];
+        throw new Error('Your session is not ready. Please sign in again.');
       }
 
       const res = await fetch('/api/matches', {
@@ -95,10 +95,6 @@ export const realCandidateSource: ScoredMatchSource = {
       }
 
       const matches: RankedMatch[] = await res.json();
-      if (matches.length === 0) {
-        const demoVecs = await demoCandidateSource.getCandidates(_opts);
-        return scoreDemoCandidates(_viewerVec, demoVecs);
-      }
       return matches;
     } catch (err: any) {
       console.error('[SoulTribe] candidate query exception:', err?.message || err);
@@ -519,7 +515,7 @@ export async function getGlobalSurfacedCounts(candidateIds: string[]): Promise<M
 
 export async function getRankedMatches(
   user: UserProfileData & { id?: string },
-  opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string }
+  opts?: { area?: string; limit?: number; activityCategory?: string; userId?: string; discovery?: 'community' | 'curated' }
 ): Promise<RankedMatch[]> {
   initTelemetry();
   clearLastCandidateFetchError();
@@ -585,7 +581,7 @@ export async function getRankedMatches(
     // HARD EXCLUSION 1: Self-exclusion
     if (viewerId && m.id === viewerId) continue;
     if (viewerVec.profile.id !== '00000000-0000-0000-0000-000000000099' && m.id === viewerVec.profile.id) continue;
-    if (user.handle && user.handle !== 'user' && m.name.toLowerCase().replace(/[^a-z0-9]/g, '_') === user.handle.toLowerCase()) continue;
+    // Identity is established by ID, never by display-name similarity.
 
     // HARD EXCLUSION 2: Hidden candidates
     if (hiddenIds.has(m.id)) continue;
@@ -645,7 +641,11 @@ export async function getRankedMatches(
 
   let finalResults: RankedMatch[] = [];
 
-  if (isSmall) {
+  if (opts?.discovery === 'community') {
+    // Compatibility orders the directory; it does not decide membership.
+    // Server safety gates and explicit hides have already been applied.
+    finalResults = [...freshPool, ...suppressedPool];
+  } else if (isSmall) {
     const combined = [...freshPool, ...suppressedPool];
     if (opts?.limit === undefined || opts?.limit === 6) {
       finalResults = combined;
