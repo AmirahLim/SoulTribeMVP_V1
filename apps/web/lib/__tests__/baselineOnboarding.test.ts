@@ -14,6 +14,14 @@ import {
 } from "../baselineOnboarding";
 import { toProfileVector } from "../profileAdapter";
 describe("Five question baseline", () => {
+  it('requires desired qualities but not opening pace for revised Q4', () => {
+    const d = {...emptyDraft(), contact: 0, planning: 1};
+    expect(validStep(d,4)).toBe(false);
+    expect(validStep({...d,desiredQualities:['Curious','Reliable']},4)).toBe(true);
+    expect(isDraft({...d,desiredQualities:['Curious','Curious']})).toBe(false);
+    expect(isDraft({...d,desiredQualities:['Curious','Reliable','Playful','Proactive']})).toBe(false);
+    expect(isDraft({...d,desiredQualities:['invented']})).toBe(false);
+  });
   it('preserves two group choices, accepts legacy drafts and rejects excess or duplicates', () => {
     const d = {...emptyDraft(), group: GROUPS[0]};
     expect(validStep(d, 3)).toBe(true);
@@ -44,6 +52,7 @@ describe("Five question baseline", () => {
     d.planning = 0;
     expect(validStep(d, 4)).toBe(false);
     d.opening = 1;
+    d.desiredQualities = ['Curious'];
     expect(validStep(d, 4)).toBe(true);
   });
   it("rejects unknown, duplicate and excess choices", () => {
@@ -64,6 +73,7 @@ describe("Five question baseline", () => {
       intent: [INTENTS[0]],
       clicks: [CLICKS[0]],
       group: GROUPS[0],
+      desiredQualities: ['Reliable'],
       contact: 0,
       planning: 0.5,
       opening: 1,

@@ -133,6 +133,7 @@ export default function EarlyRead() {
                 <strong>{draft.intent.join(", ").toLowerCase()}</strong>.
               </p>
               <h2>You click through</h2>
+              {!!draft.desiredQualities?.length && <><h2>You value in a friend</h2><p>{draft.desiredQualities.join(' · ')}</p><p>We’ll only describe someone as bringing these qualities when their own measured answers support it. Until then, that part is not yet measured.</p></>}
               <p>{draft.clicks.join(" · ")}</p>
               <h2>You’d say yes to</h2>
               <p>{draft.outings.join(" · ")}</p>

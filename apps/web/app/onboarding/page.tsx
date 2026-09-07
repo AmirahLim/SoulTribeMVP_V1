@@ -8,6 +8,8 @@ import {
   AREAS,
   CLICKS,
   FLOW,
+  FRIEND_QUALITIES,
+  QUALITY_DETAILS,
   GROUPS,
   groupChoices,
   INTENTS,
@@ -24,7 +26,7 @@ const titles = [
   "What are you looking for right now?",
   "When do you know you’re clicking?",
   "What’s your social sweet spot?",
-  "How do your friendships flow?",
+  "What matters to you in a friendship?",
   "What gets you out of the house?",
   "Make it possible.",
 ];
@@ -209,7 +211,7 @@ export default function OnboardingPage() {
               : draft.step === 3
                 ? "Pick up to 2 settings where you feel most like yourself."
                 : draft.step === 4
-                  ? "Help us find a rhythm that works in real life. Choose one point on each line."
+                  ? "The qualities you appreciate. The rhythm you hope to share."
                   : draft.step === 5
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
@@ -240,35 +242,18 @@ export default function OnboardingPage() {
             </div>
           )}
           {draft.step === 4 && (
-            <div className="ob-flow">
-              {FLOW.map((f) => (
-                <fieldset key={f.key}>
-                  <legend>{f.label}</legend>
-                  <div className="ob-poles">
-                    <span>{f.choices[0]}</span>
-                    <span>{f.choices[4]}</span>
-                  </div>
-                  <div className="ob-stops">
-                    {f.choices.map((label, i) => (
-                      <button
-                        type="button"
-                        title={label}
-                        aria-label={`${f.label}: ${label}`}
-                        aria-pressed={draft[f.key] === i / 4}
-                        key={label}
-                        onClick={() => setDraft({ ...draft, [f.key]: i / 4 })}
-                      >
-                        <span aria-hidden="true">○</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p>
-                    {draft[f.key] === null
-                      ? "Tap to choose"
-                      : f.choices[draft[f.key]! * 4]}
-                  </p>
-                </fieldset>
-              ))}
+            <div className="ob-q4-parts">
+              <fieldset><legend>WHAT YOU VALUE</legend><p>Which qualities matter most to you in a friend? <small>Pick up to 3.</small></p>
+                <div className="ob-choices">{FRIEND_QUALITIES.map((quality, i) => <button type="button" key={quality} title={QUALITY_DETAILS[i]} aria-pressed={(draft.desiredQualities ?? []).includes(quality)} onClick={() => {
+                  const previous = draft.desiredQualities ?? [];
+                  if (!previous.includes(quality) && previous.length === 3) {setError('Pick up to 3 qualities. Remove one to try another.'); return;}
+                  setError(''); setDraft({...draft, q4Revision: 2, desiredQualities: previous.includes(quality) ? previous.filter(q => q !== quality) : [...previous, quality]});
+                }}>{quality}</button>)}</div>
+                <details><summary>What do these qualities mean?</summary><dl>{FRIEND_QUALITIES.map((quality,i) => <div key={quality}><dt>{quality}</dt><dd>{QUALITY_DETAILS[i]}</dd></div>)}</dl></details>
+              </fieldset>
+              {FLOW.filter(f => f.key !== 'opening').map(f => <fieldset key={f.key}><legend>{f.key === 'contact' ? 'STAYING CONNECTED' : 'MAKING PLANS'}</legend><p>{f.label}</p>
+                <div className="ob-choices">{f.choices.map((label,i) => <button type="button" key={label} aria-pressed={draft[f.key] === i / 4} onClick={() => {setError(''); setDraft({...draft, q4Revision: 2, desiredQualities: draft.desiredQualities ?? [], [f.key]: i / 4});}}>{label}</button>)}</div>
+              </fieldset>)}
             </div>
           )}
           {draft.step === 5 && chips("outings", OUTINGS, 5)}

@@ -16,6 +16,8 @@ export const CLICKS = [
   "We actually make plans happen",
 ];
 export const GROUPS = ["1:1", "Small circle", "Social mix", "Big energy"];
+export const FRIEND_QUALITIES = ['Curious', 'Reliable', 'Emotionally open', 'Playful', 'Thoughtful', 'Independent', 'Adventurous', 'Open-minded', 'Proactive'];
+export const QUALITY_DETAILS = ['Interested in ideas, people and the world', 'Follows through and shows up', 'Comfortable having real conversations', 'Doesn’t take everything too seriously', 'Notices and remembers the little things', 'Has their own life and gives you room for yours', 'Open to unfamiliar places and experiences', 'Can hold different perspectives without making it weird', 'Initiates, suggests things and keeps friendship moving'];
 export const OUTINGS = [
   "Specialty Coffee",
   "Food Hunts",
@@ -107,6 +109,8 @@ export const FLOW = [
 ] as const;
 export interface BaselineDraft {
   version: 2;
+  q4Revision?: 2;
+  desiredQualities?: string[];
   step: number;
   intent: string[];
   clicks: string[];
@@ -122,6 +126,8 @@ export interface BaselineDraft {
 }
 export const emptyDraft = (): BaselineDraft => ({
   version: 2,
+  q4Revision: 2,
+  desiredQualities: [],
   step: 1,
   intent: [],
   clicks: [],
@@ -145,7 +151,7 @@ export function validStep(d: BaselineDraft, step: number): boolean {
   if (step === 2) return selected(d.clicks, CLICKS, 1, 3);
   if (step === 3) return selected(groupChoices(d), GROUPS, 1, 2);
   if (step === 4)
-    return [d.contact, d.planning, d.opening].every(
+    return (d.q4Revision !== 2 || selected(d.desiredQualities, FRIEND_QUALITIES, 1, 3)) && (d.q4Revision === 2 ? [d.contact, d.planning] : [d.contact, d.planning, d.opening]).every(
       (x) => x !== null && [0, 0.25, 0.5, 0.75, 1].includes(x),
     );
   if (step === 5) return selected(d.outings, OUTINGS, 1, 5);
@@ -160,6 +166,8 @@ export function isDraft(value: unknown): value is BaselineDraft {
   const d = value as BaselineDraft;
   return (
     d.version === 2 &&
+    (d.q4Revision === undefined || d.q4Revision === 2) &&
+    (d.q4Revision !== 2 || selected(d.desiredQualities, FRIEND_QUALITIES, 0, 3)) &&
     Number.isInteger(d.step) &&
     d.step >= 1 &&
     d.step <= 6 &&
@@ -192,7 +200,7 @@ export function microInsight(d: BaselineDraft, step: number): string {
   if (step === 3)
     return groupChoices(d).length ? `Your sweet spot: ${groupChoices(d).join(' or ').toLowerCase()}.` : "";
   if (step === 4)
-    return validStep(d, 4)
+    return d.q4Revision === 2 ? (d.desiredQualities?.length ? `You value: ${d.desiredQualities.join(' · ')}. This is what you appreciate in others—not a label for you.` : 'What helps a friendship feel right for you?') : validStep(d, 4)
       ? `${FLOW[1].choices[d.planning! * 4]}. ${FLOW[2].choices[d.opening! * 4]}.`
       : "There is no right pace. Just yours.";
   return d.outings.length

@@ -1,4 +1,15 @@
 /* Scoped to onboarding: shared signup/read styles remain unchanged. */
+.ob-q4-parts { text-align: left; }
+.ob-q4-parts fieldset { border: 0; padding: 0; margin: 20px 0; }
+.ob-q4-parts legend { font-size: 10px; letter-spacing: .13em; margin-bottom: 8px; }
+.ob-q4-parts p { font-size: 13px; margin-bottom: 10px; line-height: 1.5; }
+.ob-immersive .ob-q4-parts .ob-choices { justify-content: flex-start; }
+.ob-immersive .ob-q4-parts button { font-size: 12px; padding: 9px 12px; }
+.ob-q4-parts details { font-size: 12px; margin-top: 12px; }
+.ob-q4-parts summary { cursor: pointer; padding: 8px 0; }
+.ob-q4-parts dt { font-weight: 500; margin-top: 8px; }
+.ob-q4-parts dd { opacity: .9; }
+.ob-immersive[data-step="4"] .ob-layout { padding-top: 7svh; }
 .ob-value-statement { margin-top: 7px; font-size: 11px; letter-spacing: normal; font-weight: 300; line-height: 1.5; }
 .ob-group-count { display: block; margin-top: 7px; font-size: 11px; line-height: 1.5; font-weight: 300; }
 .ob-preview-nav { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; max-width: 300px; letter-spacing: normal; }
