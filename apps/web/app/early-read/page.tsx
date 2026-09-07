@@ -11,7 +11,7 @@ import {EarlyReadAlbum} from '../../components/profile/EarlyReadAlbum';
 import '../onboarding/onboarding.css';
 import './early-read.css';
 export default function EarlyRead() {
- const {user,loading}=useAuth();
+ const {user,loading,signInWithGoogle}=useAuth();
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
  const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
@@ -72,12 +72,11 @@ export default function EarlyRead() {
  }
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
- {draft&&<><EarlyReadAlbum draft={draft} onFeedback={feedback}/>
- {!user?<><Link className="ob-primary" href="/join">Keep my Early Read and meet people →</Link><p>Your reading is available now. An account is needed to keep your profile and meet other members.</p></>:!saved?<><h2>Keep this reading as your starting point.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {draft&&<><EarlyReadAlbum draft={draft}/>
+ {!user?<><button className="ob-primary" disabled={busy||loading} onClick={async()=>{setBusy(true);setError('');try{const result=await signInWithGoogle('/early-read');if(result.error)throw result.error;}catch(e){setError(e instanceof Error?e.message:'Could not open Google sign-in. Please retry.');}finally{setBusy(false);}}}>{busy?'Opening Google…':'Keep my Early Read and meet people →'}</button></>:!saved?<><h2>Keep this reading as your starting point.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
  <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<><ProfilePhoto userId={user.id}/><Link className="ob-primary" href="/people">See who I might click with →</Link><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
- {!saved&&<Link href="/onboarding">Edit the answers behind my reading</Link>}
  </>}
  {error&&<p role="alert" className="ob-error">{error}</p>}
  {ready&&!draft&&<Link href="/onboarding">Return to onboarding</Link>}
