@@ -269,4 +269,27 @@ await fails('update profile_answers set onboarding=$1 where user_id=$2',/Invalid
 await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:{...lifeContextDraft,lifeContextsPublic:false}},sixUser]);
 assert.deepEqual((await db.query('select life_contexts from profiles where id=$1',[sixUser])).rows[0].life_contexts,[]);
 console.log('Passed life phase disclosure, public projection, validation and withdrawal checks.');
+// Isolated local regression fixtures; never run against production.
+await as(sixUser);
+await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:{lifeContexts:['Slow Living'],lifeContextsPublic:false}},sixUser]);
+await fails('update profiles set life_contexts=$1 where id=$2',/explicit consent/,[['Slow Living'],sixUser]);
+for(const consent of [false,null,'true']) {
+ await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:{lifeContexts:['Slow Living'],lifeContextsPublic:consent}},sixUser]);
+ assert.deepEqual((await db.query('select life_contexts from profiles where id=$1',[sixUser])).rows[0].life_contexts,[]);
+}
+const phases=['Slow Living','Family Life','Adventure Era'];
+await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:{lifeContexts:phases,lifeContextsPublic:true}},sixUser]);
+assert.deepEqual((await db.query('select life_contexts from profiles where id=$1',[sixUser])).rows[0].life_contexts,phases);
+for(const invalid of [[...phases,'Wild & Free'],['Slow Living','Slow Living'],['Unknown'],[null]]) {
+ await fails('update profile_answers set onboarding=$1 where user_id=$2',/Invalid life phases/,[{baselineV2:{lifeContexts:invalid,lifeContextsPublic:true}},sixUser]);
+}
+await fails('update profiles set life_contexts=$1 where id=$2',/explicit consent/,[['Wild & Free'],sixUser]);
+await db.query('delete from profile_answers where user_id=$1',[sixUser]);
+assert.deepEqual((await db.query('select life_contexts from profiles where id=$1',[sixUser])).rows[0].life_contexts,[]);
+await db.exec('reset role');
+for(let repeat=0;repeat<2;repeat++) {
+ await db.exec(await readFile(new URL('../supabase/migrations/20260926000000_public_life_context.sql',import.meta.url),'utf8'));
+}
+assert.equal((await db.query("select has_function_privilege('anon','guard_public_life_context()','EXECUTE') allowed")).rows[0].allowed,false);
+console.log('Passed direct-write consent protection, strict boolean consent, three-phase limit, withdrawal/deletion and repeatable migration.');
 await db.close();
