@@ -3,6 +3,7 @@ import { OutingUpdates } from '../../components/outings/OutingUpdates';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import keepsake from '../../components/EventKeepsake.module.css';
 import {
   Calendar,
   MapPin,
@@ -276,11 +277,11 @@ function OutingsContent() {
                 return (
                   <div
                     key={item.id}
-                    className="relative overflow-hidden rounded-[26px] border border-[rgba(245,242,234,0.11)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-xl flex flex-col gap-3.5"
+                    className={keepsake.card}
                   >
                     {/* Header Image Banner & Host Info */}
-                    <div className="flex items-start gap-3.5">
-                      <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-white/20 shadow-md">
+                    <div className={keepsake.coverRow}>
+                      <div className={keepsake.photo}>
                         <img src={coverImg} alt={item.title} className="h-full w-full object-cover" />
                       </div>
 
@@ -385,7 +386,7 @@ function OutingsContent() {
                 return (
                   <div
                     key={item.id}
-                    className="relative overflow-hidden rounded-[26px] border border-[rgba(245,242,234,0.11)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-xl flex flex-col gap-3"
+                    className={keepsake.card}
                   >
                     {/* Date/Time Banner & Joined Status Badge */}
                     <div className="flex items-center justify-between border-b border-[rgba(245,242,234,0.08)] pb-2.5">
@@ -408,8 +409,8 @@ function OutingsContent() {
                     </div>
 
                     {/* Title & Host Info */}
-                    <div className="flex items-start gap-3.5 pt-1">
-                      <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-white/20 shadow-md">
+                    <div className={keepsake.coverRow}>
+                      <div className={keepsake.photo}>
                         <img src={coverImg} alt={item.title} className="h-full w-full object-cover" />
                       </div>
 
@@ -423,6 +424,7 @@ function OutingsContent() {
                       </div>
                     </div>
 
+                    {item.pitch && <p className={keepsake.description}>{item.pitch}</p>}
                     {/* Attendee Stack & Count */}
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.08)]">
                       <div className="flex items-center gap-2">
@@ -474,7 +476,7 @@ function OutingsContent() {
                 return (
                   <div
                     key={item.id}
-                    className="relative overflow-hidden rounded-[26px] border border-[rgba(245,242,234,0.11)] bg-[rgba(10,12,11,0.62)] p-5 backdrop-blur-xl shadow-xl flex flex-col gap-3"
+                    className={keepsake.card}
                   >
                     {/* Status Badge & Activity Metrics */}
                     <div className="flex items-center justify-between border-b border-[rgba(245,242,234,0.08)] pb-2.5">
@@ -494,8 +496,8 @@ function OutingsContent() {
                     </div>
 
                     {/* Title & Description */}
-                    <div className="flex items-start gap-3.5 pt-1">
-                      <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-white/20 shadow-md">
+                    <div className={keepsake.coverRow}>
+                      <div className={keepsake.photo}>
                         <img src={coverImg} alt={item.title} className="h-full w-full object-cover" />
                       </div>
 
@@ -509,6 +511,8 @@ function OutingsContent() {
                       </div>
                     </div>
 
+                    {item.pitch && <p className={keepsake.description}>{item.pitch}</p>}
+                    {item.dateTime && <p className={keepsake.when}><Clock aria-hidden="true" size={16} /> {item.dateTime}</p>}
                     {/* Manage Pitch Action */}
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.08)]">
                       <span className="text-xs text-[rgba(245,242,234,0.50)]">
@@ -558,11 +562,11 @@ function OutingsContent() {
                 return (
                   <div
                     key={item.id}
-                    className="relative overflow-hidden rounded-[26px] border border-[rgba(245,242,234,0.08)] bg-[rgba(10,12,11,0.45)] p-5 backdrop-blur-md shadow-md flex flex-col gap-3 opacity-90"
+                    className={keepsake.card}
                   >
                     {/* Header Image & Info */}
-                    <div className="flex items-start gap-3.5">
-                      <div className="relative h-12 w-12 shrink-0 rounded-2xl overflow-hidden border border-white/10 opacity-80">
+                    <div className={keepsake.coverRow}>
+                      <div className={keepsake.photo}>
                         <img src={coverImg} alt={item.title} className="h-full w-full object-cover" />
                       </div>
 
@@ -576,6 +580,7 @@ function OutingsContent() {
                       </div>
                     </div>
 
+                    {item.pitch && <p className={keepsake.description}>{item.pitch}</p>}
                     {/* Attended Stack & Post-Outing Action */}
                     <div className="flex items-center justify-between pt-2 border-t border-[rgba(245,242,234,0.06)]">
                       <div className="flex items-center gap-2">

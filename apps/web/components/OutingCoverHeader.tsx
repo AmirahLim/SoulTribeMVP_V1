@@ -43,6 +43,7 @@ export function OutingCoverHeader({
 
   return (
     <div
+      data-outing-cover
       className={`relative ${containerHeightClass} w-full overflow-hidden rounded-[20px] bg-black/60 border border-white/15 shadow-md ${className}`}
     >
       <img

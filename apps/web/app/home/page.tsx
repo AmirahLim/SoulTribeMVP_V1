@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import keepsake from '../../components/EventKeepsake.module.css';
 import { PitchCard, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
 import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage } from '../../lib/outingsStore';
@@ -507,7 +508,7 @@ function HomeContent() {
                   key={item.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="overflow-hidden rounded-[28px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl"
+                  className={keepsake.card}
                 >
                   {/* Header Badge */}
                   <div className="flex items-center justify-between">
@@ -713,7 +714,7 @@ function HomeContent() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="rounded-[28px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl space-y-4"
+                  className={keepsake.card}
                 >
                   <div className="flex items-center justify-between">
                     <span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold text-emerald-300 backdrop-blur-md">
@@ -839,7 +840,7 @@ function HomeContent() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="rounded-[28px] border border-white/20 bg-black/65 backdrop-blur-xl p-5 shadow-2xl space-y-4"
+                  className={keepsake.card}
                 >
                   <div className="flex items-center justify-between">
                     {item.fitBadge ? (

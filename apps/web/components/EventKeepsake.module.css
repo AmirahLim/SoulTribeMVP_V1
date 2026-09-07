@@ -1,0 +1,52 @@
+.card {
+  position: relative;
+  padding: 27px 24px 24px;
+  margin: 12px 0 20px;
+  color: #35402f;
+  background: #efe9dc url('/images/crumpled-letter.jpg') center / 650px auto repeat;
+  border: 1px solid #e4ddc9;
+  border-radius: 2px 5px 14px 3px;
+  box-shadow: 2px 12px 25px #0004;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  isolation: isolate;
+}
+.card::before {
+  content: ''; position: absolute; left: 12px; top: 12px; bottom: 12px;
+  border-left: 1px solid #92866726; pointer-events: none;
+}
+.card :is(div,span,p,strong,em,h2,h3,svg) {color: inherit; border-color: #67715340}
+.card :is(h2,h3) {font-family: Georgia, 'Times New Roman', serif; font-size: clamp(28px,4vw,36px); font-weight: 400; line-height: 1.15; margin: 4px 0 12px; overflow-wrap: anywhere}
+.card p,.description {font-size: 16px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere}
+.card em {font-style: normal}
+.card > div {min-width: 0; gap: 12px; flex-wrap: wrap}
+.card :is(span,strong) {white-space: normal; overflow-wrap: anywhere}
+.card > div > span {font-size: 12px}
+.card [class*='border-t'] {padding-top: 18px}
+.card [class*='text-xs'],.card [class*='text-[12'] {font-size: 14px; line-height: 1.65}
+.card [class*='rounded-full']:not(img) {border-radius: 2px; background-color: #d6dbc5; color: #3b4c32; box-shadow: none; backdrop-filter: none}
+.card button,.card a {min-height: 44px}
+.card button {background: #40533a; color: #fff8e9; border: 1px solid #40533a; border-radius: 3px; padding: 11px 16px; font-size: 14px; line-height: 1.4; height: auto}
+.card button * {color: inherit}
+.card button:hover:not(:disabled) {background: #2e4129}
+.card button:disabled {opacity: .55; cursor: wait}
+.card button[class*='text-red'] {background: #f0e2d6; color: #823e32; border-color: #a07059}
+.card a {color: #40533a; text-underline-offset: 4px; display: inline-flex; align-items: center; font-size: 14px}
+.card :is(a,button):focus-visible {outline: 3px solid #996b30; outline-offset: 4px}
+.card [data-outing-cover],.photo {
+  position: relative; width: calc(100% - 12px); height: auto; flex-shrink: 0;
+  padding: 9px 9px 25px; margin: 15px auto 12px;
+  background: #faf6ed; border: 1px solid #ddd7c6; border-radius: 1px;
+  box-shadow: 2px 6px 10px #26301e30; transform: rotate(-1.5deg); overflow: visible;
+}
+.card [data-outing-cover]::before,.photo::before {
+  content: ''; position: absolute; top: -13px; left: 32%; width: 35%; height: 26px;
+  background: #d5bf818f; transform: rotate(4deg); z-index: 12; pointer-events: none;
+}
+.card [data-outing-cover] > img,.photo > img {width: 100%; height: auto; aspect-ratio: 16/10; object-fit: cover; opacity: 1; filter: saturate(.85); transform: none}
+.card [data-outing-cover] > div {color: #fffaf0; background: #263320df; border-radius: 2px; font-size: 12px; max-width: calc(100% - 24px)}
+.card [data-outing-cover] a {color: #fffaf0; min-height: auto; display: inline; font-size: inherit}
+.coverRow {display: flex; flex-direction: column; align-items: stretch}
+.when {display: flex; align-items: center; gap: 10px; font-size: 14px!important}
+@media(max-width:390px) {.card {padding: 24px 18px 20px}.card > div {gap: 10px}.card button {padding: 11px 12px}.card [data-outing-cover],.photo {width: calc(100% - 6px)}}
