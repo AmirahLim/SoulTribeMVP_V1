@@ -163,7 +163,7 @@ export default function OnboardingPage() {
     options: string[],
     max: number,
   ) => (
-    <div className="ob-choices">
+    <div className={`ob-choices${key === "clicks" ? " ob-click-choices" : ""}`}>
       {options.map((o) => (
         <button
           type="button"
@@ -287,17 +287,25 @@ export default function OnboardingPage() {
                 3–20 letters, numbers or underscores. Availability is confirmed
                 when you save your account.
               </p>
-              <label htmlFor="area">Where are plans easiest?</label>
-              <select
+              <label htmlFor="area">Where are you based?</label>
+              <input
                 id="area"
+                type="search"
+                list="singapore-areas"
+                autoComplete="off"
+                placeholder="Search your Singapore neighbourhood or area"
+                aria-describedby="area-help"
                 value={draft.area}
-                onChange={(e) => setDraft({ ...draft, area: e.target.value })}
-              >
-                <option value="">Choose a Singapore area</option>
-                {AREAS.map((a) => (
-                  <option key={a}>{a}</option>
-                ))}
-              </select>
+                onChange={(e) => {
+                  const typed = e.target.value;
+                  const recognised = AREAS.find(a => a.toLowerCase() === typed.trim().toLowerCase());
+                  setDraft({ ...draft, area: recognised ?? typed });
+                }}
+              />
+              <datalist id="singapore-areas">
+                {AREAS.map(a => <option key={a} value={a} />)}
+              </datalist>
+              <p id="area-help">Choose an area from the list. No exact address needed.</p>
               <label htmlFor="travel">How far are you happy to travel?</label>
               <select
                 id="travel"
@@ -344,9 +352,7 @@ export default function OnboardingPage() {
                   : designPreview && draft.step === 6 ? "Back to page 1 →" : "Continue →"}
             </button>
           </nav>
-          <p className="ob-small">
-            {designPreview ? "Design preview only. Answers stay on this page and disappear on refresh." : "Saved when you continue. Resume on this browser for 7 days."}
-          </p>
+          {designPreview && <p className="ob-small">Design preview only. Answers are not saved.</p>}
         </section>
       </div>
     </main>
