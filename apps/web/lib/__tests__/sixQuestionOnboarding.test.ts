@@ -2,6 +2,12 @@ import {describe,it,expect} from 'vitest';
 import {emptyDraft,isDraft,validStep,completeDraft,canonicalRhythm,upgradeDraft,OUTINGS,RHYTHM,selectedLabels} from '../sixQuestionOnboarding';
 import {emptyDraft as legacyEmpty} from '../baselineOnboarding';
 describe('Six question onboarding',()=>{
+ it('accepts bounded custom intent and click answers without exceeding three selections',()=>{
+  const d={...emptyDraft(),intent:['Other'],intentOther:'Find a walking companion',clicks:['Other'],clicksOther:'We enjoy making things'};
+  expect(isDraft(d)).toBe(true);expect(validStep(d,1)).toBe(true);expect(validStep(d,2)).toBe(true);
+  expect(validStep({...d,intentOther:' '},1)).toBe(false);expect(validStep({...d,clicksOther:''},2)).toBe(false);
+  expect(isDraft({...d,intentOther:'x'.repeat(121)})).toBe(false);
+ });
  it('starts with six unanswered questions and separate identity',()=>{const d=emptyDraft();expect(isDraft(d)).toBe(true);expect(completeDraft(d)).toBe(false);expect(validStep(d,4)).toBe(false);expect(isDraft({...d,step:7})).toBe(true);expect(isDraft({...d,step:8})).toBe(false);});
  it('counts Other within each cap and requires nonblank bounded text',()=>{
   const d={...emptyDraft(),desiredQualities:['Curious','Reliable','Other'],qualityOther:'Patient'};

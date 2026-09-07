@@ -94,7 +94,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (ready) title.current?.focus();
   }, [draft.step, ready]);
-    function otherField(key:'qualityOther'|'outingOther'|'connectionOther'|'planningOther'|'punctualityOther',visible:boolean,label:string) {
+    function otherField(key:'intentOther'|'clicksOther'|'qualityOther'|'outingOther'|'connectionOther'|'planningOther'|'punctualityOther',visible:boolean,label:string) {
     return visible ? <label className="ob-other-field">{label}<input maxLength={120} value={draft[key]??''} placeholder="In your own words…" onChange={e=>{setError('');setDraft({...draft,[key]:e.target.value});}}/><small>Up to 120 characters. Please don’t include personal contact details.</small></label> : null;
   }
   function qualityChips() { return <div className="ob-choices">{[...FRIEND_QUALITIES,'Other'].map(quality=><button type="button" key={quality} aria-pressed={(draft.desiredQualities??[]).includes(quality)} onClick={()=>{
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
           aria-pressed={draft[key].includes(o)}
           onClick={() => toggle(key, o, max)}
         >
-          {o === "Other" ? "+ Something Else" : o}
+          {o === "Other" ? key === "outings" ? "+ Something Else" : "Other +" : o}
         </button>
       ))}
     </div>
@@ -239,8 +239,8 @@ export default function OnboardingPage() {
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
           </p>
-          {draft.step === 1 && chips("intent", INTENTS, 3)}
-          {draft.step === 2 && chips("clicks", CLICKS, 3)}
+          {draft.step === 1 && <>{chips("intent", [...INTENTS,"Other"], 3)}{otherField("intentOther",draft.intent.includes("Other"),"What else are you hoping to find?")}</>}
+          {draft.step === 2 && <>{chips("clicks", [...CLICKS,"Other"], 3)}{otherField("clicksOther",draft.clicks.includes("Other"),"What else tells you you’re clicking?")}</>}
           {draft.step === 3 && (
             <div className="ob-groups">
               {GROUPS.map((g, i) => (

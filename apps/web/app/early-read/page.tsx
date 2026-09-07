@@ -131,11 +131,11 @@ export default function EarlyRead() {
                 Your early answers suggest you enjoy{" "}
                 <strong>{groupChoices(draft).join(' or ').toLowerCase()}</strong> settings. You’re
                 making room for{" "}
-                <strong>{draft.intent.join(", ").toLowerCase()}</strong>.
+                <strong>{selectedLabels(draft.intent,draft.intentOther).join(", ").toLowerCase()}</strong>.
               </p>
               {!!draft.desiredQualities?.length && <><h2>You value in a friend</h2><p>{selectedLabels(draft.desiredQualities,draft.qualityOther).join(' · ')}</p><p>We’ll only describe someone as bringing these qualities when their own measured answers support it. Until then, that part is not yet measured.</p></>}
               <h2>You click through</h2>
-              <p>{draft.clicks.join(" · ")}</p>
+              <p>{selectedLabels(draft.clicks,draft.clicksOther).join(" · ")}</p>
               {draft.flowVersion === 3 && <><h2>Your social rhythm</h2><p>{[draft.connectionChoice === 'Other' ? draft.connectionOther : draft.connectionChoice, draft.planningChoice === 'Other' ? draft.planningOther : draft.planningChoice, draft.punctualityChoice === 'Other' ? draft.punctualityOther : draft.punctualityChoice].filter(Boolean).join(' · ')}</p></>}
               <h2>You’d say yes to</h2>
               <p>{selectedLabels(draft.outings,draft.outingOther).join(" · ")}</p>
