@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { getSupabaseServerClient } from "../../../../lib/supabaseServer";
-import { isDraft } from "../../../../lib/baselineOnboarding";
+import { isDraft } from "../../../../lib/sixQuestionOnboarding";
 const COOKIE = "st_onboarding_v2";
 export async function GET(request: NextRequest) {
   const token = request.cookies.get(COOKIE)?.value;

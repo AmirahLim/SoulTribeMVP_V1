@@ -9,8 +9,9 @@ import {
   BaselineDraft,
   completeDraft,
   isDraft,
+  selectedLabels,
   groupChoices,
-} from "../../lib/baselineOnboarding";
+} from "../../lib/sixQuestionOnboarding";
 import "../onboarding/onboarding.css";
 export default function EarlyRead() {
   const { user, loading } = useAuth();
@@ -44,7 +45,7 @@ export default function EarlyRead() {
           setDraft(data.draft);
         else
           setError(
-            "Return to the browser where you answered the five questions, or start again.",
+            "Return to the browser where you answered the six questions, or start again.",
           );
       })
       .catch(() => setError("Unable to load your answers. Please reload."));
@@ -82,7 +83,7 @@ export default function EarlyRead() {
             <p className="ob-eyebrow">YOUR ACCOUNT DETAILS</p>
             <h1>A name to say hello to.</h1>
             <p>
-              Your five answers are ready. Add your display name and birth year
+              Your answers are ready. Add your display name and birth year
               to finish your adult member profile.
             </p>
             <form className="ob-fields" onSubmit={save}>
@@ -120,9 +121,9 @@ export default function EarlyRead() {
               <h1>A little more you.</h1>
               <div
                 className="ob-bloom"
-                aria-label="Five answered areas form your first social signature"
+                aria-label="Six answered areas form your first social signature"
               >
-                {[1, 2, 3, 4, 5].map((n) => (
+                {[1, 2, 3, 4, 5, 6].map((n) => (
                   <i key={n} />
                 ))}
               </div>
@@ -132,15 +133,16 @@ export default function EarlyRead() {
                 making room for{" "}
                 <strong>{draft.intent.join(", ").toLowerCase()}</strong>.
               </p>
+              {!!draft.desiredQualities?.length && <><h2>You value in a friend</h2><p>{selectedLabels(draft.desiredQualities,draft.qualityOther).join(' · ')}</p><p>We’ll only describe someone as bringing these qualities when their own measured answers support it. Until then, that part is not yet measured.</p></>}
               <h2>You click through</h2>
-              {!!draft.desiredQualities?.length && <><h2>You value in a friend</h2><p>{draft.desiredQualities.join(' · ')}</p><p>We’ll only describe someone as bringing these qualities when their own measured answers support it. Until then, that part is not yet measured.</p></>}
               <p>{draft.clicks.join(" · ")}</p>
+              {draft.flowVersion === 3 && <><h2>Your social rhythm</h2><p>{[draft.connectionChoice === 'Other' ? draft.connectionOther : draft.connectionChoice, draft.planningChoice === 'Other' ? draft.planningOther : draft.planningChoice, draft.punctualityChoice === 'Other' ? draft.punctualityOther : draft.punctualityChoice].filter(Boolean).join(' · ')}</p></>}
               <h2>You’d say yes to</h2>
-              <p>{draft.outings.join(" · ")}</p>
+              <p>{selectedLabels(draft.outings,draft.outingOther).join(" · ")}</p>
               <h2>Room to get to know you</h2>
               <p>
                 This is an Early Read. Communication habits, values and handling
-                differences take more than five questions. Deepen your Tribal
+                differences take more than six questions. Deepen your Tribal
                 Pass whenever you’re ready.
               </p>
               <Link className="ob-primary" href="/people">

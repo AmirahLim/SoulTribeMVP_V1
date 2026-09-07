@@ -7,7 +7,9 @@ import { getUserProfile } from "../../lib/userStore";
 import {
   AREAS,
   CLICKS,
-  FLOW,
+  RHYTHM,
+  upgradeDraft,
+  canonicalRhythm,
   FRIEND_QUALITIES,
   QUALITY_DETAILS,
   GROUPS,
@@ -20,13 +22,14 @@ import {
   isDraft,
   microInsight,
   validStep,
-} from "../../lib/baselineOnboarding";
+} from "../../lib/sixQuestionOnboarding";
 import "./onboarding.css";
 const titles = [
   "What are you looking for right now?",
   "When do you know you’re clicking?",
   "What’s your social sweet spot?",
   "What matters to you in a friendship?",
+  "What’s your social rhythm?",
   "What gets you out of the house?",
   "Make it possible.",
 ];
@@ -35,6 +38,7 @@ const scenes = [
   "/onboarding-click.jpg",
   "/onboarding-group.jpg",
   "/onboarding-flow.jpg",
+  "/onboarding-click.jpg",
   "/onboarding-outings.jpg",
   "/onboarding-group.jpg",
 ];
@@ -63,7 +67,7 @@ export default function OnboardingPage() {
     fetch("/api/onboarding/draft")
       .then((r) => { if (!r.ok) throw new Error('Draft unavailable'); return r.json(); })
       .then((data) => {
-        if (live && isDraft(data.draft)) setDraft(data.draft);
+        if (live && isDraft(data.draft)) setDraft(upgradeDraft(data.draft));
       })
       .catch(() => {
         if (live) setLoadFailed(true);
@@ -82,13 +86,23 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (ready) title.current?.focus();
   }, [draft.step, ready]);
+    function otherField(key:'qualityOther'|'outingOther'|'connectionOther'|'planningOther'|'punctualityOther',visible:boolean,label:string) {
+    return visible ? <label className="ob-other-field">{label}<input maxLength={120} value={draft[key]??''} placeholder="In your own words…" onChange={e=>{setError('');setDraft({...draft,[key]:e.target.value});}}/><small>Up to 120 characters. Please don’t include personal contact details.</small></label> : null;
+  }
+  function qualityChips() { return <div className="ob-choices">{[...FRIEND_QUALITIES,'Other'].map(quality=><button type="button" key={quality} aria-pressed={(draft.desiredQualities??[]).includes(quality)} onClick={()=>{
+    const previous=draft.desiredQualities??[];
+    if(!previous.includes(quality)&&previous.length===3){setError('Pick up to 3 qualities. Remove one to try another.');return;}
+    const values=previous.includes(quality)?previous.filter(q=>q!==quality):[...previous,quality];
+    setError('');setDraft({...draft,desiredQualities:values,qualityOther:values.includes('Other')?draft.qualityOther:''});
+  }}>{quality==='Other'?'Other +':quality}</button>)}</div>; }
+
   async function advance(back = false) {
     if (designPreview) {
       setError('');
-      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 5 ? 1 : draft.step + 1});
+      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 6 ? 1 : draft.step + 1});
       return;
     }
-    if (loadFailed) return;
+  if (loadFailed) return;
     if (!back && !validStep(draft, draft.step)) {
       setError("Please make your selection to continue.");
       return;
@@ -97,19 +111,19 @@ export default function OnboardingPage() {
     setError("");
     const next = {
       ...draft,
-      step: back ? Math.max(1, draft.step - 1) : Math.min(6, draft.step + 1),
+      step: back ? Math.max(1, draft.step - 1) : Math.min(7, draft.step + 1),
     };
     try {
       const r = await fetch("/api/onboarding/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(next),
+        body: JSON.stringify(canonicalRhythm(next)),
       });
       if (!r.ok)
         throw new Error(
           "We could not save your answers. They are still here; please retry.",
         );
-      if (!back && draft.step === 6)
+      if (!back && draft.step === 7)
         router.push(user ? "/early-read" : "/join");
       else setDraft(next);
     } catch (e) {
@@ -149,7 +163,7 @@ export default function OnboardingPage() {
           aria-pressed={draft[key].includes(o)}
           onClick={() => toggle(key, o, max)}
         >
-          {o}
+          {o === "Other" ? "+ Something Else" : o}
         </button>
       ))}
     </div>
@@ -165,12 +179,12 @@ export default function OnboardingPage() {
     <main className="ob-shell ob-immersive" data-step={draft.step}>
       <header className="ob-header">
         <div><Link href="/">SOUL TRIBE</Link><p className="ob-value-statement">Watch your social world take shape</p></div>
-        {designPreview && <nav aria-label="Design preview pages" className="ob-preview-nav"><span>Design preview · not saved</span>{[1,2,3,4,5].map(step => <button type="button" key={step} aria-label={`Preview question ${step}`} aria-current={draft.step === step ? 'step' : undefined} onClick={() => {setDraft({...draft,step});setError('');}}>{step}</button>)}</nav>}
+        {designPreview && <nav aria-label="Design preview pages" className="ob-preview-nav"><span>Design preview · not saved</span>{[1,2,3,4,5,6].map(step => <button type="button" key={step} aria-label={`Preview question ${step}`} aria-current={draft.step === step ? 'step' : undefined} onClick={() => {setDraft({...draft,step});setError('');}}>{step}</button>)}</nav>}
         <div
           className="ob-petals"
-          aria-label={`Question ${Math.min(draft.step, 5)} of 5${draft.step === 6 ? " complete. Profile details." : ""}`}
+          aria-label={`Question ${Math.min(draft.step, 6)} of 6${draft.step === 7 ? " complete. Profile details." : ""}`}
         >
-          {[1, 2, 3, 4, 5].map((n) => (
+          {[1, 2, 3, 4, 5, 6].map((n) => (
             <i
               key={n}
               data-filled={
@@ -198,8 +212,8 @@ export default function OnboardingPage() {
         </div>
         <section className="ob-content" aria-labelledby="question-title">
           <p className="ob-eyebrow">
-            {draft.step <= 5
-              ? `YOUR EARLY READ · ${draft.step} OF 5`
+            {draft.step <= 6
+              ? `YOUR EARLY READ · ${draft.step} OF 6`
               : "YOUR HANDLE & NEIGHBOURHOOD"}
           </p>
           <h1 id="question-title" tabIndex={-1} ref={title}>
@@ -211,8 +225,8 @@ export default function OnboardingPage() {
               : draft.step === 3
                 ? "Pick up to 2 settings where you feel most like yourself."
                 : draft.step === 4
-                  ? "The qualities you appreciate. The rhythm you hope to share."
-                  : draft.step === 5
+                  ? "Pick up to 3."
+                  : draft.step === 5 ? "A little about staying connected, making plans and timing." : draft.step === 6
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
           </p>
@@ -241,23 +255,10 @@ export default function OnboardingPage() {
               ))}
             </div>
           )}
-          {draft.step === 4 && (
-            <div className="ob-q4-parts">
-              <fieldset><legend>WHAT YOU VALUE</legend><p>Which qualities matter most to you in a friend? <small>Pick up to 3.</small></p>
-                <div className="ob-choices">{FRIEND_QUALITIES.map((quality, i) => <button type="button" key={quality} title={QUALITY_DETAILS[i]} aria-pressed={(draft.desiredQualities ?? []).includes(quality)} onClick={() => {
-                  const previous = draft.desiredQualities ?? [];
-                  if (!previous.includes(quality) && previous.length === 3) {setError('Pick up to 3 qualities. Remove one to try another.'); return;}
-                  setError(''); setDraft({...draft, q4Revision: 2, desiredQualities: previous.includes(quality) ? previous.filter(q => q !== quality) : [...previous, quality]});
-                }}>{quality}</button>)}</div>
-                <details><summary>What do these qualities mean?</summary><dl>{FRIEND_QUALITIES.map((quality,i) => <div key={quality}><dt>{quality}</dt><dd>{QUALITY_DETAILS[i]}</dd></div>)}</dl></details>
-              </fieldset>
-              {FLOW.filter(f => f.key !== 'opening').map(f => <fieldset key={f.key}><legend>{f.key === 'contact' ? 'STAYING CONNECTED' : 'MAKING PLANS'}</legend><p>{f.label}</p>
-                <div className="ob-choices">{f.choices.map((label,i) => <button type="button" key={label} aria-pressed={draft[f.key] === i / 4} onClick={() => {setError(''); setDraft({...draft, q4Revision: 2, desiredQualities: draft.desiredQualities ?? [], [f.key]: i / 4});}}>{label}</button>)}</div>
-              </fieldset>)}
-            </div>
-          )}
-          {draft.step === 5 && chips("outings", OUTINGS, 5)}
-          {draft.step === 6 && (
+          {draft.step === 4 && <>{qualityChips()}{otherField('qualityOther', (draft.desiredQualities ?? []).includes('Other'), 'Your own quality')}</>}
+          {draft.step === 5 && <div className="ob-rhythm">{RHYTHM.map(r => <fieldset key={r.key}><legend>{r.title}</legend>{r.prompt && <p>{r.prompt}</p>}<div className="ob-choices">{[...r.choices,'Other'].map(choice => <button type="button" key={choice} aria-pressed={draft[r.key]===choice} onClick={()=>{setError('');setDraft({...draft,[r.key]:choice,[r.other]:choice==='Other'?draft[r.other]:'',contact:r.key==='connectionChoice'?null:draft.contact,planning:r.key==='planningChoice'?null:draft.planning});}}>{choice==='Other'?'Other +':choice}</button>)}</div>{otherField(r.other,draft[r.key]==='Other',r.title+' — your answer')}</fieldset>)}</div>}
+          {draft.step === 6 && <div className="ob-outing-cloud">{chips("outings", [...OUTINGS,'Other'], 5)}{otherField('outingOther',draft.outings.includes('Other'),'Something else you would enjoy')}</div>}
+          {draft.step === 7 && (
             <div className="ob-fields">
               <label htmlFor="handle">Your unique handle</label>
               <input
@@ -302,9 +303,9 @@ export default function OnboardingPage() {
             </div>
           )}
           <p className="ob-insight" aria-live="polite">
-            {draft.step <= 5
+            {draft.step <= 6
               ? microInsight(draft, draft.step)
-              : "Five answers. A first picture of how you connect."}
+              : "Six answers. A first picture of how you connect."}
           </p>
           {error && (
             <p className="ob-error" role="alert">
@@ -329,9 +330,9 @@ export default function OnboardingPage() {
             >
               {busy
                 ? "Saving…"
-                : draft.step === 6
+                : draft.step === 7
                   ? "Keep my Early Read →"
-                  : designPreview && draft.step === 5 ? "Back to page 1 →" : "Continue →"}
+                  : designPreview && draft.step === 6 ? "Back to page 1 →" : "Continue →"}
             </button>
           </nav>
           <p className="ob-small">

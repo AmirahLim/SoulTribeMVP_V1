@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
-import { completeDraft, isDraft } from "../../lib/baselineOnboarding";
+import { completeDraft, isDraft } from "../../lib/sixQuestionOnboarding";
 import "../onboarding/onboarding.css";
 export default function JoinPage() {
   const router = useRouter();

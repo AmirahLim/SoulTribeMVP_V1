@@ -1,0 +1,9 @@
+# Six-question onboarding
+
+Current founder direction supersedes prior five-question copy. Intro → Q1 intent → Q2 click moments → Q3 social group → Q4 desired friend qualities → Q5 connection/planning/punctuality → Q6 activities → handle/location setup → signup → Early Read/Social Signature. The identity step is not a seventh assessment question. Photography remains supplied by the founder; Q5 reuses an existing photo. Design preview now navigates all six questions.
+
+Q4 and Q6 allow one custom choice within the caps of three/five. Q5 has one selection per section. Other opens an inline plain-text field capped at 120 characters; whitespace-only responses fail completion. React renders text safely. Do not include this text in analytics, personal-trait inference, matching vectors or generated Bond claims. Predefined contact/planning choices have explicit mappings; custom answers remain unknown numerically. Punctuality is preserved privately without inferring reliability or changing existing trait fields.
+
+`flowVersion: 3` distinguishes six-question drafts while retaining historical baseline JSON and cookie conventions. Existing drafts can still be claimed using their old validation. Resuming them in the new UI preserves `legacyAnswers` and asks users to review from Q4; changed activity/rhythm answers are not silently reinterpreted. Full new answers remain in private `profile_answers.onboarding.baselineV2`. Exact predefined activities map to approved interest leaves; custom activities never create nodes automatically.
+
+Apply `20260917000000_six_question_onboarding.sql` after all earlier onboarding migrations before live signup. It widens funnel step validation to seven (six questions + setup), supports both draft versions, and preserves existing account/idempotency protection. All previous live Supabase/auth release gates remain. The deployed design preview is not evidence that the live migration is applied.

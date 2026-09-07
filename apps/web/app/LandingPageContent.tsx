@@ -65,7 +65,7 @@ export default function LandingPageContent() {
           </p>
 
           <div className="mt-8">
-            <p className="mb-4 text-[15px] text-white/90">Five quick picks. Your Early Read, then people you might click with.</p>
+            <p className="mb-4 text-[15px] text-white/90">Six quick questions. Your Early Read, then people you might click with.</p>
             <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
               <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
                 Your Circle Starts Here <ArrowRight className="ml-2 h-4 w-4" />
