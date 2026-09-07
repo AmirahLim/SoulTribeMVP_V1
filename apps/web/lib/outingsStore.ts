@@ -10,6 +10,8 @@ export interface OutingItem {
   category: string;
   dateTime: string;
   startsAt?: string;
+  durationMinutes?: number;
+  outingState?: string;
   hostId: string;
   hostName: string;
   hostAvatar: string;
@@ -294,6 +296,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
         category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
         startsAt: out.starts_at,
+        durationMinutes: out.duration_minutes,
+        outingState: out.state,
         hostId: out.host_id,
         hostName,
         hostAvatar,
@@ -371,6 +375,8 @@ export async function fetchGoingOutings(userId?: string): Promise<OutingItem[]> 
           category: out.activity_category || 'coffee',
           dateTime: dateTimeStr,
           startsAt: out.starts_at,
+        durationMinutes: out.duration_minutes,
+        outingState: out.state,
           hostId: out.host_id,
           hostName,
           hostAvatar,
@@ -491,6 +497,8 @@ export async function fetchInvitedOutings(userId?: string): Promise<OutingItem[]
         category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
         startsAt: out.starts_at,
+        durationMinutes: out.duration_minutes,
+        outingState: out.state,
         hostId: out.host_id,
         hostName,
         hostAvatar,
@@ -620,6 +628,8 @@ export async function fetchRadarOutings(userId?: string): Promise<OutingItem[]> 
       category: out.activity_category || 'coffee',
       dateTime: dateTimeStr,
       startsAt: out.starts_at,
+        durationMinutes: out.duration_minutes,
+        outingState: out.state,
       hostId: out.host_id,
       hostName,
       hostAvatar,
@@ -749,6 +759,8 @@ export async function fetchUserPitches(userId?: string): Promise<OutingItem[]> {
         category: out.activity_category || 'coffee',
         dateTime: dateTimeStr,
         startsAt: out.starts_at,
+        durationMinutes: out.duration_minutes,
+        outingState: out.state,
         hostId: out.host_id,
         hostName,
         hostAvatar,

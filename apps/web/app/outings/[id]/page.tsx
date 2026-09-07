@@ -1,4 +1,7 @@
 'use client';
+import { ContinuationCheck } from '../../../components/outings/ContinuationCheck';
+import { OutingContext } from '../../../components/outings/OutingContext';
+import { SafetyActions } from '../../../components/outings/SafetyActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +30,7 @@ export default function OutingDetailPage() {
 interface OutingMember {
   user_id: string;
   role: 'host' | 'guest';
-  state: 'invited' | 'requested' | 'accepted' | 'declined';
+  state: 'invited' | 'requested' | 'accepted' | 'declined' | 'removed' | 'withdrawn' | 'waitlisted';
   display_name: string;
   avatar_url: string;
   home_area: string;
@@ -211,10 +214,11 @@ function OutingDetailContent() {
     if (checkIsSupabaseConfigured()) {
       try {
         const client = getSupabaseBrowserClient();
-        await client.from('outing_members').delete().eq('outing_id', outingId);
-        await client.from('outings').delete().eq('id', outingId);
+        const { error } = await client.from('outings').update({ state: 'cancelled' }).eq('id', outingId);
+        if (error) throw error;
       } catch (err: any) {
-        console.error('[SoulTribe Error] Failed to delete outing from DB:', err);
+        setErrorMessage(err.message || 'Unable to cancel outing');
+        return;
       }
     }
 
@@ -229,7 +233,7 @@ function OutingDetailContent() {
     setLoadingCandidates(true);
     try {
       const userProf = getUserProfile();
-      const list = await getRankedMatches(userProf, { limit: 30 });
+      const list = await getRankedMatches(userProf, { limit: 30, activityCategory: outing?.activity_category });
       setCandidateList(list);
     } catch {
       setCandidateList([]);
@@ -243,7 +247,7 @@ function OutingDetailContent() {
     setActionMessage('');
 
     if (members.filter((m) => m.state === 'accepted').length >= (outing?.max_participants || 6)) {
-      setErrorMessage('Cannot add member: Outing is full (capped at 6 participants).');
+      setErrorMessage('Cannot add member: Outing is full.');
       return;
     }
 
@@ -256,12 +260,12 @@ function OutingDetailContent() {
             outing_id: outingId,
             user_id: cand.id,
             role: 'guest',
-            state: 'accepted',
+            state: 'invited',
           });
 
         if (error) {
           if (error.message.includes('cap') || error.message.includes('exceed') || error.code === 'P0001') {
-            setErrorMessage('Cannot add member: Outing is full (capped at 6 participants).');
+            setErrorMessage('Cannot add member: Outing is full.');
           } else {
             setErrorMessage(error.message);
           }
@@ -276,7 +280,7 @@ function OutingDetailContent() {
     const newMember: OutingMember = {
       user_id: cand.id,
       role: 'guest',
-      state: 'accepted',
+      state: 'invited',
       display_name: cand.name,
       avatar_url: cand.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
       home_area: cand.homeArea || 'Singapore',
@@ -284,7 +288,7 @@ function OutingDetailContent() {
     };
 
     setMembers((prev) => [...prev.filter((m) => m.user_id !== cand.id), newMember]);
-    setActionMessage(`${cand.name} added to outing!`);
+    setActionMessage(`${cand.name} invited to the outing.`);
     setIsAddUserOpen(false);
   };
 
@@ -300,13 +304,15 @@ function OutingDetailContent() {
     if (checkIsSupabaseConfigured()) {
       try {
         const client = getSupabaseBrowserClient();
-        await client
+        const { error } = await client
           .from('outing_members')
-          .delete()
+          .update({ state: 'removed' })
           .eq('outing_id', outingId)
           .eq('user_id', memberUserId);
+        if (error) throw error;
       } catch (err: any) {
-        console.error('[SoulTribe Error] Failed to remove member from DB:', err);
+        setErrorMessage(err.message || 'Unable to remove member');
+        return;
       }
     }
 
@@ -513,7 +519,7 @@ function OutingDetailContent() {
     setActionMessage('');
 
     if (isFull) {
-      setErrorMessage('This outing is full (capped at 6 participants).');
+      setErrorMessage('This outing is full.');
       return;
     }
 
@@ -534,7 +540,7 @@ function OutingDetailContent() {
         if (error) {
           // Catch 6-person cap trigger failure
           if (error.message.includes('cap') || error.message.includes('exceed') || error.code === 'P0001') {
-            setErrorMessage('This outing is full (capped at 6 participants).');
+            setErrorMessage('This outing is full.');
             removeJoinedOutingLocal(outingId);
           } else {
             setErrorMessage(error.message);
@@ -587,11 +593,12 @@ function OutingDetailContent() {
     if (checkIsSupabaseConfigured()) {
       try {
         const client = getSupabaseBrowserClient();
-        await client
+        const { error } = await client
           .from('outing_members')
-          .delete()
+          .update({ state: 'withdrawn' })
           .eq('outing_id', outingId)
           .eq('user_id', viewerId);
+        if (error) throw error;
 
         setMembers((prev) => prev.filter((m) => m.user_id !== viewerId));
         setActionMessage('You have left this outing.');
@@ -612,7 +619,7 @@ function OutingDetailContent() {
     setActionMessage('');
 
     if (isFull) {
-      setErrorMessage('Cannot accept request: Outing is full (capped at 6 participants).');
+      setErrorMessage('Cannot accept request: Outing is full.');
       return;
     }
 
@@ -627,7 +634,7 @@ function OutingDetailContent() {
 
         if (error) {
           if (error.message.includes('cap') || error.message.includes('exceed') || error.code === 'P0001') {
-            setErrorMessage('Cannot accept request: Outing is full (capped at 6 participants).');
+            setErrorMessage('Cannot accept request: Outing is full.');
           } else {
             setErrorMessage(error.message);
           }
@@ -887,6 +894,9 @@ function OutingDetailContent() {
         </div>
 
         {/* HOST PENDING REQUESTS CONTROL PANEL */}
+        {checkIsSupabaseConfigured() && new Date(outing.starts_at).getTime() < Date.now() && <ContinuationCheck outingId={outingId} userId={viewerId} peers={members} />}
+        {checkIsSupabaseConfigured() && members.some(m => m.user_id === viewerId && m.state === 'accepted') && outing.state !== 'cancelled' && <OutingContext key={`${outingId}:${viewerId}`} outingId={outingId} userId={viewerId} isHost={isHost} />}
+        {checkIsSupabaseConfigured() && !isHost && <SafetyActions userId={viewerId} targetId={outing.host_id} outingId={outingId} />}
         {isHost && pendingRequests.length > 0 && (
           <div className="rounded-[24px] border border-amber-400/30 bg-amber-500/10 p-5 shadow-lg space-y-3">
             <span className="text-[11px] font-bold tracking-widest text-amber-300 uppercase flex items-center gap-1.5">

@@ -30,9 +30,9 @@ export function PassArcCanvas({ exploredPct = 0.42, signalsText = 'Developing re
     const cy = size / 2;
     const r = 30;
 
-    const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
-    const CREAM = '245,242,234';
+    const AMBER = '130,96,68';
+    const EMERALD = '56,101,77';
+    const CREAM = '32,59,48';
 
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
@@ -72,13 +72,13 @@ export function PassArcCanvas({ exploredPct = 0.42, signalsText = 'Developing re
     <div className={`flex items-center gap-4 py-1 ${className}`}>
       <canvas ref={canvasRef} aria-label={`Tribal Pass ${passPctInt} percent explored`} />
       <div>
-        <p className="text-[11px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+        <p className="text-[11px] font-bold tracking-widest uppercase text-[#536657]">
           Tribal Pass
         </p>
-        <p className="font-sans text-[19px] font-semibold text-[#F5F2EA] mt-0.5">
+        <p className="font-sans text-[19px] font-semibold text-[#203B30] mt-0.5">
           {passPctInt}% explored
         </p>
-        <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5">
+        <p className="text-xs text-[#536657] mt-0.5">
           {signalsText}
         </p>
       </div>

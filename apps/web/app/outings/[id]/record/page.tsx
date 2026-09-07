@@ -29,9 +29,9 @@ interface Attendee {
 }
 
 interface FeedbackItemState {
-  wouldMeetAgain: number;
-  energyRead: 'quieter' | 'as_expected' | 'livelier';
-  paceRead: 'slower' | 'as_expected' | 'faster';
+  wouldMeetAgain: number | null;
+  energyRead: 'quieter' | 'as_expected' | 'livelier' | null;
+  paceRead: 'slower' | 'as_expected' | 'faster' | null;
   note: string;
   status: 'pending' | 'saved' | 'skipped';
 }
@@ -59,6 +59,7 @@ function OutingRecordContent() {
 
   // 3. attendedIds starts EMPTY (not pre-ticked)
   const [attendedIds, setAttendedIds] = useState<string[]>([]);
+  const [didAttend, setDidAttend] = useState(false);
   
   // 2. headline starts EMPTY with placeholder
   const [headline, setHeadline] = useState<string>('');
@@ -122,13 +123,15 @@ function OutingRecordContent() {
               });
 
             setAttendees(realPeerAttendees);
+            const { data: savedRecord } = await client.from('outing_records').select('attended,headline').eq('outing_id', outingId).maybeSingle();
+            if (savedRecord) { setAttendedIds(savedRecord.attended || []); setDidAttend((savedRecord.attended || []).includes(authorId)); setHeadline(savedRecord.headline || ''); }
 
             const initialFb: Record<string, FeedbackItemState> = {};
             for (const peer of realPeerAttendees) {
               initialFb[peer.id] = {
-                wouldMeetAgain: 5,
-                energyRead: 'as_expected',
-                paceRead: 'as_expected',
+                wouldMeetAgain: null,
+                energyRead: null,
+                paceRead: null,
                 note: '',
                 status: 'pending',
               };
@@ -227,7 +230,7 @@ function OutingRecordContent() {
 
   const handleSaveIndividualFeedback = async (aboutId: string) => {
     const item = feedbackState[aboutId];
-    if (!item) return;
+    if (!item || item.wouldMeetAgain === null) { setErrorMessage('Choose a response or skip this reflection.'); return; }
 
     const payload: RhythmCheckInput = {
       outing_id: outingId,
@@ -262,7 +265,7 @@ function OutingRecordContent() {
         const recordRes = await saveOutingRecord({
           outing_id: outingId,
           headline: headline.trim() || null,
-          attended: attendedIds,
+          attended: [...new Set([...attendedIds.filter(id => id !== authorId), ...(didAttend ? [authorId] : [])])],
         });
 
         if (!recordRes.success) {
@@ -277,7 +280,7 @@ function OutingRecordContent() {
 
       for (const peer of targetPeers) {
         const item = feedbackState[peer.id];
-        if (item && item.status !== 'skipped') {
+        if (item && item.wouldMeetAgain !== null && item.status !== 'skipped' && (!isHost || didAttend)) {
           const res = await saveRhythmCheck({
             outing_id: outingId,
             author_id: authorId,
@@ -340,7 +343,7 @@ function OutingRecordContent() {
                 Private & Confidential Feedback
               </h4>
               <p className="mt-1 text-[12.5px] text-[#F3F0E9]/90 leading-relaxed">
-                Your Rhythm Check feedback is strictly private and used exclusively by the algorithm to calibrate future matching weights. The people rated will <strong>never</strong> see your responses.
+                Your Rhythm Check feedback is strictly private and kept separate from your stated profile answers. The people you reflect on will <strong>never</strong> see your responses.
               </p>
             </div>
           </div>
@@ -362,10 +365,11 @@ function OutingRecordContent() {
                 <UserCheck className="h-5 w-5 text-amber-300" /> Who actually attended?
               </h3>
               <p className="text-[12.5px] text-[#A6AAA4]">
-                Tick attendees who turned up so we can write real attendance records (`outing_records.attended`).
+                The host records who attended. Private reflections are available once shared attendance is recorded.
               </p>
             </div>
 
+            {isHost && <label className="flex gap-3 items-center p-3"><input type="checkbox" checked={didAttend} onChange={e => setDidAttend(e.target.checked)} />I attended this outing</label>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               {attendees.map((person) => {
                 const isAttended = attendedIds.includes(person.id);
@@ -373,6 +377,7 @@ function OutingRecordContent() {
                   <button
                     key={person.id}
                     type="button"
+                    disabled={!isHost}
                     onClick={() => toggleAttended(person.id)}
                     className={`flex items-center justify-between rounded-[16px] border p-3 transition-all ${
                       isAttended
@@ -432,9 +437,9 @@ function OutingRecordContent() {
             ) : (
               attendedPeers.map((person) => {
                 const fb = feedbackState[person.id] || {
-                  wouldMeetAgain: 5,
-                  energyRead: 'as_expected',
-                  paceRead: 'as_expected',
+                  wouldMeetAgain: null,
+                  energyRead: null,
+                  paceRead: null,
                   note: '',
                   status: 'pending',
                 };
@@ -480,7 +485,7 @@ function OutingRecordContent() {
                         {/* Q1: Would meet again (1-5) */}
                         <div>
                           <label className="text-[12.5px] font-semibold text-[#F3F0E9] block mb-2">
-                            Would meet {person.name} again: <strong className="text-amber-300">{fb.wouldMeetAgain} / 5</strong>
+                            Would meet {person.name} again: <strong className="text-amber-300">{fb.wouldMeetAgain ?? "Not answered"}</strong>
                           </label>
                           <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map((val) => (
@@ -545,7 +550,7 @@ function OutingRecordContent() {
                         {/* Optional private note */}
                         <div>
                           <label className="text-[12px] font-semibold text-[#A6AAA4] block mb-1">
-                            Optional private note for matching calibration:
+                            Optional private reflection:
                           </label>
                           <input
                             type="text"
@@ -624,7 +629,7 @@ function OutingRecordContent() {
           </h2>
 
           <p className="text-[14px] text-[#A6AAA4] max-w-[340px] leading-relaxed">
-            Your private Rhythm Checks have recalibrated future matching weights, and actual attendance (`outing_records.attended`) has been recorded.
+            Your attendance and private reflections have been saved. Your stated profile answers stay unchanged.
           </p>
 
           <div className="rounded-[16px] border border-white/10 bg-black/40 p-3.5 text-[12.5px] text-amber-300 font-semibold flex items-center gap-2">

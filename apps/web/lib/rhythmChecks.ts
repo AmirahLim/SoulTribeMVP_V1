@@ -46,6 +46,7 @@ export function clearMockRhythmData(): void {
  * Author ID must match signed-in user.
  */
 export async function saveRhythmCheck(check: RhythmCheckInput): Promise<{ success: boolean; error?: string }> {
+  if (!checkIsSupabaseConfigured()) {
   const existingIdx = mockRhythmChecks.findIndex(
     (r) => r.outing_id === check.outing_id && r.author_id === check.author_id && r.about_id === check.about_id
   );
@@ -55,6 +56,7 @@ export async function saveRhythmCheck(check: RhythmCheckInput): Promise<{ succes
     mockRhythmChecks.push({ ...check });
   }
 
+  }
   if (checkIsSupabaseConfigured()) {
     try {
       const client = getSupabaseBrowserClient();
@@ -89,6 +91,7 @@ export async function saveRhythmCheck(check: RhythmCheckInput): Promise<{ succes
  * Writes attended UUIDs array.
  */
 export async function saveOutingRecord(record: OutingRecordInput): Promise<{ success: boolean; error?: string }> {
+  if (!checkIsSupabaseConfigured()) {
   const existingIdx = mockOutingRecords.findIndex((r) => r.outing_id === record.outing_id);
   if (existingIdx >= 0) {
     mockOutingRecords[existingIdx] = { ...record };
@@ -96,6 +99,7 @@ export async function saveOutingRecord(record: OutingRecordInput): Promise<{ suc
     mockOutingRecords.push({ ...record });
   }
 
+  }
   if (checkIsSupabaseConfigured()) {
     try {
       const client = getSupabaseBrowserClient();

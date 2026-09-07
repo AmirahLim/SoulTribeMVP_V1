@@ -83,69 +83,32 @@ function DeeperTribalPassContent() {
       .includes(opt);
   };
 
-  const handleSaveCurrentCategory = async (catNum: number) => {
-    const updatedCats = Array.from(new Set([...completedCats, catNum]));
-    setCompletedCats(updatedCats);
-    const updated = setUserProfile({
-      deepProfile: formState,
-      completedCategoryNums: updatedCats,
-      hasCompletedOnboarding: true,
-    });
-    setPassPct(updated.passCompletionPct);
-    setSavedMessage(true);
-
+  const persistCategories = async (categories: number[]): Promise<boolean> => {
+    setSavedMessage(false);
     if (checkIsSupabaseConfigured()) {
-      try {
-        const client = getSupabaseBrowserClient();
-        const { data: authSession } = await client.auth.getSession();
-        const userId = authSession?.session?.user?.id || profile.id;
-        if (userId) {
-          await saveDeeperPassToSupabase(userId, formState, updatedCats);
-        }
-      } catch (err) {
-        console.error('Error syncing deeper pass section to Supabase:', err);
-      }
+      const client = getSupabaseBrowserClient();
+      const { data } = await client.auth.getSession();
+      if (!data.session?.user.id) { alert('Please sign in again.'); return false; }
+      const result = await saveDeeperPassToSupabase(data.session.user.id, formState, categories);
+      if (!result.success) { alert(result.error || 'Unable to save. Your answers remain on this screen.'); return false; }
     }
-
+    const updated = setUserProfile({ deepProfile: formState, completedCategoryNums: categories });
+    setCompletedCats(categories); setPassPct(updated.passCompletionPct); setSavedMessage(true);
     setTimeout(() => setSavedMessage(false), 3000);
+    return true;
   };
-
+  const handleSaveCurrentCategory = (catNum: number) => persistCategories(Array.from(new Set([...completedCats, catNum])));
   const handleSaveAllTen = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const allTen = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    setCompletedCats(allTen);
-    const updated = setUserProfile({
-      deepProfile: formState,
-      completedCategoryNums: allTen,
-      hasCompletedOnboarding: true,
-    });
-    setPassPct(updated.passCompletionPct);
-    setSavedMessage(true);
-
-    if (checkIsSupabaseConfigured()) {
-      try {
-        const client = getSupabaseBrowserClient();
-        const { data: authSession } = await client.auth.getSession();
-        const userId = authSession?.session?.user?.id || profile.id;
-        if (userId) {
-          await saveDeeperPassToSupabase(userId, formState, allTen);
-        }
-      } catch (err) {
-        console.error('Error syncing all 10 deeper pass sections to Supabase:', err);
-      }
-    }
-
-    setTimeout(() => setSavedMessage(false), 3000);
+    e?.preventDefault();
+    return persistCategories(completedCats.includes(activeCategoryNum) ? completedCats : [...completedCats, activeCategoryNum]);
   };
 
   const handleSaveAndReturnToProfile = async () => {
-    await handleSaveCurrentCategory(activeCategoryNum);
-    router.push('/you');
+    if (await handleSaveCurrentCategory(activeCategoryNum)) router.push('/you');
   };
 
   const handleSaveAllTenAndReturn = async () => {
-    await handleSaveAllTen();
-    router.push('/you');
+    if (await handleSaveAllTen()) router.push('/you');
   };
 
   const zodiacSigns = [

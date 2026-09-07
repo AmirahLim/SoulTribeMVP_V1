@@ -57,11 +57,7 @@ vi.mock('@supabase/supabase-js', () => {
             };
           }
           if (table === 'profiles') {
-            return {
-              select: () => ({
-                eq: () => ({
-                  limit: async () => ({
-                    data: [
+            let rows: any[] = [
                       {
                         id: 'viewer-1',
                         display_name: 'Viewer',
@@ -119,13 +115,16 @@ vi.mock('@supabase/supabase-js', () => {
                         user_interests: [{ node_name: 'Coffee & Cafes' }],
                         user_values: [{ value_key: 'Authenticity' }],
                       },
-                    ],
-                    error: null,
-                  }),
-                }),
-              }),
+                    ];
+            const q: any = {
+              eq: (key: string, value: any) => { rows = rows.filter(r => r[key] === value); return q; },
+              limit: async () => ({ data: rows, error: null }),
+              maybeSingle: async () => ({ data: rows[0] || null, error: null }),
             };
+            return { select: () => q };
           }
+          if (table === 'recommendation_preferences') return { select: () => ({eq: () => ({maybeSingle: async () => ({data:null,error:null})})}) };
+          if (table === 'interaction_events') return { insert: async () => ({error:null}) };
           return {
             select: () => ({
               eq: () => ({

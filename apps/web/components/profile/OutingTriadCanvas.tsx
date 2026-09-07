@@ -40,9 +40,9 @@ export function OutingTriadCanvas({
     const cy = size / 2 + 4;
     const R = size * 0.36;
 
-    const AMBER = '239,185,78';
-    const EMERALD = '91,217,154';
-    const CREAM = '245,242,234';
+    const AMBER = '130,96,68';
+    const EMERALD = '56,101,77';
+    const CREAM = '32,59,48';
 
     // Concentric guide triangles
     [1, 0.66, 0.33].forEach((k) => {
@@ -95,9 +95,9 @@ export function OutingTriadCanvas({
     <div
       className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       <div
@@ -107,38 +107,38 @@ export function OutingTriadCanvas({
         }}
       />
       <div className="relative z-10">
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
+        <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657] mb-3">
           Outing DNA
         </p>
 
         <div className="flex items-center gap-4">
           <canvas ref={canvasRef} aria-label={`Outing DNA triad: ${descriptors.join(', ')}`} />
           <div>
-            <h3 className="font-sans text-lg font-semibold text-[#F5F2EA] leading-tight">
+            <h3 className="font-sans text-lg font-semibold text-[#203B30] leading-tight">
               {descriptors.join(' × ')}
             </h3>
           </div>
         </div>
 
         {/* Preference Rows */}
-        <div className="mt-4 flex flex-col border-t border-[rgba(245,242,234,0.08)]">
+        <div className="mt-4 flex flex-col border-t border-[rgba(32,59,48,0.12)]">
           {instantYes && (
-            <div className="flex gap-3 items-baseline py-2.5 border-b border-[rgba(245,242,234,0.08)]">
-              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[#5BD99A]">
+            <div className="flex gap-3 items-baseline py-2.5 border-b border-[rgba(32,59,48,0.12)]">
+              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[#38654D]">
                 Instant yes
               </span>
-              <span className="text-[13.5px] text-[#F5F2EA]">
+              <span className="text-[13.5px] text-[#203B30]">
                 {instantYes}
               </span>
             </div>
           )}
 
           {usuallyYes && usuallyYes.length > 0 && (
-            <div className="flex gap-3 items-baseline py-2.5 border-b border-[rgba(245,242,234,0.08)]">
-              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[rgba(245,242,234,0.44)]">
+            <div className="flex gap-3 items-baseline py-2.5 border-b border-[rgba(32,59,48,0.12)]">
+              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[#536657]">
                 Usually yes
               </span>
-              <span className="text-[13.5px] text-[rgba(245,242,234,0.70)]">
+              <span className="text-[13.5px] text-[#536657]">
                 {usuallyYes.join(' · ')}
               </span>
             </div>
@@ -146,10 +146,10 @@ export function OutingTriadCanvas({
 
           {convinceMe && convinceMe.length > 0 && (
             <div className="flex gap-3 items-baseline py-2.5">
-              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[rgba(245,242,234,0.44)]">
+              <span className="w-20 shrink-0 text-[9.5px] font-bold tracking-wider uppercase text-[#536657]">
                 Convince me
               </span>
-              <span className="text-[13.5px] text-[rgba(245,242,234,0.70)]">
+              <span className="text-[13.5px] text-[#536657]">
                 {convinceMe.join(' · ')}
               </span>
             </div>

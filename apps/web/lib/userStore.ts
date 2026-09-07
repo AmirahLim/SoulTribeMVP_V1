@@ -113,9 +113,9 @@ export const STANDING_LEVELS: StandingLevel[] = [
   },
   {
     key: 'trusted_host',
-    label: 'Trusted Host',
-    meaning: 'Proven reliable at creating good experiences',
-    howEarned: 'Multiple successful outings + strong attendee feedback',
+    label: 'Repeat Host',
+    meaning: 'Has hosted several outings',
+    howEarned: 'Three or more hosted outings; this is participation history, not a trust rating',
     icon: '🛡️',
     badgeColor: 'border-purple-400/40 bg-purple-500/10 text-purple-200',
   },
@@ -299,7 +299,7 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   version: 10,
   displayName: '',
   handle: '',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+  avatarUrl: '',
   homeArea: 'Singapore',
   bio: '',
   passCompletionPct: 0,
@@ -308,64 +308,36 @@ export const DEFAULT_USER_PROFILE: UserProfileData = {
   outingsAttended: 0,
   outingsHosted: 0,
   standingKey: 'new_here',
-  deepProfile: {
-    groupSize: '3–4 people',
-    socialVibe: 'Intimate · Calm',
-    socialAtmosphereOpen: 'I usually find one person I click with before I open up to the room.',
-    messagingStyle: 'Voice notes · Memes',
-    supportStyle: 'Listen first',
-    messagingStyleOpen: 'I don\'t need to talk every day to feel close, but when we talk I like actually talking.',
-    friendshipPillars: 'Comfortable silence · Reliability',
-    realFriendOpen: 'We can disappear into our own lives and reconnect without it feeling weird.',
-    idealSaturday: 'Slow coffee & Hobbies',
-    spontaneousTrip: 'Convince me',
-    idealSaturdayOpen: 'Slow morning, something interesting in the afternoon, dinner if the energy is right.',
-    selfDescriptionOpen: 'Curious, reflective, and independent with a subtle dry humor.',
-    mbti: 'INFJ',
-    sunSign: 'Scorpio',
-    moonSign: 'Cancer',
-    risingSign: 'Leo',
-    coreValues: 'Curiosity · Freedom · Growth · Community',
-    respectPeopleOpen: 'I really respect people who can change their mind when presented with better information.',
-    talkForHoursOpen: 'Design history, why people make irrational choices, and filter coffee roast notes.',
-    currentRabbitHoleOpen: 'Japanese woodworking joints and studio ghibli food aesthetics.',
-    budgetPref: '$20–50',
-    instantYesOutingOpen: 'Pottery studio session followed by quiet specialty coffee.',
-    likeMeIfPrompt: 'You value quiet quality over constant social noise.',
-    quickestWayPrompt: 'Propose a slow weekend coffee walk or share a good design article.',
-    punctualityPref: 'On time',
-    cancellationStance: '24h notice',
-  },
+  deepProfile: {},
 };
 
 export const DEFAULT_PITCHES: PitchedOuting[] = [];
 
+let cacheAccount: string | null = null;
+export function setProfileCacheAccount(userId: string | null): void {
+  cacheAccount = userId;
+}
+export function isProfileCacheAccount(userId: string): boolean { return cacheAccount === userId; }
+function cacheKey(key: string): string {
+  return `${key}:v2:${cacheAccount ?? 'guest'}`;
+}
+
 export function getUserProfile(): UserProfileData {
   if (typeof window === 'undefined') return DEFAULT_USER_PROFILE;
   try {
-    const saved = localStorage.getItem('soul_tribe_user_profile');
+    const saved = localStorage.getItem(cacheKey('soul_tribe_user_profile'));
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.version !== 10) {
-        parsed.version = 10;
-        parsed.homeArea = 'Singapore';
-        parsed.deepProfile = {
-          ...DEFAULT_USER_PROFILE.deepProfile,
-          ...(parsed.deepProfile || {}),
-        };
-      }
-
       const completedCats = parsed.completedCategoryNums !== undefined
         ? parsed.completedCategoryNums
         : [];
-      const hasOnboarded = parsed.hasCompletedOnboarding ?? true;
+      const hasOnboarded = parsed.hasCompletedOnboarding ?? false;
       const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
 
       const result: UserProfileData = {
         ...DEFAULT_USER_PROFILE,
         ...parsed,
         version: 10,
-        homeArea: 'Singapore',
         passCompletionPct: calculatedPct,
         completedCategoryNums: completedCats,
         hasCompletedOnboarding: hasOnboarded,
@@ -375,7 +347,7 @@ export function getUserProfile(): UserProfileData {
         },
       };
 
-      localStorage.setItem('soul_tribe_user_profile', JSON.stringify(result));
+      localStorage.setItem(cacheKey('soul_tribe_user_profile'), JSON.stringify(result));
       return result;
     }
   } catch (e) {
@@ -391,26 +363,23 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
     : (current.completedCategoryNums || []);
   const hasOnboarded = data.hasCompletedOnboarding !== undefined
     ? data.hasCompletedOnboarding
-    : (current.hasCompletedOnboarding ?? true);
+    : (current.hasCompletedOnboarding ?? false);
 
   const calculatedPct = calculatePassCompletion(hasOnboarded, completedCats);
 
   const updated: UserProfileData = {
     ...current,
     ...data,
-    version: 4,
+    version: 10,
     passCompletionPct: calculatedPct,
     completedCategoryNums: completedCats,
     hasCompletedOnboarding: hasOnboarded,
-    deepProfile: {
-      ...(current.deepProfile || {}),
-      ...(data.deepProfile || {}),
-    },
+    deepProfile: data.deepProfile ?? current.deepProfile ?? {},
   };
 
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('soul_tribe_user_profile', JSON.stringify(updated));
+      localStorage.setItem(cacheKey('soul_tribe_user_profile'), JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to save user profile', e);
     }
@@ -421,7 +390,7 @@ export function setUserProfile(data: Partial<UserProfileData>): UserProfileData 
 export function getUserPitches(): PitchedOuting[] {
   if (typeof window === 'undefined') return [];
   try {
-    const saved = localStorage.getItem('soul_tribe_user_pitches');
+    const saved = localStorage.getItem(cacheKey('soul_tribe_user_pitches'));
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -439,7 +408,7 @@ export function addUserPitch(newPitch: PitchedOuting): PitchedOuting[] {
   const updated = [newPitch, ...current];
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('soul_tribe_user_pitches', JSON.stringify(updated));
+      localStorage.setItem(cacheKey('soul_tribe_user_pitches'), JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to save user pitch', e);
     }
@@ -452,7 +421,7 @@ export function removeUserPitchLocal(outingId: string): PitchedOuting[] {
   const updated = current.filter((p) => p.id !== outingId);
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('soul_tribe_user_pitches', JSON.stringify(updated));
+      localStorage.setItem(cacheKey('soul_tribe_user_pitches'), JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to remove user pitch', e);
     }
@@ -463,7 +432,7 @@ export function removeUserPitchLocal(outingId: string): PitchedOuting[] {
 export function getJoinedOutingsLocal(): string[] {
   if (typeof window === 'undefined') return [];
   try {
-    const saved = localStorage.getItem('soul_tribe_joined_outings');
+    const saved = localStorage.getItem(cacheKey('soul_tribe_joined_outings'));
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) return parsed;
@@ -480,7 +449,7 @@ export function addJoinedOutingLocal(outingId: string): string[] {
   const updated = [...current, outingId];
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('soul_tribe_joined_outings', JSON.stringify(updated));
+      localStorage.setItem(cacheKey('soul_tribe_joined_outings'), JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to save joined outing', e);
     }
@@ -493,7 +462,7 @@ export function removeJoinedOutingLocal(outingId: string): string[] {
   const updated = current.filter((id) => id !== outingId);
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem('soul_tribe_joined_outings', JSON.stringify(updated));
+      localStorage.setItem(cacheKey('soul_tribe_joined_outings'), JSON.stringify(updated));
     } catch (e) {
       console.error('Failed to remove joined outing', e);
     }

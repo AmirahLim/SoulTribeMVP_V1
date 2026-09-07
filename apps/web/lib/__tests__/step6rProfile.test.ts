@@ -32,10 +32,11 @@ describe('Step 6r — Profile Wiring Regression Guards', () => {
     expect(youPageSource).not.toMatch(/primaryInstinct:\s*\{\s*type:\s*'Connector'/);
   });
 
-  it('5. people/[id]/page.tsx passes trait data to toProfileVector (not just 4 cosmetic fields)', () => {
+  it('5. people/[id]/page.tsx uses a public projection without copying private trait rows', () => {
     // The old code had: toProfileVector({ displayName, homeArea, avatarUrl, bio } as any, ...)
     // The new code spreads the full dbProfile: ...dbProfile
-    expect(profilePageSource).toContain('...dbProfile');
+    expect(profilePageSource).not.toContain('...dbProfile');
+    expect(profilePageSource).toContain('display_name,handle,avatar_url,bio,home_area');
   });
 
   it('6. people/[id]/page.tsx uses real score() not hardcoded rankScore', () => {

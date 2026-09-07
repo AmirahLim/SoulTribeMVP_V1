@@ -40,9 +40,9 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
     <div
       className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all duration-300 overflow-hidden ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: ({ personality: '#E3EADF', communication: '#EAE5EF', friendship: '#F1E3D8', lifestyle: '#E2EAE9' } as Record<string, string>)[thread.key] || '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       {/* Thread Radial Color Wash */}
@@ -57,17 +57,19 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="font-sans text-xl font-semibold text-[#F5F2EA]">
+            <h3 className="font-sans text-xl font-semibold text-[#203B30]">
               {thread.name || colorSpec.name}
             </h3>
-            <p className="text-xs text-[rgba(245,242,234,0.44)] mt-0.5 tracking-wide">
+            <p className="text-xs text-[#536657] mt-0.5 tracking-wide">
               {descriptorText}
             </p>
           </div>
 
           <button
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Collapse" : "Explore"} ${thread.name}`}
             onClick={() => setExpanded(!expanded)}
-            className="rounded-full border border-[rgba(245,242,234,0.11)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[rgba(245,242,234,0.44)] transition-all hover:text-[#F5F2EA]"
+            className="rounded-full border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#536657] transition-all hover:text-[#203B30]"
           >
             {expanded ? 'Collapse' : 'Open'}
           </button>
@@ -80,38 +82,38 @@ export function ThreadCard({ thread, className = '' }: ThreadCardProps) {
 
         {/* Note copy */}
         {thread.note && (
-          <p className="text-[12.5px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-3 break-words">
+          <p className="text-[12.5px] leading-relaxed text-[#536657] mt-3 break-words">
             {thread.note}
           </p>
         )}
 
         {/* Expanded Signals Details */}
         {expanded && (
-          <div className="mt-4 border-t border-[rgba(245,242,234,0.08)] pt-3.5 flex flex-col gap-3 text-xs leading-relaxed text-[rgba(245,242,234,0.70)]">
+          <div className="mt-4 border-t border-[rgba(32,59,48,0.12)] pt-3.5 flex flex-col gap-3 text-xs leading-relaxed text-[#536657]">
             {thread.naturalSetting && (
               <div>
-                <p className="font-bold uppercase tracking-wider text-[10px] text-[rgba(245,242,234,0.44)]">Natural Setting</p>
-                <p className="mt-0.5 text-[#F5F2EA]">{thread.naturalSetting}</p>
+                <p className="font-bold uppercase tracking-wider text-[10px] text-[#536657]">Natural Setting</p>
+                <p className="mt-0.5 text-[#203B30]">{thread.naturalSetting}</p>
               </div>
             )}
 
             {thread.thriveWhen && (
               <div>
-                <p className="font-bold uppercase tracking-wider text-[10px] text-[rgba(245,242,234,0.44)]">You Thrive When</p>
-                <p className="mt-0.5 text-[#F5F2EA]">{thread.thriveWhen}</p>
+                <p className="font-bold uppercase tracking-wider text-[10px] text-[#536657]">You Thrive When</p>
+                <p className="mt-0.5 text-[#203B30]">{thread.thriveWhen}</p>
               </div>
             )}
 
             {thread.signals && thread.signals.length > 0 && (
               <div>
-                <p className="font-bold uppercase tracking-wider text-[10px] text-[rgba(245,242,234,0.44)] mb-1.5">
+                <p className="font-bold uppercase tracking-wider text-[10px] text-[#536657] mb-1.5">
                   Signals ({thread.signals.length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {thread.signals.map((sig, idx) => (
                     <span
                       key={idx}
-                      className="rounded-full border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[11px] font-medium text-[#F5F2EA]"
+                      className="rounded-full border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[11px] font-medium text-[#203B30]"
                     >
                       {sig.label}
                     </span>
@@ -136,38 +138,38 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
       return (
         <div className="flex items-end gap-5 pt-2 pb-1">
           {/* 1:1 */}
-          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '1:1' ? 'text-[#5BD99A]' : 'text-[rgba(245,242,234,0.22)]'}`}>
+          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '1:1' ? 'text-[#38654D]' : 'text-[rgba(32,59,48,0.18)]'}`}>
             <div className="flex flex-wrap gap-1 w-11 justify-center items-end min-h-[34px]">
-              <span className={`w-1.75 h-1.75 rounded-full ${activeGroup === '1:1' ? 'bg-[#5BD99A] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(245,242,234,0.16)]'}`} />
+              <span className={`w-1.75 h-1.75 rounded-full ${activeGroup === '1:1' ? 'bg-[#38654D] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(32,59,48,0.18)]'}`} />
             </div>
             <span className="text-[10px] font-semibold tracking-wider uppercase">1:1</span>
           </div>
 
           {/* 3-4 */}
-          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '3–4' || activeGroup === '3-4' ? 'text-[#5BD99A]' : 'text-[rgba(245,242,234,0.22)]'}`}>
+          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '3–4' || activeGroup === '3-4' ? 'text-[#38654D]' : 'text-[rgba(32,59,48,0.18)]'}`}>
             <div className="flex flex-wrap gap-1 w-11 justify-center items-end min-h-[34px]">
               {[1, 2, 3, 4].map((i) => (
-                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === '3–4' || activeGroup === '3-4' ? 'bg-[#5BD99A] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(245,242,234,0.16)]'}`} />
+                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === '3–4' || activeGroup === '3-4' ? 'bg-[#38654D] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(32,59,48,0.18)]'}`} />
               ))}
             </div>
             <span className="text-[10px] font-semibold tracking-wider uppercase">3–4</span>
           </div>
 
           {/* 5-8 */}
-          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '5–8' || activeGroup === '5-8' ? 'text-[#5BD99A]' : 'text-[rgba(245,242,234,0.22)]'}`}>
+          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === '5–8' || activeGroup === '5-8' ? 'text-[#38654D]' : 'text-[rgba(32,59,48,0.18)]'}`}>
             <div className="flex flex-wrap gap-1 w-11 justify-center items-end min-h-[34px]">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === '5–8' || activeGroup === '5-8' ? 'bg-[#5BD99A] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(245,242,234,0.16)]'}`} />
+                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === '5–8' || activeGroup === '5-8' ? 'bg-[#38654D] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(32,59,48,0.18)]'}`} />
               ))}
             </div>
             <span className="text-[10px] font-semibold tracking-wider uppercase">5–8</span>
           </div>
 
           {/* Crowd */}
-          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === 'Crowd' ? 'text-[#5BD99A]' : 'text-[rgba(245,242,234,0.22)]'}`}>
+          <div className={`flex flex-col items-center gap-2 flex-1 ${activeGroup === 'Crowd' ? 'text-[#38654D]' : 'text-[rgba(32,59,48,0.18)]'}`}>
             <div className="flex flex-wrap gap-1 w-11 justify-center items-end min-h-[34px]">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
-                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === 'Crowd' ? 'bg-[#5BD99A] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(245,242,234,0.16)]'}`} />
+                <span key={i} className={`w-1.75 h-1.75 rounded-full ${activeGroup === 'Crowd' ? 'bg-[#38654D] shadow-[0_0_7px_rgba(91,217,154,0.8)]' : 'bg-[rgba(32,59,48,0.18)]'}`} />
               ))}
             </div>
             <span className="text-[10px] font-semibold tracking-wider uppercase">Crowd</span>
@@ -183,21 +185,21 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
           <svg viewBox="0 0 320 62" preserveAspectRatio="none" className="w-full h-[62px] block" aria-hidden="true">
             <defs>
               <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stopColor="#5BD99A" stopOpacity=".9"/>
-                <stop offset="1" stopColor="#5BD99A" stopOpacity=".25"/>
+                <stop offset="0" stopColor="#38654D" stopOpacity=".9"/>
+                <stop offset="1" stopColor="#38654D" stopOpacity=".25"/>
               </linearGradient>
               <linearGradient id="wf" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#5BD99A" stopOpacity=".22"/>
-                <stop offset="1" stopColor="#5BD99A" stopOpacity="0"/>
+                <stop offset="0" stopColor="#38654D" stopOpacity=".22"/>
+                <stop offset="1" stopColor="#38654D" stopOpacity="0"/>
               </linearGradient>
             </defs>
             <path d="M0,48 C26,48 26,18 52,18 C78,18 78,50 104,50 C130,50 130,26 156,26 C182,26 182,52 208,52 C234,52 234,32 260,32 C286,32 286,44 320,44 L320,62 L0,62 Z" fill="url(#wf)"/>
             <path d="M0,48 C26,48 26,18 52,18 C78,18 78,50 104,50 C130,50 130,26 156,26 C182,26 182,52 208,52 C234,52 234,32 260,32 C286,32 286,44 320,44" fill="none" stroke="url(#wg)" strokeWidth="2.2" strokeLinecap="round"/>
-            <circle cx="52" cy="18" r="4" fill="#5BD99A"/>
-            <circle cx="156" cy="26" r="4" fill="#5BD99A"/>
-            <circle cx="260" cy="32" r="3.4" fill="#5BD99A" opacity=".55"/>
+            <circle cx="52" cy="18" r="4" fill="#38654D"/>
+            <circle cx="156" cy="26" r="4" fill="#38654D"/>
+            <circle cx="260" cy="32" r="3.4" fill="#38654D" opacity=".55"/>
           </svg>
-          <div className="flex justify-between text-[10.5px] text-[rgba(245,242,234,0.22)] mt-2 font-medium tracking-wide">
+          <div className="flex justify-between text-[10.5px] text-[rgba(32,59,48,0.18)] mt-2 font-medium tracking-wide">
             <span>Weeks between</span>
             <span>Constant contact</span>
           </div>
@@ -211,29 +213,29 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
       const posY = thread.extraVisualData?.mapY || 36; // %
 
       return (
-        <div className="relative h-[150px] rounded-xl bg-gradient-to-b from-[rgba(255,255,255,0.035)] to-[rgba(255,255,255,0.012)] border border-[rgba(245,242,234,0.11)] overflow-hidden">
+        <div className="relative h-[150px] rounded-xl bg-gradient-to-b from-[rgba(255,255,255,0.035)] to-[rgba(255,255,255,0.012)] border border-[rgba(32,59,48,0.18)] overflow-hidden">
           {/* Vertical axis line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-[rgba(245,242,234,0.07)]" />
           {/* Horizontal axis line */}
           <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[rgba(245,242,234,0.07)]" />
 
           {/* Corrected Axis Labels */}
-          <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+          <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[#536657]">
             Close
           </span>
-          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[#536657]">
             Independent
           </span>
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[#536657]">
             Few
           </span>
-          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold tracking-widest uppercase text-[#536657]">
             Many
           </span>
 
           {/* Glowing amber dot at member position */}
           <div
-            className="absolute w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#EFB94E] shadow-[0_0_0_5px_rgba(239,185,78,0.18),0_0_18px_rgba(239,185,78,0.9)]"
+            className="absolute w-3.5 h-3.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[#826044] shadow-[0_0_0_5px_rgba(239,185,78,0.18),0_0_18px_rgba(239,185,78,0.9)]"
             style={{ left: `${posX}%`, top: `${posY}%` }}
           />
         </div>
@@ -263,14 +265,14 @@ function renderThreadVisual(thread: ThreadData, colorSpec: ThreadColorSpec) {
                   : 'bg-[rgba(255,255,255,0.045)] border border-transparent'
               }`}
             >
-              <div className={`text-[10px] font-bold ${d.active ? 'text-[#EFB94E]' : 'text-[rgba(245,242,234,0.44)]'}`}>
+              <div className={`text-[10px] font-bold ${d.active ? 'text-[#826044]' : 'text-[#536657]'}`}>
                 {d.label}
               </div>
               <div
                 className={`h-1 mx-1.5 mt-1.5 rounded-full transition-all ${
                   d.active
-                    ? 'bg-[#EFB94E] shadow-[0_0_8px_rgba(239,185,78,0.7)]'
-                    : 'bg-[rgba(245,242,234,0.12)]'
+                    ? 'bg-[#826044] shadow-[0_0_8px_rgba(239,185,78,0.7)]'
+                    : 'bg-[rgba(32,59,48,0.18)]'
                 }`}
               />
             </div>

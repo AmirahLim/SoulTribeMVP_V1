@@ -54,7 +54,7 @@ describe('Step 6y — Profile Header, Spacing, and Public Boundaries', () => {
     expect(youSource).toContain('<PassArcCanvas');
     expect(youSource).toContain('<BoundariesMatching');
     expect(youSource).toContain('<ConnectionNotes');
-    expect(youSource).toContain('<SocialInstincts');
+    expect(youSource).not.toContain('<SocialInstincts');
     expect(youSource).toContain('<TheInterestingPart');
   });
 
@@ -68,10 +68,10 @@ describe('Step 6y — Profile Header, Spacing, and Public Boundaries', () => {
     expect(routeSource).not.toContain('|| 34');
   });
 
-  it('7. Boundaries is public on the member profile page', () => {
+  it('7. Private boundaries are not inferred on public profiles', () => {
     const personSource = readFileSync(PERSON_PAGE_PATH, 'utf-8');
-    expect(personSource).toContain('<BoundariesMatching');
-    expect(personSource).toMatch(/<BoundariesMatching[\s\S]*?voice="third"/);
+    expect(personSource).not.toContain('<BoundariesMatching');
+    expect(personSource).toContain('<SafetyActions');
   });
 
   it('8. The reference is committed in docs/reference/', () => {

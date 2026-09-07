@@ -124,7 +124,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const q5Avail = user.q5Availability || (user as any).trait_social_rhythm?.availability || [];
   const rawQ6 = user.q6Outings || (user as any).user_interests?.map((i: any) => i.interest_nodes?.name || i.node_name || i.name) || [];
   const q7Pacing = user.q7EmotionalPacing || (user as any).trait_emotional?.er_opening_pace;
-  const rawQ8 = user.q8Qualities || (user as any).user_values?.map((v: any) => v.value_key || v.value_name || v.name) || [];
+  const rawQ8 = user.q8Qualities || [];
 
   const q6Outings = rawQ6;
   const q8Qualities = rawQ8;
@@ -221,7 +221,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const emoObj = (user as any).trait_emotional !== undefined ? (user as any).trait_emotional : (user as any).emotional;
   const emotionalAnswered = emoObj !== undefined
     ? (emoObj?.answered ?? 0)
-    : (q7Pacing || q8Qualities.length > 0 ? 6 : (supportVal !== null ? 5 : 0));
+    : (q7Pacing ? 1 : (supportVal !== null ? 5 : 0));
 
   const er_opening_pace = typeof q7Pacing === 'string'
     ? (q7Pacing.toLowerCase().includes('open book') || q7Pacing.toLowerCase().includes('fast') ? 0.8 : 0.4)
@@ -241,7 +241,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     affection: emoObj?.affection,
     advice_vs_listening_self: emoObj?.advice_vs_listening_self ?? supportVal,
     advice_vs_listening_expect: emoObj?.advice_vs_listening_expect ?? supportVal,
-    reliability_self: emoObj?.reliability_self ?? (q8Qualities.some((q: string) => q.includes('Reliability')) ? 0.9 : undefined),
+    reliability_self: emoObj?.reliability_self,
     reliability_expect: emoObj?.reliability_expect,
     boundary_clarity: emoObj?.boundary_clarity,
     answered: emotionalAnswered,
@@ -307,15 +307,8 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     node_path: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
   })) : ((user as any).user_interests || undefined);
 
-  // 10. Values (from Q8 Qualities)
-  const values = q8Qualities.length > 0 ? q8Qualities.map((val: string) => ({
-    user_id: userId,
-    value_key: val.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-    value_name: val,
-    stance: 0.8,
-    importance: 0.8,
-    visibility: 'matching_only' as const,
-  })) : ((user as any).user_values || undefined);
+  // Desired qualities in friends are not self-reported values. Preserve evidence.
+  const values = (user as any).user_values?.filter((v: any) => v.visibility !== 'private');
 
   const birthYear = user.birthYear ?? (user as any).birth_year;
   const agePrefMin = user.agePrefMin ?? (user as any).age_pref_min;
@@ -334,8 +327,8 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
       age_pref_max: agePrefMax,
       profile_version: user.version || (user as any).profile_version || 6,
       confidence: 0.5,
-      tier: 'free',
-      status: 'active',
+      tier: (user as any).tier ?? 'free',
+      status: (user as any).status ?? 'active',
     },
     personality,
     communication,

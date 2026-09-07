@@ -43,21 +43,6 @@ function OnboardingContent() {
   const [userCity, setUserCity] = useState<string>('Singapore');
   const [step1Error, setStep1Error] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedHandle = localStorage.getItem('soul_tribe_handle');
-      const profile = getUserProfile();
-      if (storedHandle) {
-        setUserHandle(storedHandle);
-      } else if (profile.handle) {
-        setUserHandle(profile.handle);
-      }
-      if (profile.displayName && profile.displayName !== 'Priya Sharma') {
-        setUserName(profile.displayName);
-      }
-    }
-  }, []);
-
   const handleNameChange = (name: string) => {
     setUserName(name);
     if (!userHandle) {
@@ -90,6 +75,21 @@ function OnboardingContent() {
 
   // Q8: Who would you be excited to meet right now? (Up to 5 qualities)
   const [q8Qualities, setQ8Qualities] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const p = getUserProfile();
+    setUserName(p.displayName); setUserHandle(p.handle || ""); setUserDob(p.dateOfBirth || ""); setUserPhoto(p.avatarUrl); setUserCity(p.homeArea);
+    setQ1Finding(p.q1Finding ?? []);
+    setQ2Feelings(p.q2Feelings ?? []);
+    setQ3Energy(p.q3Energy ?? null);
+    setQ3GroupSize(p.q3GroupSize ?? null);
+    setQ4Connected(p.q4Connected ?? []);
+    setQ5PlanningRhythm(p.q5PlanningRhythm ?? null);
+    setQ5Availability(p.q5Availability ?? []);
+    setQ6Outings(p.q6Outings ?? []);
+    setQ7EmotionalPacing(p.q7EmotionalPacing ?? null);
+    setQ8Qualities(p.q8Qualities ?? []);
+  }, [user?.id]);
 
   const [isRevealing, setIsRevealing] = useState(false);
 
@@ -152,6 +152,10 @@ function OnboardingContent() {
     }
 
     if (step < 8) {
+      setUserProfile({ id: user?.id, displayName: userName, handle: userHandle, dateOfBirth: userDob, avatarUrl: userPhoto, homeArea: userCity,
+        q1Finding, q2Feelings, q3Energy: q3Energy ?? undefined, q3GroupSize: q3GroupSize ?? undefined,
+        q4Connected, q5PlanningRhythm: q5PlanningRhythm ?? undefined, q5Availability, q6Outings,
+        q7EmotionalPacing: q7EmotionalPacing ?? undefined, q8Qualities });
       setStep(step + 1);
     } else {
       if (isSupabaseConfigured && !user) {
@@ -176,6 +180,7 @@ function OnboardingContent() {
           handle: userHandle.trim().toLowerCase(),
           homeArea: userCity.trim(),
           birthYear: bYear,
+          dateOfBirth: userDob,
           avatarUrl: userPhoto || undefined,
           q1Finding,
           q2Feelings,
@@ -206,10 +211,13 @@ function OnboardingContent() {
         handle: userHandle.trim().toLowerCase(),
         dateOfBirth: userDob,
         birthYear: bYear,
-        avatarUrl: userPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        avatarUrl: userPhoto || '',
         homeArea: userCity,
         hasCompletedOnboarding: true,
-        completedCategoryNums: [],
+        completedCategoryNums: getUserProfile().completedCategoryNums || [],
+        q1Finding, q2Feelings, q3Energy: q3Energy ?? undefined, q3GroupSize: q3GroupSize ?? undefined,
+        q4Connected, q5PlanningRhythm: q5PlanningRhythm ?? undefined, q5Availability, q6Outings,
+        q7EmotionalPacing: q7EmotionalPacing ?? undefined, q8Qualities,
       });
 
       setIsSaving(false);

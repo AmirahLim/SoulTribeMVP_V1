@@ -1,12 +1,14 @@
 'use client';
+import { AnswerPortrait } from '../../components/profile/AnswerPortrait';
+import { ReflectionPreferences } from '../../components/outings/ReflectionPreferences';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bloom } from '@soul-tribe/ui';
 import { useAuth } from '../../lib/authContext';
-import { getUserProfile, setUserProfile, calculateTribeStanding } from '../../lib/userStore';
+import { getUserProfile, setUserProfile } from '../../lib/userStore';
 import { AuthGuard } from '../../components/AuthGuard';
-import { getSupabaseBrowserClient } from '../../lib/supabase';
+import { saveProfileIdentity } from '../../lib/saveProfileIdentity';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import Link from 'next/link';
 
@@ -17,7 +19,6 @@ import { TribalRead, TribalReadData } from '../../components/profile/TribalRead'
 import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
 import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
 import { ConnectionNotes } from '../../components/profile/ConnectionNotes';
-import { SocialInstincts } from '../../components/profile/SocialInstincts';
 import { ValuesConstellationCanvas, ValueNode } from '../../components/profile/ValuesConstellationCanvas';
 import { InterestGraphCanvas, InterestNode } from '../../components/profile/InterestGraphCanvas';
 import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
@@ -116,6 +117,12 @@ function ProfileContent() {
   const [error, setError] = useState<string | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const settingsDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (isSettingsOpen) settingsDialog.current?.showModal();
+  }, [isSettingsOpen]);
   const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -185,40 +192,30 @@ function ProfileContent() {
   // Settings save handler
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUserProfile({
-      displayName: editName.trim(),
-      homeArea: editArea,
-      bio: editBio,
-      avatarUrl: editPhoto,
-    });
-    setIsSettingsOpen(false);
+    if (saving || !authUser?.id) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const identity = await saveProfileIdentity(authUser.id, {
+        display_name: editName, home_area: editArea, bio: editBio, avatar_url: editPhoto,
+      });
+      setMyRead(current => current ? { ...current, profile: { ...current.profile, ...identity } } : current);
+      setUserProfile({ displayName: identity.display_name, homeArea: identity.home_area, bio: identity.bio, avatarUrl: identity.avatar_url });
+      setIsSettingsOpen(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Your changes could not be saved. Please try again.');
+    } finally { setSaving(false); }
 
-    if (authUser?.id) {
-      try {
-        const client = getSupabaseBrowserClient();
-        await client
-          .from('profiles')
-          .update({
-            display_name: editName.trim(),
-            home_area: editArea,
-            bio: editBio,
-            avatar_url: editPhoto,
-          })
-          .eq('id', authUser.id);
-      } catch {
-        // Fallback
-      }
-    }
   };
 
   // ─── Loading state ─────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-[#070908] flex items-center justify-center">
+      <div className="min-h-screen w-full bg-[#F8F5EE] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-[#5BD99A]" />
-          <p className="text-[rgba(245,242,234,0.44)] text-sm">Loading your profile…</p>
+          <p className="text-[#536657] text-sm">Loading your profile…</p>
         </div>
       </div>
     );
@@ -228,15 +225,15 @@ function ProfileContent() {
 
   if (error || !myRead) {
     return (
-      <div className="min-h-screen w-full bg-[#070908] flex items-center justify-center p-6">
+      <div className="min-h-screen w-full bg-[#F8F5EE] flex items-center justify-center p-6">
         <div className="text-center max-w-xs">
-          <p className="text-[#EFB94E] text-sm font-semibold mb-2">Could not load your read</p>
-          <p className="text-[rgba(245,242,234,0.44)] text-xs leading-relaxed">
+          <p className="text-[#826044] text-sm font-semibold mb-2">Could not load your read</p>
+          <p className="text-[#536657] text-xs leading-relaxed">
             {error || 'Something went wrong. Try refreshing.'}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 rounded-full border border-[rgba(245,242,234,0.20)] text-xs text-[#F5F2EA]"
+            className="mt-4 px-4 py-2 rounded-full border border-[#203B30]/15 text-xs text-[#203B30]"
           >
             Retry
           </button>
@@ -264,20 +261,9 @@ function ProfileContent() {
 
   // Local standing calculation
   const localProfile = getUserProfile();
-  const currentStanding = calculateTribeStanding(localProfile.outingsAttended || 0, localProfile.outingsHosted || 0);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#070908] text-[#F5F2EA] pb-24">
-      {/* ATMOSPHERIC BRAND CANVAS BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <img
-          src="/user-you-bg.jpg"
-          alt="Canvas Ground Background"
-          className="absolute inset-0 h-full w-full object-cover blur-[2px] opacity-75"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[rgba(4,6,5,0.80)] via-[rgba(4,6,5,0.60)] to-[rgba(4,6,5,0.95)]" />
-      </div>
-
+    <div className="relative min-h-screen w-full bg-[#F8F5EE] text-[#203B30] pb-24">
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
         {/* 1. Restored Profile Hero (with real data, no hardcoded defaults) */}
@@ -288,12 +274,14 @@ function ProfileContent() {
           bio={profile.bio}
           avatarUrl={profile.avatar_url}
           passCompletionPct={myRead.passCompletionPct}
-          standingText={currentStanding.label}
-          instinctType={myRead.socialInstinct?.type}
-          instinctDescription={myRead.socialInstinct?.description}
-          onEditProfile={() => setIsSettingsOpen(true)}
+          onEditProfile={() => {
+            setEditName(profile.display_name); setEditArea(profile.home_area || '');
+            setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
+          }}
           onDeepenPass={() => router.push('/you/deeper')}
         />
+
+        {myRead.tribalRead ? <TribalRead data={myRead.tribalRead} /> : <section className="rounded-3xl bg-[#E3EADF] p-6"><h2 className="text-2xl font-semibold">Your Social Signature</h2><p className="mt-3 text-sm">Your portrait grows from what you choose to share. Add more answers when you feel ready.</p></section>}
 
         {/* 2. Pass Arc (Drawn Arc Canvas) */}
         <PassArcCanvas
@@ -305,18 +293,14 @@ function ProfileContent() {
           }
         />
 
+        <AnswerPortrait profile={localProfile} />
         {/* 3. Friendship DNA Bloom */}
-        <div className="flex flex-col items-center py-2 text-center border-t border-[rgba(245,242,234,0.08)] pt-4">
+        <div className="flex flex-col items-center py-2 text-center border-t border-[#203B30]/15 pt-4">
           <Bloom threads={bloomThreads} size={280} interactive />
-          <p className="text-[12.5px] text-[rgba(245,242,234,0.44)] mt-1">
-            Ten threads · {myRead.threadsExplored} explored · <span className="text-[#EFB94E]">tap a petal</span>
+          <p className="text-[12.5px] text-[#536657] mt-1">
+            Ten threads · {myRead.threadsExplored} explored · <span className="text-[#826044]">tap a petal</span>
           </p>
         </div>
-
-        {/* 4. Your Tribal Read */}
-        {myRead.tribalRead && (
-          <TribalRead data={myRead.tribalRead} label="Your Tribal Read" tone="amber" />
-        )}
 
         {/* 5. The Interesting Part (cross-thread tension) — only when data exists */}
         {myRead.tension && (
@@ -326,10 +310,10 @@ function ProfileContent() {
         {/* 6. Connection Threads */}
         <div className="flex flex-col gap-3.5">
           <div className="flex items-baseline justify-between px-1">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
               Connection Threads
             </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
               {connectionThreads.filter((t) => t.status === 'known').length} of {connectionThreads.length}
             </p>
           </div>
@@ -339,17 +323,17 @@ function ProfileContent() {
               return (
                 <div
                   key={t.key}
-                  className="rounded-[22px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.08)]"
+                  className="rounded-[22px] p-5 backdrop-blur-xl bg-[#F2EEE5] border border-[#203B30]/15"
                 >
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.30)] mb-2">
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657] mb-2">
                     {t.name}
                   </p>
-                  <p className="text-xs text-[rgba(245,242,234,0.44)] leading-relaxed">
+                  <p className="text-xs text-[#536657] leading-relaxed">
                     This thread has not been measured yet.
                   </p>
                   <Link
                     href={t.nextHref}
-                    className="inline-block mt-3 text-xs font-semibold text-[#EFB94E] hover:underline"
+                    className="inline-block mt-3 text-xs font-semibold text-[#826044] hover:underline"
                   >
                     {t.nextPrompt} →
                   </Link>
@@ -385,20 +369,16 @@ function ProfileContent() {
           />
         )}
 
+        {authUser?.id && <ReflectionPreferences userId={authUser.id} />}
         {/* 8. Connection Notes — only when data exists */}
         {myRead.connectionNotes && myRead.connectionNotes.length > 0 && (
           <ConnectionNotes notes={myRead.connectionNotes} />
         )}
 
-        {/* 9. Social Instincts — only when data exists */}
-        {myRead.socialInstinct && (
-          <SocialInstincts primaryInstinct={myRead.socialInstinct} />
-        )}
-
         {/* 10. What Matters (Values Constellation Canvas) */}
         <div className="flex flex-col">
           <div className="flex items-baseline justify-between px-1 mb-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
               What Matters
             </p>
           </div>
@@ -406,7 +386,7 @@ function ProfileContent() {
             values={myRead.values?.length ? myRead.values : undefined}
             note={
               myRead.values?.length
-                ? `${myRead.values[0].label} sits at the centre of most of your answers — the others orbit it.`
+                ? 'Values you have chosen to share.'
                 : undefined
             }
           />
@@ -415,10 +395,10 @@ function ProfileContent() {
         {/* 11. I'm Into (Interest Graph Canvas) */}
         <div className="flex flex-col">
           <div className="flex items-baseline justify-between px-1 mb-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
               I'm Into
             </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#826044]">
               Rabbit hole
             </p>
           </div>
@@ -431,7 +411,7 @@ function ProfileContent() {
         {myRead.outingPreferences && (
           <div className="flex flex-col">
             <div className="flex items-baseline justify-between px-1 mb-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)]">
+              <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
                 Outing DNA
               </p>
             </div>
@@ -447,17 +427,17 @@ function ProfileContent() {
 
         {/* 13. Hosted Pitches */}
         {userPitches.length > 0 && (
-          <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[rgba(10,12,11,0.62)] border border-[rgba(245,242,234,0.11)] shadow-xl">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[rgba(245,242,234,0.44)] mb-3">
+          <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[#F2EEE5] border border-[#203B30]/15 shadow-xl">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657] mb-3">
               Hosted Pitches ({userPitches.length})
             </p>
             <div className="flex flex-col gap-3">
               {userPitches.map((p) => (
-                <div key={p.id} className="rounded-xl border border-[rgba(245,242,234,0.08)] bg-[rgba(255,255,255,0.03)] p-3.5">
-                  <h4 className="font-sans text-sm font-semibold text-[#F5F2EA]">
+                <div key={p.id} className="rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.03)] p-3.5">
+                  <h4 className="font-sans text-sm font-semibold text-[#203B30]">
                     {p.title}
                   </h4>
-                  <p className="text-xs text-[rgba(245,242,234,0.70)] mt-1 leading-relaxed">
+                  <p className="text-xs text-[#536657] mt-1 leading-relaxed">
                     {p.pitch && p.pitch !== p.title
                       ? p.pitch
                       : `Hosted by ${profile.display_name} in ${p.area || profile.home_area}`}
@@ -469,44 +449,47 @@ function ProfileContent() {
         )}
 
         {/* 14. Clean Footer */}
-        <p className="text-center text-[11.5px] leading-relaxed text-[rgba(245,242,234,0.44)] mt-6">
+        <p className="text-center text-[11.5px] leading-relaxed text-[#536657] mt-6">
           Soul Tribe · Singapore
         </p>
       </div>
 
       {/* Settings Modal */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(7,9,8,0.85)] p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-[26px] border border-[rgba(245,242,234,0.20)] bg-[#0A0C0B] p-6 text-[#F5F2EA]">
-            <h3 className="text-lg font-bold">Edit Profile &amp; Settings</h3>
+        <dialog ref={settingsDialog} aria-labelledby="profile-settings-title"
+          onCancel={(event) => { if (saving) event.preventDefault(); else setIsSettingsOpen(false); }}
+          className="w-full max-w-md rounded-[26px] bg-[#F8F5EE] p-0 backdrop:bg-black/40">
+          <div className="w-full max-w-md rounded-[26px] border border-[#203B30]/15 bg-[#F8F5EE] p-6 text-[#203B30]">
+            <h3 id="profile-settings-title" className="text-lg font-bold">Edit profile</h3>
 
+            {saveError && <p role="alert" className="mt-3 text-sm text-red-800">{saveError}</p>}
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
               <div>
-                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Display Name</label>
+                <label htmlFor="profile-name" className="font-semibold text-[#536657]">Display Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
+                  className="mt-1 w-full rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] p-2.5 text-[#203B30]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Home Area</label>
+                <label htmlFor="profile-area" className="font-semibold text-[#536657]">Home Area</label>
                 <input
                   type="text"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
+                  className="mt-1 w-full rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] p-2.5 text-[#203B30]"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-[rgba(245,242,234,0.70)]">Bio</label>
+                <label htmlFor="profile-bio" className="font-semibold text-[#536657]">Bio</label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.05)] p-2.5 text-[#F5F2EA]"
+                  className="mt-1 w-full rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] p-2.5 text-[#203B30]"
                   rows={3}
                 />
               </div>
@@ -514,21 +497,23 @@ function ProfileContent() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={() => setIsSettingsOpen(false)}
-                  className="flex-1 rounded-xl border border-[rgba(245,242,234,0.20)] bg-[rgba(255,255,255,0.05)] py-2.5 font-bold"
+                  className="flex-1 rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] py-2.5 font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={saving}
                   className="flex-1 rounded-xl bg-[#2D523E] py-2.5 font-bold text-[#F5F2EA]"
                 >
-                  Save Changes
+                  {saving ? 'Saving…' : 'Save changes'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

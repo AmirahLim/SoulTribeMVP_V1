@@ -23,9 +23,9 @@ export function TheInterestingPart({ tension, className = '' }: TheInterestingPa
     <div
       className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       {/* Subtle Amber Wash Overlay */}
@@ -37,23 +37,23 @@ export function TheInterestingPart({ tension, className = '' }: TheInterestingPa
       />
 
       <div className="relative z-10">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#EFB94E]">
+        <span className="text-[10px] font-bold tracking-widest uppercase text-[#826044]">
           The Interesting Part
         </span>
 
-        <h3 className="font-sans mt-1 text-2xl font-bold tracking-tight text-[#F5F2EA]">
+        <h3 className="font-sans mt-1 text-2xl font-bold tracking-tight text-[#203B30]">
           {tension.headline}
         </h3>
 
-        <p className="mt-2 text-xs leading-relaxed font-normal text-[rgba(245,242,234,0.70)]">
+        <p className="mt-2 text-xs leading-relaxed font-normal text-[#536657]">
           {tension.explanation}
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold text-[rgba(245,242,234,0.70)]">
+        <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-semibold text-[#536657]">
           {tension.threadsInvolved.map((t, idx) => (
             <span
               key={idx}
-              className="rounded-full border border-[rgba(245,242,234,0.15)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[11px] font-medium text-[#F5F2EA]"
+              className="rounded-full border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.04)] px-2.5 py-0.5 text-[11px] font-medium text-[#203B30]"
             >
               Cross-thread: {t}
             </span>

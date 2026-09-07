@@ -53,14 +53,14 @@ export interface CandidateSource {
 export interface ScoredMatchSource {
   getScoredMatches(
     viewerVec: ProfileVector,
-    opts?: { area?: string; limit?: number }
+    opts?: { area?: string; limit?: number; activityCategory?: string }
   ): Promise<RankedMatch[]>;
 }
 
 export const realCandidateSource: ScoredMatchSource = {
   async getScoredMatches(
     _viewerVec: ProfileVector,
-    _opts?: { area?: string; limit?: number }
+    _opts?: { area?: string; limit?: number; activityCategory?: string }
   ): Promise<RankedMatch[]> {
     if (!checkIsSupabaseConfigured()) {
       return [];
@@ -81,6 +81,7 @@ export const realCandidateSource: ScoredMatchSource = {
 
       const res = await fetch('/api/matches', {
         method: 'POST',
+        body: JSON.stringify({ activityCategory: _opts?.activityCategory }),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -130,7 +131,7 @@ export function clearLastCandidateFetchError(): void {
 export const mixedCandidateSource: ScoredMatchSource = {
   async getScoredMatches(
     viewerVec: ProfileVector,
-    opts?: { area?: string; limit?: number }
+    opts?: { area?: string; limit?: number; activityCategory?: string }
   ): Promise<RankedMatch[]> {
     clearLastCandidateFetchError();
     const demoVecs = await demoCandidateSource.getCandidates(opts);
@@ -561,7 +562,7 @@ export async function getRankedMatches(
   let candidateMatches: RankedMatch[] = [];
 
   if ('getScoredMatches' in source) {
-    candidateMatches = await source.getScoredMatches(viewerVec, { area: opts?.area, limit: opts?.limit });
+    candidateMatches = await source.getScoredMatches(viewerVec, { area: opts?.area, limit: opts?.limit, activityCategory: opts?.activityCategory });
   } else {
     const candidateVecs = await source.getCandidates({ area: opts?.area, limit: opts?.limit });
     candidateMatches = scoreDemoCandidates(viewerVec, candidateVecs, context);

@@ -1,48 +1,31 @@
-# Soul Tribe — Antigravity Context Pack
+# Soul Tribe
 
-Drop this whole folder into your Antigravity workspace. `AGENTS.md` is the entry point — the
-agent reads it first, then the numbered docs.
+Friendship-first discovery, intentional outings and private reflections. This is an existing MVP, not a starter template.
 
-## Contents
+Read `AGENTS.md` and `docs/00-current-product-direction.md` for current product intent. Older numbered specs and `exports/` remain historical references.
 
-| File | What it's for |
-|---|---|
-| `AGENTS.md` | Root agent instructions: non-negotiables, tech decisions, monorepo layout, how to work. **Read first.** |
-| `docs/01-product-brief.md` | What Soul Tribe is, the design law, MVP scope, non-goals, success criteria |
-| `docs/02-design-system.md` | The visual system + the anti-pattern list that kills the flat-slide look |
-| `docs/03-data-model.md` | Postgres/Supabase schema, RLS, the 6-person cap trigger |
-| `docs/04-matching-spec.md` | The 10-dimension engine: weights, scoring math, Emotional Rhythm, group cohesion, explanations |
-| `docs/05-onboarding-question-bank.md` | Production-ready question copy mapped to schema fields, plus the trait→phrase copy bank |
-| `docs/06-screens-and-flows.md` | Screen-by-screen, including the host-controlled pitch flow |
-| `docs/07-build-order.md` | Milestones M0–M8, each ending in something demoable |
-| `reference-99peaks-light.jpg` | **Primary visual reference** — structure, layering, illustrated world |
-| `reference-sonar-dark.jpg` | Secondary — for depth/overlap of device shots only. Ignore its palette. |
+## Stack and local development
 
-## Suggested first prompt to Antigravity
+Node.js 22, npm workspaces, Next.js 16 / React 19 / TypeScript / Tailwind 3, Supabase.
 
-> Read `AGENTS.md`, then `docs/01`, `docs/02`, and `docs/04` in full before writing any code.
-> Then execute milestone M0 and M1 from `docs/07-build-order.md`. Build the matching engine
-> test-first from the 12 test cases in `docs/04` §12. Do not write any UI in this pass.
+```sh
+npm ci
+npm run dev
+```
 
-Then, per milestone:
+Configure the existing app environment using `apps/web/.env.example` if available. The app requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Server matching requires `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`; never expose either through a public environment variable. Unsplash image search optionally uses `UNSPLASH_ACCESS_KEY`.
 
-> Execute milestone M3 from `docs/07-build-order.md`. Before you start, re-read
-> `docs/02-design-system.md` §10 (anti-patterns) and §11 (definition of visual done), and check
-> each primitive against both before you consider it finished.
+## Verification
 
-## Three things to hold Antigravity to
+```sh
+npm run typecheck
+npm test
+npm run test:db
+npm run build
+```
 
-1. **The Bloom, not bars.** If it renders the Friendship DNA as progress bars or a radar chart,
-   it has not read the design system. Send it back.
-2. **Friction is mandatory.** Any match explanation without a "where you might rub" section is
-   a bug.
-3. **Six is enforced in Postgres.** UI-only caps don't count.
+`test:db` applies every committed migration to local PGlite with minimal Supabase auth/storage shims, then checks data ownership, account fields, invitation consent, capacity, chat/logistics access, reflection eligibility and transactional rollback. It is not a test of a deployed Supabase project or simultaneous network clients.
 
-## Decisions already made (don't let the agent re-open them)
+## Engineering foundations branch
 
-- Web PWA first (Next.js 15 + Supabase), native later via a shared `packages/core`
-- Light + illustrated visual direction, warm palette — not dark, not cool-blue
-- MVP = onboarding + matching + host-controlled pitching + outing artifacts. Flash Pods,
-  Echo Room, and the interactive Tribe Map are deferred.
-- Weights are fixed and sum to 100. Don't let it "simplify" the model — the dimensionality
-  *is* the product.
+See `docs/engineering-implementation.md` for implementation coverage, migration ordering, open policies and remaining release checks. Apply and test migrations in staging before deploying the client that calls `save_profile_bundle` and `create_pitch`. Do not deploy these client changes against the old schema.

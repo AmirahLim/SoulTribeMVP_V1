@@ -47,8 +47,8 @@ export function ValuesConstellationCanvas({
     ctx.scale(dpr, dpr);
     const W = containerWidth;
     const H = containerHeight;
-    const AMBER = '239,185,78';
-    const CREAM = '245,242,234';
+    const AMBER = '130,96,68';
+    const CREAM = '32,59,48';
 
     ctx.clearRect(0, 0, W, H);
 
@@ -93,9 +93,9 @@ export function ValuesConstellationCanvas({
     <div
       className={`relative rounded-[26px] p-5 backdrop-blur-xl transition-all ${className}`}
       style={{
-        backgroundColor: 'rgba(10,12,11,0.62)',
-        border: '1px solid rgba(245,242,234,0.11)',
-        boxShadow: '0 22px 48px -26px rgba(0,0,0,0.9), inset 0 1px 0 rgba(245,242,234,0.22)',
+        backgroundColor: '#F2EEE5',
+        border: '1px solid rgba(32,59,48,0.18)',
+        boxShadow: '0 4px 16px rgba(32,59,48,0.04)',
       }}
     >
       <div
@@ -109,7 +109,7 @@ export function ValuesConstellationCanvas({
           <canvas ref={canvasRef} aria-label="Your values, sized by how often they surface" />
         </div>
         {note && (
-          <p className="text-[12.5px] leading-relaxed text-[rgba(245,242,234,0.70)] mt-3">
+          <p className="text-[12.5px] leading-relaxed text-[#536657] mt-3">
             {note}
           </p>
         )}
