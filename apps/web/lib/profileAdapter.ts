@@ -212,7 +212,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const intent = intentAnswered > 0 ? {
     user_id: userId,
     intents: intentObj?.intents ?? (q1.length > 0 ? q1 : undefined),
-    depth: intentObj?.depth ?? (q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : (q1.length > 0 ? 2 : undefined)),
+    depth: intentObj !== undefined ? intentObj?.depth ?? undefined : (q1.some((f: string) => f.includes('inner circle') || f.includes('close')) ? 4 : (q1.length > 0 ? 2 : undefined)),
     open_to_hosting: intentObj?.open_to_hosting,
     answered: intentAnswered,
   } : undefined;

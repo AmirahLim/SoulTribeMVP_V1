@@ -186,4 +186,30 @@ assert.ok(
 console.log(
   'Passed consent, capacity, membership revocation, account protection, bilateral block, private answers, rollback, reflection eligibility and retained history checks.',
 );
+// Baseline v2 security and transactional persistence.
+const newcomer='10000000-0000-4000-8000-000000000004';
+await db.exec('reset role');
+await db.query('insert into auth.users values($1)',[newcomer]);
+const token='a'.repeat(64);
+const draft={version:2,step:6,intent:['Close circle'],clicks:['Our humour just lands'],group:'1:1',contact:0,planning:.5,opening:1,outings:['Analog Photo Walks','Indie Cinema'],handle:'newcomer',area:'Bedok',travel:'Nearby'};
+await db.exec("set role anon; set request.jwt.claim.sub='';");
+await fails('select * from onboarding_drafts',/permission denied/);
+await db.query('select save_onboarding_draft($1,$2)',[token,draft]);
+assert.equal((await db.query('select read_onboarding_draft($1) d',['b'.repeat(64)])).rows[0].d,null);
+await fails('select save_onboarding_draft($1,$2)',/Invalid draft/,[token,{...draft,outings:['invalid']}]);
+await fails('select claim_onboarding_draft($1,$2,$3)',/permission denied/,[token,'New Member',1995]);
+await as(newcomer);
+await fails('select claim_onboarding_draft($1,$2,$3)',/adult birth year/,[token,'New Member',2020]);
+await db.query('select claim_onboarding_draft($1,$2,$3)',[token,'New Member',1995]);
+const savedVersion=(await db.query('select profile_version from profiles where id=$1',[newcomer])).rows[0].profile_version;
+await db.query('select claim_onboarding_draft($1,$2,$3)',[token,'New Member',1995]);
+assert.equal((await db.query('select profile_version from profiles where id=$1',[newcomer])).rows[0].profile_version,savedVersion);
+assert.equal((await db.query('select count(*)::int n from user_interests where user_id=$1',[newcomer])).rows[0].n,2);
+assert.equal((await db.query('select contact_frequency_self from trait_communication where user_id=$1',[newcomer])).rows[0].contact_frequency_self,null);
+assert.equal((await db.query('select depth from trait_intent where user_id=$1',[newcomer])).rows[0].depth,null);
+assert.equal((await db.query('select count(*)::int n from trait_personality where user_id=$1',[newcomer])).rows[0].n,0);
+await as(guest);
+await fails('select claim_onboarding_draft($1,$2,$3)',/already saved/,[token,'Other Member',1995]);
+assert.equal((await db.query('select read_onboarding_draft($1) d',[token])).rows[0].d,null);
+console.log('Passed baseline draft isolation, validation, adult eligibility, atomic claim, idempotence and unknown trait preservation.');
 await db.close();

@@ -8,7 +8,7 @@ Soul Tribe helps adults find meaningful real-world friendships through self-unde
 
 Keep Social Signature (self profile), Tribal Pass (progressive assessment) and Connection Notes (pair explanation) distinct. Bonds describe observed continuation, not a compatibility prediction. Preserve old database names where changing them adds migration risk.
 
-The baseline in this handover is eight questions. Save exact answers privately, support editing, and keep sensitive information optional. Desired qualities in friends are not the author's personal values. Avoid diagnostic, mystical and deterministic claims; missing evidence stays unknown. Numeric ranking stays internal to the experience.
+Updated 7 September: the baseline is five questions: friendship intent, click moments, social setting, contact/planning/opening flow, and up to five outing preferences. Intro leads to these questions, followed by handle and area setup, account sign-up and Early Read. Deeper Tribal Pass remains available afterwards. Save exact answers privately, support editing, and keep sensitive information optional. Desired qualities in friends are not the author's personal values. Avoid diagnostic, mystical and deterministic claims; missing evidence stays unknown. Numeric ranking stays internal to the experience.
 
 Outings navigation is Your Pitches, Invited, Confirmed and Past, with a prominent new-Pitch action. Backend event states and membership states remain separate. Host approval and invitee acceptance must be enforced outside the browser. Messages require shared accepted outing context. Exact logistics belong behind the same access boundary; MVP venues are public.
 

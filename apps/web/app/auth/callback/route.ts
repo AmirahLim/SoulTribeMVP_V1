@@ -11,7 +11,8 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/home';
+  const requestedNext = searchParams.get('next') ?? '/home';
+  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//') && !requestedNext.includes('\\') ? requestedNext : '/home';
 
   // No code parameter at all → send to sign-in
   if (!code) {
@@ -53,6 +54,9 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
+    // A verified onboarding member must claim the private draft before profile creation.
+    // Return the existing response so all exchanged session cookies reach the browser.
+    if (next === '/early-read') return response;
     const { data: profile } = await supabase
       .from('profiles')
       .select('id, handle')
@@ -64,7 +68,8 @@ export async function GET(request: NextRequest) {
       const usernameUrl = new URL('/auth/signin', origin);
       usernameUrl.searchParams.set('step', 'choose_username');
       usernameUrl.searchParams.set('next', next);
-      return NextResponse.redirect(usernameUrl);
+      response.headers.set('location', usernameUrl.toString());
+      return response;
     }
   }
 

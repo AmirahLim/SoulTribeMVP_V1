@@ -36,7 +36,7 @@ export default function LandingPageContent() {
             </span>
           </div>
 
-          <Link href="/auth/signin?next=/onboarding">
+          <Link href="/onboarding">
             <Button variant="primary" size="sm">
               Find your people
             </Button>
@@ -65,7 +65,8 @@ export default function LandingPageContent() {
           </p>
 
           <div className="mt-8">
-            <Link href="/auth/signin?next=/onboarding" className="inline-block w-full max-w-[320px]">
+            <p className="mb-4 text-[15px] text-white/90">Five quick picks. Your Early Read, then people you might click with.</p>
+            <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
               <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
                 Your Circle Starts Here <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -141,7 +142,7 @@ export default function LandingPageContent() {
 
         {/* BOTTOM CTA FOOTER */}
         <footer className="mt-12 text-center">
-          <Link href="/auth/signin?next=/onboarding" className="inline-block w-full max-w-[320px]">
+          <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
             <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
               Join Soul Tribe →
             </Button>

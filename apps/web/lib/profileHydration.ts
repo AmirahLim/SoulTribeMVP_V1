@@ -6,7 +6,7 @@ export async function hydrateProfile(userId: string): Promise<void> {
   const [profile, answers] = await Promise.all([
     client
       .from('profiles')
-      .select('id,handle,display_name,avatar_url,home_area,bio')
+      .select('id,handle,display_name,avatar_url,home_area,bio,trait_intent(*),trait_communication(*),trait_social_rhythm(*),trait_emotional(*),trait_experience(*),trait_geography(*)')
       .eq('id', userId)
       .maybeSingle(),
     client
@@ -29,6 +29,12 @@ export async function hydrateProfile(userId: string): Promise<void> {
   const p = profile.data;
   setUserProfile({
     ...answers.data?.onboarding,
+    ...(answers.data?.onboarding?.baselineV2 ? Object.fromEntries(
+      ['trait_intent','trait_communication','trait_social_rhythm','trait_emotional','trait_experience','trait_geography'].map(key => {
+        const value=(p as Record<string,any>)[key];
+        return [key,Array.isArray(value)?value[0]??null:value??null];
+      }),
+    ) : {}),
     id: userId,
     displayName: p.display_name,
     handle: p.handle,
