@@ -1,157 +1,82 @@
-'use client';
-
-import React from 'react';
 import Link from 'next/link';
-import { Button } from '@soul-tribe/ui';
-import { motion } from 'framer-motion';
-import { ArrowRight, Feather } from 'lucide-react';
-import { SYNTHETIC_PROFILES } from '../../../supabase/seed/seed';
-import { generateMatchExplanation } from '../../../packages/core/explain/generator';
+import { ArrowDown, ArrowRight, Feather } from 'lucide-react';
+
+const steps = [
+  ['01', 'A little about you.', 'Six questions about what you want in a friendship, how you keep in touch, and what you’d actually leave the house for.', 'Your Social Signature', 'A first look at your friendship style. You can add to it as you go.'],
+  ['02', 'Someone you might click with.', 'Discover people with room for the kind of friendship you’re looking for. See what you have in common—and where your expectations might differ.', 'Connection Notes', 'A little context before you say hello. A starting point, not a promise of chemistry.'],
+  ['03', 'Something to do together.', 'Join a plan that catches your eye, or put one out there. The host brings the group together; once you’re confirmed, you can chat and sort the details.', 'Real-life plans', 'Coffee, a gig, a walk that turns into dinner. Give the friendship somewhere to start.'],
+];
+
+function StartLink({ children }: { children: React.ReactNode }) {
+  return <Link href="/onboarding" className="inline-flex min-h-14 items-center justify-center gap-8 rounded-full bg-[#f5f1e9] px-7 py-4 text-sm font-medium text-[#17231c] hover:bg-white">{children}<ArrowRight size={18} aria-hidden="true" /></Link>;
+}
 
 export default function LandingPageContent() {
-  const p1 = SYNTHETIC_PROFILES[0];
-  const p2 = SYNTHETIC_PROFILES[1];
-  const sampleExplanation = generateMatchExplanation(p1, p2);
-
   return (
-    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-20">
-      {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED STYLISH MOTION-BLUR PORTRAIT PHOTO */}
-      <img
-        src="/user-intro-bg.jpg"
-        alt="Intro Canvas Background"
-        className="fixed inset-0 h-full w-full object-cover z-0 opacity-80"
-      />
-
-      {/* Dark Ambient Vignette Overlay for Crisp Legibility */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/95 z-0 pointer-events-none" />
-
-      {/* PAGE CONTENT CONTAINER */}
-      <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
-        {/* EDITORIAL BRAND HEADER */}
-        <header className="flex items-center justify-between pb-6 border-b border-white/15">
-          <div className="flex items-center gap-2">
-            <Feather className="h-6 w-6 text-white" />
-            <span className="text-[22px] font-extrabold tracking-tight text-white drop-shadow-md">
-              SOUL TRIBE
-            </span>
+    <div className="relative isolate min-h-screen bg-[#171915] text-[#fffdf9]">
+      <img src="/user-intro-bg.jpg" alt="" fetchPriority="high" className="fixed inset-0 -z-20 h-full w-full object-cover" />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/65 to-black/90" />
+      <a href="#intro-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-4 focus:text-black">Skip to content</a>
+      <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-7 md:px-12">
+        <Link href="/" aria-label="Soul Tribe home" className="flex items-center gap-2 text-lg font-semibold tracking-tight md:text-2xl"><Feather size={24} aria-hidden="true" />SOUL TRIBE</Link>
+        <nav aria-label="Main navigation" className="flex items-center gap-6 text-sm">
+          <a href="#how-it-works" className="hidden py-3 underline-offset-4 hover:underline sm:block">How it works</a>
+          <Link href="/login" className="py-3 underline-offset-4 hover:underline">Log in</Link>
+        </nav>
+      </header>
+      <main id="intro-content">
+        <section className="mx-auto flex min-h-[76svh] max-w-7xl flex-col justify-center px-6 pb-14 pt-12 md:px-12 md:pb-20">
+          <p className="mb-7 text-[11px] uppercase tracking-[.2em] text-white/85">New friends. Real plans. Singapore.</p>
+          <h1 className="max-w-4xl text-[clamp(3.5rem,8vw,7.5rem)] font-normal leading-[.98] tracking-[-.055em]">People to<br />do life with.</h1>
+          <p className="mt-8 max-w-xl text-lg font-light leading-relaxed md:text-xl">Soul Tribe helps you meet new friends in Singapore, find people you might click with, and make plans to meet in real life.</p>
+          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
+            <StartLink>Find your people</StartLink>
+            <p className="text-xs leading-relaxed text-white/80">Start with six questions.<br />Create your account after.</p>
           </div>
-
-          <Link href="/onboarding">
-            <Button variant="primary" size="sm">
-              Find your people
-            </Button>
-          </Link>
-        </header>
-
-        {/* HERO INTRODUCTION — LUXURY MINIMALIST */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mt-8 flex flex-col text-left"
-        >
-          <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-            Friendship-First Social Coordination · Singapore
-          </span>
-
-          <h1 className="mt-4 text-[38px] font-extrabold tracking-tight text-white leading-[44px] drop-shadow-md">
-            Six people.<br />
-            One good Saturday.<br />
-            <span className="text-white/90 underline decoration-white/30 underline-offset-4">Start there.</span>
-          </h1>
-
-          <p className="mt-4 max-w-[340px] text-[15px] font-medium leading-relaxed text-white/90 drop-shadow-sm">
-            Not a dating app, not an endless feed. A coordination layer that surfaces the right handful of people.
-          </p>
-
-          <div className="mt-8">
-            <p className="mb-4 text-[15px] text-white/90">Six quick questions. Your Early Read, then people you might click with.</p>
-            <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
-              <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
-                Your Circle Starts Here <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+          <a href="#how-it-works" className="mt-14 inline-flex w-fit items-center gap-3 py-3 text-xs text-white/85">A little more about us <ArrowDown size={14} aria-hidden="true" /></a>
+        </section>
+        <section aria-labelledby="sound-familiar" className="mx-auto grid max-w-7xl gap-8 border-t border-white/25 px-6 py-16 md:grid-cols-[1fr_2fr] md:gap-16 md:px-12 md:py-24">
+          <h2 id="sound-familiar" className="text-xs uppercase tracking-[.18em] text-white/80">Sound familiar?</h2>
+          <div>
+            <p className="max-w-3xl text-3xl font-light leading-tight tracking-tight md:text-5xl">Your friends are busy.<br />The group chat says “soon”.<br />There’s a gig you’d love to go to.</p>
+            <p className="mt-7 max-w-xl text-base font-light leading-relaxed text-white/85">You don’t have to replace your circle to want a few new people in it. Maybe you’ve just moved here. Maybe life has shifted. Or you just want someone who’s up for the same things.</p>
+            <p className="mt-4 max-w-xl text-base font-light leading-relaxed text-white/85">That’s what Soul Tribe is for. Making room for new friendships, one actual plan at a time.</p>
           </div>
-        </motion.section>
-
-        {/* SAMPLE EDITORIAL RESONANCE READ CARD */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="mt-12 overflow-hidden rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl p-6 shadow-2xl"
-        >
-          <span className="text-[10px] font-bold tracking-widest text-white/80 uppercase">
-            Editorial Resonance Read Sample
-          </span>
-
-          <div className="mt-3 flex items-center justify-between">
-            <h3 className="text-[18px] font-bold text-white">
-              Priya Sharma &amp; Marcus Tan
-            </h3>
-            <span className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold text-white border border-white/30 backdrop-blur-md">
-              Strong Fit
-            </span>
+        </section>
+        <section id="how-it-works" aria-labelledby="how-title" className="mx-auto max-w-7xl scroll-mt-6 px-6 py-12 md:px-12 md:py-20">
+          <p className="text-xs uppercase tracking-[.18em] text-white/80">How it works</p>
+          <h2 id="how-title" className="mb-12 mt-5 max-w-2xl text-4xl font-light leading-tight tracking-tight md:text-6xl">From “we should”<br />to “see you there”.</h2>
+          <div className="grid gap-10 md:grid-cols-3 md:gap-8">
+            {steps.map(([number, title, description, feature, detail]) => (
+              <article key={number} className="border-t border-white/35 pt-5">
+                <span className="text-xs text-white/70">{number}</span>
+                <h3 className="mt-7 text-2xl font-normal leading-tight tracking-tight">{title}</h3>
+                <p className="mt-4 text-sm font-light leading-7 text-white/90">{description}</p>
+                <p className="mt-7 text-[11px] uppercase tracking-widest text-white/80">{feature}</p>
+                <p className="mt-2 text-sm font-light leading-6 text-white/80">{detail}</p>
+              </article>
+            ))}
           </div>
-
-          <div className="mt-4 flex flex-col gap-3 border-t border-white/15 pt-4">
-            <div>
-              <span className="text-[11px] font-bold text-white/70 uppercase">Where You Click</span>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-white font-medium">
-                &ldquo;{sampleExplanation.click_text}&rdquo;
-              </p>
-            </div>
-
-            <div className="border-t border-white/10 pt-3">
-              <span className="text-[11px] font-bold text-amber-300/80 uppercase">Potential Friction</span>
-              <p className="mt-1 text-[13.5px] leading-relaxed text-white/80 italic">
-                &ldquo;{sampleExplanation.friction_text}&rdquo;
-              </p>
-            </div>
+        </section>
+        <section aria-labelledby="plans-title" className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 md:grid-cols-2 md:gap-16 md:px-12 md:py-24">
+          <div>
+            <p className="text-xs uppercase tracking-[.18em] text-white/80">Make it a plan</p>
+            <h2 id="plans-title" className="mt-5 text-4xl font-light leading-tight tracking-tight md:text-5xl">A shared interest.<br />An easy first invite.</h2>
+            <p className="mt-6 max-w-md text-base font-light leading-relaxed text-white/85">You don’t need a big occasion. Just something you’d enjoy, and a few people who’d be up for it too.</p>
           </div>
-        </motion.section>
-
-        {/* THREE FOUNDATIONAL PRINCIPLES */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-10 flex flex-col gap-4"
-        >
-          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
-            <h3 className="text-[16px] font-bold text-white">01. Persistent Artifacts</h3>
-            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
-              Every outing produces an Outing Record. Every profile produces a Friendship DNA. No ephemeral chats that vanish.
-            </p>
+          <div className="border-y border-white/30 py-2">
+            <p className="py-4 text-[10px] uppercase tracking-[.18em] text-white/70">A few ideas—not live listings</p>
+            {['Coffee, then a record-store browse?', 'Anyone up for an indie film?', 'An evening walk. Dinner if we feel like it.'].map((idea, index) => <p key={idea} className="flex items-start gap-6 border-t border-white/20 py-6 text-xl font-light leading-snug"><span className="pt-1 text-xs text-white/60">0{index + 1}</span>{idea}</p>)}
           </div>
-
-          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
-            <h3 className="text-[16px] font-bold text-white">02. Zero Dating Mechanics</h3>
-            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
-              No swiping, no hot-or-not, no raw compatibility percentage numbers exposed to users.
-            </p>
-          </div>
-
-          <div className="rounded-[24px] border border-white/15 bg-black/50 backdrop-blur-md p-5">
-            <h3 className="text-[16px] font-bold text-white">03. Capped Group Size</h3>
-            <p className="mt-1 text-[13px] text-white/75 leading-relaxed">
-              Free-tier outings are capped at 6 participants including the host, enforced in the database and API.
-            </p>
-          </div>
-        </motion.section>
-
-        {/* BOTTOM CTA FOOTER */}
-        <footer className="mt-12 text-center">
-          <Link href="/onboarding" className="inline-block w-full max-w-[320px]">
-            <Button variant="primary" size="lg" className="w-full py-4 text-[16px] font-bold">
-              Join Soul Tribe →
-            </Button>
-          </Link>
-          <p className="mt-4 text-[12px] text-white/50">
-            Soul Tribe Singapore · Friendship-First Social Platform
-          </p>
-        </footer>
-      </div>
+        </section>
+        <section className="mx-auto max-w-7xl border-t border-white/25 px-6 py-16 text-center md:px-12 md:py-24" aria-labelledby="start-title">
+          <p className="text-xs uppercase tracking-[.18em] text-white/80">For friendship. Not dating.</p>
+          <h2 id="start-title" className="mx-auto mt-6 max-w-2xl text-4xl font-light leading-tight tracking-tight md:text-6xl">Who would you like<br />in your next chapter?</h2>
+          <p className="mx-auto mb-8 mt-6 max-w-md text-sm leading-relaxed text-white/85">Tell us a little about yourself. Get a first read on your friendship style, then explore people and plans.</p>
+          <StartLink>Let’s start</StartLink>
+        </section>
+      </main>
+      <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 border-t border-white/20 px-6 py-7 text-xs text-white/70 md:px-12"><span>SOUL TRIBE · Singapore</span><span>More time together, outside the app.</span></footer>
     </div>
   );
 }
