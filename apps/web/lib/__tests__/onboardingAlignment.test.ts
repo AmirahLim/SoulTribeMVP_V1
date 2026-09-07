@@ -11,8 +11,9 @@ describe('Onboarding alignment',()=>{
     expect(css).toContain('.ob-immersive .ob-choices { justify-content: center;');
     expect(css).toContain('.ob-immersive:not([data-step="7"]) :is(.ob-rhythm fieldset,.ob-q4-parts) { text-align: center; }');
     expect(css).toContain('.ob-immersive:not([data-step="7"]) :is(.ob-rhythm,.ob-q4-parts) .ob-choices { justify-content: center; }');
-    expect(css).toContain('.ob-immersive .ob-layout { align-items: center; padding-top: 0; }');
-    expect(css).toContain('.ob-immersive .ob-content { width: min(100%, 600px); margin-left: auto; margin-right: auto; }');
+    expect(css).toContain('.ob-immersive .ob-layout { align-self:center; align-items:center; width:calc(100vw - 44px); max-width:calc(100vw - 44px); padding-top:0; }');
+    expect(css).toContain('.ob-immersive .ob-content { min-width:0; width:100%; max-width:100%; margin-left:auto; margin-right:auto; }');
+    expect(css).toContain('max-width:100vw; overflow-x:clip');
     expect(layout).toContain("width: 'device-width'");
     expect(layout).toContain('initialScale: 1');
   });
