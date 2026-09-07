@@ -216,6 +216,9 @@ function LumaSignInForm() {
   // Handle post-auth routing checks for logged-in session
   useEffect(() => {
     if (user && !authLoading && !isChooseUsernameStep) {
+      // The six-question flow owns profile creation and adult eligibility.
+      // Never invoke legacy cached-profile backfill for an Early Read return.
+      if (redirectPath === '/early-read') { router.replace('/early-read'); return; }
       getUserProfileRecord(user.id).then((profileRec) => {
         const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
         if (profileRec?.hasProfile) {
