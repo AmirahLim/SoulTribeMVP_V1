@@ -1,82 +1,86 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowRight, Feather } from 'lucide-react';
+import { ArrowRight, Feather } from 'lucide-react';
+import styles from './landing.module.css';
 
-const steps = [
-  ['01', 'A little about you.', 'Six questions about what you want in a friendship, how you keep in touch, and what you’d actually leave the house for.', 'Your Social Signature', 'A first look at your friendship style. You can add to it as you go.'],
-  ['02', 'Someone you might click with.', 'Discover people with room for the kind of friendship you’re looking for. See what you have in common—and where your expectations might differ.', 'Connection Notes', 'A little context before you say hello. A starting point, not a promise of chemistry.'],
-  ['03', 'Something to do together.', 'Join a plan that catches your eye, or put one out there. The host brings the group together; once you’re confirmed, you can chat and sort the details.', 'Real-life plans', 'Coffee, a gig, a walk that turns into dinner. Give the friendship somewhere to start.'],
-];
-
-function StartLink({ children }: { children: React.ReactNode }) {
-  return <Link href="/onboarding" className="inline-flex min-h-14 items-center justify-center gap-8 rounded-full bg-[#f5f1e9] px-7 py-4 text-sm font-medium text-[#17231c] hover:bg-white">{children}<ArrowRight size={18} aria-hidden="true" /></Link>;
+function StartLink({ children = 'Find your people' }: { children?: React.ReactNode }) {
+  return <Link href="/onboarding" className={styles.cta}>{children}<ArrowRight size={17} aria-hidden="true" /></Link>;
 }
 
+const questions = [
+  ['Is this a dating app?', 'No. Soul Tribe is for friendship: people to share an interest, an ordinary evening, or a new chapter with.'],
+  ['What does the reading tell me?', 'It brings together what you share about friendship, communication and the things you enjoy. Your first six answers give you an early read; you can build a fuller picture as you go.'],
+  ['How do I actually meet someone?', 'Explore people and their Connection Notes, or find an outing you want to join. You can also pitch your own plan. The host confirms who is joining, then the group can chat and arrange the details.'],
+  ['Can I make a spontaneous plan?', 'Yes. Put a time, place and activity into a pitch, or look for an upcoming outing. Whether a plan comes together depends on who is available and the host confirming the group.'],
+  ['When do I create an account?', 'Start with the questions and see your early read first. Then sign up to save your profile and explore people and outings. Soul Tribe is for adults aged 18 and over.'],
+];
+
 export default function LandingPageContent() {
-  return (
-    <div className="relative isolate min-h-screen bg-[#171915] text-[#fffdf9]">
-      <img src="/user-intro-bg.jpg" alt="" fetchPriority="high" className="fixed inset-0 -z-20 h-full w-full object-cover" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/65 to-black/90" />
-      <a href="#intro-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-4 focus:text-black">Skip to content</a>
-      <header className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-7 md:px-12">
-        <Link href="/" aria-label="Soul Tribe home" className="flex items-center gap-2 text-lg font-semibold tracking-tight md:text-2xl"><Feather size={24} aria-hidden="true" />SOUL TRIBE</Link>
-        <nav aria-label="Main navigation" className="flex items-center gap-6 text-sm">
-          <a href="#how-it-works" className="hidden py-3 underline-offset-4 hover:underline sm:block">How it works</a>
-          <Link href="/login" className="py-3 underline-offset-4 hover:underline">Log in</Link>
-        </nav>
-      </header>
-      <main id="intro-content">
-        <section className="mx-auto flex min-h-[76svh] max-w-7xl flex-col justify-center px-6 pb-14 pt-12 md:px-12 md:pb-20">
-          <p className="mb-7 text-[11px] uppercase tracking-[.2em] text-white/85">New friends. Real plans. Singapore.</p>
-          <h1 className="max-w-4xl text-[clamp(3.5rem,8vw,7.5rem)] font-normal leading-[.98] tracking-[-.055em]">People to<br />do life with.</h1>
-          <p className="mt-8 max-w-xl text-lg font-light leading-relaxed md:text-xl">Soul Tribe helps you meet new friends in Singapore, find people you might click with, and make plans to meet in real life.</p>
-          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
-            <StartLink>Find your people</StartLink>
-            <p className="text-xs leading-relaxed text-white/80">Start with six questions.<br />Create your account after.</p>
-          </div>
-          <a href="#how-it-works" className="mt-14 inline-flex w-fit items-center gap-3 py-3 text-xs text-white/85">A little more about us <ArrowDown size={14} aria-hidden="true" /></a>
-        </section>
-        <section aria-labelledby="sound-familiar" className="mx-auto grid max-w-7xl gap-8 border-t border-white/25 px-6 py-16 md:grid-cols-[1fr_2fr] md:gap-16 md:px-12 md:py-24">
-          <h2 id="sound-familiar" className="text-xs uppercase tracking-[.18em] text-white/80">Sound familiar?</h2>
-          <div>
-            <p className="max-w-3xl text-3xl font-light leading-tight tracking-tight md:text-5xl">Your friends are busy.<br />The group chat says “soon”.<br />There’s a gig you’d love to go to.</p>
-            <p className="mt-7 max-w-xl text-base font-light leading-relaxed text-white/85">You don’t have to replace your circle to want a few new people in it. Maybe you’ve just moved here. Maybe life has shifted. Or you just want someone who’s up for the same things.</p>
-            <p className="mt-4 max-w-xl text-base font-light leading-relaxed text-white/85">That’s what Soul Tribe is for. Making room for new friendships, one actual plan at a time.</p>
-          </div>
-        </section>
-        <section id="how-it-works" aria-labelledby="how-title" className="mx-auto max-w-7xl scroll-mt-6 px-6 py-12 md:px-12 md:py-20">
-          <p className="text-xs uppercase tracking-[.18em] text-white/80">How it works</p>
-          <h2 id="how-title" className="mb-12 mt-5 max-w-2xl text-4xl font-light leading-tight tracking-tight md:text-6xl">From “we should”<br />to “see you there”.</h2>
-          <div className="grid gap-10 md:grid-cols-3 md:gap-8">
-            {steps.map(([number, title, description, feature, detail]) => (
-              <article key={number} className="border-t border-white/35 pt-5">
-                <span className="text-xs text-white/70">{number}</span>
-                <h3 className="mt-7 text-2xl font-normal leading-tight tracking-tight">{title}</h3>
-                <p className="mt-4 text-sm font-light leading-7 text-white/90">{description}</p>
-                <p className="mt-7 text-[11px] uppercase tracking-widest text-white/80">{feature}</p>
-                <p className="mt-2 text-sm font-light leading-6 text-white/80">{detail}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-        <section aria-labelledby="plans-title" className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-16 md:grid-cols-2 md:gap-16 md:px-12 md:py-24">
-          <div>
-            <p className="text-xs uppercase tracking-[.18em] text-white/80">Make it a plan</p>
-            <h2 id="plans-title" className="mt-5 text-4xl font-light leading-tight tracking-tight md:text-5xl">A shared interest.<br />An easy first invite.</h2>
-            <p className="mt-6 max-w-md text-base font-light leading-relaxed text-white/85">You don’t need a big occasion. Just something you’d enjoy, and a few people who’d be up for it too.</p>
-          </div>
-          <div className="border-y border-white/30 py-2">
-            <p className="py-4 text-[10px] uppercase tracking-[.18em] text-white/70">A few ideas—not live listings</p>
-            {['Coffee, then a record-store browse?', 'Anyone up for an indie film?', 'An evening walk. Dinner if we feel like it.'].map((idea, index) => <p key={idea} className="flex items-start gap-6 border-t border-white/20 py-6 text-xl font-light leading-snug"><span className="pt-1 text-xs text-white/60">0{index + 1}</span>{idea}</p>)}
-          </div>
-        </section>
-        <section className="mx-auto max-w-7xl border-t border-white/25 px-6 py-16 text-center md:px-12 md:py-24" aria-labelledby="start-title">
-          <p className="text-xs uppercase tracking-[.18em] text-white/80">For friendship. Not dating.</p>
-          <h2 id="start-title" className="mx-auto mt-6 max-w-2xl text-4xl font-light leading-tight tracking-tight md:text-6xl">Who would you like<br />in your next chapter?</h2>
-          <p className="mx-auto mb-8 mt-6 max-w-md text-sm leading-relaxed text-white/85">Tell us a little about yourself. Get a first read on your friendship style, then explore people and plans.</p>
-          <StartLink>Let’s start</StartLink>
-        </section>
-      </main>
-      <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-4 border-t border-white/20 px-6 py-7 text-xs text-white/70 md:px-12"><span>SOUL TRIBE · Singapore</span><span>More time together, outside the app.</span></footer>
-    </div>
-  );
+  return <div className={styles.page}>
+    <a className={styles.skip} href="#main">Skip to content</a>
+    <header className={styles.header}>
+      <Link href="/" className={styles.brand} aria-label="Soul Tribe home"><Feather size={23} aria-hidden="true" />Soul Tribe</Link>
+      <nav aria-label="Main navigation"><a href="#features">The little details</a><a href="#how">How it works</a><Link href="/auth/signin">Log in</Link></nav>
+    </header>
+    <main id="main">
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <img className={styles.heroImage} src="/images/early-read/seaside.jpg" alt="" fetchPriority="high" />
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>A friendship app · Starting in Singapore</p>
+          <h1 id="hero-title">Find your people.<br /><em>Make a real plan.</em></h1>
+          <p className={styles.heroDescription}>Understand how you connect. Meet people who share what matters to you. Find something to do together—or invite them to your own plan.</p>
+          <StartLink />
+          <p className={styles.micro}>Six questions to begin. A little more you.</p>
+        </div>
+        <div className={styles.heroCaption}><span>Good company.<br />Nothing grand required.</span><a href="#features">Take a closer look ↓</a></div>
+      </section>
+
+      <section className={styles.intro}>
+        <p className={styles.eyebrow}>For the friendships you still want to find</p>
+        <h2>You can know a lot of people.<br /><em>And still miss being known.</em></h2>
+        <div className={styles.introColumns}>
+          <p>Someone who doesn’t mistake your quiet for disinterest. Who’s happy with a long conversation, or no conversation at all. Who means it when they say, “Let’s go.”</p>
+          <p>Soul Tribe is built for people who believe real friendship is rare—and worth seeking. Not just anyone. People who share your depth, your rhythm, and a little room in their lives.</p>
+        </div>
+      </section>
+
+      <section id="features" className={styles.features} aria-labelledby="features-title">
+        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>A little understanding. An actual beginning.</p><h2 id="features-title">Less guessing.<br /><em>More getting each other.</em></h2></div><p>Common interests open a conversation. How you like to spend time, keep in touch and show up for each other helps it continue.</p></div>
+        <div className={styles.featureGrid}>
+          <article className={styles.feature}>
+            <div className={styles.readVisual} aria-label="Illustrative early-read preview">
+              <div className={styles.miniPhoto}><img src="/images/early-read/evening.jpg" alt="Two people sitting beside the sea at dusk" loading="lazy" /><span>room to be yourself</span></div>
+              <div className={styles.note}><span>A NOTE FOR YOU</span><p>You value time together that doesn’t need a big occasion.</p><small>Illustrative reading</small></div>
+            </div>
+            <div className={styles.featureCopy}><p className={styles.eyebrow}>01 · Your early read</p><h3>Put words to what<br />you’ve been looking for.</h3><p>Maybe it’s depth. Maybe it’s ease. Answer a few questions about what you want from friendship and see your preferences brought together in a personal reading.</p></div>
+          </article>
+          <article className={styles.feature}>
+            <div className={styles.matchVisual}>
+              <p className={styles.eyebrow}>Connection notes · An example</p>
+              <div className={styles.initials} aria-hidden="true"><span>You</span><i>↔</i><span>A new<br />friend</span></div>
+              <h4>There’s no rush to reply.</h4><p>You both prefer thoughtful check-ins to keeping a conversation going all day.</p><div className={styles.tags}><span>Shared pace</span><span>Room to breathe</span></div>
+            </div>
+            <div className={styles.featureCopy}><p className={styles.eyebrow}>02 · People & connection notes</p><h3>A little context<br />before the first hello.</h3><p>Discover people and read what connects you—from shared interests to the way you keep in touch. See where expectations differ, too. You don’t have to start completely in the dark.</p></div>
+          </article>
+          <article className={styles.planFeature}>
+            <div className={styles.planCopy}><p className={styles.eyebrow}>03 · Pitch an outing</p><h3>“We should”<br /><em>needs a when.</em></h3><p>A free evening. A film you don’t want to miss. A walk you’d rather share. Pitch the thing you actually want to do, with a time and place—or ask to join someone else’s plan.</p><p>Once the host confirms the group, chat together and sort the details. Give a new friendship somewhere to begin.</p><a href="/onboarding" className={styles.textLink}>Make room for a good evening <ArrowRight size={16} aria-hidden="true" /></a></div>
+            <div className={styles.pitch}><img src="/images/early-read/shore.jpg" alt="Two people enjoying an evening beside the water" loading="lazy" /><div><p className={styles.eyebrow}>An example pitch · Not a live listing</p><h4>A walk, then somewhere for dinner?</h4><p>Friday · 6:30 pm<br />East Coast Park, Singapore</p><span className={styles.pitchFooter}>A small plan. An open invitation. ↗</span></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="how" className={styles.how} aria-labelledby="how-title">
+        <p className={styles.eyebrow}>How it works</p><h2 id="how-title">Start with you.<br /><em>See where it goes.</em></h2>
+        <div className={styles.steps}>{[
+          ['01', 'Tell us a little.', 'Six questions about friendship, your pace and what you enjoy. No perfect answer required.'],
+          ['02', 'Get your early read.', 'A few personal notes to open and explore. Create an account and save your profile when you’re ready.'],
+          ['03', 'Find a person. Pick a plan.', 'Explore people, request to join an outing, or pitch something of your own. Take the next step into real life.']
+        ].map(([number, title, text]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
+        <StartLink>Get my early read</StartLink>
+      </section>
+
+      <section className={styles.faq} aria-labelledby="faq-title"><p className={styles.eyebrow}>A few things you might be wondering</p><h2 id="faq-title">Before you say hello.</h2>{questions.map(([q, a]) => <details key={q}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</section>
+      <section className={styles.closing}><img src="/images/early-read/sunset.jpg" alt="" loading="lazy" /><div><p className={styles.eyebrow}>For friendship. For real life.</p><h2>Someone to tell<br /><em>the little things to.</em></h2><p>Start with a little about yourself.<br />There’s room for someone new.</p><StartLink /></div></section>
+    </main>
+    <footer className={styles.footer}><Link href="/" className={styles.brand}>Soul Tribe</Link><p>More time together, outside the app.</p><nav aria-label="Footer navigation"><a href="#features">Features</a><a href="#how">How it works</a><Link href="/auth/signin">Log in</Link></nav></footer>
+  </div>;
 }
