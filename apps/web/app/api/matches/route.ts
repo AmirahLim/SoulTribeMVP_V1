@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: preferenceError.message }, { status: 500 });
     }
 
-    let ownReflections: Array<{ about_id: string; would_meet_again: boolean }> = [];
+    let ownReflections: Array<{ about_id: string; would_meet_again: number }> = [];
     if (learningPreference?.use_reflections) {
       const { data, error } = await adminClient
         .from('rhythm_checks')
