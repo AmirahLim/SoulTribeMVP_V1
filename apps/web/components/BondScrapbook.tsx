@@ -58,9 +58,10 @@ return <div className={s.album}>
 <p className={s.eyebrow}>You & {notes.candidate.displayName} · connection notes</p>
 <p className={`${s.summaryHand} ${handwriting.className}`}>a little more about you two.</p>
 <h1 id="bond-title">How the threads<br/><em>come together.</em></h1>
-<div className={s.threadSurround}>
-<img className={s.threadPhoto} src="/images/brown-thread-photo.jpg" alt="" width="1200" height="1600" />
-<p className={`${s.summaryLead} ${s.summaryPaper}`}>{synthesis[0].observation&&`${synthesis[0].observation}. `}{synthesis[0].text}</p>
+<div className={s.stringSummary}>
+<svg className={s.stringSide} viewBox="0 0 32 300" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M29 0 C8 15 13 36 24 51 C38 73 5 82 10 108 C15 132 33 131 26 156 C17 188 4 193 10 219 C17 247 31 266 13 300" /></svg>
+<p className={s.summaryLead}>{synthesis[0].observation&&`${synthesis[0].observation}. `}{synthesis[0].text}</p>
+<svg className={s.stringUnder} viewBox="0 0 700 64" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 45 C62 62 91 9 148 20 C206 31 162 62 238 52 C305 43 393 14 372 5 C345 -5 316 22 362 36 C406 50 445 42 472 56 C493 66 558 61 593 41 C628 18 655 37 700 4" /></svg>
 </div>
 <details className={s.summaryExpand}><summary><span className={s.closedAction}>Read the full connection summary ↗</span><span className={s.openAction}>Show less ↙</span></summary>
 <div className={s.synthesis}>{synthesis.slice(1).map((part,i)=><article key={part.title}>

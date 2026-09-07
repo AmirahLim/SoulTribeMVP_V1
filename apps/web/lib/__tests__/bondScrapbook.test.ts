@@ -19,8 +19,10 @@ describe('Bond scrapbook',()=>{
   expect(html).not.toContain('The space between you');
   expect(html).toContain('Turning intention into time');
   expect(html).not.toContain('/images/connection-thread.png');
-  expect(html.indexOf('src="/images/brown-thread-photo.jpg"')).toBeGreaterThan(html.indexOf('How the threads'));
-  expect(html.indexOf('src="/images/brown-thread-photo.jpg"')).toBeLessThan(html.indexOf('Read the full connection summary'));
+  expect(html).not.toContain('/images/brown-thread-photo.jpg');
+  expect(html).not.toContain('<img');
+  expect(html).toContain('viewBox="0 0 32 300"');
+  expect(html).toContain('viewBox="0 0 700 64"');
   expect(html).not.toContain('<details open');
   expect(html.indexOf('How the threads')).toBeLessThan(html.indexOf('Thread by thread'));
  });
