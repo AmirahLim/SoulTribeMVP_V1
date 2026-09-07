@@ -302,6 +302,16 @@ function PitchComposerContent() {
       let hostId = authUser?.id || profile.id;
       const startsAtIso = dateCheck.iso;
 
+      // Pad or synthesize pitch for database check constraint compatibility
+      // Hoisted above the Supabase branch so both branches can use dbPitch
+      const cleanTitle = title.trim();
+      const cleanPitch = pitch.trim();
+      const dbPitch = cleanPitch.length >= 20
+        ? cleanPitch
+        : cleanPitch.length > 0
+          ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
+          : `${cleanTitle} meetup hosted by ${profile.displayName || 'Soul Tribe member'}`;
+
       // 1. Supabase database insert if configured
       if (checkIsSupabaseConfigured()) {
         const client = getSupabaseBrowserClient();
@@ -336,15 +346,6 @@ function PitchComposerContent() {
         const dbCategory = VALID_DB_CATEGORIES.includes(activityCategory as any)
           ? (activityCategory as typeof VALID_DB_CATEGORIES[number])
           : 'cultural';
-
-        // Pad or synthesize pitch for database check constraint compatibility on remote DB
-        const cleanTitle = title.trim();
-        const cleanPitch = pitch.trim();
-        const dbPitch = cleanPitch.length >= 20
-          ? cleanPitch
-          : cleanPitch.length > 0
-            ? `${cleanPitch} · Hosted by ${profile.displayName || 'Soul Tribe member'}`
-            : `${cleanTitle} meetup hosted by ${profile.displayName || 'Soul Tribe member'}`;
 
         // Insert into outings table with cover image columns
         const { data: newOuting, error: outingError } = await client

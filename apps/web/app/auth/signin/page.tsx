@@ -37,9 +37,11 @@ function LumaSignInForm() {
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('next') || searchParams?.get('redirect') || '/home';
   const initialStepParam = searchParams?.get('step');
+  const initialError = searchParams?.get('error');
 
   const {
     signInWithOtp,
+    verifyOtp,
     signInWithGoogle,
     signUpWithPassword,
     signInWithPassword,
@@ -71,11 +73,87 @@ function LumaSignInForm() {
 
   // UI States
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(
+    initialError === 'exchange_failed'
+      ? 'Sign-in link expired or was already used. Please request a new one.'
+      : initialError
+        ? `Sign-in error: ${initialError}`
+        : null
+  );
   const [suggestSwitchTab, setSuggestSwitchTab] = useState<'signup' | 'login' | null>(null);
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
   const [otpSentSuccess, setOtpSentSuccess] = useState(false);
+  const [otpSentEmail, setOtpSentEmail] = useState('');
 
+  // 6-digit OTP code input state
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const otpRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+
+  // Handle OTP digit input
+  const handleOtpDigitChange = (index: number, value: string) => {
+    // Only allow single digits
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = digit;
+    setOtpDigits(newDigits);
+
+    // Auto-focus next input
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-submit when all 6 digits are entered
+    if (digit && index === 5) {
+      const code = newDigits.join('');
+      if (code.length === 6) {
+        handleVerifyOtpCode(code);
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length > 0) {
+      const newDigits = [...otpDigits];
+      for (let i = 0; i < pasted.length && i < 6; i++) {
+        newDigits[i] = pasted[i];
+      }
+      setOtpDigits(newDigits);
+      if (pasted.length === 6) {
+        handleVerifyOtpCode(pasted);
+      } else {
+        otpRefs.current[Math.min(pasted.length, 5)]?.focus();
+      }
+    }
+  };
+
+  const handleVerifyOtpCode = async (code: string) => {
+    setIsVerifyingOtp(true);
+    setErrorMessage(null);
+
+    const { error: verifyError, user: verifiedUser } = await verifyOtp(otpSentEmail, code);
+    setIsVerifyingOtp(false);
+
+    if (verifyError) {
+      setErrorMessage(verifyError.message || 'Invalid or expired code. Please try again.');
+      setOtpDigits(['', '', '', '', '', '']);
+      otpRefs.current[0]?.focus();
+      return;
+    }
+
+    if (verifiedUser) {
+      const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
+      router.push(targetPath);
+    }
+  };
   // Read saved profile handle on load
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -153,8 +231,9 @@ function LumaSignInForm() {
             hasCompletedOnboarding: true,
           });
           router.push(targetPath);
-        } else {
-          // Check if local profile exists
+        } else if (profileRec !== null) {
+          // profileRec.hasProfile === false AND we got a real response (not a thrown error)
+          // → This is genuinely a new user or user without a profile row
           const currentProfile = getUserProfile();
           if (currentProfile.hasCompletedOnboarding && currentProfile.displayName) {
             saveOnboardingToSupabase(user.id, {
@@ -182,6 +261,12 @@ function LumaSignInForm() {
             setIsChooseUsernameStep(true);
           }
         }
+        // If profileRec is null, the lookup failed silently — handled by .catch below
+      }).catch((err: any) => {
+        // Network error or Supabase failure — surface it instead of swallowing
+        setErrorMessage(
+          err?.message || 'Unable to load your profile. Please check your connection and try again.'
+        );
       });
     }
   }, [user, authLoading, isChooseUsernameStep, redirectPath, router]);
@@ -258,6 +343,7 @@ function LumaSignInForm() {
           return;
         }
 
+        setOtpSentEmail(trimmedEmail);
         setOtpSentSuccess(true);
       }
     } else {
@@ -297,6 +383,7 @@ function LumaSignInForm() {
           return;
         }
 
+        setOtpSentEmail(trimmedEmail);
         setOtpSentSuccess(true);
       }
     }
@@ -738,10 +825,57 @@ function LumaSignInForm() {
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[16px] border border-emerald-500/40 bg-emerald-500/15 p-4 text-[13px] text-emerald-200 flex items-start gap-2.5"
+                    className="rounded-[16px] border border-emerald-500/40 bg-emerald-500/15 p-5 text-emerald-200"
                   >
-                    <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
-                    <span>Email OTP link sent! Check your inbox to complete sign-in.</span>
+                    <div className="flex items-start gap-2.5 mb-4">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[13px] font-semibold text-emerald-200">
+                          We sent a 6-digit code to {otpSentEmail}
+                        </p>
+                        <p className="text-[12px] text-emerald-200/70 mt-0.5">
+                          Enter it below. You can also tap the link in the email.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* 6-Box Code Input */}
+                    <div className="flex justify-center gap-2 mb-3" onPaste={handleOtpPaste}>
+                      {otpDigits.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={(el) => { otpRefs.current[i] = el; }}
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleOtpDigitChange(i, e.target.value)}
+                          onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                          disabled={isVerifyingOtp}
+                          className="w-10 h-12 rounded-[10px] border border-white/20 bg-black/60 text-center text-[18px] font-bold text-white outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/40 transition-all disabled:opacity-50"
+                        />
+                      ))}
+                    </div>
+
+                    {isVerifyingOtp && (
+                      <div className="flex items-center justify-center gap-2 text-[12px] text-emerald-300/80">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Verifying code...
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpSentSuccess(false);
+                        setOtpDigits(['', '', '', '', '', '']);
+                        setOtpSentEmail('');
+                      }}
+                      className="mt-3 text-[11.5px] text-emerald-300/60 hover:text-emerald-200 underline underline-offset-2 transition-all cursor-pointer block mx-auto"
+                    >
+                      Use a different email
+                    </button>
                   </motion.div>
                 )}
 
