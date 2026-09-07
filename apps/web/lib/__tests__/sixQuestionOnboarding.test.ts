@@ -5,7 +5,7 @@ describe('Six question onboarding',()=>{
  it('offers Depth and Spiritual and preserves removed answers when resuming',()=>{
   const d={...emptyDraft(),intent:['Other'],intentOther:'Old answer',desiredQualities:['Intellectually curious','Reliable'],connectionChoice:'Other',connectionOther:'Old rhythm'};
   const resumed=upgradeDraft(d);
-  expect(resumed.legacyAnswers).toEqual(d);expect(resumed.intent).toEqual([]);expect(resumed.desiredQualities).toEqual(['Reliable']);expect(resumed.connectionChoice).toBe('');
+  expect(resumed).toEqual(d);expect(resumed.intentOther).toBe('Old answer');expect(resumed.connectionOther).toBe('Old rhythm');
   expect(validStep({...emptyDraft(),desiredQualities:['Depth','Spiritual']},4)).toBe(true);
  });
  it('accepts bounded custom intent and click answers without exceeding three selections',()=>{

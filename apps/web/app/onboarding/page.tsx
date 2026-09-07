@@ -133,7 +133,7 @@ export default function OnboardingPage() {
           "We could not save your answers. They are still here; please retry.",
         );
       if (!back && draft.step === 7)
-        router.push(user ? "/early-read" : "/join");
+        router.push("/early-read");
       else setDraft(next);
     } catch (e) {
       setError((e as Error).message);
@@ -310,7 +310,7 @@ export default function OnboardingPage() {
               <label htmlFor="travel-km">How far are you willing to travel? <output htmlFor="travel-km">{draft.travelKm??10} km</output></label>
               <input id="travel-km" type="range" min={1} max={50} step={1} value={draft.travelKm??10} onChange={e=>setDraft({...draft,travelKm:Number(e.target.value)})} />
               <div className="ob-range-labels"><span>1 km</span><span>50 km</span></div>
-              <p>Your travel preference is saved. Distance-based filtering needs a mapped location.</p>
+              <p>We favour the same reported town and country. Your chosen distance is saved, but town names alone cannot verify who is within that radius.</p>
 
             </div>
           )}

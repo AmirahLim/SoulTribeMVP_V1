@@ -1,5 +1,6 @@
 import type { ProfileVector, MatchContext } from '../domain/types.ts';
 import { getTravelTimeMinutes } from '../geo/matrix.ts';
+import {hasKilometrePreference} from '../geo/selfReportedTown.ts';
 
 export interface GateCheckResult {
   passed: boolean;
@@ -75,6 +76,9 @@ export function evaluateGates(
     }
 
     // 6. Geography gate: t > 2 * min(radius) across categories
+    // Preserve legacy minute-based policy only for legacy profiles. New km
+    // preferences cannot be evaluated without mapped locations.
+    if (!hasKilometrePreference(vecA.geography) && !hasKilometrePreference(vecB.geography)) {
     const travelMins = getTravelTimeMinutes(
       vecA.geography?.home_area || 'Tiong Bahru',
       vecB.geography?.home_area || 'Tiong Bahru'
@@ -96,6 +100,7 @@ export function evaluateGates(
     }
     if (!geoPassed) {
       reasons.push('GEOGRAPHY_TOO_FAR');
+    }
     }
   }
 

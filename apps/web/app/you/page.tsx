@@ -297,6 +297,7 @@ function ProfileContent() {
         {!!localProfile.lifeContexts?.length && <section className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><h2>Life phase</h2><p>{localProfile.lifeContexts.join(' · ')}</p></section>}
         <details className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><summary className="cursor-pointer text-sm">Your saved answers</summary><AnswerPortrait profile={localProfile} /></details>
         <PublicAnswerSharing userId={localProfile.id}/>
+        <Link href="/early-read" className="inline-block py-3 underline">Revisit and correct my Early Read →</Link>
         {/* 3. Friendship DNA Bloom */}
         <div className="flex flex-col items-center rounded-[32px] bg-gradient-to-br from-[#dfebdf] via-[#f2eee3] to-[#e1dfee] p-6 text-center text-[#203B30]">
           <h2 className="text-xl font-semibold">Your Social Signature</h2>

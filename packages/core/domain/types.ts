@@ -132,6 +132,8 @@ export interface TraitExperience {
 
 export interface TraitGeography {
   user_id: string;
+  country?: string;
+  radius_km?: number;
   home_area?: string;
   radius_minutes?: Record<string, number>;
   answered: number;

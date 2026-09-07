@@ -1,168 +1,84 @@
 "use client";
 import ProfilePhoto from './ProfilePhoto';
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/authContext";
-import { getUserProfile } from "../../lib/userStore";
-import { hydrateProfile } from "../../lib/profileHydration";
-import {
-  BaselineDraft,
-  completeDraft,
-  isDraft,
-  selectedLabels,
-  groupChoices,
-} from "../../lib/sixQuestionOnboarding";
-import "../onboarding/onboarding.css";
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+import {useAuth} from '../../lib/authContext';
+import {hydrateProfile} from '../../lib/profileHydration';
+import {getSupabaseBrowserClient} from '../../lib/supabase';
+import {completeDraft,isDraft} from '../../lib/sixQuestionOnboarding';
+import {buildEarlyRead,type ReadDraft,type ReadFeedback} from '../../lib/earlyRead';
+import {EarlyReadPortrait} from '../../components/profile/EarlyReadPortrait';
+import '../onboarding/onboarding.css';
 export default function EarlyRead() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-  const [draft, setDraft] = useState<BaselineDraft | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [name, setName] = useState("");
-  const [year, setYear] = useState("");
-  const [ageChecked,setAgeChecked]=useState(false);
-  useEffect(()=>{fetch("/api/onboarding/eligibility").then(r=>r.json()).then(d=>{if(d.birthYear){setYear(String(d.birthYear));setAgeChecked(true);}}).catch(()=>{});},[]);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      router.replace("/join");
-      return;
+ const {user,loading}=useAuth();
+ const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
+ const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
+ const [error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
+ useEffect(()=>{
+  let active=true;
+  fetch('/api/onboarding/eligibility').then(r=>r.ok?r.json():null).then(d=>{if(active&&d?.birthYear){setYear(String(d.birthYear));setAgeChecked(true);}}).catch(()=>{});
+  return()=>{active=false;};
+ },[]);
+ useEffect(()=>{
+  if(loading)return;let active=true;setReady(false);setDraft(null);setSaved(false);setError('');
+  async function load() {
+   try {
+    if(user) {
+     const {data,error}=await getSupabaseBrowserClient().from('profile_answers').select('onboarding').eq('user_id',user.id).maybeSingle();
+     if(error)throw error;
+     if(isDraft(data?.onboarding?.baselineV2)) {
+      if(active){setDraft(data.onboarding.baselineV2);setSaved(true);}return;
+     }
     }
-    const profile = getUserProfile() as ReturnType<typeof getUserProfile> & {
-      baselineV2?: BaselineDraft;
-    };
-    if (profile.hasCompletedOnboarding) {
-      if (isDraft(profile.baselineV2)) {
-        setDraft(profile.baselineV2);
-        setSaved(true);
-      } else router.replace("/you");
-      return;
-    }
-    fetch("/api/onboarding/draft")
-      .then((r) => r.json())
-      .then((data) => {
-        if (isDraft(data.draft) && completeDraft(data.draft))
-          setDraft(data.draft);
-        else
-          setError(
-            "Return to the browser where you answered the six questions, or start again.",
-          );
-      })
-      .catch(() => setError("Unable to load your answers. Please reload."));
-  }, [user, loading, router]);
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await fetch("/api/onboarding/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName: name.trim(),
-          birthYear: Number(year),
-        }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
-      await hydrateProfile(user.id);
-      setDraft(data.draft);
-      setSaved(true);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    const response=await fetch('/api/onboarding/draft',{cache:'no-store'});
+    if(!response.ok)throw new Error('Unable to load your answers. Please reload.');
+    const data=await response.json();
+    if(!isDraft(data.draft)||!completeDraft(data.draft))throw new Error('Complete your onboarding answers in this browser to reveal your Early Read.');
+    if(active)setDraft(data.draft);
+   }catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load your answers. Please reload.');}
+   finally{if(active)setReady(true);}
   }
-  return (
-    <main className="ob-shell">
-      <section className="ob-read">
-        {!saved ? (
-          <>
-            <p className="ob-eyebrow">YOUR ACCOUNT DETAILS</p>
-            <h1>A name to say hello to.</h1>
-            <p>
-              Your answers are ready. Add your display name to finish your profile.
-            </p>
-            <form className="ob-fields" onSubmit={save}>
-              <label htmlFor="name">Display name</label>
-              <input
-                id="name"
-                required
-                maxLength={80}
-                autoComplete="nickname"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {!ageChecked && draft?.setupRevision!==2 && <><label htmlFor="year">Birth year</label>
-              <input
-                id="year"
-                required
-                type="number"
-                min={1930}
-                max={new Date().getFullYear() - 18}
-                autoComplete="bday-year"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
-              />
-              </>}
-              {!ageChecked&&draft?.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
-              <button className="ob-primary" disabled={!draft || busy || (draft.setupRevision===2&&!ageChecked)}>
-                {busy ? "Saving…" : "Reveal my Early Read →"}
-              </button>
-            </form>
-            <Link href="/onboarding">Edit my handle or answers</Link>
-          </>
-        ) : (
-          draft && (
-            <>
-              <p className="ob-eyebrow">YOUR EARLY READ</p>
-              <h1>A little more you.</h1>
-              {user && <ProfilePhoto userId={user.id} />}
-              <div
-                className="ob-bloom"
-                aria-label="Six answered areas form your first social signature"
-              >
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <i key={n} />
-                ))}
-              </div>
-              <p>
-                Your early answers suggest you enjoy{" "}
-                <strong>{groupChoices(draft).join(' or ').toLowerCase()}</strong> settings. You’re
-                making room for{" "}
-                <strong>{selectedLabels(draft.intent,draft.intentOther).join(", ").toLowerCase()}</strong>.
-              </p>
-              {!!draft.desiredQualities?.length && <><h2>You value in a friend</h2><p>{selectedLabels(draft.desiredQualities,draft.qualityOther).join(' · ')}</p><p>We’ll only describe someone as bringing these qualities when their own measured answers support it. Until then, that part is not yet measured.</p></>}
-              <h2>You click through</h2>
-              <p>{selectedLabels(draft.clicks,draft.clicksOther).join(" · ")}</p>
-              {draft.flowVersion === 3 && <><h2>Your social rhythm</h2><p>{[draft.connectionChoice === 'Other' ? draft.connectionOther : draft.connectionChoice, draft.planningChoice === 'Other' ? draft.planningOther : draft.planningChoice, draft.punctualityChoice === 'Other' ? draft.punctualityOther : draft.punctualityChoice].filter(Boolean).join(' · ')}</p></>}
-              <h2>You’d say yes to</h2>
-              <p>{selectedLabels(draft.outings,draft.outingOther).join(" · ")}</p>
-              <h2>Room to get to know you</h2>
-              <p>
-                This is an Early Read. Communication habits, values and handling
-                differences take more than six questions. Deepen your Tribal
-                Pass whenever you’re ready.
-              </p>
-              <Link className="ob-primary" href="/people">
-                See who I might click with →
-              </Link>
-              <Link href="/you">My Social Signature</Link>
-              <Link href="/you/deeper">Deepen my Tribal Pass</Link>
-            </>
-          )
-        )}
-        {error && (
-          <p role="alert" className="ob-error">
-            {error}
-          </p>
-        )}
-      </section>
-    </main>
-  );
+  void load();return()=>{active=false;};
+ },[loading,user]);
+ async function feedback(id:string,value:ReadFeedback) {
+  if(!draft)throw new Error('No answers');
+  if(saved&&user) {
+   const client=getSupabaseBrowserClient();
+   const {data,error}=await client.from('profile_answers').select('onboarding').eq('user_id',user.id).single();
+   if(error)throw error;
+   const current=data.onboarding.baselineV2 as ReadDraft;
+   if(!isDraft(current)||buildEarlyRead(current).find(c=>c.id===id)?.basis!==value.basis)throw new Error('Answers changed. Reload.');
+   const next={...current,earlyReadFeedback:{...current.earlyReadFeedback,[id]:value}};
+   const result=await client.from('profile_answers').update({onboarding:{...data.onboarding,baselineV2:next}}).eq('user_id',user.id).eq('onboarding',JSON.stringify(data.onboarding)).select('user_id').single();
+   if(result.error)throw result.error;setDraft(next);
+  }else{
+   const read=await fetch('/api/onboarding/draft',{cache:'no-store'});
+   if(!read.ok)throw new Error('Unable to load draft');
+   const {draft:current}=await read.json();
+   if(!isDraft(current)||buildEarlyRead(current).find(c=>c.id===id)?.basis!==value.basis)throw new Error('Answers changed');
+   const next={...current,earlyReadFeedback:{...(current as ReadDraft).earlyReadFeedback,[id]:value}};
+   const response=await fetch('/api/onboarding/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(next)});
+   if(!response.ok)throw new Error('Unable to save correction');setDraft(next);
+  }
+ }
+ async function save(e:React.FormEvent) {
+  e.preventDefault();if(!user)return;setBusy(true);setError('');
+  try {
+   const r=await fetch('/api/onboarding/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({displayName:name.trim(),birthYear:Number(year)})});
+   const data=await r.json();if(!r.ok)throw new Error(data.error);
+   await hydrateProfile(user.id);setDraft(data.draft);setSaved(true);
+  }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
+ }
+ return <main className="ob-shell"><section className="ob-read">
+ {!ready&&<p role="status">Reading your answers…</p>}
+ {draft&&<><EarlyReadPortrait draft={draft} onFeedback={feedback}/>
+ {!user?<><Link className="ob-primary" href="/join">Keep my Early Read and meet people →</Link><p>Your reading is available now. An account is needed to keep your profile and meet other members.</p></>:!saved?<><h2>Keep this reading as your starting point.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
+ {!ageChecked&&draft.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
+ <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<><ProfilePhoto userId={user.id}/><Link className="ob-primary" href="/people">See who I might click with →</Link><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
+ {!saved&&<Link href="/onboarding">Edit the answers behind my reading</Link>}
+ </>}
+ {error&&<p role="alert" className="ob-error">{error}</p>}
+ {ready&&!draft&&<Link href="/onboarding">Return to onboarding</Link>}
+ </section></main>;
 }

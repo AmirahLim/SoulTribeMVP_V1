@@ -425,3 +425,11 @@
     scroll-behavior: auto !important;
   }
 }
+.ob-read-card { margin: 1.4rem 0; padding: 1.4rem; border: 1px solid #c9d2c6; border-radius: 1.3rem; background: #f2f0e7; }
+.ob-read-card h2 { margin-top: 0; }
+.ob-read-card details { margin: .8rem 0; }
+.ob-read-card summary { cursor: pointer; text-decoration: underline; }
+.ob-read-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: 1rem; }
+.ob-read-actions button, .ob-read-card textarea + button { min-height: 44px; padding: .6rem 1rem; border: 1px solid #60705e; border-radius: 999px; }
+.ob-read-card textarea { display: block; width: 100%; min-height: 90px; padding: .7rem; margin: .6rem 0; border: 1px solid #60705e; border-radius: .6rem; background: white; }
+.ob-read-card blockquote { white-space: pre-wrap; border-left: 3px solid #60705e; padding-left: 1rem; }

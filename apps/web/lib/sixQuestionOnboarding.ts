@@ -48,9 +48,8 @@ export function microInsight(d:BaselineDraft,step:number):string {
 }
 export function upgradeDraft(d:BaselineDraft):BaselineDraft {
  if(d.flowVersion===3) {
-  const obsolete=d.intent.includes('Other')||d.clicks.includes('Other')||(d.desiredQualities??[]).some(x=>x==='Other'||x==='Intellectually curious')||d.connectionChoice==='Other'||d.planningChoice==='Other';
-  if(!obsolete)return d;
-  return {...d,legacyAnswers:d,step:1,intent:d.intent.filter(x=>x!=='Other'),clicks:d.clicks.filter(x=>x!=='Other'),desiredQualities:(d.desiredQualities??[]).filter(x=>x!=='Other'&&x!=='Intellectually curious'),connectionChoice:d.connectionChoice==='Other'?'':d.connectionChoice,planningChoice:d.planningChoice==='Other'?'':d.planningChoice};
+  // Current-version answers remain the member's words when reopening or correcting.
+  return d;
  }
  // Preserve original answers without silently mapping changed activity or rhythm labels.
  return {...emptyDraft(),...d,flowVersion:3,step:Math.min(d.step,4),legacyAnswers:d,qualityOther:'',outingOther:'',outings:[],connectionChoice:'',connectionOther:'',planningChoice:'',planningOther:'',punctualityChoice:'',punctualityOther:'',contact:null,planning:null};

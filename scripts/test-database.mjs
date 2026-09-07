@@ -311,4 +311,11 @@ for(const consent of [false,'true',null]) {
 await db.exec('reset role');
 for(let i=0;i<2;i++)await db.exec(await readFile(new URL('../supabase/migrations/20260927000000_public_onboarding_preferences.sql',import.meta.url),'utf8'));
 console.log('Passed explicit public-answer consent, exact allowed-field projection, withdrawal, direct-write protection and repeatability.');
+// Early Read corrections remain exact and private even when answers are shared.
+await as(sixUser);
+const corrected={...sharing,earlyReadFeedback:{qualities:{status:'not_quite',text:'My private correction',basis:'["Reliable"]'}}};
+await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:corrected},sixUser]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[sixUser])).rows[0].onboarding.baselineV2.earlyReadFeedback,corrected.earlyReadFeedback);
+assert.equal((await db.query('select public_onboarding from profiles where id=$1',[sixUser])).rows[0].public_onboarding.earlyReadFeedback,undefined);
+console.log('Passed exact private Early Read correction persistence with no public projection.');
 await db.close();

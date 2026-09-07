@@ -13,6 +13,7 @@ import {
   depthScore,
 } from './functions.ts';
 import { getTravelTimeMinutes } from '../geo/matrix.ts';
+import {hasKilometrePreference} from '../geo/selfReportedTown.ts';
 
 function evalNumericPair(
   valA: number | undefined | null,
@@ -350,6 +351,8 @@ export function scoreExperience(vecA: ProfileVector, vecB: ProfileVector): numbe
 export function scoreGeography(vecA: ProfileVector, vecB: ProfileVector): number | null {
   const gA = vecA.geography;
   const gB = vecB.geography;
+  // Town labels and kilometre preferences are not measured travel times.
+  if (hasKilometrePreference(gA) || hasKilometrePreference(gB)) return null;
   if (!gA || !gB || !gA.home_area || !gB.home_area) return null;
 
   const travelMinutes = getTravelTimeMinutes(gA.home_area, gB.home_area);

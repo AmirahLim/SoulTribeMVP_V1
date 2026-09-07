@@ -295,8 +295,10 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
     : (homeArea ? 2 : 0);
   const geography = geographyAnswered > 0 ? {
     user_id: userId,
+    country: geoObj?.country,
+    radius_km: geoObj?.radius_km,
     home_area: geoObj?.home_area || homeArea || 'Singapore',
-    radius_minutes: geoObj?.radius_minutes || { coffee: 30, dining: 45 },
+    radius_minutes: geoObj?.radius_km != null ? undefined : geoObj?.radius_minutes || { coffee: 30, dining: 45 },
     answered: geographyAnswered,
   } : undefined;
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { getSupabaseServerClient } from "../../../../lib/supabaseServer";
 import { isDraft } from "../../../../lib/sixQuestionOnboarding";
+import {validReadFeedback,type ReadDraft} from '../../../../lib/earlyRead';
 const COOKIE = "st_onboarding_v2";
 export async function GET(request: NextRequest) {
   const token = request.cookies.get(COOKIE)?.value;
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Invalid draft" }, { status: 400 });
   }
-  if (!isDraft(draft))
+  if (!isDraft(draft) || !validReadFeedback((draft as ReadDraft).earlyReadFeedback))
     return NextResponse.json({ error: "Invalid draft" }, { status: 400 });
   const token =
     request.cookies.get(COOKIE)?.value || randomBytes(32).toString("hex");
