@@ -28,12 +28,12 @@ const titles = [
   "Make it possible.",
 ];
 const scenes = [
-  "/onboarding-friendship-v2.jpg",
-  "/onboarding-friendship-v2.jpg",
-  "/onboarding-friendship-v2.jpg",
-  "/onboarding-friendship-v2.jpg",
-  "/onboarding-friendship-v2.jpg",
-  "/onboarding-friendship-v2.jpg",
+  "/onboarding-intent.jpg",
+  "/onboarding-click.jpg",
+  "/onboarding-group.jpg",
+  "/onboarding-flow.jpg",
+  "/onboarding-outings.jpg",
+  "/onboarding-group.jpg",
 ];
 export default function OnboardingPage() {
   const router = useRouter();
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
       </main>
     );
   return (
-    <main className="ob-shell">
+    <main className="ob-shell ob-immersive" data-step={draft.step}>
       <header className="ob-header">
         <Link href="/">SOUL TRIBE</Link>
         <div

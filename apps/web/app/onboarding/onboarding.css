@@ -1,3 +1,62 @@
+/* Scoped to onboarding: shared signup/read styles remain unchanged. */
+.ob-immersive.ob-shell {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: max(26px, env(safe-area-inset-top)) clamp(24px, 5vw, 72px) max(22px, env(safe-area-inset-bottom));
+  background: #171717;
+  color: white;
+}
+.ob-immersive .ob-header { width: 100%; max-width: none; margin: 0; z-index: 1; font-weight: 400; }
+.ob-immersive .ob-layout { display: flex; flex: 1; width: 100%; max-width: none; align-items: flex-end; justify-content: center; margin: 0; padding-top: 22svh; }
+.ob-immersive .ob-photo { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; min-height: 0; max-height: none; border-radius: 0; }
+.ob-immersive .ob-photo img { object-position: center 45%; }
+.ob-immersive[data-step="4"] .ob-photo img { object-position: 65% center; }
+.ob-immersive .ob-photo::after { inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.08) 25%, rgba(0,0,0,.48) 52%, rgba(0,0,0,.78) 100%); }
+.ob-immersive .ob-photo > span { display: none; }
+.ob-immersive .ob-content { width: 100%; max-width: 600px; text-align: center; }
+.ob-immersive .ob-content h1 { font: 300 clamp(30px, 3.8vw, 46px)/1.15 Inter, Arial, sans-serif; letter-spacing: -.04em; color: white; margin-bottom: 12px; text-wrap: balance; }
+.ob-immersive .ob-content h1:focus { outline: none; }
+.ob-immersive .ob-eyebrow { color: white; font-size: 10px; font-weight: 400; margin-bottom: 14px; }
+.ob-immersive .ob-helper { color: rgba(255,255,255,.9); margin-bottom: 22px; font-size: 13px; }
+.ob-immersive .ob-petals { gap: 5px; }
+.ob-immersive .ob-petals i { height: 2px; width: 22px; border: 0; border-radius: 2px; transform: none; background: rgba(255,255,255,.35); }
+.ob-immersive .ob-petals i[data-filled="true"] { background: white; }
+.ob-immersive .ob-choices { justify-content: center; gap: 8px; }
+.ob-immersive :is(.ob-choices,.ob-groups) button { background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.55); color: white; font-weight: 400; text-align: center; backdrop-filter: blur(4px); }
+.ob-immersive :is(.ob-choices,.ob-groups) button[aria-pressed="true"] { background: rgba(255,255,255,.24); border-color: white; box-shadow: inset 0 0 0 1px white; }
+.ob-immersive .ob-groups { gap: 10px; }
+.ob-immersive .ob-groups button { min-height: 75px; border-radius: 18px; }
+.ob-immersive .ob-groups span { margin-bottom: 5px; }
+.ob-immersive .ob-insight { color: white; font: 300 14px/1.5 Inter, Arial, sans-serif; margin: 18px 0; min-height: 24px; }
+.ob-immersive .ob-nav { align-items: center; margin-top: 12px; }
+.ob-immersive .ob-nav button { color: white; background: transparent; border: 1px solid rgba(255,255,255,.7); font-size: 13px; font-weight: 400; }
+.ob-immersive .ob-small { color: rgba(255,255,255,.85); font-size: 10px; margin-top: 16px; }
+.ob-immersive .ob-flow { max-width: 450px; margin: auto; }
+.ob-immersive .ob-flow fieldset { margin-bottom: 12px; }
+.ob-immersive .ob-flow legend { font-weight: 400; margin: auto auto 8px; }
+.ob-immersive .ob-flow fieldset p { color: white; }
+.ob-immersive .ob-stops { position: relative; }
+.ob-immersive .ob-stops::before { content: ''; position: absolute; top: 50%; left: 22px; right: 22px; height: 1px; background: rgba(255,255,255,.5); pointer-events: none; }
+.ob-immersive .ob-stops button { position: relative; color: white; background: transparent; }
+.ob-immersive .ob-stops button[aria-pressed="true"] { background: rgba(255,255,255,.25); box-shadow: inset 0 0 0 1px white; }
+.ob-immersive .ob-fields { text-align: left; }
+.ob-immersive .ob-fields :is(input,select) { color: white; border-color: rgba(255,255,255,.65); background: rgba(0,0,0,.22); }
+.ob-immersive .ob-fields option { color: #222; background: white; }
+.ob-immersive .ob-fields p { color: white; }
+.ob-immersive .ob-error { color: white; text-decoration: underline; text-underline-offset: 4px; }
+.ob-immersive :is(button,a,input,select):focus-visible { outline: 2px solid white; outline-offset: 4px; }
+@media (max-width: 600px) {
+  .ob-immersive.ob-shell { padding-left: 22px; padding-right: 22px; }
+  .ob-immersive .ob-layout { padding-top: 26svh; }
+  .ob-immersive[data-step="4"] .ob-layout,
+  .ob-immersive[data-step="5"] .ob-layout,
+  .ob-immersive[data-step="6"] .ob-layout { padding-top: 17svh; }
+  .ob-immersive .ob-content h1 { font-size: 32px; }
+  .ob-immersive .ob-choices button { font-size: 12px; padding: 10px 12px; }
+}
 .ob-shell {
   min-height: 100svh;
   background: #f6f3ec;
