@@ -1,5 +1,9 @@
 # Landing-page screenshot assets
 
+## Current captures (8 September 2026)
+
+The intro uses `current-*.jpg`, captured in Chromium at 390 by 780 CSS pixels with 2x resolution. These render the current SocialScrapbook, MatchKeepsake and BondScrapbook components, and the current outing card and guest-selection JSX with their production styles. All names, preferences and outings are fictional sample data. Initial avatars and existing scenic assets avoid exposing live member photos. The connection objects have a separate scrolled capture. No member records or live sessions were modified. These are illustrative interface captures, not live listings. The older `actual-*` assets below are retained but no longer used by the intro.
+
 Matching screenshots: actual-match-a.jpg and actual-match-b.jpg were edited with built-in ImageGen. Prompt: preserve the supplied matching interface and all its text, spacing, controls and dreamy background; replace Allan Ling everywhere with Leo Chen, Yasmin with Maya Vale, Samuel with Owen Park, and replace the circular member headshots with fictional adult portraits. JPEG copies are used for web delivery. Original screenshots remain untouched.
 
 These are product screenshots supplied by the project owner. Original source images are unchanged.
