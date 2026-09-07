@@ -107,10 +107,12 @@
 .ob-immersive :is(button,a,input,select):focus-visible { outline: 2px solid white; outline-offset: 4px; }
 @media (max-width: 600px) {
   .ob-immersive.ob-shell { padding-left: 22px; padding-right: 22px; }
-  .ob-immersive .ob-layout { padding-top: 26svh; }
+  .ob-immersive .ob-layout { align-items: center; padding-top: 0; }
   .ob-immersive[data-step="4"] .ob-layout,
   .ob-immersive[data-step="5"] .ob-layout,
-  .ob-immersive[data-step="6"] .ob-layout { padding-top: 17svh; }
+  .ob-immersive[data-step="6"] .ob-layout { padding-top: 0; }
+  .ob-immersive[data-step="7"] .ob-layout { align-items: center; padding-top: 8svh; }
+  .ob-immersive .ob-content { width: min(100%, 600px); margin-left: auto; margin-right: auto; }
   .ob-immersive .ob-content h1 { font-size: 32px; }
   .ob-immersive .ob-choices button { font-size: 12px; padding: 10px 12px; }
 }

@@ -9,12 +9,12 @@ describe('Current intro',()=>{
     expect(source).not.toContain('Your kind of people.');
     expect(source).not.toContain('Intentional friendship matching.');
   });
-  it('uses the requested FAQ heading and fills supplied phone screens without solid padding',()=>{
+  it('uses the requested FAQ heading and fits supplied phone screens without cropping',()=>{
     expect(source).toContain('<h2>Frequently Asked Questions</h2>');
     expect(source).not.toContain('A few good questions.');
     const css=readFileSync(resolve(__dirname,'../../app/landing.module.css'),'utf8');
-    expect(css).toContain('.suppliedPreview .screen>img{object-fit:cover');
-    expect(css).toContain('background:transparent');
+    expect(css).toContain('.suppliedPreview .screen>img{object-fit:contain');
+    expect(css).toContain('object-position:top center');
   });
   it('uses current captures and pairs social and connection descriptions correctly',()=>{
     expect(source).not.toContain('/images/landing/actual-');
