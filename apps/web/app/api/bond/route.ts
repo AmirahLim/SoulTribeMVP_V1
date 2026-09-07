@@ -85,9 +85,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Fetch profiles from database bypassing RLS
-  const { data: dbProfiles, error: fetchErr } = await adminClient
-    .from('profiles')
-    .select(`
+  const profileSelection = `
       id,
       display_name,
       avatar_url,
@@ -110,8 +108,23 @@ export async function POST(req: NextRequest) {
       trait_geography (*),
       user_interests (*, interest_nodes (name,path)),
       user_values (*)
-    `)
+    `;
+  let { data: dbProfiles, error: fetchErr } = await adminClient
+    .from('profiles')
+    .select(profileSelection)
     .in('id', [authUserId, candidateId]);
+
+  // Older deployments identify seeded demo accounts by their reserved UUIDs.
+  // Only retry for this exact optional-column mismatch; all other errors fail closed.
+  if (fetchErr?.code === '42703' && /column (?:profiles\.)?is_demo does not exist/i.test(fetchErr.message)) {
+    const legacyResult = await adminClient
+      .from('profiles')
+      .select(profileSelection.replace(/\s+is_demo,/, ''))
+      .in('id', [authUserId, candidateId]);
+    // The dynamic projection has the same fields except is_demo, which is absent.
+    dbProfiles = legacyResult.data as unknown as typeof dbProfiles;
+    fetchErr = legacyResult.error;
+  }
 
   if (fetchErr || !dbProfiles) {
     return NextResponse.json({ error: 'Failed to fetch profile data' }, { status: 500 });

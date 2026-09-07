@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '../../app/api/bond/route';
 import { NextRequest } from 'next/server';
+const schemaState = vi.hoisted(() => ({error: null as null | {code:string;message:string}, selections: [] as string[], demo:false}));
+beforeEach(()=>{schemaState.error=null;schemaState.selections=[];schemaState.demo=false;});
 
 const mockDbProfiles = [
   {
@@ -97,11 +99,13 @@ vi.mock('@supabase/supabase-js', () => ({
       }),
     },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
+      select: vi.fn((selection:string) => ({
         or: vi.fn(async () => ({ data: [], error: null })),
         in: vi.fn(async (_col: string, ids: string[]) => {
+          schemaState.selections.push(selection);
+          if(schemaState.error && selection.includes('is_demo,')) return {data:null,error:schemaState.error};
           const profiles = mockDbProfiles.filter((p) => ids.includes(p.id));
-          return { data: profiles, error: null };
+          return { data: profiles.map(p=>({...p,is_demo:schemaState.demo && p.id.endsWith('0002')})), error: null };
         }),
       })),
     })),
@@ -121,6 +125,24 @@ function walkObject(obj: any, forbidKeys: string[]) {
 }
 
 describe('POST /api/bond Endpoint Tests', () => {
+  const request=()=>new NextRequest('http://localhost/api/bond',{method:'POST',headers:{Authorization:'Bearer valid_token','Content-Type':'application/json'},body:JSON.stringify({candidateId:'11111111-1111-4111-8111-000000000002'})});
+  it('supports a legacy schema missing only the optional is_demo column',async()=>{
+    schemaState.error={code:'42703',message:'column profiles.is_demo does not exist'};
+    const res=await POST(request());expect(res.status).toBe(200);
+    expect(schemaState.selections).toHaveLength(2);
+    expect(schemaState.selections[0]).toContain('is_demo,');
+    expect(schemaState.selections[1]).not.toContain('is_demo,');
+    expect((await res.json()).threads.length).toBeGreaterThan(0);
+  });
+  it('does not retry unrelated database errors',async()=>{
+    schemaState.error={code:'42501',message:'permission denied'};
+    expect((await POST(request())).status).toBe(500);
+    expect(schemaState.selections).toHaveLength(1);
+  });
+  it('retains the demo flag exclusion on modern schemas',async()=>{
+    schemaState.demo=true;
+    expect((await POST(request())).status).toBe(404);
+  });
   it('1. Two candidates with different answers produce Tribal Thread text that differs in substance', async () => {
     const req1 = new NextRequest('http://localhost/api/bond', {
       method: 'POST',
