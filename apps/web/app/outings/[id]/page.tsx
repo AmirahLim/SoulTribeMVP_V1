@@ -1,4 +1,5 @@
 'use client';
+import analog from '../../../components/AnalogPages.module.css';
 import { ContinuationCheck } from '../../../components/outings/ContinuationCheck';
 import { OutingContext } from '../../../components/outings/OutingContext';
 import { SafetyActions } from '../../../components/outings/SafetyActions';
@@ -463,7 +464,7 @@ function OutingDetailContent() {
 
   if (loading) {
     return (
-      <IllustratedGround variant="paper" className="min-h-screen pb-24">
+      <IllustratedGround variant="paper" className={`${analog.page} min-h-screen pb-24`}>
         <div className="flex items-center justify-center p-12 text-[#F3F0E9]">
           Loading outing record...
         </div>
@@ -474,7 +475,7 @@ function OutingDetailContent() {
   // 6. PROPER "OUTING NOT FOUND" STATE
   if (!outing) {
     return (
-      <IllustratedGround variant="paper" className="min-h-screen pb-24">
+      <IllustratedGround variant="paper" className={`${analog.page} min-h-screen pb-24`}>
         <button
           type="button"
           onClick={() => router.back()}
@@ -702,7 +703,7 @@ function OutingDetailContent() {
   });
 
   return (
-    <IllustratedGround variant="paper" className="min-h-screen pb-24">
+    <IllustratedGround variant="paper" className={`${analog.page} min-h-screen pb-24`}>
       <button
         type="button"
         onClick={() => router.back()}

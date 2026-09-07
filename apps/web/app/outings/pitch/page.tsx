@@ -1,4 +1,5 @@
 'use client';
+import analog from '../../../components/AnalogPages.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -449,7 +450,7 @@ function PitchComposerContent() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24">
+    <div className={`${analog.page} relative min-h-screen w-full bg-[#0D1D15] text-[#FFFDF9] pb-24`}>
       {/* PAGE CANVAS BACKGROUND */}
       <img
         src="/user-outing-bg.jpg"

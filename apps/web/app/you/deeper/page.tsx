@@ -1,4 +1,5 @@
 'use client';
+import analog from '../../../components/AnalogPages.module.css';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -139,7 +140,7 @@ function DeeperTribalPassContent() {
   const currentCat = categories.find((c) => c.num === activeCategoryNum) || categories[0];
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24">
+    <div className={`${analog.page} relative min-h-screen w-full bg-black text-[#FFFDF9] pb-24`}>
       {/* PAGE CANVAS BACKGROUND: YOUR UPLOADED CANDID CLIFF JUMP MOTION PHOTO */}
       <img
         src="/user-deeper-bg.jpg"
