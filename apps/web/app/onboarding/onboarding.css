@@ -433,3 +433,8 @@
 .ob-read-actions button, .ob-read-card textarea + button { min-height: 44px; padding: .6rem 1rem; border: 1px solid #60705e; border-radius: 999px; }
 .ob-read-card textarea { display: block; width: 100%; min-height: 90px; padding: .7rem; margin: .6rem 0; border: 1px solid #60705e; border-radius: .6rem; background: white; }
 .ob-read-card blockquote { white-space: pre-wrap; border-left: 3px solid #60705e; padding-left: 1rem; }
+
+/* Keep all six onboarding questions and their answer groups centred. */
+.ob-immersive:not([data-step="7"]) :is(.ob-rhythm fieldset,.ob-q4-parts) { text-align: center; }
+.ob-immersive:not([data-step="7"]) :is(.ob-rhythm,.ob-q4-parts) .ob-choices { justify-content: center; }
+.ob-immersive:not([data-step="7"]) .ob-rhythm legend { margin-left: auto; margin-right: auto; }

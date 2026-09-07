@@ -65,7 +65,7 @@ export default function LandingPageContent(){
 <h2 className={styles.realLife}>The rest happens in real life.</h2>
       </section>
       <section className={styles.outingGallery}><div className={styles.sectionHeading}><h2>From an invitation<br/>to a shared memory.</h2><p>Your invitations, your pitches, and the evenings that already happened, all in one place.</p></div><div className={styles.memoryPreview}><img src="/images/landing/supplied-memory-phone.jpg" alt="Outing invitation shown on a phone, with a sunset skating photo in the Polaroid" width="430" height="728" loading="lazy"/></div></section>
-      <section id="faq" className={styles.faq}><h2>A few good questions.</h2>{[
+      <section id="faq" className={styles.faq}><h2>Frequently Asked Questions</h2>{[
         ['Is Soul Tribe for dating?','No. It’s for friendship: people to share an interest, an ordinary evening or a new chapter with.'],
         ['What makes a match personal?','Your profile brings together interests, friendship preferences and social rhythm. Connection Notes show what you share and where expectations differ.'],
         ['Can I make a plan for today?','Yes. Pitch an activity with a time and place, or request to join an upcoming outing. Plans depend on who is available and the host confirming the group.'],

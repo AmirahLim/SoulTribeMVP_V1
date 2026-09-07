@@ -9,6 +9,13 @@ describe('Current intro',()=>{
     expect(source).not.toContain('Your kind of people.');
     expect(source).not.toContain('Intentional friendship matching.');
   });
+  it('uses the requested FAQ heading and fills supplied phone screens without solid padding',()=>{
+    expect(source).toContain('<h2>Frequently Asked Questions</h2>');
+    expect(source).not.toContain('A few good questions.');
+    const css=readFileSync(resolve(__dirname,'../../app/landing.module.css'),'utf8');
+    expect(css).toContain('.suppliedPreview .screen>img{object-fit:cover');
+    expect(css).toContain('background:transparent');
+  });
   it('uses current captures and pairs social and connection descriptions correctly',()=>{
     expect(source).not.toContain('/images/landing/actual-');
     for(const key of ['profile','matching','connection','threads','pitches','invited','guests','past'])expect(existsSync(resolve(__dirname,'../../public/images/landing/current-'+key+'.jpg'))).toBe(true);
