@@ -813,7 +813,7 @@ function OutingDetailContent() {
 
         {/* 3. SEAT ROSTER & REAL MEMBERS */}
         <div className="rounded-[24px] border border-[#F3F0E9]/12 bg-[#15261C] p-5 shadow-lg space-y-4">
-          <div className="flex items-center justify-between">
+          <div className={`${analog.rosterHeading} flex items-center justify-between`}>
             <span className="text-[11px] font-bold tracking-widest text-[#8F998D] uppercase">
               Seat Roster (Max {outing.max_participants})
             </span>
@@ -833,7 +833,7 @@ function OutingDetailContent() {
             </div>
           </div>
 
-          <SeatRow seatsTotal={outing.max_participants} seatsFilled={filledCount} />
+          <SeatRow className={analog.seats} seatsTotal={outing.max_participants} seatsFilled={filledCount} />
 
           {/* Member List */}
           <div className="pt-2 space-y-2.5 border-t border-white/10">
@@ -841,7 +841,7 @@ function OutingDetailContent() {
               Invited & Joining Roster ({members.length} Members)
             </span>
             {members.map((m) => (
-              <div key={m.user_id} className="flex items-center justify-between rounded-[16px] border border-white/10 bg-[#0D1D15] p-2.5">
+              <div key={m.user_id} className={`${analog.rosterMember} flex items-center justify-between rounded-[16px] border border-white/10 bg-[#0D1D15] p-2.5`}>
                 <div className="flex items-center gap-2.5">
                   <img
                     src={m.avatar_url}
@@ -861,7 +861,7 @@ function OutingDetailContent() {
                 <div className="flex items-center gap-2">
                   <Link href={`/people/${m.user_id}/bond`}>
                     <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-200 hover:border-emerald-400">
-                      <Sparkles className="h-3 w-3 text-emerald-400" /> View Bond
+                      <Sparkles className="h-3 w-3" /> View Connection
                     </span>
                   </Link>
 
@@ -906,7 +906,7 @@ function OutingDetailContent() {
 
             <div className="space-y-2.5 pt-1">
               {pendingRequests.map((m) => (
-                <div key={m.user_id} className="flex items-center justify-between rounded-[16px] border border-white/15 bg-[#0D1D15] p-3">
+                <div key={m.user_id} className={`${analog.rosterMember} flex items-center justify-between rounded-[16px] border border-white/15 bg-[#0D1D15] p-3`}>
                   <div className="flex items-center gap-2.5">
                     <img
                       src={m.avatar_url}

@@ -103,7 +103,15 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user: authUser, session } = useAuth();
+  const { user: authUser, session, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const handleSignOut = async () => {
+    if (signingOut || saving) return;
+    setSigningOut(true); setSignOutError(null);
+    try { await signOut(); window.location.assign('/'); }
+    catch { setSignOutError('Could not sign out. Please try again.'); setSigningOut(false); }
+  };
 
   const [myRead, setMyRead] = useState<MyRead | null>(null);
   const [loading, setLoading] = useState(true);
@@ -185,7 +193,7 @@ function ProfileContent() {
   // Settings save handler
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (saving || !authUser?.id) return;
+    if (saving || signingOut || !authUser?.id) return;
     setSaving(true);
     setSaveError(null);
     try {
@@ -268,14 +276,15 @@ function ProfileContent() {
       {isSettingsOpen && (
         <dialog ref={settingsDialog} aria-labelledby="profile-settings-title"
           onCancel={(event) => { if (saving) event.preventDefault(); else setIsSettingsOpen(false); }}
-          className="w-full max-w-md rounded-[26px] bg-[#F8F5EE] p-0 backdrop:bg-black/40">
+          className="w-[calc(100%-32px)] max-w-md max-h-[85dvh] overflow-y-auto rounded-[26px] bg-[#F8F5EE] p-0 backdrop:bg-black/40">
           <div className="w-full max-w-md rounded-[26px] border border-[#203B30]/15 bg-[#F8F5EE] p-6 text-[#203B30]">
             <h3 id="profile-settings-title" className="text-lg font-bold">Edit profile</h3>
 
             {saveError && <p role="alert" className="mt-3 text-sm text-red-800">{saveError}</p>}
-            <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-xs">
+            <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-sm [&_input]:text-base [&_textarea]:text-base">
               <div>
-                <label htmlFor="profile-name" className="font-semibold text-[#536657]">Display Name</label>
+                <label htmlFor="profile-name" className="font-semibold text-[#536657]">Display name</label>
+                <p className="mt-1 text-sm">The name people see. It does not need to be unique.</p>
                 <input
                   id="profile-name"
                   type="text"
@@ -285,6 +294,11 @@ function ProfileContent() {
                 />
               </div>
 
+              <div className="text-sm">
+                <p className="font-semibold text-[#536657]">Username</p>
+                <p>@{profile.handle}</p>
+                <p className="mt-1">Your unique handle. Changing your display name does not change this.</p>
+              </div>
               <div>
                 <label htmlFor="profile-area" className="font-semibold text-[#536657]">Home Area</label>
                 <input
@@ -297,7 +311,8 @@ function ProfileContent() {
               </div>
 
               <div>
-                <label htmlFor="profile-bio" className="font-semibold text-[#536657]">Bio</label>
+                <label htmlFor="profile-bio" className="font-semibold text-[#536657]">Bio (optional)</label>
+                <p className="mt-1 text-sm">Your saved introduction. Edit or clear it, then save changes.</p>
                 <textarea
                   id="profile-bio"
                   value={editBio}
@@ -325,6 +340,12 @@ function ProfileContent() {
                 </button>
               </div>
             </form>
+            <div className="mt-6 border-t border-[#203B30]/20 pt-4">
+              {signOutError && <p role="alert" className="mb-3 text-sm text-red-800">{signOutError}</p>}
+              <button type="button" onClick={handleSignOut} disabled={signingOut || saving} className="w-full rounded border border-[#697653] bg-[#e0e3cc] py-3 text-base font-semibold text-[#35402f] disabled:opacity-50">
+                {signingOut ? 'Signing out…' : 'Sign out'}
+              </button>
+            </div>
           </div>
         </dialog>
       )}

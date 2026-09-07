@@ -206,13 +206,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (isConfigured) {
         const client = getSupabaseBrowserClient();
-        await client.auth.signOut();
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
       }
       setProfileCacheAccount(null);
       setSession(null);
       setUser(null);
     } catch (err) {
       console.error('Supabase signOut error:', err);
+      throw err;
     }
   };
 

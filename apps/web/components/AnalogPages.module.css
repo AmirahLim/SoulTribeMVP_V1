@@ -34,3 +34,18 @@
 .page [data-outing-cover] :is(a,span){color:#fffaf0!important}
 .page [data-outing-cover] img{opacity:1}
 @media(max-width:540px){.page>div[class*="max-w-"]{padding-left:18px;padding-right:18px}.page form>div[class*="shadow-"]{padding:18px!important}.page [data-outing-cover]{transform:none}.page h1{font-size:32px!important}}
+.page div[class*="bg-[#0D1D15]"]{background:#e0e3cc!important;color:#35402f!important;border-color:#a2aa8966!important;border-radius:3px!important}
+.page .rosterMember{flex-wrap:wrap;gap:14px;padding:14px!important}
+.page .rosterMember>div:first-child{min-width:0;flex:1 1 180px}
+.page .rosterMember>div:last-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.page .rosterMember :is(span,a){font-size:14px!important;line-height:1.5}
+.page .rosterMember img{width:40px;height:40px;flex-shrink:0}
+.page .rosterMember a{display:inline-flex;min-height:44px;align-items:center;background:#f4efdf;border:1px solid #9ba583;border-radius:3px;padding:6px 10px;color:#35402f!important}
+.page .rosterMember a span{background:transparent!important;border:0!important;padding:0!important;color:inherit!important}
+.page .rosterMember span[class*="bg-emerald"]{background:#d2dfc6!important;color:#314c2b!important;border-color:#7e966d!important;border-radius:3px}
+.page .rosterMember span[class*="bg-amber"]{background:#eee0b9!important;color:#604917!important;border-color:#aa925d!important;border-radius:3px}
+.page .rosterMember span[class*="bg-red"]{background:#efdcd1!important;color:#853c30!important;border-color:#b07f6d!important;border-radius:3px}
+.page .seats>div{background:#f4efdf!important;color:#46523a!important;border:1px solid #8c9978!important}
+.page .seats>div[class*="bg-[#016401]"]{background:#42583a!important;color:#fffaf0!important}
+.page .rosterHeading{flex-wrap:wrap;gap:12px}
+.page .rosterHeading>div{flex-wrap:wrap;gap:12px}
