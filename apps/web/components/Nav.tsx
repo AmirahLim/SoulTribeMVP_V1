@@ -6,16 +6,18 @@ import { usePathname } from 'next/navigation';
 import { Compass, Users, Calendar, User } from 'lucide-react';
 import { fetchInvitedOutings } from '../lib/outingsStore';
 import { useAuth } from '../lib/authContext';
-import { getUserProfile } from '../lib/userStore';
+import { showAppNavigation } from '../lib/navigationVisibility';
 
 export function Nav() {
   const pathname = usePathname();
   const { user: authUser } = useAuth();
   const [pendingCount, setPendingCount] = useState<number>(0);
 
-  const userId = authUser?.id || getUserProfile()?.id;
+  const visible = showAppNavigation(pathname,Boolean(authUser));
+  const userId = authUser?.id;
 
   useEffect(() => {
+    if (!visible) { setPendingCount(0); return; }
     async function updateCount() {
       try {
         if (userId) {
@@ -32,10 +34,10 @@ export function Nav() {
 
     window.addEventListener('soul-tribe-invites-changed', updateCount);
     return () => window.removeEventListener('soul-tribe-invites-changed', updateCount);
-  }, [pathname, userId]);
+  }, [pathname, userId, visible]);
 
-  // Hide nav on landing and onboarding routes
-  if (pathname === '/' || pathname.startsWith('/onboarding')) {
+  // App navigation belongs only to signed-in app routes, not acquisition/setup.
+  if (!visible) {
     return null;
   }
 
