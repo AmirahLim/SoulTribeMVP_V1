@@ -1,7 +1,7 @@
 .card {
   position: relative;
   color: #303c2b;
-  background: radial-gradient(ellipse at 0% 0%, #c5cbb76b, transparent 55%), repeating-linear-gradient(102deg, #b9ae8f0a 0 1px, transparent 1px 4px), #ede8d9;
+  background: linear-gradient(#ede8d91f, #ede8d91f), url('/images/crumpled-letter.jpg') center / 650px auto repeat, #ede8d9;
   box-shadow: 0 13px 35px #0004;
   padding: 28px 24px 22px;
   margin: 14px 0;

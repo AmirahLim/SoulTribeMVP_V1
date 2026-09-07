@@ -5,3 +5,6 @@
 @media(max-width:420px){.scene{padding:18px 16px 115px}.identity{gap:20px}.portrait{width:112px;padding:7px 7px 3px}.portrait img,.initial{height:115px}.portrait figcaption{font-size:16px}.name h1{font-size:31px}.standing{font-size:10px!important}.sectionLabel{display:block}.sectionLabel>span{display:block;margin-top:8px}.grid{gap:19px 12px;padding:3px}.card h3{font-size:22px}.photoWindow{height:105px}.photoWindow span{font-size:20px}.card{min-height:270px}.cardLabel{letter-spacing:0}.letterMark{font-size:26px}.topline{font-size:8px}.intro{margin-top:35px}.between{min-height:220px}}
 @media(max-width:340px){.grid{grid-template-columns:1fr}.between{grid-column:auto}.card{min-height:245px}.identity{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}}
+.paper,.sheet{background:repeating-linear-gradient(transparent 0 28px,#807c6112 28px 29px),url('/images/crumpled-letter.jpg') center/650px auto repeat,#eee8d5}
+.letter{background:linear-gradient(155deg,#d8ccb333 28%,transparent 28%),linear-gradient(25deg,#d8ccb333 28%,transparent 28%),url('/images/crumpled-letter.jpg') center/650px auto repeat,#f3ecd9}
+.photo,.portrait{background:#f5f0e3 url('/images/crumpled-letter.jpg') center/650px auto repeat}
