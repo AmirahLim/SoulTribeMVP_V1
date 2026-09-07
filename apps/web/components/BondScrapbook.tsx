@@ -55,11 +55,13 @@ const synthesis=bondSynthesis(notes.threads);
 return <div className={s.album}>
 <nav className={s.tabs} aria-label="Member views"><Link href={`/people/${notes.candidate.id}`}>Their profile</Link><span aria-current="page">View Connection</span></nav>
 <section className={s.overview} aria-labelledby="bond-title">
-<img className={s.threadHeader} src="/images/connection-thread.png" alt="" width="900" height="300" />
 <p className={s.eyebrow}>You & {notes.candidate.displayName} · connection notes</p>
 <p className={`${s.summaryHand} ${handwriting.className}`}>a little more about you two.</p>
 <h1 id="bond-title">How the threads<br/><em>come together.</em></h1>
-<p className={s.summaryLead}>{synthesis[0].observation&&`${synthesis[0].observation}. `}{synthesis[0].text}</p>
+<div className={s.threadSurround}>
+<img className={s.threadPhoto} src="/images/brown-thread-photo.jpg" alt="" width="1200" height="1600" />
+<p className={`${s.summaryLead} ${s.summaryPaper}`}>{synthesis[0].observation&&`${synthesis[0].observation}. `}{synthesis[0].text}</p>
+</div>
 <details className={s.summaryExpand}><summary><span className={s.closedAction}>Read the full connection summary ↗</span><span className={s.openAction}>Show less ↙</span></summary>
 <div className={s.synthesis}>{synthesis.slice(1).map((part,i)=><article key={part.title}>
 <span className={`${s.chapter} ${handwriting.className}`}>0{i+1}</span><div><h2>{part.title}</h2>{part.observation&&<p className={s.observation}>{part.observation}.</p>}<p>{part.text}</p>
