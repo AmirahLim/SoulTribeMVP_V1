@@ -7,8 +7,9 @@ import {hydrateProfile} from '../../lib/profileHydration';
 import {getSupabaseBrowserClient} from '../../lib/supabase';
 import {completeDraft,isDraft} from '../../lib/sixQuestionOnboarding';
 import {buildEarlyRead,type ReadDraft,type ReadFeedback} from '../../lib/earlyRead';
-import {EarlyReadPortrait} from '../../components/profile/EarlyReadPortrait';
+import {EarlyReadAlbum} from '../../components/profile/EarlyReadAlbum';
 import '../onboarding/onboarding.css';
+import './early-read.css';
 export default function EarlyRead() {
  const {user,loading}=useAuth();
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
@@ -69,9 +70,9 @@ export default function EarlyRead() {
    await hydrateProfile(user.id);setDraft(data.draft);setSaved(true);
   }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
  }
- return <main className="ob-shell"><section className="ob-read">
+ return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
- {draft&&<><EarlyReadPortrait draft={draft} onFeedback={feedback}/>
+ {draft&&<><EarlyReadAlbum draft={draft} onFeedback={feedback}/>
  {!user?<><Link className="ob-primary" href="/join">Keep my Early Read and meet people →</Link><p>Your reading is available now. An account is needed to keep your profile and meet other members.</p></>:!saved?<><h2>Keep this reading as your starting point.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
