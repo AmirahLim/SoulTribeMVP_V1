@@ -1,4 +1,5 @@
 "use client";
+import ProfilePhoto from './ProfilePhoto';
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,8 @@ export default function EarlyRead() {
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState("");
   const [year, setYear] = useState("");
+  const [ageChecked,setAgeChecked]=useState(false);
+  useEffect(()=>{fetch("/api/onboarding/eligibility").then(r=>r.json()).then(d=>{if(d.birthYear){setYear(String(d.birthYear));setAgeChecked(true);}}).catch(()=>{});},[]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -83,8 +86,7 @@ export default function EarlyRead() {
             <p className="ob-eyebrow">YOUR ACCOUNT DETAILS</p>
             <h1>A name to say hello to.</h1>
             <p>
-              Your answers are ready. Add your display name and birth year
-              to finish your adult member profile.
+              Your answers are ready. Add your display name to finish your profile.
             </p>
             <form className="ob-fields" onSubmit={save}>
               <label htmlFor="name">Display name</label>
@@ -96,7 +98,7 @@ export default function EarlyRead() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              <label htmlFor="year">Birth year</label>
+              {!ageChecked && draft?.setupRevision!==2 && <><label htmlFor="year">Birth year</label>
               <input
                 id="year"
                 required
@@ -107,8 +109,9 @@ export default function EarlyRead() {
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
               />
-              <p>Soul Tribe is for adults aged 18 and over.</p>
-              <button className="ob-primary" disabled={!draft || busy}>
+              </>}
+              {!ageChecked&&draft?.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
+              <button className="ob-primary" disabled={!draft || busy || (draft.setupRevision===2&&!ageChecked)}>
                 {busy ? "Saving…" : "Reveal my Early Read →"}
               </button>
             </form>
@@ -119,6 +122,7 @@ export default function EarlyRead() {
             <>
               <p className="ob-eyebrow">YOUR EARLY READ</p>
               <h1>A little more you.</h1>
+              {user && <ProfilePhoto userId={user.id} />}
               <div
                 className="ob-bloom"
                 aria-label="Six answered areas form your first social signature"

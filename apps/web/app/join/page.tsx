@@ -9,6 +9,7 @@ export default function JoinPage() {
   const router = useRouter();
   const { user, loading, signInWithOtp, verifyOtp, signInWithGoogle } =
     useAuth();
+  const [birthDate,setBirthDate]=useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -26,12 +27,19 @@ export default function JoinPage() {
       .catch(() => setError("Unable to load your answers. Please reload."));
   }, [router]);
   useEffect(() => {
-    if (user && !loading && ready) router.replace("/early-read");
+    if (user && !loading && ready) void fetch('/api/onboarding/eligibility').then(r=>r.json()).then(d=>{if(d.birthYear)router.replace('/early-read');}).catch(()=>{});
   }, [user, loading, ready, router]);
+  async function checkAge() {
+    const r=await fetch('/api/onboarding/eligibility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({birthDate})});
+    const data=await r.json();
+    if(!r.ok){setError(data.error);return false;}return true;
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
+    try { if(!sent && !await checkAge()){setBusy(false);return;} } catch {setError("Could not check your age. Please retry.");setBusy(false);return;}
+    if(user){router.replace('/early-read');setBusy(false);return;}
     const result = sent
       ? await verifyOtp(email, code)
       : await signInWithOtp(email, "/early-read");
@@ -49,6 +57,7 @@ export default function JoinPage() {
           Create your account to save your answers and see where friendship
           could start. Already a member? Use your usual email.
         </p>
+        <div className="ob-fields"><label htmlFor="signup-birth-date">Date of birth</label><input id="signup-birth-date" type="date" autoComplete="bday" required value={birthDate} disabled={sent} onChange={e=>setBirthDate(e.target.value)} /><p>For the 18+ eligibility check. We do not retain your full date of birth or display it on your profile. This is a self-reported check.</p></div>
         <form className="ob-fields" onSubmit={submit}>
           <label htmlFor="email">Email address</label>
           <input
@@ -92,6 +101,7 @@ export default function JoinPage() {
           disabled={!ready || busy}
           onClick={async () => {
             setBusy(true);
+            try {if(!await checkAge()){setBusy(false);return;}}catch{setError("Could not check your age. Please retry.");setBusy(false);return;}
             const r = await signInWithGoogle("/early-read");
             if (r.error) setError(r.error.message);
             setBusy(false);

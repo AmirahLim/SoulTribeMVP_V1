@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../../lib/supabaseServer";
+import {ELIGIBILITY_COOKIE,readProof} from '../../../../lib/eligibilityProof';
 export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== request.nextUrl.origin)
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
@@ -23,10 +24,14 @@ export async function POST(request: NextRequest) {
     if (text.length > 1024)
       return NextResponse.json({ error: "Too large" }, { status: 413 });
     const body = JSON.parse(text);
+    const {data:pending,error:pendingError}=await client.rpc('read_onboarding_draft',{p_token:token});
+    if(pendingError)throw pendingError;
+    const checkedYear=readProof(token,request.cookies.get(ELIGIBILITY_COOKIE)?.value);
+    if(pending?.setupRevision===2&&!checkedYear)return NextResponse.json({error:'Please complete the private age check at signup.'},{status:400});
     const { data, error } = await client.rpc("claim_onboarding_draft", {
       p_token: token,
       p_display_name: body.displayName,
-      p_birth_year: body.birthYear,
+      p_birth_year: checkedYear ?? body.birthYear,
     });
     if (error)
       return NextResponse.json(

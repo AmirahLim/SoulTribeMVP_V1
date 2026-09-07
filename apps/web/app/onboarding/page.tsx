@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import PhotoPicker from "./PhotoPicker";
+import {LIFE_CONTEXTS,LIFE_CONTEXT_DETAILS} from "../../lib/lifeContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
 import { getUserProfile } from "../../lib/userStore";
@@ -16,7 +18,6 @@ import {
   groupChoices,
   INTENTS,
   OUTINGS,
-  TRAVEL,
   BaselineDraft,
   emptyDraft,
   isDraft,
@@ -107,7 +108,7 @@ export default function OnboardingPage() {
   async function advance(back = false) {
     if (designPreview) {
       setError('');
-      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 6 ? 1 : draft.step + 1});
+      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 7 ? 1 : draft.step + 1});
       return;
     }
   if (loadFailed) return;
@@ -163,7 +164,7 @@ export default function OnboardingPage() {
     options: string[],
     max: number,
   ) => (
-    <div className="ob-choices">
+    <div className={`ob-choices${key === "clicks" ? " ob-click-choices" : ""}`}>
       {options.map((o) => (
         <button
           type="button"
@@ -287,28 +288,27 @@ export default function OnboardingPage() {
                 3–20 letters, numbers or underscores. Availability is confirmed
                 when you save your account.
               </p>
-              <label htmlFor="area">Where are plans easiest?</label>
-              <select
-                id="area"
-                value={draft.area}
-                onChange={(e) => setDraft({ ...draft, area: e.target.value })}
-              >
-                <option value="">Choose a Singapore area</option>
-                {AREAS.map((a) => (
-                  <option key={a}>{a}</option>
-                ))}
-              </select>
-              <label htmlFor="travel">How far are you happy to travel?</label>
-              <select
-                id="travel"
-                value={draft.travel}
-                onChange={(e) => setDraft({ ...draft, travel: e.target.value })}
-              >
-                <option value="">Choose your usual comfort zone</option>
-                {TRAVEL.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
+              <PhotoPicker previewOnly={designPreview} />
+              <details className="ob-life-context">
+                <summary>What phase of life are you in? · {(draft.lifeContexts??[]).length}/3 selected</summary>
+                <p>Pick up to 3 that feel like you right now.</p>
+                {LIFE_CONTEXTS.map(context=><label key={context} className="ob-life-option"><input type="checkbox" checked={(draft.lifeContexts??[]).includes(context)} disabled={!(draft.lifeContexts??[]).includes(context)&&(draft.lifeContexts??[]).length>=3} onChange={()=>{
+                  const selected=draft.lifeContexts??[];
+                  setDraft({...draft,setupRevision:2,lifeContexts:selected.includes(context)?selected.filter(c=>c!==context):[...selected,context],country:draft.country??'',travelKm:draft.travelKm??10});
+                }}/><span>{context}{LIFE_CONTEXT_DETAILS[context]&&<small>{LIFE_CONTEXT_DETAILS[context]}</small>}</span></label>)}
+              </details>
+              <p>{(draft.lifeContexts??[]).join(' · ')}</p>
+              <p>Describe the chapter you’re in—not an age label. These answers stay private.</p>
+              <label htmlFor="area">Where are you based?</label>
+              <input id="area" maxLength={100} autoComplete="address-level2" value={draft.area} placeholder="Town, city or neighbourhood" onChange={e=>setDraft({...draft,area:e.target.value})} />
+              <label htmlFor="country">Country or region</label>
+              <input id="country" maxLength={80} autoComplete="country-name" value={draft.country??''} placeholder="e.g. Singapore, Malaysia, Australia" onChange={e=>setDraft({...draft,country:e.target.value})} />
+              <p>No exact address needed. This is self-reported, not a verified location.</p>
+              <label htmlFor="travel-km">How far are you willing to travel? <output htmlFor="travel-km">{draft.travelKm??10} km</output></label>
+              <input id="travel-km" type="range" min={1} max={50} step={1} value={draft.travelKm??10} onChange={e=>setDraft({...draft,travelKm:Number(e.target.value)})} />
+              <div className="ob-range-labels"><span>1 km</span><span>50 km</span></div>
+              <p>Your travel preference is saved. Distance-based filtering needs a mapped location.</p>
+
             </div>
           )}
           <p className="ob-insight" aria-live="polite">
@@ -341,12 +341,10 @@ export default function OnboardingPage() {
                 ? "Saving…"
                 : draft.step === 7
                   ? "Keep my Early Read →"
-                  : designPreview && draft.step === 6 ? "Back to page 1 →" : "Continue →"}
+                  : designPreview && draft.step === 6 ? "Preview profile details →" : "Continue →"}
             </button>
           </nav>
-          <p className="ob-small">
-            {designPreview ? "Design preview only. Answers stay on this page and disappear on refresh." : "Saved when you continue. Resume on this browser for 7 days."}
-          </p>
+          {designPreview && <p className="ob-small">Design preview only. Answers are not saved.</p>}
         </section>
       </div>
     </main>
