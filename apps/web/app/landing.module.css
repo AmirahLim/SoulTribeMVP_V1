@@ -10,7 +10,7 @@
 .heroText>p{font-size:clamp(1rem,2vw,1.5rem)!important;margin:16px auto 28px!important}.heroText h1{margin-bottom:0!important}
 
 /* Supplied captures fill the phone display, matching the fitted Social Read preview. */
-.suppliedPreview .screen>img{object-fit:contain;object-position:top center;background:#070b08}
+.suppliedPreview .screen>img{object-fit:fill;object-position:top center;background:transparent}
 .howSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:38px;align-items:start}
 .howSteps article{min-width:0}
 .howSteps .phone{width:100%;max-width:300px;height:560px}

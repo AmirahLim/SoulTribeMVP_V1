@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Nav } from '../components/Nav';
@@ -13,6 +13,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Soul Tribe: Friendship-First Social Platform',
   description: 'Six people. One good Saturday. Soul Tribe holds the history of your adult friendships.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 import { AuthProvider } from '../lib/authContext';
