@@ -21,12 +21,12 @@ export default function PhotoPicker({previewOnly=false}:{previewOnly?:boolean}) 
   }catch(e){setError(e instanceof Error?e.message:'Could not save photo.');}
   finally{setBusy(false);}
  }
- return <div>
+ return <div className="ob-photo-picker">
   <label htmlFor="onboarding-photo">Add a photo · Optional</label>
   {url&&<img src={url} alt="Your selected profile photo" width={88} height={88} style={{objectFit:'cover',borderRadius:'50%',margin:'12px 0'}} />}
   <input id="onboarding-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e=>void select(e.target.files?.[0])}/>
   {photo&&<button type="button" disabled={busy} onClick={async()=>{try{if(!previewOnly)await pendingPhoto(null);setPhoto(null);}catch{setError('Could not remove the saved photo. Please retry.');}}}>Remove photo</button>}
-  <p>{busy?'Preparing photo…':'Preview here. Confirm your photo after signing in to upload it privately.'}</p>
+  {busy&&<p role="status">Preparing photo…</p>}
   {error&&<p role="alert">{error}</p>}
  </div>;
 }
