@@ -138,6 +138,7 @@ export const STANDING_LEVELS: StandingLevel[] = [
 ];
 
 export interface UserProfileData {
+  lifeContexts?: string[];
   id?: string;
   version?: number;
   displayName: string;

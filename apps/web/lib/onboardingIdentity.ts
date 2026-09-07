@@ -1,7 +1,8 @@
 export const AGE_BANDS = ['18–24', '25–34', '35–44', '45–54', '55+'] as const;
 import {validLifeContexts} from './lifeContext';
-export type IdentityDetails = { setupRevision?: 1 | 2; lifeContexts?: string[]; ageBand?: string; ageOther?: string; country?: string; travelKm?: number };
+export type IdentityDetails = { setupRevision?: 1 | 2; lifeContexts?: string[]; lifeContextsPublic?: boolean; ageBand?: string; ageOther?: string; country?: string; travelKm?: number };
 export function validIdentity(d: IdentityDetails & {area: string}, complete = false): boolean {
+  if (d.lifeContextsPublic !== undefined && typeof d.lifeContextsPublic !== 'boolean') return false;
   if (d.setupRevision === undefined) return true;
   if (d.setupRevision !== 1 && d.setupRevision !== 2) return false;
   if (d.setupRevision === 2) {

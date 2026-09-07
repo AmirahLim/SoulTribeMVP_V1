@@ -13,6 +13,7 @@ type PublicProfile = {
   handle: string;
   avatar_url?: string;
   bio?: string;
+  life_contexts?: string[];
   home_area?: string;
   user_values?: { value_key: string }[];
 };
@@ -48,7 +49,7 @@ function PersonDetailContent() {
     getSupabaseBrowserClient()
       .from('profiles')
       .select(
-        'id,display_name,handle,avatar_url,bio,home_area,user_values(value_key)',
+        'id,display_name,handle,avatar_url,bio,home_area,life_contexts,user_values(value_key)',
       )
       .eq('id', id)
       .maybeSingle()
@@ -124,6 +125,7 @@ function PersonDetailContent() {
                 {profile.bio || 'They haven’t added an introduction yet.'}
               </p>
             </section>
+            {!!profile.life_contexts?.length && <section className="rounded-3xl p-6 bg-ground-card"><h2 className="font-serif text-2xl">Life phase</h2><p className="mt-3">{profile.life_contexts.join(' · ')}</p></section>}
             {!!profile.user_values?.length && (
               <section className="bg-ground-mist rounded-3xl p-6">
                 <h2 className="font-serif text-2xl">What they’ve shared</h2>

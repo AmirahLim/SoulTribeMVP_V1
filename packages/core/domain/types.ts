@@ -1,4 +1,5 @@
 export interface Profile {
+  life_contexts?: string[];
   id: string;
   handle: string;
   display_name: string;

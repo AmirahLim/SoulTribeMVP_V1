@@ -15,6 +15,7 @@ export function adaptRowToUserData(row: any): any {
     homeArea: row.home_area || 'Singapore',
     avatarUrl: row.avatar_url,
     bio: row.bio,
+    lifeContexts: row.life_contexts ?? [],
     birthYear: row.birth_year,
     agePrefMin: row.age_pref_min,
     agePrefMax: row.age_pref_max,

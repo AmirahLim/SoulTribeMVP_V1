@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       home_area,
       bio,
       birth_year,
+      life_contexts,
       age_pref_min,
       age_pref_max,
       status,

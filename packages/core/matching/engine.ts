@@ -14,6 +14,7 @@ import {
 import { evaluateGates } from './gates.ts';
 import { getOutingContextualWeights } from './reweighting.ts';
 import { calculateAsymmetricFit } from './asymmetric.ts';
+import {lifeContextBoost} from './lifeContext.ts';
 
 export function score(
   vecA: ProfileVector,
@@ -92,7 +93,8 @@ export function score(
   } else {
     baseRank = 0;
   }
-  const rank_score = gateCheck.passed ? baseRank : 0;
+  const contextBoost=baseRank>0?lifeContextBoost(vecA.profile.life_contexts,vecB.profile.life_contexts):0;
+  const rank_score = gateCheck.passed ? Math.min(1,baseRank+contextBoost) : 0;
 
   const contributions: Record<string, number> = {};
   if (typeof sPersonality === 'number') contributions.personality = sPersonality;

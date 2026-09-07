@@ -323,6 +323,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
       bio: user.bio || (user as any).bio,
       home_area: user.homeArea || (user as any).home_area || 'Singapore',
       birth_year: birthYear,
+      life_contexts: user.lifeContexts ?? [],
       age_pref_min: agePrefMin,
       age_pref_max: agePrefMax,
       profile_version: user.version || (user as any).profile_version || 6,

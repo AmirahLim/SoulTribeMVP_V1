@@ -289,16 +289,17 @@ export default function OnboardingPage() {
                 when you save your account.
               </p>
               <PhotoPicker previewOnly={designPreview} />
+              <div id="life-phase-label" className="ob-field-label">Life phase</div>
               <details className="ob-life-context">
-                <summary>What phase of life are you in? · {(draft.lifeContexts??[]).length}/3 selected</summary>
+                <summary id="life-phase-toggle" aria-labelledby="life-phase-label life-phase-value"><span id="life-phase-value">{(draft.lifeContexts??[]).length ? `${(draft.lifeContexts??[]).length} selected · ${(draft.lifeContexts??[]).join(', ')}` : 'Choose up to 3'}</span></summary>
                 <p>Pick up to 3 that feel like you right now.</p>
                 {LIFE_CONTEXTS.map(context=><label key={context} className="ob-life-option"><input type="checkbox" checked={(draft.lifeContexts??[]).includes(context)} disabled={!(draft.lifeContexts??[]).includes(context)&&(draft.lifeContexts??[]).length>=3} onChange={()=>{
                   const selected=draft.lifeContexts??[];
-                  setDraft({...draft,setupRevision:2,lifeContexts:selected.includes(context)?selected.filter(c=>c!==context):[...selected,context],country:draft.country??'',travelKm:draft.travelKm??10});
+                  setDraft({...draft,setupRevision:2,lifeContextsPublic:true,lifeContexts:selected.includes(context)?selected.filter(c=>c!==context):[...selected,context],country:draft.country??'',travelKm:draft.travelKm??10});
                 }}/><span>{context}{LIFE_CONTEXT_DETAILS[context]&&<small>{LIFE_CONTEXT_DETAILS[context]}</small>}</span></label>)}
               </details>
-              <p>{(draft.lifeContexts??[]).join(' · ')}</p>
-              <p>Describe the chapter you’re in—not an age label. These answers stay private.</p>
+              <p>Describe the chapter you’re in, not an age label.</p>
+              <p>Selections you make here appear on your profile and help suggest people in a similar chapter.</p>
               <label htmlFor="area">Where are you based?</label>
               <input id="area" maxLength={100} autoComplete="address-level2" value={draft.area} placeholder="Town, city or neighbourhood" onChange={e=>setDraft({...draft,area:e.target.value})} />
               <label htmlFor="country">Country or region</label>
@@ -340,7 +341,7 @@ export default function OnboardingPage() {
               {busy
                 ? "Saving…"
                 : draft.step === 7
-                  ? "Keep my Early Read →"
+                  ? "Get my Early Read →"
                   : designPreview && draft.step === 6 ? "Preview profile details →" : "Continue →"}
             </button>
           </nav>

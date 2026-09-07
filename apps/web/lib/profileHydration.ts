@@ -6,7 +6,7 @@ export async function hydrateProfile(userId: string): Promise<void> {
   const [profile, answers] = await Promise.all([
     client
       .from('profiles')
-      .select('id,handle,display_name,avatar_url,home_area,bio,trait_intent(*),trait_communication(*),trait_social_rhythm(*),trait_emotional(*),trait_experience(*),trait_geography(*)')
+      .select('id,handle,display_name,avatar_url,home_area,bio,life_contexts,trait_intent(*),trait_communication(*),trait_social_rhythm(*),trait_emotional(*),trait_experience(*),trait_geography(*)')
       .eq('id', userId)
       .maybeSingle(),
     client
@@ -36,6 +36,7 @@ export async function hydrateProfile(userId: string): Promise<void> {
       }),
     ) : {}),
     id: userId,
+    lifeContexts: p.life_contexts ?? [],
     displayName: p.display_name,
     handle: p.handle,
     avatarUrl: p.avatar_url || '',
