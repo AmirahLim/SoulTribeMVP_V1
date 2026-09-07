@@ -16,6 +16,9 @@ describe('Bond scrapbook',()=>{
   expect(html).toContain('Read the full connection summary');
   expect(html).toContain('Show less');
   expect(html).toContain('View Connection');
+  expect(html).not.toContain('The space between you');
+  expect(html).toContain('Turning intention into time');
+  expect(html.indexOf('/images/connection-thread.png')).toBeLessThan(html.indexOf('How the threads'));
   expect(html).not.toContain('<details open');
   expect(html.indexOf('How the threads')).toBeLessThan(html.indexOf('Thread by thread'));
  });
