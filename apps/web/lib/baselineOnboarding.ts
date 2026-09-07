@@ -73,18 +73,18 @@ export const TRAVEL = [
 export const FLOW = [
   {
     key: "contact",
-    label: "Staying in touch",
+    label: "Between meetups, how often do you like friends to check in?",
     choices: [
-      "Pick up anytime",
-      "Occasional check-ins",
-      "Somewhere in between",
-      "Often in touch",
-      "Regular contact",
+      "Long gaps are okay",
+      "Every few weeks",
+      "About once a week",
+      "A few times a week",
+      "Most days",
     ],
   },
   {
     key: "planning",
-    label: "Making plans",
+    label: "A friend suggests meeting up. How much notice suits you?",
     choices: [
       "Same-day",
       "A day or two ahead",
@@ -95,13 +95,13 @@ export const FLOW = [
   },
   {
     key: "opening",
-    label: "Opening up",
+    label: "With a new friend, when do you share something personal?",
     choices: [
-      "Give me time",
-      "Gradually",
-      "At my own pace",
-      "Fairly quickly",
-      "Open quickly",
+      "After trust builds over time",
+      "After several meetups",
+      "A little more each time",
+      "Early, if we click",
+      "Often in our first conversation",
     ],
   },
 ] as const;
@@ -111,6 +111,7 @@ export interface BaselineDraft {
   intent: string[];
   clicks: string[];
   group: string;
+  groupChoices?: string[];
   contact: number | null;
   planning: number | null;
   opening: number | null;
@@ -142,7 +143,7 @@ const selected = (v: unknown, options: string[], min: number, max: number) =>
 export function validStep(d: BaselineDraft, step: number): boolean {
   if (step === 1) return selected(d.intent, INTENTS, 1, 3);
   if (step === 2) return selected(d.clicks, CLICKS, 1, 3);
-  if (step === 3) return GROUPS.includes(d.group);
+  if (step === 3) return selected(groupChoices(d), GROUPS, 1, 2);
   if (step === 4)
     return [d.contact, d.planning, d.opening].every(
       (x) => x !== null && [0, 0.25, 0.5, 0.75, 1].includes(x),
@@ -166,6 +167,7 @@ export function isDraft(value: unknown): value is BaselineDraft {
     selected(d.clicks, CLICKS, 0, 3) &&
     selected(d.outings, OUTINGS, 0, 5) &&
     ["", ...GROUPS].includes(d.group) &&
+    (d.groupChoices === undefined || (selected(d.groupChoices, GROUPS, 0, 2) && d.group === (d.groupChoices[0] || ''))) &&
     [d.contact, d.planning, d.opening].every(
       (x) => x === null || [0, 0.25, 0.5, 0.75, 1].includes(x),
     ) &&
@@ -177,6 +179,7 @@ export function isDraft(value: unknown): value is BaselineDraft {
 }
 export const completeDraft = (d: BaselineDraft) =>
   [1, 2, 3, 4, 5, 6].every((n) => validStep(d, n));
+export const groupChoices = (d: BaselineDraft): string[] => d.groupChoices ?? (d.group ? [d.group] : []);
 export function microInsight(d: BaselineDraft, step: number): string {
   if (step === 1)
     return d.intent.length
@@ -187,7 +190,7 @@ export function microInsight(d: BaselineDraft, step: number): string {
       ? `Your kind of click: ${d.clicks[0].replace(/^We |^Our |^They /, "").toLowerCase()}.`
       : "";
   if (step === 3)
-    return d.group ? `Your sweet spot: ${d.group.toLowerCase()}.` : "";
+    return groupChoices(d).length ? `Your sweet spot: ${groupChoices(d).join(' or ').toLowerCase()}.` : "";
   if (step === 4)
     return validStep(d, 4)
       ? `${FLOW[1].choices[d.planning! * 4]}. ${FLOW[2].choices[d.opening! * 4]}.`

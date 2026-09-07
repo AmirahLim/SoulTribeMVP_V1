@@ -9,6 +9,7 @@ import {
   CLICKS,
   FLOW,
   GROUPS,
+  groupChoices,
   INTENTS,
   OUTINGS,
   TRAVEL,
@@ -161,7 +162,7 @@ export default function OnboardingPage() {
   return (
     <main className="ob-shell ob-immersive" data-step={draft.step}>
       <header className="ob-header">
-        <Link href="/">SOUL TRIBE</Link>
+        <div><Link href="/">SOUL TRIBE</Link><p className="ob-value-statement">Watch your social world take shape</p></div>
         {designPreview && <nav aria-label="Design preview pages" className="ob-preview-nav"><span>Design preview · not saved</span>{[1,2,3,4,5].map(step => <button type="button" key={step} aria-label={`Preview question ${step}`} aria-current={draft.step === step ? 'step' : undefined} onClick={() => {setDraft({...draft,step});setError('');}}>{step}</button>)}</nav>}
         <div
           className="ob-petals"
@@ -206,9 +207,9 @@ export default function OnboardingPage() {
             {draft.step <= 2
               ? "Pick up to 3."
               : draft.step === 3
-                ? "Pick the setting that feels like you."
+                ? "Pick up to 2 settings where you feel most like yourself."
                 : draft.step === 4
-                  ? "Choose a place on each spectrum."
+                  ? "Help us find a rhythm that works in real life. Choose one point on each line."
                   : draft.step === 5
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
@@ -220,14 +221,20 @@ export default function OnboardingPage() {
               {GROUPS.map((g, i) => (
                 <button
                   type="button"
-                  aria-pressed={draft.group === g}
+                  aria-pressed={groupChoices(draft).includes(g)}
                   key={g}
-                  onClick={() => setDraft({ ...draft, group: g })}
+                  onClick={() => {
+                    const previous = groupChoices(draft);
+                    if (!previous.includes(g) && previous.length === 2) { setError('Pick up to 2. Remove one to try another.'); return; }
+                    const choices = previous.includes(g) ? previous.filter(x => x !== g) : [...previous, g];
+                    setError(''); setDraft({ ...draft, group: choices[0] || '', groupChoices: choices });
+                  }}
                 >
                   <span aria-hidden="true">
                     {["••", "••••", "••••••", "••••••••"][i]}
                   </span>
                   {g}
+                  <small className="ob-group-count">{['2 people · just the two of you', '3–4 people · around a table', '5–9 people · a shared activity', '10+ people · a bigger gathering'][i]}</small>
                 </button>
               ))}
             </div>

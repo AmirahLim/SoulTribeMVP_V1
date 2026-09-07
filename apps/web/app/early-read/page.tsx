@@ -9,6 +9,7 @@ import {
   BaselineDraft,
   completeDraft,
   isDraft,
+  groupChoices,
 } from "../../lib/baselineOnboarding";
 import "../onboarding/onboarding.css";
 export default function EarlyRead() {
@@ -127,7 +128,7 @@ export default function EarlyRead() {
               </div>
               <p>
                 Your early answers suggest you enjoy{" "}
-                <strong>{draft.group.toLowerCase()}</strong> settings. You’re
+                <strong>{groupChoices(draft).join(' or ').toLowerCase()}</strong> settings. You’re
                 making room for{" "}
                 <strong>{draft.intent.join(", ").toLowerCase()}</strong>.
               </p>

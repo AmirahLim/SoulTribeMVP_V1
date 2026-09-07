@@ -14,6 +14,15 @@ import {
 } from "../baselineOnboarding";
 import { toProfileVector } from "../profileAdapter";
 describe("Five question baseline", () => {
+  it('preserves two group choices, accepts legacy drafts and rejects excess or duplicates', () => {
+    const d = {...emptyDraft(), group: GROUPS[0]};
+    expect(validStep(d, 3)).toBe(true);
+    expect(isDraft({...d, groupChoices: [GROUPS[0], GROUPS[3]]})).toBe(true);
+    expect(isDraft({...d, groupChoices: GROUPS.slice(0, 3)})).toBe(false);
+    expect(isDraft({...d, groupChoices: [GROUPS[0], GROUPS[0]]})).toBe(false);
+    expect(isDraft({...d, groupChoices: [GROUPS[1]]})).toBe(false);
+    expect(microInsight({...d, groupChoices: [GROUPS[0], GROUPS[3]]}, 3)).toContain('1:1 or big energy');
+  });
   it("never converts an explicit unknown depth to a midpoint", () => {
     const v = toProfileVector({
       displayName: "Member",

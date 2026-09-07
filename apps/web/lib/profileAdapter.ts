@@ -281,7 +281,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const experience = expAnswered > 0 ? {
     user_id: userId,
     settings: expObj?.settings ?? (q6Outings.length > 0 ? q6Outings : undefined),
-    group_size_pref: expObj?.group_size_pref ?? group_size_pref,
+    group_size_pref: expObj !== undefined ? (expObj?.group_size_pref ?? undefined) : group_size_pref,
     orientation: expObj?.orientation,
     novelty: expObj?.novelty ?? saturdayVal?.novelty,
     answered: expAnswered,
