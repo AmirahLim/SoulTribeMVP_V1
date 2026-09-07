@@ -15,8 +15,16 @@ export async function hydrateProfile(userId: string): Promise<void> {
       .eq('user_id', userId)
       .maybeSingle(),
   ]);
-  if (profile.error || answers.error)
-    throw new Error('Unable to load your saved profile.');
+  if (profile.error || answers.error) {
+    const failedQuery = profile.error ? 'profiles' : 'profile_answers';
+    const error = profile.error ?? answers.error;
+    console.error('[SoulTribe] profile hydration query failed:', {
+      query: failedQuery,
+      code: error?.code,
+      message: error?.message,
+    });
+    throw new Error(error?.message || 'Unable to load your saved profile.');
+  }
   if (!profile.data || !isProfileCacheAccount(userId)) return;
   const p = profile.data;
   setUserProfile({
