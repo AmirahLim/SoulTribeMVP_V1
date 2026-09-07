@@ -40,7 +40,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
 
       <div className="relative z-10">
         <div>
-          <h3 className="font-sans text-xl font-semibold text-[#203B30]">Your Social Signature</h3>
+          <h3 className="font-sans text-xl font-semibold text-[#203B30]">Connection Notes</h3>
           <p className="mt-0.5 text-xs text-[#536657]">
             Little things worth knowing about being friends with me.
           </p>
@@ -53,7 +53,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
             const colorSpec = getThreadColor(primaryThread);
 
             return (
-              <div
+              <button type="button"
                 key={note.id}
                 onClick={() => setSelectedNote(note)}
                 className="relative flex h-36 w-60 shrink-0 cursor-pointer flex-col justify-between rounded-[20px] p-4 border border-[rgba(32,59,48,0.18)] bg-[rgba(255,255,255,0.03)] backdrop-blur-md shadow-md transition-all hover:border-[rgba(32,59,48,0.18)] hover:scale-102 overflow-hidden"
@@ -75,7 +75,7 @@ export function ConnectionNotes({ notes = [], className = '' }: ConnectionNotesP
                     Tap for detail →
                   </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

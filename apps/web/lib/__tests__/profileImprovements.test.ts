@@ -34,12 +34,12 @@ describe('Evidence-aware Social Signature', () => {
   it('does not invent a summary for missing evidence', () => {
     expect(renderToStaticMarkup(React.createElement(TribalRead))).toBe('');
   });
-  it('offers native disclosure and excludes unsupported synthesis sections', () => {
+  it('offers the Tribal Read sheet and excludes unsupported synthesis sections', () => {
     const html = renderToStaticMarkup(React.createElement(TribalRead, { data: {
       headline: 'A quieter pace', summary: 'You prefer small groups.', pills: [], topThreads: ['personality', 'communication'],
       sections: [{ title: 'Supported', content: 'Shared activities give conversation a starting point.', markerCount: 2 }, { title: 'Unsupported', content: 'Invented certainty', markerCount: 1 }],
     } }));
-    expect(html).toContain('<summary'); expect(html).toContain('Supported'); expect(html).not.toContain('Invented certainty');
+    expect(html).toContain('Read More About Me'); expect(html).toContain('<dialog'); expect(html).toContain('Supported'); expect(html).not.toContain('Invented certainty');
   });
   it('does not present an instinct or participation count as a personal role', () => {
     const html = renderToStaticMarkup(React.createElement(ProfileHero, { displayName: 'Alex', handle: '', homeArea: '', instinctType: 'Connector', standingText: 'Trusted' }));

@@ -263,11 +263,11 @@ function ProfileContent() {
   const localProfile = getUserProfile();
 
   return (
-    <div className="relative min-h-screen w-full bg-[#F8F5EE] text-[#203B30] pb-24">
+    <div className="relative min-h-screen w-full bg-[#101c18] text-[#d8e4db] pb-24">
       {/* WRAPPER */}
       <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
         {/* 1. Restored Profile Hero (with real data, no hardcoded defaults) */}
-        <ProfileHero
+        <div className="rounded-[30px] bg-[#f2f0e7] px-5"><ProfileHero
           displayName={profile.display_name}
           handle={profile.handle}
           homeArea={profile.home_area}
@@ -279,7 +279,7 @@ function ProfileContent() {
             setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
           }}
           onDeepenPass={() => router.push('/you/deeper')}
-        />
+        /></div>
 
         {myRead.tribalRead ? <TribalRead data={myRead.tribalRead} /> : <section className="rounded-3xl bg-[#E3EADF] p-6"><h2 className="text-2xl font-semibold">Your Social Signature</h2><p className="mt-3 text-sm">Your portrait grows from what you choose to share. Add more answers when you feel ready.</p></section>}
 
@@ -293,9 +293,11 @@ function ProfileContent() {
           }
         />
 
-        <AnswerPortrait profile={localProfile} />
+        <details className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><summary className="cursor-pointer text-sm">Your saved answers</summary><AnswerPortrait profile={localProfile} /></details>
         {/* 3. Friendship DNA Bloom */}
-        <div className="flex flex-col items-center py-2 text-center border-t border-[#203B30]/15 pt-4">
+        <div className="flex flex-col items-center rounded-[32px] bg-gradient-to-br from-[#dfebdf] via-[#f2eee3] to-[#e1dfee] p-6 text-center text-[#203B30]">
+          <h2 className="text-xl font-semibold">Your Social Signature</h2>
+          <p className="mt-2 text-xs">A living visual of how your Connection Threads come together.</p>
           <Bloom threads={bloomThreads} size={280} interactive />
           <p className="text-[12.5px] text-[#536657] mt-1">
             Ten threads · {myRead.threadsExplored} explored · <span className="text-[#826044]">tap a petal</span>
@@ -329,7 +331,7 @@ function ProfileContent() {
                     {t.name}
                   </p>
                   <p className="text-xs text-[#536657] leading-relaxed">
-                    This thread has not been measured yet.
+                    This part of you is still unfolding.
                   </p>
                   <Link
                     href={t.nextHref}
