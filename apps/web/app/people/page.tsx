@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ResonanceRead } from '@soul-tribe/ui';
+import {MatchKeepsake} from '../../components/MatchKeepsake';
 import { getUserProfile } from '../../lib/userStore';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode } from '../../lib/matching';
-import { getGenderAvatarForName } from '@soul-tribe/core';
 import { MapPin, ArrowRight, AlertCircle, Sparkles, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -151,84 +150,7 @@ function PeopleListContent() {
         {/* CURATED MATCHES BATCH LISTING */}
         {!loading && !error && matches.length > 0 && (
           <div className="mt-6 flex flex-col gap-6">
-            {matches.map((person) => {
-              return (
-                <motion.div
-                  key={person.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <Link href={`/people/${person.id}`}>
-                    <div className="group overflow-hidden rounded-[28px] border border-white/20 bg-black/60 backdrop-blur-xl shadow-2xl transition-all hover:border-white/50">
-                      {/* Candidate's Individual Portrait Image */}
-                      <div className="relative h-64 w-full overflow-hidden bg-black/40">
-                        <img
-                          src={person.avatarUrl || getGenderAvatarForName(person.name)}
-                          alt={person.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
-
-                        <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
-                          {person.isDemo && (
-                            <span className="rounded-full bg-amber-400 text-black px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider uppercase shadow-lg border border-amber-300">
-                              Demo
-                            </span>
-                          )}
-
-                          {/* HIDE fit label and numeric score in Small Community Mode */}
-                          {person.fitLabel ? (
-                            <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-bold tracking-widest text-white uppercase backdrop-blur-md border border-white/20">
-                              {person.fitLabel}
-                            </span>
-                          ) : null}
-
-                          {person.provisional && (
-                            <span className="rounded-full bg-amber-500/80 px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-wide text-black uppercase backdrop-blur-md">
-                              Early Match - Complete pass for details
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="absolute bottom-4 left-4 right-4">
-                          <h2 className="text-[24px] font-extrabold text-white tracking-tight drop-shadow-md">
-                            {person.name}
-                          </h2>
-                          <span className="flex items-center text-[13px] font-medium text-white/80">
-                            <MapPin className="mr-1 h-3.5 w-3.5" /> {person.homeArea}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Content & Resonance Read (Click and Friction texts kept in full) */}
-                      <div className="p-5">
-                        <p className="text-[13.5px] leading-relaxed text-white/90">
-                          {person.bio}
-                        </p>
-
-                        <div className="mt-4 border-t border-white/15 pt-3.5">
-                          <ResonanceRead
-                            clickText={person.clickText}
-                            rubText={person.rubText}
-                          />
-                        </div>
-
-                        <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-3.5">
-                          <Link href={`/people/${person.id}/bond`}>
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4E6E4C]/50 bg-[#15261C]/80 px-3.5 py-1.5 text-[12px] font-bold text-emerald-200 shadow-md backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-[#15261C]">
-                              <Sparkles className="h-3.5 w-3.5 text-emerald-400" /> Connection Notes
-                            </span>
-                          </Link>
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-black shadow-md transition-transform group-hover:scale-105">
-                            Open Profile <ArrowRight className="h-3.5 w-3.5" />
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
+            {matches.map(person => <MatchKeepsake key={person.id} person={person}/>)}
           </div>
         )}
       </div>

@@ -1,0 +1,41 @@
+.card {
+  position: relative;
+  color: #303c2b;
+  background: radial-gradient(ellipse at 0% 0%, #c5cbb76b, transparent 55%), repeating-linear-gradient(102deg, #b9ae8f0a 0 1px, transparent 1px 4px), #ede8d9;
+  box-shadow: 0 13px 35px #0004;
+  padding: 28px 24px 22px;
+  margin: 14px 0;
+  border-radius: 2px 3px 6px 1px;
+  isolation: isolate;
+}
+.card::before, .card::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 7px;
+  background: #ede8d9; z-index: -1;
+  clip-path: polygon(0 35%, 3% 60%, 7% 10%, 12% 40%, 17% 0, 22% 65%, 27% 20%, 32% 55%, 39% 8%, 45% 45%, 51% 0, 57% 48%, 63% 20%, 68% 65%, 73% 15%, 79% 42%, 85% 5%, 90% 60%, 96% 25%, 100% 45%, 100% 100%, 0 100%);
+}
+.card::before {top: -5px}.card::after {bottom: -5px; transform: rotate(180deg)}
+.header {display: grid; grid-template-columns: minmax(0, 1fr) 40%; gap: 16px; align-items: center; padding: 10px 0 30px}
+.heading {min-width: 0}.eyebrow {font-family: monospace; font-size: 8px; letter-spacing: .12em; line-height: 1.7; display: block; color: #59624c}
+.heading h3 {font-family: Georgia, 'Times New Roman', serif; font-size: clamp(29px, 4vw, 42px); font-weight: 400; line-height: 1.06; margin: 15px 0 12px; overflow-wrap: anywhere}
+.area {font-size: 12px; color: #59624c; line-height: 1.6}
+.labels {display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px}
+.labels span {background: #ccd0b8; color: #39432e; font-size: 10px; line-height: 1.5; padding: 5px 9px; border-radius: 1px; transform: rotate(-2deg)}
+.portrait {position: relative; display: block; padding: 7px 7px 3px; background: #faf5e8; box-shadow: 2px 5px 10px #1b271b30; transform: rotate(4deg); margin: 0 3px 0 0; min-width: 0}
+.portrait::before {content: ''; position: absolute; top: -12px; left: 22%; width: 58%; height: 23px; background: #c7b890a6; transform: rotate(-9deg); z-index: 1}
+.portrait img, .initial {width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block}
+.initial {display: grid; place-items: center; background: #78856b; color: #f9f4e6; font-family: Georgia, serif; font-size: 55px}
+.portrait>span:last-child {display: block; text-align: center; font-size: 21px; line-height: 1.4}
+.click {border-top: 1px solid #65715350; padding-top: 22px}
+.click h4 {font-size: 30px; font-weight: 400; line-height: 1.2; margin: 0 0 14px; transform: rotate(-1deg)}
+.click p, .friction p, .bio p {font-size: 14px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere}
+.friction {position: relative; margin: 26px -5px 20px; padding: 22px 19px; background: repeating-linear-gradient(transparent 0 27px, #7b80621a 27px 28px), #dce0cd; box-shadow: 1px 3px 5px #26351c0d; transform: rotate(-.6deg)}
+.friction::before {content: ''; position: absolute; width: 44px; height: 17px; top: -8px; right: 22px; background: #b8b79780; transform: rotate(7deg)}
+.friction h4 {font-family: monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; font-weight: 400; margin: 0 0 12px}
+.friction p {color: #46503b; font-size: 13px}
+.bio {font-size: 12px; line-height: 1.7; margin-bottom: 12px}.bio summary {cursor: pointer; padding: 12px 0; text-decoration: underline; text-underline-offset: 4px}.bio p {padding-bottom: 14px}
+.actions {display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #65715340; padding-top: 20px}
+.actions a {display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 46px; padding: 10px 13px; font-size: 12px; text-decoration: none; border: 1px solid #526147; color: #36492f; border-radius: 2px}
+.actions a:last-child {background: #40543b; color: #faf5e8}.actions a:hover {background: #cdd2bc}.actions a:last-child:hover {background: #2b3d28}
+.card a:focus-visible, .card summary:focus-visible {outline: 3px solid #a37131; outline-offset: 4px}
+@media(min-width:650px) {.header {grid-template-columns: minmax(0, 1fr) 165px}.card {padding: 35px}.click p {font-size: 15px}}
+@media(max-width:370px) {.card {padding: 22px 17px}.header {gap: 10px}.heading h3 {font-size: 27px}.portrait>span:last-child {font-size: 17px}.actions a {padding: 9px;font-size: 11px}}
