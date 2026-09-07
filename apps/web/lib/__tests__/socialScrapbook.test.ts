@@ -26,11 +26,19 @@ describe('Social scrapbook', () => {
     expect(publicSocialPages(undefined, [], 'id').filter(p => p.key !== 'between').every(p => p.notes.length === 0)).toBe(true);
   });
   it('shows identity first, owner-only deeper questions and honest standing', () => {
-    const props = {name: 'Alex', pages: publicSocialPages(undefined, [], 'alex')};
-    const own = renderToStaticMarkup(React.createElement(SocialScrapbook, {...props, own: true}));
-    const other = renderToStaticMarkup(React.createElement(SocialScrapbook, props));
+    const props = {name: 'Alex', handle: 'alex_unique', pages: publicSocialPages(undefined, [], 'alex')};
+    const own = renderToStaticMarkup(React.createElement(SocialScrapbook, {...props, own: true, earlyReadHref: '/early-read', onEdit: () => {}}));
+    const other = renderToStaticMarkup(React.createElement(SocialScrapbook, {...props, earlyReadHref: '/people/alex/early-read'}));
     expect(own).toContain('You’re more than six answers');
+    expect(own).toContain('Settings');
+    expect(own).not.toContain('Edit profile');
+    expect(own).toContain('View my Early Read');
     expect(other).not.toContain('/you/deeper');
+    expect(other).toContain('View Alex’s Early Read');
+    expect(other).toContain('/people/alex/early-read');
+    expect(other).toContain('Display name');
+    expect(other).toContain('Unique username');
+    expect(other).toContain('@alex_unique');
     expect(other).toContain('Not available yet');
     expect(other).not.toContain('Trusted');
     expect(other.indexOf('<h1>Alex')).toBeLessThan(other.indexOf('Little pages of'));

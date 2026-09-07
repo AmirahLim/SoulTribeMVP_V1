@@ -8,3 +8,5 @@
 .paper,.sheet{background:repeating-linear-gradient(transparent 0 28px,#807c6112 28px 29px),url('/images/crumpled-letter.jpg') center/650px auto repeat,#eee8d5}
 .letter{background:linear-gradient(155deg,#d8ccb333 28%,transparent 28%),linear-gradient(25deg,#d8ccb333 28%,transparent 28%),url('/images/crumpled-letter.jpg') center/650px auto repeat,#f3ecd9}
 .photo,.portrait{background:#f5f0e3 url('/images/crumpled-letter.jpg') center/650px auto repeat}
+.identityLabel{margin-top:12px;font-size:9px!important;letter-spacing:.14em;text-transform:uppercase;color:#c8c4b2!important}.username{font-size:14px!important;overflow-wrap:anywhere}.username span{display:block;margin-bottom:2px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#c8c4b2}.area{margin-top:7px}.earlyRead{display:inline-block;margin-top:24px;padding:13px 0;border-bottom:1px solid #d9cdaa;font-size:13px;line-height:1.7}.earlyRead+.deepen{margin-left:24px}.earlyRead:focus-visible{outline:3px solid #e4b957;outline-offset:6px}
+@media(max-width:420px){.earlyRead+.deepen{margin-left:0;margin-top:12px}}

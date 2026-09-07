@@ -94,6 +94,7 @@ function PersonDetailContent() {
       </div>}
       {profile && <SocialScrapbook name={profile.display_name} handle={profile.handle} area={profile.home_area}
         avatar={profile.avatar_url} bio={profile.bio} summary={sharedSummary}
+        earlyReadHref={`/people/${profile.id}/early-read`}
         pages={publicSocialPages(profile.public_onboarding, (profile.user_values ?? []).map(v => v.value_key.replaceAll('_', ' ')), profile.id)}>
         <div className="flex flex-wrap gap-5 mb-8">
           <Link href={`/people/${profile.id}/bond`} className="inline-flex items-center justify-center rounded-sm bg-[#eee5d2] text-[#303c2b] border border-[#d4c7aa] px-5 py-3 min-h-[46px] hover:bg-[#e0d3b8]">View Connection →</Link>

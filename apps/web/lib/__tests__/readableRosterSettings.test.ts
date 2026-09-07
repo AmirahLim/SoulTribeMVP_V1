@@ -16,8 +16,19 @@ describe('Readable outing roster and account settings',()=>{
   expect(page).toContain('type="button" onClick={handleSignOut}');
   expect(page).toContain("await signOut(); window.location.assign('/')");
   expect(page).toContain('Your unique handle.');
+  expect(page).toContain('>Settings</h3>');
+  expect(page).toContain('earlyReadHref="/early-read"');
   expect(page).toContain("setEditBio(profile.bio || '')");
   expect(page).toContain('max-h-[85dvh] overflow-y-auto');
+ });
+ it('links member profiles to a consent-gated public Early Read',()=>{
+  const profile=source('../../app/people/[id]/page.tsx');
+  const read=source('../../app/people/[id]/early-read/page.tsx');
+  expect(profile).toContain('earlyReadHref={`/people/${profile.id}/early-read`}');
+  expect(read).toContain(".select('id,display_name,handle,public_onboarding')");
+  expect(read).not.toContain("from('profile_answers')");
+  expect(read).toContain('<EarlyReadAlbum draft={sharedDraft(answers)} />');
+  expect(read).toContain('has not chosen to share their onboarding answers.');
  });
  it('does not clear client authentication when the provider reports a sign-out error',()=>{
   const auth=source('../authContext.tsx').split('const signOut = async')[1].split('return (')[0];

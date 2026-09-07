@@ -251,6 +251,7 @@ function ProfileContent() {
       <SocialScrapbook own name={profile.display_name} handle={profile.handle} area={profile.home_area}
         avatar={profile.avatar_url} bio={profile.bio} headline={myRead.tribalRead?.headline}
         summary={myRead.tribalRead?.summary} pages={selfSocialPages(myRead)}
+        earlyReadHref="/early-read"
         onEdit={() => {
           setEditName(profile.display_name); setEditArea(profile.home_area || '');
           setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
@@ -278,7 +279,7 @@ function ProfileContent() {
           onCancel={(event) => { if (saving) event.preventDefault(); else setIsSettingsOpen(false); }}
           className="w-[calc(100%-32px)] max-w-md max-h-[85dvh] overflow-y-auto rounded-[26px] bg-[#F8F5EE] p-0 backdrop:bg-black/40">
           <div className="w-full max-w-md rounded-[26px] border border-[#203B30]/15 bg-[#F8F5EE] p-6 text-[#203B30]">
-            <h3 id="profile-settings-title" className="text-lg font-bold">Edit profile</h3>
+            <h3 id="profile-settings-title" className="text-lg font-bold">Settings</h3>
 
             {saveError && <p role="alert" className="mt-3 text-sm text-red-800">{saveError}</p>}
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-sm [&_input]:text-base [&_textarea]:text-base">
