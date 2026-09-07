@@ -5,8 +5,9 @@ import styles from './landing.module.css';
 function CTA({children='Find your people'}:{children?:React.ReactNode}) {
   return <Link className={styles.cta} href="/onboarding">{children}<ArrowRight size={16} aria-hidden="true"/></Link>;
 }
-type AppScreen = 'pitches'|'radar'|'invited'|'guests'|'past'|'match-a'|'match-b';
+type AppScreen = 'pitches'|'radar'|'invited'|'guests'|'past'|'match-a'|'match-b'|'early-read';
 const screenDescriptions: Record<AppScreen,string> = {
+  'early-read': 'Your Early Read scrapbook: personal notes, letters, an envelope and a Polaroid',
   'match-a': 'Matching profiles: why you might click and potential friction, with anonymised identities',
   'match-b': 'Detailed friendship matching explanation and View Bond, with anonymised identities',
   pitches: 'Your Pitches: gathering interest and Manage Pitch controls',
@@ -26,7 +27,7 @@ export default function LandingPageContent(){
       <section className={styles.hero}>
         <img className={styles.backdrop} src="/images/early-read/seaside.jpg" alt="" fetchPriority="high"/>
         <div className={styles.heroText}><h1>Quick, real-time pitching.<br/>Intentional friendship matching.</h1><CTA/></div>
-        <div className={styles.heroPhones}><Phone screen="radar" className={styles.behind}/><Phone screen="pitches" className={styles.front}/></div>
+        <div className={styles.heroPhones}><Phone screen="early-read" className={styles.behind}/><Phone screen="pitches" className={styles.front}/></div>
       </section>
       <section id="features" className={styles.features}>
         <div className={styles.sectionHeading}><h2>Your kind of people.<br/>Your kind of plans.</h2><p>Who you click with is personal. Soul Tribe brings together your interests, friendship preferences and social rhythm—then gives you somewhere to start.</p></div>
