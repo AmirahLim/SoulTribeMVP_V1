@@ -233,6 +233,7 @@ const six={...draft,flowVersion:3,step:7,handle:'six_member',desiredQualities:['
 await db.exec("set role anon; set request.jwt.claim.sub='';");
 await db.query('select save_onboarding_draft($1,$2)',['c'.repeat(64),six]);
 const customStart={...six,intent:['Other'],intentOther:'A walking companion',clicks:['Other'],clicksOther:'We make things together'};
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...six,desiredQualities:['Depth','Spiritual']}])).rows[0].valid,true);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[customStart])).rows[0].valid,true);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...customStart,intentOther:' '}])).rows[0].valid,false);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...six,desiredQualities:['Free-spirit','Intellectually curious','Ambitious','Reliable','Other']}])).rows[0].valid,true);

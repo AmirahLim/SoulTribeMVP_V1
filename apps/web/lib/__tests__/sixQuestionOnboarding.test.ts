@@ -2,6 +2,12 @@ import {describe,it,expect} from 'vitest';
 import {emptyDraft,isDraft,validStep,completeDraft,canonicalRhythm,upgradeDraft,OUTINGS,RHYTHM,selectedLabels} from '../sixQuestionOnboarding';
 import {emptyDraft as legacyEmpty} from '../baselineOnboarding';
 describe('Six question onboarding',()=>{
+ it('offers Depth and Spiritual and preserves removed answers when resuming',()=>{
+  const d={...emptyDraft(),intent:['Other'],intentOther:'Old answer',desiredQualities:['Intellectually curious','Reliable'],connectionChoice:'Other',connectionOther:'Old rhythm'};
+  const resumed=upgradeDraft(d);
+  expect(resumed.legacyAnswers).toEqual(d);expect(resumed.intent).toEqual([]);expect(resumed.desiredQualities).toEqual(['Reliable']);expect(resumed.connectionChoice).toBe('');
+  expect(validStep({...emptyDraft(),desiredQualities:['Depth','Spiritual']},4)).toBe(true);
+ });
  it('accepts bounded custom intent and click answers without exceeding three selections',()=>{
   const d={...emptyDraft(),intent:['Other'],intentOther:'Find a walking companion',clicks:['Other'],clicksOther:'We enjoy making things'};
   expect(isDraft(d)).toBe(true);expect(validStep(d,1)).toBe(true);expect(validStep(d,2)).toBe(true);

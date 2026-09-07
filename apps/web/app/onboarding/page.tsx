@@ -97,7 +97,7 @@ export default function OnboardingPage() {
     function otherField(key:'intentOther'|'clicksOther'|'qualityOther'|'outingOther'|'connectionOther'|'planningOther'|'punctualityOther',visible:boolean,label:string) {
     return visible ? <label className="ob-other-field">{label}<input maxLength={120} value={draft[key]??''} placeholder="In your own words…" onChange={e=>{setError('');setDraft({...draft,[key]:e.target.value});}}/><small>Up to 120 characters. Please don’t include personal contact details.</small></label> : null;
   }
-  function qualityChips() { return <div className="ob-choices">{[...FRIEND_QUALITIES,'Other'].map(quality=><button type="button" key={quality} aria-pressed={(draft.desiredQualities??[]).includes(quality)} onClick={()=>{
+  function qualityChips() { return <div className="ob-choices">{FRIEND_QUALITIES.map(quality=><button type="button" key={quality} aria-pressed={(draft.desiredQualities??[]).includes(quality)} onClick={()=>{
     const previous=draft.desiredQualities??[];
     if(!previous.includes(quality)&&previous.length===5){setError('Pick up to 5 qualities. Remove one to try another.');return;}
     const values=previous.includes(quality)?previous.filter(q=>q!==quality):[...previous,quality];
@@ -239,8 +239,8 @@ export default function OnboardingPage() {
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
           </p>
-          {draft.step === 1 && <>{chips("intent", [...INTENTS,"Other"], 3)}{otherField("intentOther",draft.intent.includes("Other"),"What else are you hoping to find?")}</>}
-          {draft.step === 2 && <>{chips("clicks", [...CLICKS,"Other"], 3)}{otherField("clicksOther",draft.clicks.includes("Other"),"What else tells you you’re clicking?")}</>}
+          {draft.step === 1 && chips("intent", INTENTS, 3)}
+          {draft.step === 2 && chips("clicks", CLICKS, 3)}
           {draft.step === 3 && (
             <div className="ob-groups">
               {GROUPS.map((g, i) => (
@@ -264,8 +264,8 @@ export default function OnboardingPage() {
               ))}
             </div>
           )}
-          {draft.step === 4 && <>{qualityChips()}{otherField('qualityOther', (draft.desiredQualities ?? []).includes('Other'), 'Your own quality')}</>}
-          {draft.step === 5 && <div className="ob-rhythm">{RHYTHM.map(r => <fieldset key={r.key}><legend>{r.title}</legend>{r.prompt && <p>{r.prompt}</p>}<div className="ob-choices">{[...r.choices,'Other'].map(choice => <button type="button" key={choice} aria-pressed={draft[r.key]===choice} onClick={()=>{setError('');setDraft({...draft,[r.key]:choice,[r.other]:choice==='Other'?draft[r.other]:'',contact:r.key==='connectionChoice'?null:draft.contact,planning:r.key==='planningChoice'?null:draft.planning});}}>{choice==='Other'?'Other +':choice}</button>)}</div>{otherField(r.other,draft[r.key]==='Other',r.title+' — your answer')}</fieldset>)}</div>}
+          {draft.step === 4 && qualityChips()}
+          {draft.step === 5 && <div className="ob-rhythm">{RHYTHM.map(r => <fieldset key={r.key}><legend>{r.title}</legend>{r.prompt && <p>{r.prompt}</p>}<div className="ob-choices">{r.choices.map(choice => <button type="button" key={choice} aria-pressed={draft[r.key]===choice} onClick={()=>{setError('');setDraft({...draft,[r.key]:choice,[r.other]:'',contact:r.key==='connectionChoice'?null:draft.contact,planning:r.key==='planningChoice'?null:draft.planning});}}>{choice}</button>)}</div></fieldset>)}</div>}
           {draft.step === 6 && <div className="ob-outing-cloud">{chips("outings", [...OUTINGS,'Other'], 5)}{otherField('outingOther',draft.outings.includes('Other'),'Something else you would enjoy')}</div>}
           {draft.step === 7 && (
             <div className="ob-fields">
