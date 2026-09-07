@@ -9,7 +9,7 @@ describe('Match keepsakes', () => {
   const person = {id:'member-id', name:'Alex', avatarUrl:'/alex.jpg', clickText:'The complete connection explanation.', rubText:'A real difference worth considering.', fitLabel:'Some Resonance'};
   it('retains the member photo, name, complete explanation and both destinations', () => {
     const html = renderToStaticMarkup(React.createElement(MatchKeepsake, {person}));
-    for (const text of ['/alex.jpg','Alex','Why you might click','Potential friction',person.clickText,person.rubText,person.fitLabel,'View Bond','View Profile','href="/people/member-id/bond"','href="/people/member-id"']) expect(html).toContain(text);
+    for (const text of ['/alex.jpg','Alex','Why you might click','Potential friction',person.clickText,person.rubText,person.fitLabel,'View Connection','View Profile','href="/people/member-id/bond"','href="/people/member-id"']) expect(html).toContain(text);
     expect(html).not.toMatch(/<a\b[^>]*>(?:(?!<\/a>)[\s\S])*<a\b/);
   });
   it('never substitutes a strangers photo or fabricates resonance', () => {

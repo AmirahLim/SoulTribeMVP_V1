@@ -13,6 +13,10 @@ describe('Bond scrapbook',()=>{
   expect(html).not.toContain(notes.clickText);
   expect(html).not.toContain('Your bond at a glance');
   expect(html).not.toContain('Read your letter');
+  expect(html).toContain('Read the full connection summary');
+  expect(html).toContain('Show less');
+  expect(html).toContain('View Connection');
+  expect(html).not.toContain('<details open');
   expect(html.indexOf('How the threads')).toBeLessThan(html.indexOf('Thread by thread'));
  });
  it('synthesizes only available thread evidence and prioritizes practical friction',()=>{

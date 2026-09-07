@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import keepsake from '../../components/EventKeepsake.module.css';
+import story from './HomeStory.module.css';
 import { PitchCard, Button } from '@soul-tribe/ui';
 import { getRankedMatches, RankedMatch, countRealMembers, isSmallCommunityMode, getTribalPassStatusCopy } from '../../lib/matching';
 import { fetchGoingOutings, fetchRadarOutings, fetchUserPitches, OutingItem, getOutingCategoryImage } from '../../lib/outingsStore';
@@ -267,39 +268,38 @@ function HomeContent() {
       />
 
       {/* Dark Ambient Vignette Overlay for Readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/95 z-0 pointer-events-none" />
+      <div className={story.overlay} />
 
       {/* PAGE CONTENT CONTAINER */}
       <div className="relative z-10 mx-auto max-w-[440px] px-5 pt-8">
         {/* TOP BAR */}
-        <header className="flex items-center justify-between pb-6 border-b border-white/15">
-          <div className="flex items-center gap-3">
-            <Link href="/you">
+        <header className={story.header}>
+          <div className={story.identity}>
+            <Link href="/you" className={story.portrait}>
               <img
                 src={profile.avatarUrl}
                 alt={profile.displayName}
-                className="h-11 w-11 rounded-full object-cover ring-2 ring-white/30"
+                className={story.photo}
               />
+              <span>a little hello.</span>
             </Link>
-            <div>
+            <div className={story.name}>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
                 {profile.homeArea || 'Singapore'} Cohort
               </span>
-              <h1 className="text-[22px] font-extrabold text-white tracking-tight drop-shadow-md">
+              <h1>
                 Hey, {profile.displayName}
               </h1>
             </div>
           </div>
 
-          <Link href="/outings/pitch">
-            <Button variant="primary" size="sm">
+          <Link href="/outings/pitch" className={story.pitch}>
               <Plus className="mr-1 h-4 w-4" /> Pitch Outing
-            </Button>
           </Link>
         </header>
 
         {/* EDITORIAL SUMMARY */}
-        <section className="py-5 border-b border-white/15">
+        <section className={story.status}>
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
               Tribal Pass Status
@@ -325,7 +325,7 @@ function HomeContent() {
           })()}
 
           {/* Dynamic Hairline Data Points */}
-          <div className="mt-3.5 flex items-center gap-5 text-[12.5px] text-white/80">
+          <div className={story.counts}>
             <div><strong className="text-white font-bold">{matches.length}</strong> {matches.length === 1 ? 'Match' : 'Matches'}</div>
             <div><strong className="text-white font-bold">{pitches.length}</strong> Pitched</div>
             <div><strong className="text-white font-bold">{goingOutings.length}</strong> Going</div>

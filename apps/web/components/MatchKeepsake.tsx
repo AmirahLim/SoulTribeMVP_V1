@@ -39,7 +39,7 @@ export function MatchKeepsake({person}: {person: MatchKeepsakePerson}) {
     </section>
     {person.bio && <details className={styles.bio}><summary>A little about {person.name}</summary><p>{person.bio}</p></details>}
     <footer className={styles.actions}>
-      <Link href={`/people/${person.id}/bond`}>View Bond <span aria-hidden="true">↗</span></Link>
+      <Link href={`/people/${person.id}/bond`}>View Connection <span aria-hidden="true">↗</span></Link>
       <Link href={`/people/${person.id}`}>View Profile <span aria-hidden="true">→</span></Link>
     </footer>
   </article>;

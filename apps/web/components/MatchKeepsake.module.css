@@ -36,6 +36,7 @@
 .actions {display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #65715340; padding-top: 20px}
 .actions a {display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 46px; padding: 10px 13px; font-size: 12px; text-decoration: none; border: 1px solid #526147; color: #36492f; border-radius: 2px}
 .actions a:last-child {background: #40543b; color: #faf5e8}.actions a:hover {background: #cdd2bc}.actions a:last-child:hover {background: #2b3d28}
+.actions a:first-child {background:#eee5d2;border-color:#b1a589;color:#303c2b}.actions a:first-child:hover{background:#e0d3b8}
 .card a:focus-visible, .card summary:focus-visible {outline: 3px solid #a37131; outline-offset: 4px}
 @media(min-width:650px) {.header {grid-template-columns: minmax(0, 1fr) 165px}.card {padding: 35px}.click p {font-size: 15px}}
 @media(max-width:370px) {.card {padding: 22px 17px}.header {gap: 10px}.heading h3 {font-size: 27px}.portrait>span:last-child {font-size: 17px}.actions a {padding: 9px;font-size: 11px}}

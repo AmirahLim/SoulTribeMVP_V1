@@ -96,7 +96,7 @@ function PersonDetailContent() {
         avatar={profile.avatar_url} bio={profile.bio} summary={sharedSummary}
         pages={publicSocialPages(profile.public_onboarding, (profile.user_values ?? []).map(v => v.value_key.replaceAll('_', ' ')), profile.id)}>
         <div className="flex flex-wrap gap-5 mb-8">
-          <Link href={`/people/${profile.id}/bond`} className="underline py-3">View Bond →</Link>
+          <Link href={`/people/${profile.id}/bond`} className="inline-flex items-center justify-center rounded-sm bg-[#eee5d2] text-[#303c2b] border border-[#d4c7aa] px-5 py-3 min-h-[46px] hover:bg-[#e0d3b8]">View Connection →</Link>
           <Link href={`/outings/pitch?inviteId=${profile.id}`} className="underline py-3">Invite them to an outing →</Link>
         </div>
         {!!profile.life_contexts?.length && <p className="mb-6">Life lately · {profile.life_contexts.join(' · ')}</p>}
