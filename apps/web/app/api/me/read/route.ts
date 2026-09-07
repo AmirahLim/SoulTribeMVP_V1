@@ -302,7 +302,7 @@ export async function GET(req: NextRequest) {
       trait_experience (*),
       trait_lifestyle (*),
       trait_geography (*),
-      user_interests (*, interest_nodes (name)),
+      user_interests (*, interest_nodes (name,path)),
       user_values (*)
     `)
     .eq('id', authUserId)

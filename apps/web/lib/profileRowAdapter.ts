@@ -16,6 +16,7 @@ export function adaptRowToUserData(row: any): any {
     avatarUrl: row.avatar_url,
     bio: row.bio,
     lifeContexts: row.life_contexts ?? [],
+    publicOnboarding: row.public_onboarding ?? {},
     birthYear: row.birth_year,
     agePrefMin: row.age_pref_min,
     agePrefMax: row.age_pref_max,

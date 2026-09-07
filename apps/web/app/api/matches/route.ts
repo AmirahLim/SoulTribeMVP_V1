@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
         bio,
         birth_year,
         life_contexts,
+        public_onboarding,
         age_pref_min,
         age_pref_max,
         status,
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
         trait_experience (*),
         trait_lifestyle (*),
         trait_geography (*),
-        user_interests (*, interest_nodes (name)),
+        user_interests (*, interest_nodes (name,path)),
         user_values (*)
       `;
     const { data: dbProfiles, error: fetchErr } = await adminClient
@@ -149,6 +150,7 @@ export async function POST(req: NextRequest) {
     const allowedCategories = ['coffee', 'dining', 'active', 'cultural', 'nightlife', 'creative', 'intellectual'];
     if (body.activityCategory && !allowedCategories.includes(body.activityCategory)) return NextResponse.json({ error: 'Unknown activity category' }, { status: 400 });
     const context: MatchContext = {
+      allowProvisionalRanking: true,
       activity_category: body.activityCategory,
       blockedUserIds,
       reportedUserIds,

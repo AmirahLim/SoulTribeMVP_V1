@@ -292,4 +292,23 @@ for(let repeat=0;repeat<2;repeat++) {
 }
 assert.equal((await db.query("select has_function_privilege('anon','guard_public_life_context()','EXECUTE') allowed")).rows[0].allowed,false);
 console.log('Passed direct-write consent protection, strict boolean consent, three-phase limit, withdrawal/deletion and repeatable migration.');
+// New public answer sharing is opt-in and never backfills previous answers.
+assert.equal((await db.query("select count(*)::int n from profiles where public_onboarding <> '{}'::jsonb")).rows[0].n,0);
+await as(sixUser);
+const sharing={...lifeContextDraft,lifeContextsPublic:false,answersPublic:true};
+await db.query('insert into profile_answers(user_id,onboarding) values($1,$2)',[sixUser,{baselineV2:{...sharing,answersPublic:false}}]);
+await fails('update profiles set public_onboarding=$1 where id=$2',/explicit sharing consent/,[{intent:['Close circle']},sixUser]);
+await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:sharing},sixUser]);
+let publicAnswers=(await db.query('select public_onboarding from profiles where id=$1',[sixUser])).rows[0].public_onboarding;
+assert.deepEqual(publicAnswers.desiredQualities,sharing.desiredQualities);
+assert.deepEqual(publicAnswers.groupChoices,sharing.groupChoices);
+assert.equal(publicAnswers.area,undefined);assert.equal(publicAnswers.ageBand,undefined);assert.equal(publicAnswers.lifeContexts,undefined);
+await fails('update profile_answers set onboarding=$1 where user_id=$2',/Complete and review/,[{baselineV2:{...sharing,outings:['Invalid']}},sixUser]);
+for(const consent of [false,'true',null]) {
+ await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{baselineV2:{...sharing,answersPublic:consent}},sixUser]);
+ assert.deepEqual((await db.query('select public_onboarding from profiles where id=$1',[sixUser])).rows[0].public_onboarding,{});
+}
+await db.exec('reset role');
+for(let i=0;i<2;i++)await db.exec(await readFile(new URL('../supabase/migrations/20260927000000_public_onboarding_preferences.sql',import.meta.url),'utf8'));
+console.log('Passed explicit public-answer consent, exact allowed-field projection, withdrawal, direct-write protection and repeatability.');
 await db.close();

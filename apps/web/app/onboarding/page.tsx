@@ -289,6 +289,8 @@ export default function OnboardingPage() {
                 when you save your account.
               </p>
               <PhotoPicker previewOnly={designPreview} />
+              <label><input type="checkbox" checked={draft.answersPublic===true} onChange={e=>setDraft({...draft,answersPublic:e.target.checked})}/> Share my six-question answers, including custom text, on my profile and use them for matching.</label>
+              <p>Optional. Other signed-in members can read shared answers. You can stop sharing from your profile.</p>
               <div id="life-phase-label" className="ob-field-label">Life phase</div>
               <details className="ob-life-context">
                 <summary id="life-phase-toggle" aria-labelledby="life-phase-label life-phase-value"><span id="life-phase-value">{(draft.lifeContexts??[]).length ? `${(draft.lifeContexts??[]).length} selected · ${(draft.lifeContexts??[]).join(', ')}` : 'Choose up to 3'}</span></summary>

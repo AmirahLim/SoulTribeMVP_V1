@@ -15,6 +15,7 @@ import { evaluateGates } from './gates.ts';
 import { getOutingContextualWeights } from './reweighting.ts';
 import { calculateAsymmetricFit } from './asymmetric.ts';
 import {lifeContextBoost} from './lifeContext.ts';
+import {publicPreferenceBoost} from './publicPreferences.ts';
 
 export function score(
   vecA: ProfileVector,
@@ -93,8 +94,10 @@ export function score(
   } else {
     baseRank = 0;
   }
-  const contextBoost=baseRank>0?lifeContextBoost(vecA.profile.life_contexts,vecB.profile.life_contexts):0;
-  const rank_score = gateCheck.passed ? Math.min(1,baseRank+contextBoost) : 0;
+  const contextBoost=baseRank>0?lifeContextBoost(vecA.profile.life_contexts,vecB.profile.life_contexts)+publicPreferenceBoost(vecA.profile.public_onboarding,vecB.profile.public_onboarding):0;
+  const provisionalOnly = context?.allowProvisionalRanking === true &&
+    gateCheck.reasons.length > 0 && gateCheck.reasons.every(reason => reason === 'CONFIDENCE_TOO_LOW');
+  const rank_score = gateCheck.passed || provisionalOnly ? Math.min(1,baseRank+contextBoost) : 0;
 
   const contributions: Record<string, number> = {};
   if (typeof sPersonality === 'number') contributions.personality = sPersonality;

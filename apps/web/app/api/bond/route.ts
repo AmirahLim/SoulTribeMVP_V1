@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
       bio,
       birth_year,
       life_contexts,
+      public_onboarding,
       age_pref_min,
       age_pref_max,
       status,
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
       trait_experience (*),
       trait_lifestyle (*),
       trait_geography (*),
-      user_interests (*, interest_nodes (name)),
+      user_interests (*, interest_nodes (name,path)),
       user_values (*)
     `)
     .in('id', [authUserId, candidateId]);
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
   const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
   const candVec = toProfileVector(adaptRowToUserData(candRow), candidateId);
 
-  const matchRes = score(viewerVec, candVec);
+  const matchRes = score(viewerVec, candVec, {allowProvisionalRanking:true});
   const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
   const explanation = generateMatchExplanation({ ...viewerVec, values: viewerVec.values?.filter(v => v.visibility === 'public') }, { ...candVec, values: candVec.values?.filter(v => v.visibility === 'public') });
   const asymmetric = calculateAsymmetricFit(viewerVec, candVec, matchRes.resonance);

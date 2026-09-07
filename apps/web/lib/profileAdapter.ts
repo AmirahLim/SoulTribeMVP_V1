@@ -301,7 +301,15 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   } : undefined;
 
   // 9. Interests (from Q6 Outings)
-  const interests = q6Outings.length > 0 ? q6Outings.map((name: string, idx: number) => ({
+  const savedInterests = (user as any).user_interests;
+  const interests = Array.isArray(savedInterests) ? savedInterests.map((entry: any) => ({
+    user_id: entry.user_id,
+    node_id: entry.node_id,
+    node_name: entry.interest_nodes?.name ?? entry.node_name,
+    node_path: entry.interest_nodes?.path ?? entry.node_path,
+    affinity: entry.affinity,
+  })).filter((entry: any) => typeof entry.node_path === 'string' && entry.node_path.length > 0)
+  : q6Outings.length > 0 ? q6Outings.map((name: string, idx: number) => ({
     node_id: String(idx + 1),
     node_name: name,
     node_path: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
@@ -324,6 +332,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
       home_area: user.homeArea || (user as any).home_area || 'Singapore',
       birth_year: birthYear,
       life_contexts: user.lifeContexts ?? [],
+      public_onboarding: (user as any).publicOnboarding ?? {},
       age_pref_min: agePrefMin,
       age_pref_max: agePrefMax,
       profile_version: user.version || (user as any).profile_version || 6,

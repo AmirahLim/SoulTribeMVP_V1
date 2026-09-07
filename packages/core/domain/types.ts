@@ -1,4 +1,5 @@
 export interface Profile {
+  public_onboarding?: Record<string,unknown>;
   life_contexts?: string[];
   id: string;
   handle: string;
@@ -179,6 +180,8 @@ export interface ProfileVector {
 }
 
 export interface MatchContext {
+  /** Preserve evidence-based rank for low-confidence provisional discovery only. */
+  allowProvisionalRanking?: boolean;
   blockedUserIds?: string[];
   reportedUserIds?: string[];
   activity_category?: 'coffee' | 'dining' | 'active' | 'cultural' | 'nightlife' | 'creative' | 'intellectual';

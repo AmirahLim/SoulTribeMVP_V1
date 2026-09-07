@@ -1,4 +1,5 @@
 'use client';
+import {PublicAnswers} from '../../../components/profile/PublicAnswers';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -14,6 +15,7 @@ type PublicProfile = {
   avatar_url?: string;
   bio?: string;
   life_contexts?: string[];
+  public_onboarding?: Record<string,unknown>;
   home_area?: string;
   user_values?: { value_key: string }[];
 };
@@ -49,7 +51,7 @@ function PersonDetailContent() {
     getSupabaseBrowserClient()
       .from('profiles')
       .select(
-        'id,display_name,handle,avatar_url,bio,home_area,life_contexts,user_values(value_key)',
+        'id,display_name,handle,avatar_url,bio,home_area,life_contexts,public_onboarding,user_values(value_key)',
       )
       .eq('id', id)
       .maybeSingle()
@@ -95,6 +97,7 @@ function PersonDetailContent() {
         )}
         {profile && (
           <>
+            <PublicAnswers answers={profile.public_onboarding}/>
             <header className="flex gap-5 items-center">
               {profile.avatar_url ? (
                 <img
