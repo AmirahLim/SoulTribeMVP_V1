@@ -104,7 +104,6 @@ export async function POST(req: NextRequest) {
         age_pref_min,
         age_pref_max,
         status,
-        is_demo,
         trait_intent (*),
         trait_communication (*),
         trait_personality (*),
@@ -133,7 +132,7 @@ export async function POST(req: NextRequest) {
 
     // Exclude demo candidates server side
     const nonDemoProfiles = dbProfiles.filter(
-      (p: any) => !p.id.startsWith('00000000-0000-0000-0000-') && !p.is_demo
+      (p: any) => !p.id.startsWith('00000000-0000-0000-0000-')
     );
 
     const blockedUserIds = (blocks || []).map((b: any) =>
@@ -164,10 +163,35 @@ export async function POST(req: NextRequest) {
 
     const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
 
-    const { data: learningPreference } = await adminClient.from('recommendation_preferences').select('use_reflections').eq('user_id', authUserId).maybeSingle();
-    const { data: ownReflections } = learningPreference?.use_reflections
-      ? await adminClient.from('rhythm_checks').select('about_id,would_meet_again').eq('author_id', authUserId).limit(200)
-      : { data: [] };
+    const { data: learningPreference, error: preferenceError } = await adminClient
+      .from('recommendation_preferences')
+      .select('use_reflections')
+      .eq('user_id', authUserId)
+      .maybeSingle();
+    if (preferenceError) {
+      console.error('[SoulTribe API] recommendation_preferences query failed:', {
+        code: preferenceError.code,
+        message: preferenceError.message,
+      });
+      return NextResponse.json({ error: preferenceError.message }, { status: 500 });
+    }
+
+    let ownReflections: Array<{ about_id: string; would_meet_again: boolean }> = [];
+    if (learningPreference?.use_reflections) {
+      const { data, error } = await adminClient
+        .from('rhythm_checks')
+        .select('about_id,would_meet_again')
+        .eq('author_id', authUserId)
+        .limit(200);
+      if (error) {
+        console.error('[SoulTribe API] rhythm_checks query failed:', {
+          code: error.code,
+          message: error.message,
+        });
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+      ownReflections = data || [];
+    }
     // 4. Candidate Scoring & Explanation
     const candidates = candidatesPool;
     const rankedMatches = [];
@@ -193,7 +217,7 @@ export async function POST(req: NextRequest) {
         avatarUrl: candRow.avatar_url || getGenderAvatarForName(candRow.display_name || 'Member'),
         homeArea: candRow.home_area || 'Singapore',
         bio: candRow.bio || 'Member in Singapore',
-        rankScore: Math.min(1, softRes.adjustedScore + reflectionBoost(Boolean(learningPreference?.use_reflections), candRow.id, ownReflections || [])),
+        rankScore: Math.min(1, softRes.adjustedScore + reflectionBoost(Boolean(learningPreference?.use_reflections), candRow.id, ownReflections)),
         resonance: matchRes.resonance,
         logistics: matchRes.logistics,
         clickText: explanation.click_text,
