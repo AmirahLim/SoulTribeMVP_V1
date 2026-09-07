@@ -178,7 +178,7 @@ export function getBondThreadPhrase(
       if (Math.abs(extA - extB) <= 0.25) {
         return `You both ${phrA}; your social energy paces comfortably together.`;
       }
-      return `You ${phrA}, while ${nameB} ${phrB} — expect your interaction pace to vary naturally.`;
+      return `You ${phrA}, while ${nameB} ${phrB}, expect your interaction pace to vary naturally.`;
     }
   }
 
@@ -191,7 +191,7 @@ export function getBondThreadPhrase(
       if (Math.abs(respA - respB) <= 0.25) {
         return `You both ${phrA}; messaging expectations line up easily.`;
       }
-      return `You ${phrA}, whereas ${nameB} ${phrB} — asynchronous communication works best.`;
+      return `You ${phrA}, whereas ${nameB} ${phrB}, asynchronous communication works best.`;
     }
   }
 
@@ -204,7 +204,7 @@ export function getBondThreadPhrase(
       if (Math.abs(planA - planB) <= 0.25) {
         return `You both ${phrA}, making outing planning straightforward.`;
       }
-      return `You ${phrA}, while ${nameB} ${phrB} — locking in outing dates early prevents schedule friction.`;
+      return `You ${phrA}, while ${nameB} ${phrB}, locking in outing dates early prevents schedule friction.`;
     }
   }
 
@@ -217,7 +217,7 @@ export function getBondThreadPhrase(
       if (Math.abs(depthA - depthB) <= 1) {
         return `You both ${phrA}; your friendship expectations are well-aligned.`;
       }
-      return `You ${phrA}, whereas ${nameB} ${phrB} — setting clear boundaries around closeness helps.`;
+      return `You ${phrA}, whereas ${nameB} ${phrB}, setting clear boundaries around closeness helps.`;
     }
   }
 
@@ -230,7 +230,7 @@ export function getBondThreadPhrase(
       if (Math.abs(paceA - paceB) <= 0.25) {
         return `You both ${phrA}; your comfort with opening up develops at a shared speed.`;
       }
-      return `You ${phrA}, while ${nameB} ${phrB} — expect the first couple of meetings to feel uneven before it settles.`;
+      return `You ${phrA}, while ${nameB} ${phrB}, expect the first couple of meetings to feel uneven before it settles.`;
     }
   }
 
@@ -242,7 +242,7 @@ export function getBondThreadPhrase(
       return `You both chose ${shared.slice(0, 2).map((s: string) => `"${s}"`).join(' and ')}; shared activity themes come naturally.`;
     }
     if (intA.length > 0 && intB.length > 0) {
-      return `You highlighted "${intA[0]}" while ${nameB} tagged "${intB[0]}" — an opportunity to introduce new activities.`;
+      return `You highlighted "${intA[0]}" while ${nameB} tagged "${intB[0]}", an opportunity to introduce new activities.`;
     }
   }
 
@@ -254,7 +254,7 @@ export function getBondThreadPhrase(
       return `You both value ${shared.slice(0, 2).map((s: string) => `"${s}"`).join(' and ')}; core worldview stances resonate strongly.`;
     }
     if (valA.length > 0 && valB.length > 0) {
-      return `You prioritize "${valA[0]}" while ${nameB} values "${valB[0]}" — complementary life perspectives.`;
+      return `You prioritize "${valA[0]}" while ${nameB} values "${valB[0]}", complementary life perspectives.`;
     }
   }
 

@@ -26,7 +26,6 @@ export function MatchKeepsake({person}: {person: MatchKeepsakePerson}) {
       </div>
       <Link href={`/people/${person.id}`} className={styles.portrait} aria-label={`View ${person.name}’s profile`}>
         {person.avatarUrl && failedPhoto !== person.avatarUrl ? <img src={person.avatarUrl} alt={`${person.name}’s profile photo`} loading="lazy" onError={() => setFailedPhoto(person.avatarUrl ?? null)}/> : <span className={styles.initial} aria-label="No profile photo">{person.name.slice(0, 1)}</span>}
-        <span className={handwritten.className}>a little hello.</span>
       </Link>
     </header>
     <section className={styles.click}>

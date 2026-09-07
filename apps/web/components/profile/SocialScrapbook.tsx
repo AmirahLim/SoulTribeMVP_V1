@@ -24,7 +24,6 @@ export function SocialScrapbook({name, handle, area, avatar, bio, headline, summ
         <div className={styles.identity}>
           <figure className={styles.portrait}>
             {avatar ? <img src={avatar} alt={`${name}’s profile photo`} /> : <div className={styles.initial}>{name.slice(0, 1) || '✳'}</div>}
-            <figcaption className={handwriting.className}>a whole person.</figcaption>
           </figure>
           <div className={styles.name}>
             <p className={styles.eyebrow}>{own ? 'A LITTLE MORE YOU' : 'NICE TO MEET YOU'}</p>
@@ -34,7 +33,7 @@ export function SocialScrapbook({name, handle, area, avatar, bio, headline, summ
           </div>
         </div>
         <div className={styles.intro}>
-          <p className={`${styles.handwritten} ${handwriting.className}`}>{own ? 'a few things that make you, you.' : 'there’s a whole person here.'}</p>
+          {!own && <p className={`${styles.handwritten} ${handwriting.className}`}>there’s a whole person here.</p>}
           <h2>{headline || (own ? 'Your story is still unfolding.' : 'Getting to know them, gently.')}</h2>
           <p>{summary ? brief(summary, 280) : own ? 'Six questions are a beginning, not the whole of you. Your Social Read grows with what you choose to share.' : 'Open the little pages below to discover what they’ve chosen to share about friendship.'}</p>
           {summary && summary.length > 280 && <details className={styles.summaryMore}><summary>Read the rest</summary><p>{summary}</p></details>}
@@ -57,12 +56,11 @@ export function SocialScrapbook({name, handle, area, avatar, bio, headline, summ
         </div>
       </section>
       {children && <div className={styles.extras}>{children}</div>}
-      <footer className={`${styles.footer} ${handwriting.className}`}>Still becoming. Always more than a profile.</footer>
     </div>
     <dialog ref={dialog} aria-labelledby={headingId} className={styles.sheet} onClose={() => setOpened(null)}>
       {opened && <><button className={styles.close} onClick={() => dialog.current?.close()} aria-label="Close this page">✕</button><p className={styles.eyebrow}>{opened.caption}</p><h2 id={headingId}>{opened.title}</h2>
         {opened.notes.length ? opened.notes.map((note, i) => <p key={i} className={styles.note}>{note}</p>) : <p className={styles.note}>{empty}</p>}
-        <p className={styles.disclaimer}>{own ? 'A read on what you’ve shared, not a fixed definition of you.' : 'Shared preferences are a starting point—not a complete picture of a person.'}</p>
+        <p className={styles.disclaimer}>{own ? 'A read on what you’ve shared, not a fixed definition of you.' : 'Shared preferences are a starting point, not a complete picture of a person.'}</p>
         {opened.href && <Link className={styles.sheetLink} href={opened.href}>{opened.action}</Link>}
       </>}
     </dialog>

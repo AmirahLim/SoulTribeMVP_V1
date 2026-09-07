@@ -200,7 +200,7 @@ export function microInsight(d: BaselineDraft, step: number): string {
   if (step === 3)
     return groupChoices(d).length ? `Your sweet spot: ${groupChoices(d).join(' or ').toLowerCase()}.` : "";
   if (step === 4)
-    return d.q4Revision === 2 ? (d.desiredQualities?.length ? `You value: ${d.desiredQualities.join(' · ')}. This is what you appreciate in others—not a label for you.` : 'What helps a friendship feel right for you?') : validStep(d, 4)
+    return d.q4Revision === 2 ? (d.desiredQualities?.length ? `You value: ${d.desiredQualities.join(' · ')}. This is what you appreciate in others, not a label for you.` : 'What helps a friendship feel right for you?') : validStep(d, 4)
       ? `${FLOW[1].choices[d.planning! * 4]}. ${FLOW[2].choices[d.opening! * 4]}.`
       : "There is no right pace. Just yours.";
   return d.outings.length

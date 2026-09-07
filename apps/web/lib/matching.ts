@@ -209,7 +209,7 @@ export function getTribalPassStatusCopy(
   let subtitle = "";
   if (matchCount > 0) {
     if (isProvisional) {
-      subtitle = `${matchCount} ${matchCount === 1 ? 'person' : 'people'} to look at — these sharpen as you fill in your Tribal Pass.`;
+      subtitle = `${matchCount} ${matchCount === 1 ? 'person' : 'people'} to look at, these sharpen as you fill in your Tribal Pass.`;
     } else {
       subtitle = `${matchCount} ${matchCount === 1 ? 'match' : 'matches'} with clear resonance and rhythm reading.`;
     }

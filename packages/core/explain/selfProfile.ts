@@ -183,7 +183,7 @@ const NOTE_TEMPLATES: NoteTemplate[] = [
     hook: 'What makes me feel close',
     statement: 'Unhurried, low-frequency connection',
     explanation: 'I value quality over quantity in communication. A thoughtful message every few weeks means more than daily small talk.',
-    whatItLooksLike: 'Meeting up monthly and barely texting in between — and that feels right.',
+    whatItLooksLike: 'Meeting up monthly and barely texting in between, and that feels right.',
     sourceThreads: ['communication'],
   },
   {
@@ -197,7 +197,7 @@ const NOTE_TEMPLATES: NoteTemplate[] = [
   {
     markerKey: 'spontaneous',
     hook: 'How to spend time with me',
-    statement: 'Keep it loose — same-day plans are best',
+    statement: 'Keep it loose, same-day plans are best',
     explanation: 'I thrive on spontaneity. Locking things in too far ahead makes them feel like obligations.',
     whatItLooksLike: 'A "free right now?" text that leads to coffee in 30 minutes.',
     sourceThreads: ['social_rhythm'],
@@ -231,7 +231,7 @@ const NOTE_TEMPLATES: NoteTemplate[] = [
     hook: 'How to stay connected with me',
     statement: 'Regular check-ins keep us close',
     explanation: 'I feel most connected when there is a rhythm of daily or near-daily touchpoints, even small ones.',
-    whatItLooksLike: 'Memes, voice notes, quick replies — the thread never really goes quiet.',
+    whatItLooksLike: 'Memes, voice notes, quick replies, the thread never really goes quiet.',
     sourceThreads: ['communication'],
   },
   {
@@ -368,7 +368,7 @@ function generateThreadSentence(thread: ThreadKey, vec: ProfileVector, markers: 
         const phrase = PHRASES_YOU.depth(depth);
         return `You ${phrase}.`;
       }
-      if (keys.has('depth-oriented')) return 'A small number of people, held closely — and comfortable when everyone disappears into their own life for a while.';
+      if (keys.has('depth-oriented')) return 'A small number of people, held closely, and comfortable when everyone disappears into their own life for a while.';
       return 'Your friendship intent is still developing.';
     }
     case 'emotional': {
@@ -512,7 +512,7 @@ function generateTribalRead(markers: Marker[], vec: ProfileVector): TribalReadDa
     summaryParts.push('easy-going hangouts where nothing needs to be deep');
   }
 
-  const summary = summaryParts.join(' — ') + '.';
+  const summary = summaryParts.join(', ') + '.';
 
   // Build pills
   const pills: string[] = [];

@@ -5,7 +5,7 @@ import {getSupabaseBrowserClient} from '../../lib/supabase';
 const fields=[['intent','Looking for','intentOther'],['clicks','Connection moments','clicksOther'],['groupChoices','Social settings',''],['desiredQualities','Qualities wanted in friends','qualityOther'],['connectionChoice','Keeping in touch','connectionOther'],['planningChoice','Planning','planningOther'],['punctualityChoice','Timing','punctualityOther'],['outings','Outings','outingOther']];
 export function PublicAnswers({answers}:{answers?:Record<string,unknown>}) {
  if(!answers||!Object.keys(answers).length)return null;
- return <section className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><h2>Shared friendship preferences</h2><p>In their own words—not an assessment of their traits.</p><dl>{fields.map(([key,label,other])=>{
+ return <section className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><h2>Shared friendship preferences</h2><p>In their own words, not an assessment of their traits.</p><dl>{fields.map(([key,label,other])=>{
   const raw=answers[key]??(key==='groupChoices'?answers.group:undefined);
   const values=(Array.isArray(raw)?raw:[raw]).filter((v):v is string=>typeof v==='string'&&v.length>0).map(v=>v==='Other'&&typeof answers[other]==='string'?String(answers[other]):v);
   return values.length?<div className="mt-3" key={key}><dt className="font-semibold">{label}</dt><dd className="whitespace-pre-wrap">{values.join(' · ')}</dd></div>:null;
@@ -32,6 +32,6 @@ export function PublicAnswerSharing({userId}:{userId?:string}) {
   }catch(e){setError(e instanceof Error?e.message:'Unable to update sharing. Please retry.');}finally{setBusy(false);}
  }
  return <section className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><h2>Share your friendship answers</h2><p>Sharing publishes your six-question selections and custom text to other signed-in members and uses them for matching. Earlier private answers stay private until you choose to share.</p>
- {onboarding?.baselineV2&&<><details className="my-3"><summary>Review the answers before sharing</summary><PublicAnswers answers={onboarding.baselineV2}/></details><button type="button" className="underline py-3" disabled={busy} onClick={change}>{busy?'Saving…':shared?'Stop sharing these answers':'Share these answers on my profile and in matching'}</button><p>{shared?'Shared with members':'Private—not used as public matching preferences'}</p></>}
+ {onboarding?.baselineV2&&<><details className="my-3"><summary>Review the answers before sharing</summary><PublicAnswers answers={onboarding.baselineV2}/></details><button type="button" className="underline py-3" disabled={busy} onClick={change}>{busy?'Saving…':shared?'Stop sharing these answers':'Share these answers on my profile and in matching'}</button><p>{shared?'Shared with members':'Private, not used as public matching preferences'}</p></>}
  {error&&<p role="alert">{error}</p>}</section>;
 }

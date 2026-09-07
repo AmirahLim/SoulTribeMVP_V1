@@ -281,7 +281,6 @@ function HomeContent() {
                 alt={profile.displayName}
                 className={story.photo}
               />
-              <span>a little hello.</span>
             </Link>
             <div className={story.name}>
               <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">

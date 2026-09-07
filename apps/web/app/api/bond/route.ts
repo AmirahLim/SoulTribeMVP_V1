@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
       const label = THREAD_LABELS[key] || key.replace('_', ' ');
       candidateGaps.push({
         questionId: key,
-        prompt: `${candVec.profile.display_name} hasn't shared their ${label} yet — this part sharpens when they do.`,
+        prompt: `${candVec.profile.display_name} hasn't shared their ${label} yet, this part sharpens when they do.`,
         href: '',
       });
     }

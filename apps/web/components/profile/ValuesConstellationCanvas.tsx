@@ -23,7 +23,7 @@ export function ValuesConstellationCanvas({
     { label: 'Community', x: 0.72, y: 0.76, weight: 0.55 },
     { label: 'Authenticity', x: 0.22, y: 0.72, weight: 0.58 },
   ],
-  note = 'Curiosity sits at the centre of most of your answers — the others orbit it.',
+  note = 'Curiosity sits at the centre of most of your answers, the others orbit it.',
   className = '',
 }: ValuesConstellationCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
