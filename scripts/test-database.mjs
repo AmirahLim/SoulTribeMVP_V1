@@ -271,9 +271,25 @@ const geography=(await db.query('select country,radius_km,radius_minutes from tr
 assert.equal(geography.country,'Australia');assert.equal(geography.radius_km,17);assert.deepEqual(geography.radius_minutes,{});
 assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[identityUser])).rows[0].onboarding.baselineV2,identityDraft);
 await db.exec('reset role');
-for(const file of ['20260923000000_onboarding_identity.sql','20260924000000_ensure_private_avatars.sql']) {
+for(const file of ['20260923000000_onboarding_identity.sql','20260924000000_ensure_private_avatars.sql','20260925000000_onboarding_life_context.sql','20260925000000_onboarding_life_context.sql']) {
  await db.exec(await readFile(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'));
 }
 assert.equal((await db.query("select has_function_privilege('anon','claim_onboarding_draft(text,text,integer)','EXECUTE') allowed")).rows[0].allowed,false);
 console.log('Passed exact identity claim persistence, no travel-time substitution, and repeatable release migrations.');
+// Isolated in-memory fixtures only; no production member data is created.
+const lifeDraft={...identityDraft,handle:'life_context_test',setupRevision:2,lifeContexts:['Slow Living','Building My Career']};
+delete lifeDraft.ageBand; delete lifeDraft.ageOther;
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[lifeDraft])).rows[0].valid,true);
+for(const patch of [{lifeContexts:[]},{lifeContexts:['invalid']},{lifeContexts:['Slow Living','Slow Living']},{lifeContexts:['Slow Living','Building My Career','Family Life','Adventure Era']},{country:''},{area:''},{travelKm:0},{travelKm:51},{travelKm:1.5},{travelKm:null},{setupRevision:null}]) {
+ assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...lifeDraft,...patch}])).rows[0].valid,false);
+}
+const lifeUser='10000000-0000-4000-8000-000000000007';
+await db.query('insert into auth.users values($1)',[lifeUser]);
+await db.query('select save_onboarding_draft($1,$2)',['e'.repeat(64),lifeDraft]);
+await as(lifeUser);
+await fails('select claim_onboarding_draft($1,$2,$3)',/adult birth year/,['e'.repeat(64),'Life Context Test',2020]);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['e'.repeat(64),'Life Context Test',1995]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[lifeUser])).rows[0].onboarding.baselineV2,lifeDraft);
+assert.deepEqual((await db.query('select country,radius_km,radius_minutes from trait_geography where user_id=$1',[lifeUser])).rows[0],{country:'Australia',radius_km:17,radius_minutes:{}});
+console.log('Passed life-context exact persistence, age eligibility, location validation and migration repeatability.');
 await db.close();
