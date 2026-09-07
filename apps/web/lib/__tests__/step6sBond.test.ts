@@ -43,7 +43,7 @@ describe('Step 6s — Bond View & Surface Wiring Guards', () => {
   });
 
   it('6. people/[id]/page.tsx links to server-backed Connection Notes', () => {
-    expect(profilePageSource).toContain('Read Connection Notes');
+    expect(profilePageSource).toContain('View Bond');
     expect(profilePageSource).not.toContain('generateSelfProfile');
   });
 

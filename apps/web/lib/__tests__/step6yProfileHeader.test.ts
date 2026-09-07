@@ -48,14 +48,14 @@ describe('Step 6y — Profile Header, Spacing, and Public Boundaries', () => {
     expect(html).not.toContain('You ');
   });
 
-  it('4. The header and restored sections are on the You page', () => {
+  it('4. The You page uses the scrapbook without losing private read data or controls', () => {
     const youSource = readFileSync(YOU_PAGE_PATH, 'utf-8');
-    expect(youSource).toContain('<ProfileHero');
-    expect(youSource).toContain('<PassArcCanvas');
-    expect(youSource).toContain('<BoundariesMatching');
-    expect(youSource).toContain('<ConnectionNotes');
+    expect(youSource).toContain('<SocialScrapbook');
+    expect(youSource).toContain('selfSocialPages(myRead)');
+    expect(youSource).toContain('<PublicAnswerSharing');
+    expect(youSource).toContain('<ReflectionPreferences');
     expect(youSource).not.toContain('<SocialInstincts');
-    expect(youSource).toContain('<TheInterestingPart');
+    expect(youSource).not.toContain('<PassArcCanvas');
   });
 
   it('5. The disclaimer is gone from the You page', () => {

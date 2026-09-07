@@ -4,8 +4,6 @@ import { AnswerPortrait } from '../../components/profile/AnswerPortrait';
 import { ReflectionPreferences } from '../../components/outings/ReflectionPreferences';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Bloom } from '@soul-tribe/ui';
 import { useAuth } from '../../lib/authContext';
 import { getUserProfile, setUserProfile } from '../../lib/userStore';
 import { AuthGuard } from '../../components/AuthGuard';
@@ -13,16 +11,11 @@ import { saveProfileIdentity } from '../../lib/saveProfileIdentity';
 import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import Link from 'next/link';
 
-import { ProfileHero } from '../../components/profile/ProfileHero';
-import { PassArcCanvas } from '../../components/profile/PassArcCanvas';
-import { ThreadCard, ThreadData } from '../../components/profile/ThreadCard';
-import { TribalRead, TribalReadData } from '../../components/profile/TribalRead';
-import { TheInterestingPart } from '../../components/profile/TheInterestingPart';
-import { BoundariesMatching } from '../../components/profile/BoundariesMatching';
-import { ConnectionNotes } from '../../components/profile/ConnectionNotes';
-import { ValuesConstellationCanvas, ValueNode } from '../../components/profile/ValuesConstellationCanvas';
-import { InterestGraphCanvas, InterestNode } from '../../components/profile/InterestGraphCanvas';
-import { OutingTriadCanvas } from '../../components/profile/OutingTriadCanvas';
+import {SocialScrapbook} from '../../components/profile/SocialScrapbook';
+import {selfSocialPages} from '../../lib/socialScrapbook';
+import type {TribalReadData} from '../../components/profile/TribalRead';
+import type {ValueNode} from '../../components/profile/ValuesConstellationCanvas';
+import type {InterestNode} from '../../components/profile/InterestGraphCanvas';
 
 // ─── MyRead types (mirrors api/me/read response) ────────────────────
 
@@ -110,7 +103,6 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const router = useRouter();
   const { user: authUser, session } = useAuth();
 
   const [myRead, setMyRead] = useState<MyRead | null>(null);
@@ -243,222 +235,34 @@ function ProfileContent() {
     );
   }
 
-  // ─── Derived data from MyRead ──────────────────────────────────────
-
   const profile = myRead.profile;
-  const threads = myRead.threads;
-
-  // Bloom threads: known → use strength, unknown → ghost petal (strength 0)
-  const bloomThreads = threads.map((t) => ({
-    key: t.key,
-    label: t.name,
-    strength: t.status === 'known' ? t.strength : 0,
-    confidence: t.status === 'known' ? t.confidence : 0,
-    sentence: t.status === 'known' ? t.note : '',
-  }));
-
-  // Connection threads excludes values and interests which have dedicated cards below
-  const connectionThreads = threads.filter((t) => t.key !== 'interests' && t.key !== 'values');
-
-  // Local standing calculation
   const localProfile = getUserProfile();
 
   return (
-    <div className="relative min-h-screen w-full bg-[#101c18] text-[#d8e4db] pb-24">
-      {/* WRAPPER */}
-      <div className="relative z-10 mx-auto max-w-[470px] px-[18px] pt-4 flex flex-col gap-6">
-        {/* 1. Restored Profile Hero (with real data, no hardcoded defaults) */}
-        <div className="rounded-[30px] bg-[#f2f0e7] px-5"><ProfileHero
-          displayName={profile.display_name}
-          handle={profile.handle}
-          homeArea={profile.home_area}
-          bio={profile.bio}
-          avatarUrl={profile.avatar_url}
-          passCompletionPct={myRead.passCompletionPct}
-          onEditProfile={() => {
-            setEditName(profile.display_name); setEditArea(profile.home_area || '');
-            setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
-          }}
-          onDeepenPass={() => router.push('/you/deeper')}
-        /></div>
-
-        {myRead.tribalRead ? <TribalRead data={myRead.tribalRead} /> : <section className="rounded-3xl bg-[#E3EADF] p-6"><h2 className="text-2xl font-semibold">Your Social Signature</h2><p className="mt-3 text-sm">Your portrait grows from what you choose to share. Add more answers when you feel ready.</p></section>}
-
-        {/* 2. Pass Arc (Drawn Arc Canvas) */}
-        <PassArcCanvas
-          exploredPct={myRead.threadsExplored / myRead.threadsTotal}
-          signalsText={
-            typeof myRead.signalsCount === 'number' && myRead.signalsCount > 0
-              ? `Developing read · ${myRead.signalsCount} signals`
-              : `Developing read · ${myRead.threadsExplored} explored`
-          }
-        />
-
-        {!!localProfile.lifeContexts?.length && <section className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><h2>Life phase</h2><p>{localProfile.lifeContexts.join(' · ')}</p></section>}
-        <details className="rounded-3xl bg-[#f2f0e7] p-5 text-[#203B30]"><summary className="cursor-pointer text-sm">Your saved answers</summary><AnswerPortrait profile={localProfile} /></details>
-        <PublicAnswerSharing userId={localProfile.id}/>
-        <Link href="/early-read" className="inline-block py-3 underline">Revisit and correct my Early Read →</Link>
-        {/* 3. Friendship DNA Bloom */}
-        <div className="flex flex-col items-center rounded-[32px] bg-gradient-to-br from-[#dfebdf] via-[#f2eee3] to-[#e1dfee] p-6 text-center text-[#203B30]">
-          <h2 className="text-xl font-semibold">Your Social Signature</h2>
-          <p className="mt-2 text-xs">A living visual of how your Connection Threads come together.</p>
-          <Bloom threads={bloomThreads} size={280} interactive />
-          <p className="text-[12.5px] text-[#536657] mt-1">
-            Ten threads · {myRead.threadsExplored} explored · <span className="text-[#826044]">tap a petal</span>
-          </p>
-        </div>
-
-        {/* 5. The Interesting Part (cross-thread tension) — only when data exists */}
-        {myRead.tension && (
-          <TheInterestingPart tension={myRead.tension} />
-        )}
-
-        {/* 6. Connection Threads */}
-        <div className="flex flex-col gap-3.5">
-          <div className="flex items-baseline justify-between px-1">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
-              Connection Threads
-            </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
-              {connectionThreads.filter((t) => t.status === 'known').length} of {connectionThreads.length}
-            </p>
+    <div>
+      <SocialScrapbook own name={profile.display_name} handle={profile.handle} area={profile.home_area}
+        avatar={profile.avatar_url} bio={profile.bio} headline={myRead.tribalRead?.headline}
+        summary={myRead.tribalRead?.summary} pages={selfSocialPages(myRead)}
+        onEdit={() => {
+          setEditName(profile.display_name); setEditArea(profile.home_area || '');
+          setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
+        }}>
+        {!!localProfile.lifeContexts?.length && <p className="mb-6">Life lately · {localProfile.lifeContexts.join(' · ')}</p>}
+        {!!userPitches.length && <section className="mb-8">
+          <h2 className="font-serif text-2xl mb-3">Plans with my name on them</h2>
+          {userPitches.map(p => <Link key={p.id} href={`/outings/${p.id}`} className="block py-3 border-b border-white/20">{p.title} ↗</Link>)}
+        </section>}
+        <details className="border-t border-white/25">
+          <summary>My answers, profile & privacy</summary>
+          <div>
+            <Link className="underline py-3" href="/onboarding">Review or change my six answers →</Link>
+            <Link className="underline py-3" href="/early-read">Revisit and correct my Early Read →</Link>
+            <details><summary>Your saved answers</summary><AnswerPortrait profile={localProfile}/></details>
+            <PublicAnswerSharing userId={authUser?.id}/>
+            {authUser?.id && <ReflectionPreferences userId={authUser.id}/>}
           </div>
-
-          {connectionThreads.map((t) => {
-            if (t.status === 'unknown') {
-              return (
-                <div
-                  key={t.key}
-                  className="rounded-[22px] p-5 backdrop-blur-xl bg-[#F2EEE5] border border-[#203B30]/15"
-                >
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657] mb-2">
-                    {t.name}
-                  </p>
-                  <p className="text-xs text-[#536657] leading-relaxed">
-                    This part of you is still unfolding.
-                  </p>
-                  <Link
-                    href={t.nextHref}
-                    className="inline-block mt-3 text-xs font-semibold text-[#826044] hover:underline"
-                  >
-                    {t.nextPrompt} →
-                  </Link>
-                </div>
-              );
-            }
-
-            // Known thread → ThreadCard
-            const threadData: ThreadData = {
-              key: t.key,
-              name: t.name,
-              strength: t.strength,
-              confidence: t.confidence,
-              heroDescriptor: t.descriptor,
-              note: t.note,
-              naturalSetting: '',
-              thriveWhen: '',
-              signals: t.signals,
-              extraVisualData: t.extraVisualData,
-            };
-            return <ThreadCard key={t.key} thread={threadData} />;
-          })}
-        </div>
-
-        {/* 7. Boundaries & Social Principles — only when data exists */}
-        {myRead.boundaries && (
-          <BoundariesMatching
-            voice="first"
-            punctualityStance={myRead.boundaries.punctualityStance}
-            cancellationStance={myRead.boundaries.cancellationStance}
-            groupSizeBoundary={myRead.boundaries.groupSizeBoundary}
-            locationBoundary={myRead.boundaries.locationBoundary}
-          />
-        )}
-
-        {authUser?.id && <ReflectionPreferences userId={authUser.id} />}
-        {/* 8. Connection Notes — only when data exists */}
-        {myRead.connectionNotes && myRead.connectionNotes.length > 0 && (
-          <ConnectionNotes notes={myRead.connectionNotes} />
-        )}
-
-        {/* 10. What Matters (Values Constellation Canvas) */}
-        <div className="flex flex-col">
-          <div className="flex items-baseline justify-between px-1 mb-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
-              What Matters
-            </p>
-          </div>
-          <ValuesConstellationCanvas
-            values={myRead.values?.length ? myRead.values : undefined}
-            note={
-              myRead.values?.length
-                ? 'Values you have chosen to share.'
-                : undefined
-            }
-          />
-        </div>
-
-        {/* 11. I'm Into (Interest Graph Canvas) */}
-        <div className="flex flex-col">
-          <div className="flex items-baseline justify-between px-1 mb-3">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
-              I'm Into
-            </p>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#826044]">
-              Rabbit hole
-            </p>
-          </div>
-          <InterestGraphCanvas
-            nodes={myRead.interests?.length ? myRead.interests : undefined}
-          />
-        </div>
-
-        {/* 12. Outing DNA (Triad Radar Canvas) */}
-        {myRead.outingPreferences && (
-          <div className="flex flex-col">
-            <div className="flex items-baseline justify-between px-1 mb-3">
-              <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657]">
-                Outing DNA
-              </p>
-            </div>
-            <OutingTriadCanvas
-              descriptors={myRead.outingPreferences.descriptors}
-              values={myRead.outingPreferences.values}
-              instantYes={myRead.outingPreferences.instantYes}
-              usuallyYes={myRead.outingPreferences.usuallyYes}
-              convinceMe={myRead.outingPreferences.convinceMe}
-            />
-          </div>
-        )}
-
-        {/* 13. Hosted Pitches */}
-        {userPitches.length > 0 && (
-          <div className="rounded-[26px] p-5 backdrop-blur-xl bg-[#F2EEE5] border border-[#203B30]/15 shadow-xl">
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#536657] mb-3">
-              Hosted Pitches ({userPitches.length})
-            </p>
-            <div className="flex flex-col gap-3">
-              {userPitches.map((p) => (
-                <div key={p.id} className="rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.03)] p-3.5">
-                  <h4 className="font-sans text-sm font-semibold text-[#203B30]">
-                    {p.title}
-                  </h4>
-                  <p className="text-xs text-[#536657] mt-1 leading-relaxed">
-                    {p.pitch && p.pitch !== p.title
-                      ? p.pitch
-                      : `Hosted by ${profile.display_name} in ${p.area || profile.home_area}`}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 14. Clean Footer */}
-        <p className="text-center text-[11.5px] leading-relaxed text-[#536657] mt-6">
-          Soul Tribe · Singapore
-        </p>
-      </div>
+        </details>
+      </SocialScrapbook>
 
       {/* Settings Modal */}
       {isSettingsOpen && (
@@ -473,6 +277,7 @@ function ProfileContent() {
               <div>
                 <label htmlFor="profile-name" className="font-semibold text-[#536657]">Display Name</label>
                 <input
+                  id="profile-name"
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
@@ -483,6 +288,7 @@ function ProfileContent() {
               <div>
                 <label htmlFor="profile-area" className="font-semibold text-[#536657]">Home Area</label>
                 <input
+                  id="profile-area"
                   type="text"
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
@@ -493,6 +299,7 @@ function ProfileContent() {
               <div>
                 <label htmlFor="profile-bio" className="font-semibold text-[#536657]">Bio</label>
                 <textarea
+                  id="profile-bio"
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] p-2.5 text-[#203B30]"

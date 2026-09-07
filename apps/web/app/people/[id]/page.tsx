@@ -1,5 +1,6 @@
 'use client';
-import {PublicAnswers} from '../../../components/profile/PublicAnswers';
+import {SocialScrapbook} from '../../../components/profile/SocialScrapbook';
+import {publicSocialPages, sharedChoices} from '../../../lib/socialScrapbook';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -38,6 +39,7 @@ function PersonDetailContent() {
   useEffect(() => {
     let active = true;
     setProfile(null);
+    setPitches([]);
     setStatus('Loading profile…');
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -78,111 +80,32 @@ function PersonDetailContent() {
       active = false;
     };
   }, [id, attempt]);
+  const sharedIntent = sharedChoices(profile?.public_onboarding, 'intent', 'intentOther');
+  const sharedSettings = sharedChoices(profile?.public_onboarding, 'groupChoices');
+  const sharedSummary = [
+    sharedIntent.length ? `Looking for: ${sharedIntent.join(' · ')}.` : '',
+    sharedSettings.length ? `Feels most at home in: ${sharedSettings.join(' · ')}.` : '',
+  ].filter(Boolean).join(' ');
   return (
-    <main className="min-h-screen bg-ground-paper text-ink-espresso px-5 pt-8 pb-28">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <Link href="/people" className="inline-block py-3 underline text-sm">
-          Back to people
-        </Link>
-        {status && (
-          <div role="status">
-            <p>{status}</p>
-            <button
-              className="py-3 underline"
-              onClick={() => setAttempt((n) => n + 1)}
-            >
-              Try again
-            </button>
-          </div>
-        )}
-        {profile && (
-          <>
-            <PublicAnswers answers={profile.public_onboarding}/>
-            <header className="flex gap-5 items-center">
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt=""
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-ground-sand flex items-center justify-center text-3xl font-serif">
-                  {profile.display_name.charAt(0)}
-                </div>
-              )}
-              <div>
-                <p className="text-xs text-accent-sage tracking-widest uppercase">
-                  Soul Tribe
-                </p>
-                <h1 className="font-serif text-4xl mt-2">
-                  {profile.display_name}
-                </h1>
-                <p className="text-sm text-ink-bark mt-2">
-                  @{profile.handle} · {profile.home_area}
-                </p>
-              </div>
-            </header>
-            <section className="rounded-3xl p-6 bg-ground-card border border-ink-espresso/10 shadow-e1">
-              <h2 className="font-serif text-2xl">In their own words</h2>
-              <p className="mt-3 leading-relaxed whitespace-pre-wrap text-ink-bark">
-                {profile.bio || 'They haven’t added an introduction yet.'}
-              </p>
-            </section>
-            {!!profile.life_contexts?.length && <section className="rounded-3xl p-6 bg-ground-card"><h2 className="font-serif text-2xl">Life phase</h2><p className="mt-3">{profile.life_contexts.join(' · ')}</p></section>}
-            {!!profile.user_values?.length && (
-              <section className="bg-ground-mist rounded-3xl p-6">
-                <h2 className="font-serif text-2xl">What they’ve shared</h2>
-                <div className="flex flex-wrap gap-3 mt-4">
-                  {profile.user_values.map((v) => (
-                    <span
-                      key={v.value_key}
-                      className="rounded-full bg-ground-card px-4 py-2 text-sm"
-                    >
-                      {v.value_key.replaceAll('_', ' ')}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-            <section className="rounded-3xl bg-ground-sand p-6">
-              <h2 className="font-serif text-2xl">
-                What could friendship feel like?
-              </h2>
-              <p className="mt-3 text-ink-bark leading-relaxed">
-                Explore your shared rhythms, possible differences and the
-                threads that are still taking shape.
-              </p>
-              <Link
-                href={`/people/${profile.id}/bond`}
-                className="inline-block mt-4 rounded-full bg-accent-sage text-ink-chalk px-6 py-3"
-              >
-                Read Connection Notes
-              </Link>
-            </section>
-            <Link
-              href={`/outings/pitch?inviteId=${profile.id}`}
-              className="inline-block py-3 underline"
-            >
-              Invite them to an outing
-            </Link>
-            {!!pitches.length && (
-              <section>
-                <h2 className="font-serif text-2xl">Their open Pitches</h2>
-                {pitches.map((p) => (
-                  <Link
-                    className="block py-4 border-b"
-                    key={p.id}
-                    href={`/outings/${p.id}`}
-                  >
-                    {p.title} · {p.area}
-                  </Link>
-                ))}
-              </section>
-            )}
-            {user && <SafetyActions userId={user.id} targetId={profile.id} />}
-          </>
-        )}
-      </div>
-    </main>
+    <div>
+      {!profile && <div className="min-h-screen bg-[#192c23] text-[#f3ecdc] p-8">
+        <Link href="/people" className="underline">Back to people</Link>
+        <div role="status" className="mt-8"><p>{status}</p><button className="py-3 underline" onClick={() => setAttempt(n => n + 1)}>Try again</button></div>
+      </div>}
+      {profile && <SocialScrapbook name={profile.display_name} handle={profile.handle} area={profile.home_area}
+        avatar={profile.avatar_url} bio={profile.bio} summary={sharedSummary}
+        pages={publicSocialPages(profile.public_onboarding, (profile.user_values ?? []).map(v => v.value_key.replaceAll('_', ' ')), profile.id)}>
+        <div className="flex flex-wrap gap-5 mb-8">
+          <Link href={`/people/${profile.id}/bond`} className="underline py-3">View Bond →</Link>
+          <Link href={`/outings/pitch?inviteId=${profile.id}`} className="underline py-3">Invite them to an outing →</Link>
+        </div>
+        {!!profile.life_contexts?.length && <p className="mb-6">Life lately · {profile.life_contexts.join(' · ')}</p>}
+        {!!pitches.length && <section className="mb-8"><h2 className="font-serif text-2xl">Their open Pitches</h2>
+          {pitches.map(p => <Link className="block py-4 border-b border-white/20" key={p.id} href={`/outings/${p.id}`}>{p.title} · {p.area} ↗</Link>)}
+        </section>}
+        <Link href="/people" className="inline-block underline py-3 mb-5">Back to people</Link>
+        {user && <SafetyActions userId={user.id} targetId={profile.id}/>}
+      </SocialScrapbook>}
+    </div>
   );
 }
