@@ -1,5 +1,7 @@
 # Landing-page screenshot assets
 
+Matching screenshots: actual-match-a.jpg and actual-match-b.jpg were edited with built-in ImageGen. Prompt: preserve the supplied matching interface and all its text, spacing, controls and dreamy background; replace Allan Ling everywhere with Leo Chen, Yasmin with Maya Vale, Samuel with Owen Park, and replace the circular member headshots with fictional adult portraits. JPEG copies are used for web delivery. Original screenshots remain untouched.
+
 These are product screenshots supplied by the project owner. Original source images are unchanged.
 
 - actual-pitches.jpg: supplied Your Pitches screenshot, unchanged.
