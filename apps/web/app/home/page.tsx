@@ -335,7 +335,7 @@ function HomeContent() {
 
         {/* SEGMENTED TAB SWITCHER (Matches | Your Pitches | Going | On your radar) */}
         <section className="mt-5">
-          <div className="flex border-b border-white/15 overflow-x-auto scrollbar-none gap-2">
+          <div className={`${story.navigation} flex border-b border-white/15 overflow-x-auto scrollbar-none gap-2`}>
             <button
               type="button"
               onClick={() => setActiveTab('matches')}
