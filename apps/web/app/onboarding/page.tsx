@@ -40,15 +40,22 @@ export default function OnboardingPage() {
   const { user, loading } = useAuth();
   const [draft, setDraft] = useState<BaselineDraft>(emptyDraft);
   const [ready, setReady] = useState(false);
+  const [designPreview, setDesignPreview] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('preview') === 'design') return;
     if (!loading && user && getUserProfile().hasCompletedOnboarding)
       router.replace("/you");
   }, [user, loading, router]);
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('preview') === 'design') {
+      setDesignPreview(true);
+      setReady(true);
+      return;
+    }
     let live = true;
     fetch("/api/onboarding/draft")
       .then((r) => { if (!r.ok) throw new Error('Draft unavailable'); return r.json(); })
@@ -73,6 +80,11 @@ export default function OnboardingPage() {
     if (ready) title.current?.focus();
   }, [draft.step, ready]);
   async function advance(back = false) {
+    if (designPreview) {
+      setError('');
+      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 5 ? 1 : draft.step + 1});
+      return;
+    }
     if (loadFailed) return;
     if (!back && !validStep(draft, draft.step)) {
       setError("Please make your selection to continue.");
@@ -150,6 +162,7 @@ export default function OnboardingPage() {
     <main className="ob-shell ob-immersive" data-step={draft.step}>
       <header className="ob-header">
         <Link href="/">SOUL TRIBE</Link>
+        {designPreview && <nav aria-label="Design preview pages" className="ob-preview-nav"><span>Design preview · not saved</span>{[1,2,3,4,5].map(step => <button type="button" key={step} aria-label={`Preview question ${step}`} aria-current={draft.step === step ? 'step' : undefined} onClick={() => {setDraft({...draft,step});setError('');}}>{step}</button>)}</nav>}
         <div
           className="ob-petals"
           aria-label={`Question ${Math.min(draft.step, 5)} of 5${draft.step === 6 ? " complete. Profile details." : ""}`}
@@ -326,11 +339,11 @@ export default function OnboardingPage() {
                 ? "Saving…"
                 : draft.step === 6
                   ? "Keep my Early Read →"
-                  : "Continue →"}
+                  : designPreview && draft.step === 5 ? "Back to page 1 →" : "Continue →"}
             </button>
           </nav>
           <p className="ob-small">
-            Saved when you continue. Resume on this browser for 7 days.
+            {designPreview ? "Design preview only. Answers stay on this page and disappear on refresh." : "Saved when you continue. Resume on this browser for 7 days."}
           </p>
         </section>
       </div>

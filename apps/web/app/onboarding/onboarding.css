@@ -1,4 +1,9 @@
 /* Scoped to onboarding: shared signup/read styles remain unchanged. */
+.ob-preview-nav { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; max-width: 300px; letter-spacing: normal; }
+.ob-preview-nav span { width: 100%; text-align: right; font-size: 10px; }
+.ob-preview-nav button { min-width: 44px; min-height: 44px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; }
+.ob-preview-nav button[aria-current="step"] { background: rgba(255,255,255,.25); border-color: white; }
+.ob-immersive .ob-header:has(.ob-preview-nav) > .ob-petals { display: none; }
 .ob-immersive.ob-shell {
   position: relative;
   isolation: isolate;
