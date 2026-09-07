@@ -1,0 +1,7 @@
+# Bond keepsake artwork
+
+Mode: built-in imagegen. One original asset; no retries or variants. Integrated as `/images/bond-objects.jpg` with CSS background positioning, preserving all twelve original tiles.
+
+Prompt: High resolution portrait 1536×2048 texture atlas for twelve interactive website tiles. Exactly uniform 3-column by 4-row contact sheet, twelve square cells, each object group isolated and centered with generous padding on deep olive #292c21. Row 1: two ceramic coffee cups on linen coaster; vintage cassette with blank cream label; braided friendship bracelet on velvet. Row 2: glassine botanical envelope with pressed flower; brass compass on ochre fabric, marks only; vinyl record half slid from dusty blue sleeve. Row 3: ringbound flip calendar with blank cream page; fabric-covered journal with gingham spine; blank burnt sienna perforated admission tickets. Row 4: folded street map with red string, linework only; brass key with blank luggage tag; wooden embroidery hoop with visibly mended green fabric. Photoreal tactile top-down editorial scrapbook flatlay, worn edges, rich realistic textures, gentle consistent studio shadows. Exactly twelve groups, each contained in middle 70% of its cell. No text, letters, numbers, captions, logos, watermark, interface, gridlines, or borders.
+
+Original: /Users/amirahlim/.codex/generated_images/01a07d98-7ed2-73a1-bd7c-0ba9dccd37f6/exec-f7dc5702-e9c1-4dcc-8c27-229c16e06cbe.png
