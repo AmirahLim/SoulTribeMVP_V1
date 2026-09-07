@@ -16,7 +16,7 @@ import {
   groupChoices,
   INTENTS,
   OUTINGS,
-  TRAVEL,
+  AGE_BANDS,
   BaselineDraft,
   emptyDraft,
   isDraft,
@@ -107,7 +107,7 @@ export default function OnboardingPage() {
   async function advance(back = false) {
     if (designPreview) {
       setError('');
-      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 6 ? 1 : draft.step + 1});
+      setDraft({...draft, step: back ? Math.max(1, draft.step - 1) : draft.step === 7 ? 1 : draft.step + 1});
       return;
     }
   if (loadFailed) return;
@@ -287,36 +287,23 @@ export default function OnboardingPage() {
                 3–20 letters, numbers or underscores. Availability is confirmed
                 when you save your account.
               </p>
-              <label htmlFor="area">Where are you based?</label>
-              <input
-                id="area"
-                type="search"
-                list="singapore-areas"
-                autoComplete="off"
-                placeholder="Search your Singapore neighbourhood or area"
-                aria-describedby="area-help"
-                value={draft.area}
-                onChange={(e) => {
-                  const typed = e.target.value;
-                  const recognised = AREAS.find(a => a.toLowerCase() === typed.trim().toLowerCase());
-                  setDraft({ ...draft, area: recognised ?? typed });
-                }}
-              />
-              <datalist id="singapore-areas">
-                {AREAS.map(a => <option key={a} value={a} />)}
-              </datalist>
-              <p id="area-help">Choose an area from the list. No exact address needed.</p>
-              <label htmlFor="travel">How far are you happy to travel?</label>
-              <select
-                id="travel"
-                value={draft.travel}
-                onChange={(e) => setDraft({ ...draft, travel: e.target.value })}
-              >
-                <option value="">Choose your usual comfort zone</option>
-                {TRAVEL.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
+              <label htmlFor="age-band">Your age range</label>
+              <select id="age-band" value={draft.ageBand ?? ''} onChange={e=>setDraft({...draft,setupRevision:1,ageBand:e.target.value,ageOther:draft.ageOther??'',country:draft.country??'',travelKm:draft.travelKm??10})}>
+                <option value="">Choose your age range</option>
+                {AGE_BANDS.map(band=><option key={band}>{band}</option>)}
+                <option value="Other">Other — enter your age</option>
               </select>
+              {draft.ageBand==='Other' && <><label htmlFor="age-other">Your age (18+)</label><input id="age-other" type="number" min={18} max={120} step={1} inputMode="numeric" value={draft.ageOther??''} onChange={e=>setDraft({...draft,ageOther:e.target.value})} /></>}
+              <label htmlFor="area">Where are you based?</label>
+              <input id="area" maxLength={100} autoComplete="address-level2" value={draft.area} placeholder="Town, city or neighbourhood" onChange={e=>setDraft({...draft,area:e.target.value})} />
+              <label htmlFor="country">Country or region</label>
+              <input id="country" maxLength={80} autoComplete="country-name" value={draft.country??''} placeholder="e.g. Singapore, Malaysia, Australia" onChange={e=>setDraft({...draft,country:e.target.value})} />
+              <p>No exact address needed. This is self-reported, not a verified location.</p>
+              <label htmlFor="travel-km">How far are you willing to travel? <output htmlFor="travel-km">{draft.travelKm??10} km</output></label>
+              <input id="travel-km" type="range" min={1} max={50} step={1} value={draft.travelKm??10} onChange={e=>setDraft({...draft,travelKm:Number(e.target.value)})} />
+              <div className="ob-range-labels"><span>1 km</span><span>50 km</span></div>
+              <p>Your travel preference is saved. Distance-based filtering needs a mapped location.</p>
+              <p>You can add a profile photo after signing in.</p>
             </div>
           )}
           <p className="ob-insight" aria-live="polite">
@@ -349,7 +336,7 @@ export default function OnboardingPage() {
                 ? "Saving…"
                 : draft.step === 7
                   ? "Keep my Early Read →"
-                  : designPreview && draft.step === 6 ? "Back to page 1 →" : "Continue →"}
+                  : designPreview && draft.step === 6 ? "Preview profile details →" : "Continue →"}
             </button>
           </nav>
           {designPreview && <p className="ob-small">Design preview only. Answers are not saved.</p>}

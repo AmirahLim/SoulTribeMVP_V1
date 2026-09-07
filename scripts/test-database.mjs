@@ -233,6 +233,11 @@ const six={...draft,flowVersion:3,step:7,handle:'six_member',desiredQualities:['
 await db.exec("set role anon; set request.jwt.claim.sub='';");
 await db.query('select save_onboarding_draft($1,$2)',['c'.repeat(64),six]);
 const customStart={...six,intent:['Other'],intentOther:'A walking companion',clicks:['Other'],clicksOther:'We make things together'};
+const international = {...six,setupRevision:1,area:'Fitzroy',country:'Australia',ageBand:'25–34',ageOther:'',travelKm:50};
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[international])).rows[0].valid,true);
+for (const patch of [{ageBand:'Other',ageOther:'17'},{travelKm:51},{travelKm:1.5},{country:''},{ageBand:''}]) {
+ assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...international,...patch}])).rows[0].valid,false);
+}
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...six,desiredQualities:['Depth','Spiritual']}])).rows[0].valid,true);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[customStart])).rows[0].valid,true);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...customStart,intentOther:' '}])).rows[0].valid,false);
@@ -250,4 +255,20 @@ assert.equal((await db.query('select contact_frequency_expect from trait_communi
 assert.equal((await db.query('select planning_horizon from trait_social_rhythm where user_id=$1',[sixUser])).rows[0].planning_horizon,null);
 assert.equal((await db.query('select count(*)::int n from user_interests where user_id=$1',[sixUser])).rows[0].n,1);
 console.log('Passed six-question custom text preservation, canonical rhythm validation and unknown custom signal tests.');
+await db.exec('reset role');
+const identityUser='10000000-0000-4000-8000-000000000006';
+await db.query('insert into auth.users values($1)',[identityUser]);
+const identityDraft={...six,handle:'identity_member',setupRevision:1,area:'Fitzroy',country:'Australia',ageBand:'25–34',ageOther:'',travelKm:17};
+await db.query('select save_onboarding_draft($1,$2)',['d'.repeat(64),identityDraft]);
+await as(identityUser);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['d'.repeat(64),'Identity Member',1995]);
+const geography=(await db.query('select country,radius_km,radius_minutes from trait_geography where user_id=$1',[identityUser])).rows[0];
+assert.equal(geography.country,'Australia');assert.equal(geography.radius_km,17);assert.deepEqual(geography.radius_minutes,{});
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[identityUser])).rows[0].onboarding.baselineV2,identityDraft);
+await db.exec('reset role');
+for(const file of ['20260923000000_onboarding_identity.sql','20260924000000_ensure_private_avatars.sql']) {
+ await db.exec(await readFile(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'));
+}
+assert.equal((await db.query("select has_function_privilege('anon','claim_onboarding_draft(text,text,integer)','EXECUTE') allowed")).rows[0].allowed,false);
+console.log('Passed exact identity claim persistence, no travel-time substitution, and repeatable release migrations.');
 await db.close();

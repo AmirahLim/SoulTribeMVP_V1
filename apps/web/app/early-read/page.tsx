@@ -1,4 +1,5 @@
 "use client";
+import ProfilePhoto from './ProfilePhoto';
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -83,8 +84,7 @@ export default function EarlyRead() {
             <p className="ob-eyebrow">YOUR ACCOUNT DETAILS</p>
             <h1>A name to say hello to.</h1>
             <p>
-              Your answers are ready. Add your display name and birth year
-              to finish your adult member profile.
+              Your answers are ready. Add your display name to finish your profile.
             </p>
             <form className="ob-fields" onSubmit={save}>
               <label htmlFor="name">Display name</label>
@@ -119,6 +119,7 @@ export default function EarlyRead() {
             <>
               <p className="ob-eyebrow">YOUR EARLY READ</p>
               <h1>A little more you.</h1>
+              {user && <ProfilePhoto userId={user.id} />}
               <div
                 className="ob-bloom"
                 aria-label="Six answered areas form your first social signature"
