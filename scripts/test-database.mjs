@@ -232,6 +232,7 @@ await db.query('insert into auth.users values($1)',[sixUser]);
 const six={...draft,flowVersion:3,step:7,handle:'six_member',desiredQualities:['Other'],qualityOther:'Patient',outings:['Water Sports','Other'],outingOther:'Stargazing',connectionChoice:'Other',connectionOther:'When we have something to share',planningChoice:'Other',planningOther:'It depends',punctualityChoice:'On time',punctualityOther:'',contact:null,planning:null};
 await db.exec("set role anon; set request.jwt.claim.sub='';");
 await db.query('select save_onboarding_draft($1,$2)',['c'.repeat(64),six]);
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...six,punctualityChoice:'',punctualityOther:''}])).rows[0].valid,true);
 await fails('select save_onboarding_draft($1,$2)',/Invalid draft/,['c'.repeat(64),{...six,contact:1}]);
 await fails('select save_onboarding_draft($1,$2)',/Invalid draft/,['c'.repeat(64),{...six,qualityOther:'x'.repeat(121)}]);
 assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...six,qualityOther:' '}])).rows[0].valid,false);

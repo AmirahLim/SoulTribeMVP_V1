@@ -11,9 +11,10 @@ describe('Six question onboarding',()=>{
   expect(validStep({...d,outings:[...OUTINGS.slice(0,4),'Other'],outingOther:'Stargazing'},6)).toBe(true);
   expect(isDraft({...d,outings:[...OUTINGS.slice(0,5),'Other']})).toBe(false);
  });
- it('requires all three rhythm answers and keeps custom numeric signals unknown',()=>{
+ it('requires only contact and planning and keeps custom numeric signals unknown',()=>{
   let d={...emptyDraft(),connectionChoice:'Other',connectionOther:'Depends on the season',planningChoice:'Other',planningOther:'Let’s decide together',punctualityChoice:'Other',punctualityOther:'A quick heads-up helps'};
-  expect(validStep(d,5)).toBe(true);expect(validStep({...d,punctualityOther:''},5)).toBe(false);
+  expect(validStep(d,5)).toBe(true);expect(validStep({...d,punctualityChoice:'',punctualityOther:''},5)).toBe(true);
+  expect(validStep({...d,planningOther:''},5)).toBe(false);
   expect(canonicalRhythm(d).contact).toBeNull();expect(canonicalRhythm(d).planning).toBeNull();
   expect(canonicalRhythm({...d,connectionChoice:RHYTHM[0].choices[0],planningChoice:RHYTHM[1].choices[4]})).toMatchObject({contact:.75,planning:1});
  });

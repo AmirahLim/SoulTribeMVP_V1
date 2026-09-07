@@ -1,4 +1,5 @@
 /* Scoped to onboarding: shared signup/read styles remain unchanged. */
+.ob-context-line { font-size: 13px; font-weight: 300; line-height: 1.6; max-width: 490px; margin: 0 auto 16px; text-wrap: balance; color: white; }
 .ob-immersive[data-step="5"] .ob-photo::after, .ob-immersive[data-step="6"] .ob-photo::after { background: linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.48) 30%,rgba(0,0,0,.78) 100%); }
 @media(max-width:600px) { .ob-preview-nav { max-width: 150px; } }
 .ob-immersive[data-step="5"] .ob-content { max-width: 700px; }

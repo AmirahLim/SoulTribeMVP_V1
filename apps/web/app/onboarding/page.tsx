@@ -7,7 +7,7 @@ import { getUserProfile } from "../../lib/userStore";
 import {
   AREAS,
   CLICKS,
-  RHYTHM,
+  ACTIVE_RHYTHM as RHYTHM,
   upgradeDraft,
   canonicalRhythm,
   FRIEND_QUALITIES,
@@ -25,20 +25,28 @@ import {
 } from "../../lib/sixQuestionOnboarding";
 import "./onboarding.css";
 const titles = [
-  "What are you looking for right now?",
+  "What are you hoping to find here?",
   "When do you know you’re clicking?",
   "What’s your social sweet spot?",
   "What matters to you in a friendship?",
-  "What’s your social rhythm?",
+  "What’s your friendship rhythm?",
   "What gets you out of the house?",
   "Make it possible.",
+];
+const contextLines = [
+  'Because not everyone is looking for the same kind of friendship.',
+  'Shared interests can start a conversation. Chemistry is what makes you want another one.',
+  'The right people can feel completely different in the wrong setting.',
+  '',
+  'Sometimes the connection isn’t the problem. Life logistics are.',
+  'Because a good match means very little if you never actually meet.',
 ];
 const scenes = [
   "/onboarding-intent.jpg",
   "/onboarding-click.jpg",
   "/onboarding-group.jpg",
   "/onboarding-flow.jpg",
-  "/onboarding-click.jpg",
+  "/onboarding-friendship-rhythm.jpg",
   "/onboarding-outings.jpg",
   "/onboarding-group.jpg",
 ];
@@ -178,7 +186,7 @@ export default function OnboardingPage() {
   return (
     <main className="ob-shell ob-immersive" data-step={draft.step}>
       <header className="ob-header">
-        <div><Link href="/">SOUL TRIBE</Link><p className="ob-value-statement">Watch your social world take shape</p></div>
+        <Link href="/">SOUL TRIBE</Link>
         {designPreview && <nav aria-label="Design preview pages" className="ob-preview-nav"><span>Design preview · not saved</span>{[1,2,3,4,5,6].map(step => <button type="button" key={step} aria-label={`Preview question ${step}`} aria-current={draft.step === step ? 'step' : undefined} onClick={() => {setDraft({...draft,step});setError('');}}>{step}</button>)}</nav>}
         <div
           className="ob-petals"
@@ -213,12 +221,13 @@ export default function OnboardingPage() {
         <section className="ob-content" aria-labelledby="question-title">
           <p className="ob-eyebrow">
             {draft.step <= 6
-              ? `YOUR EARLY READ · ${draft.step} OF 6`
+              ? `YOUR SOCIAL WORLD TAKING SHAPE · ${draft.step} OF 6`
               : "YOUR HANDLE & NEIGHBOURHOOD"}
           </p>
           <h1 id="question-title" tabIndex={-1} ref={title}>
             {titles[draft.step - 1]}
           </h1>
+          {!!contextLines[draft.step - 1] && <p className="ob-context-line">{contextLines[draft.step - 1]}</p>}
           <p className="ob-helper">
             {draft.step <= 2
               ? "Pick up to 3."
@@ -226,7 +235,7 @@ export default function OnboardingPage() {
                 ? "Pick up to 2 settings where you feel most like yourself."
                 : draft.step === 4
                   ? "Pick up to 3."
-                  : draft.step === 5 ? "A little about staying connected, making plans and timing." : draft.step === 6
+                  : draft.step === 5 ? "" : draft.step === 6
                     ? "Pick up to 5 you’d be excited to join."
                     : "So people can find you, and plans can happen. Your area is used for practical fit."}
           </p>

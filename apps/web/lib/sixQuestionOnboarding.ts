@@ -6,6 +6,7 @@ export const RHYTHM = [
  {key:'planningChoice',other:'planningOther',title:'Making plans',prompt:'How much notice do you prefer?',choices:['Same day','1–2 days','A few days','About a week','1–2 weeks ahead']},
  {key:'punctualityChoice',other:'punctualityOther',title:'Punctuality',prompt:'What’s your vibe with timing?',choices:["I’m usually early",'On time','5–10 minutes either way is fine',"I’m pretty relaxed about timing"]},
 ] as const;
+export const ACTIVE_RHYTHM = RHYTHM.filter(r => r.key !== 'punctualityChoice');
 export type BaselineDraft = LegacyDraft & { flowVersion?:3; qualityOther?:string; outingOther?:string; connectionChoice?:string; connectionOther?:string; planningChoice?:string; planningOther?:string; punctualityChoice?:string; punctualityOther?:string; legacyAnswers?:LegacyDraft };
 export const emptyDraft = ():BaselineDraft => ({...legacyEmpty(),flowVersion:3,qualityOther:'',outingOther:'',connectionChoice:'',connectionOther:'',planningChoice:'',planningOther:'',punctualityChoice:'',punctualityOther:''});
 const textValid=(s:unknown)=>typeof s==='string' && s.length<=120 && !/[\u0000-\u001f\u007f]/.test(s);
@@ -23,7 +24,7 @@ export function validStep(d:BaselineDraft,step:number):boolean {
  if(d.flowVersion!==3)return legacyValid(d,step);
  if(step<=3)return legacyValid(d,step);
  if(step===4)return multi(d.desiredQualities,FRIEND_QUALITIES,d.qualityOther,3,true);
- if(step===5)return RHYTHM.every(r=>r.choices.includes(d[r.key] as never)||(d[r.key]==='Other'&&textValid(d[r.other])&&!!d[r.other]?.trim()));
+ if(step===5)return ACTIVE_RHYTHM.every(r=>r.choices.includes(d[r.key] as never)||(d[r.key]==='Other'&&textValid(d[r.other])&&!!d[r.other]?.trim()));
  if(step===6)return multi(d.outings,OUTINGS,d.outingOther,5,true);
  return legacyValid(d,6);
 }
