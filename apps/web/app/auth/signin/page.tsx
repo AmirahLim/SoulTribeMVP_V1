@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../../lib/authContext';
+import {claimOnboarding,OnboardingHandoffError} from '../../../lib/onboardingHandoff';
+import {isDraft,completeDraft} from '../../../lib/sixQuestionOnboarding';
 import { checkUserProfileExists, getUserProfileRecord, checkHandleAvailability } from '../../../lib/supabaseAuth';
 import { saveOnboardingToSupabase } from '../../../lib/supabaseOnboarding';
 import { deriveSuggestedHandle, validateHandle, setUserProfile, getUserProfile } from '../../../lib/userStore';
@@ -36,6 +38,7 @@ function LumaSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectPath = searchParams?.get('next') || searchParams?.get('redirect') || '/home';
+  const onboardingHandoff=redirectPath==='/home?onboarding=complete';
   const initialStepParam = searchParams?.get('step');
   const initialError = searchParams?.get('error');
 
@@ -56,7 +59,7 @@ function LumaSignInForm() {
     initialStepParam === 'choose_username' ? 'signup' : 'signup'
   );
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [isChooseUsernameStep, setIsChooseUsernameStep] = useState(initialStepParam === 'choose_username');
+  const [isChooseUsernameStep, setIsChooseUsernameStep] = useState(!onboardingHandoff&&initialStepParam === 'choose_username');
 
   // Method toggle for Email Password vs Email OTP
   const [usePasswordMode, setUsePasswordMode] = useState(true);
@@ -84,6 +87,52 @@ function LumaSignInForm() {
   const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
   const [otpSentSuccess, setOtpSentSuccess] = useState(false);
   const [otpSentEmail, setOtpSentEmail] = useState('');
+  const [confirmationMessage,setConfirmationMessage]=useState('');
+  const [pendingSaveUser,setPendingSaveUser]=useState<string|null>(null);
+  const [needsName,setNeedsName]=useState(false);
+  const saving=React.useRef(false);
+
+  async function keepSignupDetails() {
+    if(!onboardingHandoff)return true;
+    try {
+      const response=await fetch('/api/onboarding/draft',{cache:'no-store'});
+      if(!response.ok)throw new Error('Unable to load your saved answers. Please retry.');
+      const {draft,claimed}=await response.json();
+      if(!isDraft(draft)||!completeDraft(draft))throw new Error('Return to onboarding to complete your answers in this browser.');
+      if(authTab==='signup') {
+        const name=displayName.trim();
+        if(!name||name.length>80)throw new Error('Enter the display name you want on your profile.');
+        if(!claimed&&draft.displayName!==name) {
+          const saved=await fetch('/api/onboarding/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...draft,displayName:name})});
+          if(!saved.ok)throw new Error('Unable to save your display name with your answers. Please retry.');
+        }
+      }
+      return true;
+    }catch(error){setErrorMessage(error instanceof Error?error.message:'Unable to prepare your saved answers.');return false;}
+  }
+
+  async function finishOnboarding(userId:string) {
+    if(saving.current)return;
+    saving.current=true;setIsSubmitting(true);setErrorMessage(null);setPendingSaveUser(userId);
+    try {
+      await claimOnboarding({expectedUserId:userId,...(displayName.trim()?{displayName:displayName.trim()}:{})});
+      // Reload the authenticated app only after commit, so its account-scoped
+      // cache hydrates from the saved profile rather than the pre-claim snapshot.
+      window.location.assign('/home');
+    }catch(error){
+      if(error instanceof OnboardingHandoffError&&error.requiresDetails)setNeedsName(true);
+      setErrorMessage(error instanceof Error?error.message:'Your answers could not be saved. Please retry.');
+    }finally{saving.current=false;setIsSubmitting(false);}
+  }
+
+  useEffect(()=>{
+    if(!onboardingHandoff)return;
+    let active=true;
+    fetch('/api/onboarding/draft',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Unable to load your saved answers.');return r.json();}).then(data=>{
+      if(active&&isDraft(data.draft)&&data.draft.displayName)setDisplayName(previous=>previous||data.draft.displayName);
+    }).catch(error=>{if(active)setErrorMessage(error.message);});
+    return()=>{active=false;};
+  },[onboardingHandoff]);
 
   // 6-digit OTP code input state
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
@@ -150,12 +199,14 @@ function LumaSignInForm() {
     }
 
     if (verifiedUser) {
+      if(onboardingHandoff){await finishOnboarding(verifiedUser.id);return;}
       const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
       router.push(targetPath);
     }
   };
   // Read saved profile handle on load
   useEffect(() => {
+    if(onboardingHandoff)return;
     if (typeof window !== 'undefined') {
       const savedProfile = getUserProfile();
       if (savedProfile.handle) {
@@ -215,6 +266,7 @@ function LumaSignInForm() {
 
   // Handle post-auth routing checks for logged-in session
   useEffect(() => {
+    if(onboardingHandoff)return;
     if (user && !authLoading && !isChooseUsernameStep) {
       // The six-question flow owns profile creation and adult eligibility.
       // Never invoke legacy cached-profile backfill for an Early Read return.
@@ -310,6 +362,8 @@ function LumaSignInForm() {
 
     setIsSubmitting(true);
 
+    if(!await keepSignupDetails()){setIsSubmitting(false);return;}
+
     if (authTab === 'signup') {
       // SIGN UP FLOW
       if (usePasswordMode) {
@@ -319,7 +373,7 @@ function LumaSignInForm() {
           return;
         }
 
-        const { error, user: newUser } = await signUpWithPassword(trimmedEmail, password);
+        const { error, user: newUser,requiresEmailConfirmation } = await signUpWithPassword(trimmedEmail, password,onboardingHandoff?redirectPath:undefined);
         setIsSubmitting(false);
 
         if (error) {
@@ -334,6 +388,11 @@ function LumaSignInForm() {
         }
 
         if (newUser) {
+          if(onboardingHandoff) {
+            if(requiresEmailConfirmation)setConfirmationMessage('Check your email to confirm your account. Open the link in this browser; your answers will be saved before home opens.');
+            else await finishOnboarding(newUser.id);
+            return;
+          }
           setIsChooseUsernameStep(true);
         }
       } else {
@@ -373,6 +432,7 @@ function LumaSignInForm() {
         }
 
         if (loggedInUser) {
+          if(onboardingHandoff){await finishOnboarding(loggedInUser.id);return;}
           const targetPath = redirectPath === '/onboarding' ? '/home' : redirectPath;
           router.push(targetPath);
         }
@@ -670,7 +730,7 @@ function LumaSignInForm() {
                   {authTab === 'signup' ? 'Create your Soul Tribe account' : 'Welcome back to Soul Tribe'}
                 </h1>
                 <p className="mt-1 text-[13.5px] text-white/70">
-                  {authTab === 'signup'
+                  {onboardingHandoff ? 'Choose how to sign up or log in. Your Early Read and answers will be saved before you reach home.' : authTab === 'signup'
                     ? 'Sign up to connect with your tribe in Singapore.'
                     : 'Log in to view your outings and matches.'}
                 </p>
@@ -686,6 +746,8 @@ function LumaSignInForm() {
               )}
 
               {/* Google OAuth Button (At top of both modes) */}
+              {confirmationMessage&&<p role="status" className="mt-4 text-sm text-emerald-200">{confirmationMessage}</p>}
+              {onboardingHandoff&&pendingSaveUser&&<button type="button" disabled={isSubmitting} onClick={()=>void finishOnboarding(pendingSaveUser)} className="mt-4 w-full rounded-xl border border-white/30 p-3">Retry saving my Early Read</button>}
               <div className="mt-5">
                 <button
                   type="button"
@@ -741,6 +803,12 @@ function LumaSignInForm() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
+                {onboardingHandoff&&(authTab==='signup'||needsName)&&<div>
+                  <label htmlFor="onboarding-display-name" className="block text-[13.5px] font-semibold text-white mb-2">Display name for email signup</label>
+                  <input id="onboarding-display-name" type="text" autoComplete="nickname" maxLength={80} required value={displayName} onChange={e=>setDisplayName(e.target.value)} className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/60" />
+                  <p className="mt-1 text-xs text-white/60">Google supplies your name when you choose Google. Your age check and handle are already part of onboarding.</p>
+                  {needsName&&<a href="/onboarding" className="text-sm underline">Review my onboarding details</a>}
+                </div>}
                 <div>
                   <label htmlFor="auth-email-input" className="block text-[13px] font-semibold text-white mb-1.5">
                     Email Address

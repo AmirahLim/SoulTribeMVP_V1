@@ -13,7 +13,7 @@ import {claimOnboarding,OnboardingHandoffError} from '../../lib/onboardingHandof
 import '../onboarding/onboarding.css';
 import './early-read.css';
 export default function EarlyRead() {
- const {user,loading,signInWithGoogle}=useAuth();
+ const {user,loading}=useAuth();
  const router=useRouter();
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
  const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
@@ -91,22 +91,21 @@ export default function EarlyRead() {
    await hydrateProfile(user.id);setDraft(committed);setSaved(true);setNeedsDetails(false);
   }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
  }
- async function continueWithGoogle() {
+ async function openSignInChoices() {
   setBusy(true);setError('');
   try {
    const response=await fetch('/api/onboarding/eligibility',{cache:'no-store'});
    const eligibility=await response.json();
    if(!response.ok)throw new Error(eligibility.error||'Unable to load your age check. Please retry.');
    if(!eligibility.birthYear){router.push('/onboarding');return;}
-   const result=await signInWithGoogle('/home?onboarding=complete');
-   if(result.error)throw result.error;
-  }catch(e){setError(e instanceof Error?e.message:'Google sign-in could not start. Please retry.');}
+   router.push('/auth/signin?next=%2Fhome%3Fonboarding%3Dcomplete');
+  }catch(e){setError(e instanceof Error?e.message:'Sign-in options could not open. Please retry.');}
   finally{setBusy(false);}
  }
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
  {draft&&<><EarlyReadAlbum draft={draft}/>
- {!saved&&!needsDetails?<><p>Your Early Read is ready. Continue with Google to save it to your profile and meet people. We’ll use your Google display name; you can edit it later.</p><button className="ob-primary" disabled={busy} onClick={()=>void continueWithGoogle()}>{busy?'Opening Google…':'Save Early Read'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!saved&&!needsDetails?<><p>Your Early Read is ready. Save it to your profile, then meet people. Choose how to sign up or log in on the next page.</p><button className="ob-primary" disabled={busy} onClick={()=>void openSignInChoices()}>{busy?'Opening sign-in…':'Save Early Read'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/onboarding">Complete your private age check in onboarding →</Link>}
  <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><Link className="ob-primary" href="/home">Continue to home →</Link>{user&&<ProfilePhoto userId={user.id}/>}<Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}

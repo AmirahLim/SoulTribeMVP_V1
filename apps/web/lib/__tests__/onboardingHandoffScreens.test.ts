@@ -51,14 +51,15 @@ it('shows failed handoff and retry, never a saved profile or matches link',async
  expect(rendered).not.toContain('Your answers are saved to your profile.');expect(rendered).not.toContain('See who I might click with');
  expect(mocks.hydrate).not.toHaveBeenCalled();
 });
-it('keeps anonymous answers as drafts and starts Google directly with home handoff',async()=>{
+it('keeps anonymous answers as drafts and opens signup choices with home handoff',async()=>{
  mocks.user=null;const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
  expect(calls).not.toContain('POST /api/onboarding/claim');
  expect(tree!.root.findAllByType('a').some(a=>a.props.href==='/join')).toBe(false);
  expect(tree!.root.findAllByType('input')).toHaveLength(0);
  const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!;
  await act(async()=>{await button.props.onClick();});
- expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
+ expect(mocks.google).not.toHaveBeenCalled();
+ expect(mocks.push).toHaveBeenCalledWith('/auth/signin?next=%2Fhome%3Fonboarding%3Dcomplete');
 });
 it('returns a guest without the age receipt to onboarding before Google',async()=>{
  mocks.user=null;requests();
@@ -99,18 +100,20 @@ it('a signed-in failed final submission stays editable and never navigates',asyn
  await act(async()=>{await button.props.onClick();});
  expect(mocks.push).not.toHaveBeenCalled();expect(JSON.stringify(tree!.toJSON())).toContain('We could not save your answers');
 });
-it('signed-in preview also waits for Save Early Read and opens Google rather than auto-saving',async()=>{
+it('signed-in preview also waits for Save Early Read and opens auth choices rather than auto-saving',async()=>{
  const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
  expect(calls).not.toContain('POST /api/onboarding/claim');expect(mocks.hydrate).not.toHaveBeenCalled();
  const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!;
  await act(async()=>{await button.props.onClick();});
- expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
+ expect(mocks.google).not.toHaveBeenCalled();
+ expect(mocks.push).toHaveBeenCalledWith('/auth/signin?next=%2Fhome%3Fonboarding%3Dcomplete');
  expect(calls).not.toContain('POST /api/onboarding/claim');
 });
-it('Google launch failure remains visible and never claims the draft or opens home',async()=>{
- mocks.google.mockResolvedValue({error:new Error('Google sign-in could not start')});
- const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
+it('eligibility failure remains visible and never claims the draft or opens auth',async()=>{
+ const calls=requests();const base=fetch;
+ vi.stubGlobal('fetch',vi.fn((url:string,init?:RequestInit)=>url==='/api/onboarding/eligibility'?Promise.resolve(Response.json({error:'Age check unavailable'},{status:503})):base(url,init)));
+ await act(async()=>{tree=create(React.createElement(EarlyRead));});
  await act(async()=>{await tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!.props.onClick();});
- expect(JSON.stringify(tree!.toJSON())).toContain('Google sign-in could not start');
+ expect(JSON.stringify(tree!.toJSON())).toContain('Age check unavailable');expect(mocks.push).not.toHaveBeenCalled();
  expect(calls).not.toContain('POST /api/onboarding/claim');expect(mocks.replace).not.toHaveBeenCalled();
 });

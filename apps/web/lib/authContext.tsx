@@ -14,7 +14,7 @@ export interface AuthContextType {
   signInWithOtp: (email: string, redirectToPath?: string) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null; user: User | null }>;
   signInWithGoogle: (redirectToPath?: string) => Promise<{ error: Error | null }>;
-  signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
+  signUpWithPassword: (email: string, password: string, redirectToPath?: string) => Promise<{ error: Error | null; user: User | null; requiresEmailConfirmation?: boolean }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null; user: User | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -140,8 +140,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithPassword = async (
     email: string,
-    password: string
-  ): Promise<{ error: Error | null; user: User | null }> => {
+    password: string,
+    redirectToPath?: string
+  ): Promise<{ error: Error | null; user: User | null; requiresEmailConfirmation?: boolean }> => {
     if (password.length < 8) {
       return { error: new Error('Password must be at least 8 characters long.'), user: null };
     }
@@ -151,13 +152,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error: signUpErr } = await client.auth.signUp({
         email: email.trim(),
         password,
+        ...(redirectToPath?{options:{emailRedirectTo:`${getSiteBaseUrl()}/auth/callback?next=${encodeURIComponent(redirectToPath)}`}}:{}),
       });
 
       if (signUpErr) {
         return { error: new Error(signUpErr.message), user: null };
       }
 
-      return { error: null, user: data.user };
+      return { error: null, user: data.user, requiresEmailConfirmation:!data.session };
     } catch (err: any) {
       return { error: err instanceof Error ? err : new Error(String(err)), user: null };
     }
