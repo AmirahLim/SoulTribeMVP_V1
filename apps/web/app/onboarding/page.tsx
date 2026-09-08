@@ -146,7 +146,7 @@ export default function OnboardingPage() {
         const check=await checkHandleAvailability(draft.handle,user?.id);
         if(!check.available)throw new Error(check.message||'Choose an available username.');
       }
-      const payload=JSON.stringify(canonicalRhythm(next));
+      const payload=JSON.stringify({...canonicalRhythm(next), answerContractVersion:1, submittedStep:back ? null : draft.step});
       // Retrying a failed claim must use its original draft receipt. Do not
       // create a second draft when the database committed but the reply was lost.
       if(lastPersisted.current!==payload) {

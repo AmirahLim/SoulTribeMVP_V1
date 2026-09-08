@@ -98,14 +98,17 @@ vi.mock('@supabase/supabase-js', () => ({
         return { data: { user: null }, error: new Error('Invalid token') };
       }),
     },
-    from: vi.fn(() => ({
+    from: vi.fn((table:string) => table==='match_explanations' ? {
+      select:()=>({eq:()=>({in:async()=>({data:[],error:null})})}),
+      upsert:async()=>({error:null}),
+    } : ({
       select: vi.fn((selection:string) => ({
         or: vi.fn(async () => ({ data: [], error: null })),
         in: vi.fn(async (_col: string, ids: string[]) => {
           schemaState.selections.push(selection);
           if(schemaState.error && selection.includes('is_demo,')) return {data:null,error:schemaState.error};
           const profiles = mockDbProfiles.filter((p) => ids.includes(p.id));
-          return { data: profiles.map(p=>({...p,is_demo:schemaState.demo && p.id.endsWith('0002')})), error: null };
+          return { data: profiles.map(p=>({...p,profile_version:1,explanation_revision:0,is_demo:schemaState.demo && p.id.endsWith('0002')})), error: null };
         }),
       })),
     })),

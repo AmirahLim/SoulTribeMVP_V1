@@ -4,6 +4,7 @@ import { getRankedMatches, RankedMatch } from '../matching';
 import { POST } from '../../app/api/matches/route';
 import { NextRequest } from 'next/server';
 import { evaluateGates } from '@soul-tribe/core';
+const cacheTestState=vi.hoisted(()=>({extra:0,writes:[] as any[]}));
 
 vi.mock('../supabase', () => ({
   checkIsSupabaseConfigured: () => true,
@@ -34,6 +35,10 @@ vi.mock('@supabase/supabase-js', () => {
           })),
         },
         from: (table: string) => {
+          if (table === 'match_explanations') return {
+            select:()=>({eq:()=>({in:async()=>({data:[],error:null})})}),
+            upsert:async(rows:any[])=>{cacheTestState.writes.push(...rows);return {error:null};},
+          };
           if (table === 'blocks') {
             return {
               select: () => ({
@@ -116,8 +121,9 @@ vi.mock('@supabase/supabase-js', () => {
                         user_values: [{ value_key: 'Authenticity' }],
                       },
                     ];
+            rows.push(...Array.from({length:cacheTestState.extra},(_,i)=>({...rows[1],id:'extra-candidate-'+i})));
             const q: any = {
-              eq: (key: string, value: any) => { rows = rows.filter(r => r[key] === value); return q; },
+              eq: (key: string, value: any) => { rows = rows.filter(r => r[key] === value).map(r=>({...r,profile_version:1,explanation_revision:0})); return q; },
               limit: async () => ({ data: rows, error: null }),
               maybeSingle: async () => ({ data: rows[0] || null, error: null }),
             };
@@ -142,6 +148,7 @@ describe('Server-Side Matching & Privacy Protections (Step 6b)', () => {
   const oldEnv = process.env;
 
   beforeEach(() => {
+    cacheTestState.extra=0;cacheTestState.writes=[];
     process.env = {
       ...oldEnv,
       NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
@@ -347,6 +354,20 @@ describe('Server-Side Matching & Privacy Protections (Step 6b)', () => {
     expect(gateRes.reasons).toContain('AGE_PREFERENCE_MISMATCH');
   });
 
+  it('shortlists before generating explanations and exposes aggregate timing',async()=>{
+    cacheTestState.extra=10;
+    const res=await POST(new NextRequest('http://localhost/api/matches',{
+      method:'POST',headers:{Authorization:'Bearer valid_token'},body:JSON.stringify({limit:2}),
+    }));
+    expect(res.status).toBe(200);
+    const returned=await res.json();
+    expect(returned).toHaveLength(2);
+    expect(cacheTestState.writes).toHaveLength(2);
+    expect(cacheTestState.writes.map(row=>row.user_b)).toEqual(returned.map((row:any)=>row.id));
+    expect(res.headers.get('X-Match-Eligible')).toBe('11');
+    expect(res.headers.get('X-Match-Generated')).toBe('2');
+    expect(res.headers.get('Server-Timing')).toContain('scoring;dur=');
+  });
   it('7. Unconfigured env variables return 500 naming missing variables', async () => {
     delete process.env.SUPABASE_SECRET_KEY;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;

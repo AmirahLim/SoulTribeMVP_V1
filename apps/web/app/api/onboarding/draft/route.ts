@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== request.nextUrl.origin)
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   const body = await request.text();
-  if (body.length > 8192)
+  if (body.length > 32768)
     return NextResponse.json({ error: "Too large" }, { status: 413 });
   let draft: unknown;
   try {

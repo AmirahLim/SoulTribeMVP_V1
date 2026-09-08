@@ -1,0 +1,456 @@
+[
+  {
+    "questionId": "friendship.intent",
+    "questionVersion": 1,
+    "step": 1,
+    "questionText": "What are you hoping to find here?",
+    "fields": [
+      "intent"
+    ],
+    "customField": "intentOther",
+    "options": [
+      {
+        "optionId": "friendship.intent.01",
+        "value": "Close circle",
+        "label": "Close circle"
+      },
+      {
+        "optionId": "friendship.intent.02",
+        "value": "People to do things with",
+        "label": "People to do things with"
+      },
+      {
+        "optionId": "friendship.intent.03",
+        "value": "Real conversations",
+        "label": "Real conversations"
+      },
+      {
+        "optionId": "friendship.intent.04",
+        "value": "Wider social circle",
+        "label": "Wider social circle"
+      },
+      {
+        "optionId": "friendship.intent.05",
+        "value": "New perspectives",
+        "label": "New perspectives"
+      },
+      {
+        "optionId": "friendship.intent.06",
+        "value": "Sense of community",
+        "label": "Sense of community"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.clicks",
+    "questionVersion": 1,
+    "step": 2,
+    "questionText": "When do you know you’re clicking?",
+    "fields": [
+      "clicks"
+    ],
+    "customField": "clicksOther",
+    "options": [
+      {
+        "optionId": "friendship.clicks.01",
+        "value": "We skip the small talk",
+        "label": "We skip the small talk"
+      },
+      {
+        "optionId": "friendship.clicks.02",
+        "value": "Our humour just lands",
+        "label": "Our humour just lands"
+      },
+      {
+        "optionId": "friendship.clicks.03",
+        "value": "We share niche rabbit holes",
+        "label": "We share niche rabbit holes"
+      },
+      {
+        "optionId": "friendship.clicks.04",
+        "value": "They make me think differently",
+        "label": "They make me think differently"
+      },
+      {
+        "optionId": "friendship.clicks.05",
+        "value": "Comfortable silence feels easy",
+        "label": "Comfortable silence feels easy"
+      },
+      {
+        "optionId": "friendship.clicks.06",
+        "value": "We actually make plans happen",
+        "label": "We actually make plans happen"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.setting",
+    "questionVersion": 1,
+    "step": 3,
+    "questionText": "What’s your social sweet spot?",
+    "fields": [
+      "groupChoices"
+    ],
+    "customField": null,
+    "options": [
+      {
+        "optionId": "friendship.setting.01",
+        "value": "1:1",
+        "label": "1:1"
+      },
+      {
+        "optionId": "friendship.setting.02",
+        "value": "Small circle",
+        "label": "Small circle"
+      },
+      {
+        "optionId": "friendship.setting.03",
+        "value": "Social mix",
+        "label": "Social mix"
+      },
+      {
+        "optionId": "friendship.setting.04",
+        "value": "Big energy",
+        "label": "Big energy"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.qualities",
+    "questionVersion": 1,
+    "step": 4,
+    "questionText": "What matters to you in a friendship?",
+    "fields": [
+      "desiredQualities"
+    ],
+    "customField": "qualityOther",
+    "options": [
+      {
+        "optionId": "friendship.qualities.01",
+        "value": "Curious",
+        "label": "Curious"
+      },
+      {
+        "optionId": "friendship.qualities.02",
+        "value": "Reliable",
+        "label": "Reliable"
+      },
+      {
+        "optionId": "friendship.qualities.03",
+        "value": "Emotionally open",
+        "label": "Emotionally open"
+      },
+      {
+        "optionId": "friendship.qualities.04",
+        "value": "Playful",
+        "label": "Playful"
+      },
+      {
+        "optionId": "friendship.qualities.05",
+        "value": "Thoughtful",
+        "label": "Thoughtful"
+      },
+      {
+        "optionId": "friendship.qualities.06",
+        "value": "Independent",
+        "label": "Independent"
+      },
+      {
+        "optionId": "friendship.qualities.07",
+        "value": "Adventurous",
+        "label": "Adventurous"
+      },
+      {
+        "optionId": "friendship.qualities.08",
+        "value": "Open-minded",
+        "label": "Open-minded"
+      },
+      {
+        "optionId": "friendship.qualities.09",
+        "value": "Proactive",
+        "label": "Proactive"
+      },
+      {
+        "optionId": "friendship.qualities.10",
+        "value": "Free-spirit",
+        "label": "Free-spirit"
+      },
+      {
+        "optionId": "friendship.qualities.11",
+        "value": "Ambitious",
+        "label": "Ambitious"
+      },
+      {
+        "optionId": "friendship.qualities.12",
+        "value": "Depth",
+        "label": "Depth"
+      },
+      {
+        "optionId": "friendship.qualities.13",
+        "value": "Spiritual",
+        "label": "Spiritual"
+      },
+      {
+        "optionId": "friendship.qualities.14",
+        "value": "Other",
+        "label": "Other +"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.contact",
+    "questionVersion": 1,
+    "step": 5,
+    "questionText": "Staying connected",
+    "fields": [
+      "connectionChoice"
+    ],
+    "customField": "connectionOther",
+    "options": [
+      {
+        "optionId": "friendship.contact.01",
+        "value": "A few times a week",
+        "label": "A few times a week"
+      },
+      {
+        "optionId": "friendship.contact.02",
+        "value": "About once a week",
+        "label": "About once a week"
+      },
+      {
+        "optionId": "friendship.contact.03",
+        "value": "Every couple of weeks",
+        "label": "Every couple of weeks"
+      },
+      {
+        "optionId": "friendship.contact.04",
+        "value": "Weeks/Months can pass, we’re still good",
+        "label": "Weeks/Months can pass, we’re still good"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.planning",
+    "questionVersion": 1,
+    "step": 5,
+    "questionText": "Making plans — How much notice do you prefer?",
+    "fields": [
+      "planningChoice"
+    ],
+    "customField": "planningOther",
+    "options": [
+      {
+        "optionId": "friendship.planning.01",
+        "value": "Same day",
+        "label": "Same day"
+      },
+      {
+        "optionId": "friendship.planning.02",
+        "value": "1–2 days",
+        "label": "1–2 days"
+      },
+      {
+        "optionId": "friendship.planning.03",
+        "value": "A few days",
+        "label": "A few days"
+      },
+      {
+        "optionId": "friendship.planning.04",
+        "value": "About a week",
+        "label": "About a week"
+      },
+      {
+        "optionId": "friendship.planning.05",
+        "value": "1–2 weeks ahead",
+        "label": "1–2 weeks ahead"
+      }
+    ]
+  },
+  {
+    "questionId": "friendship.outings",
+    "questionVersion": 1,
+    "step": 6,
+    "questionText": "What gets you out of the house?",
+    "fields": [
+      "outings"
+    ],
+    "customField": "outingOther",
+    "options": [
+      {
+        "optionId": "friendship.outings.01",
+        "value": "Specialty Coffee",
+        "label": "Specialty Coffee"
+      },
+      {
+        "optionId": "friendship.outings.02",
+        "value": "Food Hunts",
+        "label": "Food Hunts"
+      },
+      {
+        "optionId": "friendship.outings.03",
+        "value": "Ideas & Deep Dives",
+        "label": "Ideas & Deep Dives"
+      },
+      {
+        "optionId": "friendship.outings.04",
+        "value": "Drinks & Bar Hopping",
+        "label": "Drinks & Bar Hopping"
+      },
+      {
+        "optionId": "friendship.outings.05",
+        "value": "Indie Cinema",
+        "label": "Indie Cinema"
+      },
+      {
+        "optionId": "friendship.outings.06",
+        "value": "Pottery & Making",
+        "label": "Pottery & Making"
+      },
+      {
+        "optionId": "friendship.outings.07",
+        "value": "Vinyl & Analog Culture",
+        "label": "Vinyl & Analog Culture"
+      },
+      {
+        "optionId": "friendship.outings.08",
+        "value": "Nature & Hiking",
+        "label": "Nature & Hiking"
+      },
+      {
+        "optionId": "friendship.outings.09",
+        "value": "Live Music & Gigs",
+        "label": "Live Music & Gigs"
+      },
+      {
+        "optionId": "friendship.outings.10",
+        "value": "Games Nights",
+        "label": "Games Nights"
+      },
+      {
+        "optionId": "friendship.outings.11",
+        "value": "Beach & Island Days",
+        "label": "Beach & Island Days"
+      },
+      {
+        "optionId": "friendship.outings.12",
+        "value": "Photo Walks",
+        "label": "Photo Walks"
+      },
+      {
+        "optionId": "friendship.outings.13",
+        "value": "Parties & Nightlife",
+        "label": "Parties & Nightlife"
+      },
+      {
+        "optionId": "friendship.outings.14",
+        "value": "Water Sports",
+        "label": "Water Sports"
+      },
+      {
+        "optionId": "friendship.outings.15",
+        "value": "Sports & Fitness",
+        "label": "Sports & Fitness"
+      },
+      {
+        "optionId": "friendship.outings.16",
+        "value": "Other",
+        "label": "+ Something Else"
+      }
+    ]
+  },
+  {
+    "questionId": "context.life_phase",
+    "questionVersion": 1,
+    "step": 7,
+    "questionText": "Life phase",
+    "fields": [
+      "lifeContexts"
+    ],
+    "customField": null,
+    "options": [
+      {
+        "optionId": "context.life_phase.01",
+        "value": "Building My Career",
+        "label": "Building My Career"
+      },
+      {
+        "optionId": "context.life_phase.02",
+        "value": "Building Something of My Own",
+        "label": "Building Something of My Own"
+      },
+      {
+        "optionId": "context.life_phase.03",
+        "value": "Adventure Era",
+        "label": "Adventure Era"
+      },
+      {
+        "optionId": "context.life_phase.04",
+        "value": "Wild & Free",
+        "label": "Wild & Free"
+      },
+      {
+        "optionId": "context.life_phase.05",
+        "value": "Slow Living",
+        "label": "Slow Living"
+      },
+      {
+        "optionId": "context.life_phase.06",
+        "value": "Settling Into Stability",
+        "label": "Settling Into Stability"
+      },
+      {
+        "optionId": "context.life_phase.07",
+        "value": "Family Life",
+        "label": "Family Life"
+      },
+      {
+        "optionId": "context.life_phase.08",
+        "value": "Travel & Exploring",
+        "label": "Travel & Exploring"
+      },
+      {
+        "optionId": "context.life_phase.09",
+        "value": "Reinvention/Healing",
+        "label": "Reinvention/Healing"
+      },
+      {
+        "optionId": "context.life_phase.10",
+        "value": "Running on Empty",
+        "label": "Running on Empty"
+      },
+      {
+        "optionId": "context.life_phase.11",
+        "value": "More Time, More Freedom",
+        "label": "More Time, More Freedom"
+      },
+      {
+        "optionId": "context.life_phase.12",
+        "value": "Figuring It Out",
+        "label": "Figuring It Out"
+      }
+    ]
+  },
+  {
+    "questionId": "context.location",
+    "questionVersion": 1,
+    "step": 7,
+    "questionText": "Where are you based? / Country or region",
+    "fields": [
+      "area",
+      "country"
+    ],
+    "customField": null,
+    "options": []
+  },
+  {
+    "questionId": "context.travel",
+    "questionVersion": 1,
+    "step": 7,
+    "questionText": "How far are you willing to travel?",
+    "fields": [
+      "travelKm"
+    ],
+    "customField": null,
+    "options": []
+  }
+]

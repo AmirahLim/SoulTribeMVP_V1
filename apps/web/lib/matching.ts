@@ -81,7 +81,7 @@ export const realCandidateSource: ScoredMatchSource = {
 
       const res = await fetch('/api/matches', {
         method: 'POST',
-        body: JSON.stringify({ activityCategory: _opts?.activityCategory }),
+        body: JSON.stringify({ activityCategory: _opts?.activityCategory, limit: _opts?.limit }),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -95,6 +95,10 @@ export const realCandidateSource: ScoredMatchSource = {
       }
 
       const matches: RankedMatch[] = await res.json();
+      console.info('[SoulTribe] matches timing', {
+        serverTiming:res.headers?.get('Server-Timing'),cacheHits:res.headers?.get('X-Match-Cache-Hits'),
+        generated:res.headers?.get('X-Match-Generated'),returned:matches.length,
+      });
       return matches;
     } catch (err: any) {
       console.error('[SoulTribe] candidate query exception:', err?.message || err);

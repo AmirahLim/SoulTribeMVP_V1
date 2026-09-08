@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import {
   score,
   softGate,
-  generateMatchExplanation,
   getGenderAvatarForName,
   buildMatchSurfacedEvent,
   recordEvent,
@@ -12,6 +11,7 @@ import type { MatchContext } from '@soul-tribe/core';
 import { reflectionBoost, REFLECTION_RANKING_VERSION } from '../../../lib/reflectionRanking';
 import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import { toProfileVector } from '../../../lib/profileAdapter';
+import { getMatchExplanations } from '../../../lib/matchExplanationCache';
 
 export const runtime = 'nodejs';
 
@@ -33,6 +33,7 @@ function getFitLabel(
 }
 
 export async function POST(req: NextRequest) {
+  const requestStarted = performance.now();
   // 1. Authenticate caller using Authorization header or session token
   const authHeader = req.headers.get('authorization');
   const token = authHeader ? authHeader.replace('Bearer ', '').trim() : null;
@@ -77,25 +78,10 @@ export async function POST(req: NextRequest) {
       auth: { persistSession: false },
     });
 
-    // Part 3: Load viewer's blocks and reports in both directions
-    const { data: blocks, error: blockErr } = await adminClient
-      .from('blocks')
-      .select('blocker_id, blocked_id')
-      .or(`blocker_id.eq.${authUserId},blocked_id.eq.${authUserId}`);
-
-    const { data: reports, error: reportErr } = await adminClient
-      .from('reports')
-      .select('reporter_id, reported_id')
-      .or(`reporter_id.eq.${authUserId},reported_id.eq.${authUserId}`);
-
-    if (blockErr || reportErr) {
-      console.error('[SoulTribe API] Failed to load blocks/reports:', blockErr || reportErr);
-      return NextResponse.json({ error: 'Failed to verify safety blocks' }, { status: 500 });
-    }
-
-    // Part 4.2: Cap to 200 profiles and select specific columns
     const profileSelection = `
         id,
+        profile_version,
+        explanation_revision,
         display_name,
         avatar_url,
         home_area,
@@ -117,11 +103,25 @@ export async function POST(req: NextRequest) {
         user_interests (*, interest_nodes (name,path)),
         user_values (*)
       `;
-    const { data: dbProfiles, error: fetchErr } = await adminClient
-      .from('profiles')
-      .select(profileSelection)
-      .eq('status', 'active')
-      .limit(200);
+    // These authenticated reads are independent: avoid serial database round trips.
+    const [
+      {data:blocks,error:blockErr}, {data:reports,error:reportErr},
+      {data:dbProfiles,error:fetchErr}, {data:viewerRow,error:viewerError},
+      {data:learningPreference,error:preferenceError},
+    ] = await Promise.all([
+      adminClient.from('blocks').select('blocker_id,blocked_id').or(`blocker_id.eq.${authUserId},blocked_id.eq.${authUserId}`),
+      adminClient.from('reports').select('reporter_id,reported_id').or(`reporter_id.eq.${authUserId},reported_id.eq.${authUserId}`),
+      adminClient.from('profiles').select(profileSelection).eq('status','active').limit(200),
+      adminClient.from('profiles').select(profileSelection).eq('id',authUserId).eq('status','active').maybeSingle(),
+      adminClient.from('recommendation_preferences').select('use_reflections').eq('user_id',authUserId).maybeSingle(),
+    ]);
+
+    if (blockErr || reportErr) {
+      console.error('[SoulTribe API] Failed to load blocks/reports:', blockErr || reportErr);
+      return NextResponse.json({ error: 'Failed to verify safety blocks' }, { status: 500 });
+    }
+
+    // Part 4.2: Cap to 200 profiles and select specific columns
 
     if (fetchErr) {
       console.error('[SoulTribe API] Database query error:', fetchErr);
@@ -147,6 +147,9 @@ export async function POST(req: NextRequest) {
     const candidatesPool = nonDemoProfiles.filter((p) => p.id !== authUserId);
 
     const body = await req.json().catch(() => ({}));
+    const resultLimit = body.limit ?? 20;
+    if (!Number.isInteger(resultLimit) || resultLimit < 1 || resultLimit > 200)
+      return NextResponse.json({error:'Match limit must be an integer from 1 to 200'}, {status:400});
     const allowedCategories = ['coffee', 'dining', 'active', 'cultural', 'nightlife', 'creative', 'intellectual'];
     if (body.activityCategory && !allowedCategories.includes(body.activityCategory)) return NextResponse.json({ error: 'Unknown activity category' }, { status: 400 });
     const context: MatchContext = {
@@ -158,7 +161,6 @@ export async function POST(req: NextRequest) {
     };
 
     // 3. Find viewer profile
-    const { data: viewerRow, error: viewerError } = await adminClient.from('profiles').select(profileSelection).eq('id', authUserId).eq('status', 'active').maybeSingle();
     if (viewerError) return NextResponse.json({ error: 'Unable to load your profile' }, { status: 503 });
     if (!viewerRow) {
       return NextResponse.json([], { status: 200 });
@@ -166,11 +168,6 @@ export async function POST(req: NextRequest) {
 
     const viewerVec = toProfileVector(adaptRowToUserData(viewerRow), authUserId);
 
-    const { data: learningPreference, error: preferenceError } = await adminClient
-      .from('recommendation_preferences')
-      .select('use_reflections')
-      .eq('user_id', authUserId)
-      .maybeSingle();
     if (preferenceError) {
       console.error('[SoulTribe API] recommendation_preferences query failed:', {
         code: preferenceError.code,
@@ -195,7 +192,8 @@ export async function POST(req: NextRequest) {
       }
       ownReflections = data || [];
     }
-    // 4. Candidate Scoring & Explanation
+    // Rank every eligible candidate before generating display copy.
+    const scoringStarted = performance.now();
     const candidates = candidatesPool;
     const rankedMatches = [];
     const candidateVecMap = new Map();
@@ -208,7 +206,6 @@ export async function POST(req: NextRequest) {
       const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
       if (!softRes.eligible) continue;
 
-      const explanation = generateMatchExplanation({ ...viewerVec, values: viewerVec.values?.filter(v => v.visibility === 'public') }, { ...candVec, values: candVec.values?.filter(v => v.visibility === 'public') });
 
       candidateVecMap.set(candRow.id, candVec);
       matchResMap.set(candRow.id, matchRes);
@@ -223,8 +220,6 @@ export async function POST(req: NextRequest) {
         rankScore: Math.min(1, softRes.adjustedScore + reflectionBoost(Boolean(learningPreference?.use_reflections), candRow.id, ownReflections)),
         resonance: matchRes.resonance,
         logistics: matchRes.logistics,
-        clickText: explanation.click_text,
-        rubText: explanation.friction_text,
         fitLabel: getFitLabel(softRes.adjustedScore, softRes.provisional, Math.min(viewerVec.profile.confidence, candVec.profile.confidence)),
         provisional: softRes.provisional,
         isDemo: false,
@@ -232,10 +227,19 @@ export async function POST(req: NextRequest) {
     }
 
     rankedMatches.sort((a, b) => b.rankScore - a.rankScore);
+    const scoringMs = performance.now()-scoringStarted;
+    const shortlisted = rankedMatches.slice(0,resultLimit);
+    const candidateRows = new Map(candidates.map(row=>[row.id,row]));
+    const {explanations,metrics} = await getMatchExplanations(adminClient,
+      {row:viewerRow,vector:viewerVec},
+      shortlisted.map(item=>({row:candidateRows.get(item.id)!,vector:candidateVecMap.get(item.id)!})));
+    const returnedMatches = shortlisted.map(item=>({
+      ...item,clickText:explanations.get(item.id)!.click_text,rubText:explanations.get(item.id)!.friction_text,
+    }));
 
     // Part 1.5: Emit match surfaced events on server for real candidates
     let positionCounter = 1;
-    for (const item of rankedMatches) {
+    for (const item of returnedMatches) {
       const candVec = candidateVecMap.get(item.id);
       const matchRes = matchResMap.get(item.id);
       if (candVec && matchRes) {
@@ -252,9 +256,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Aggregate audit keeps private feedback out of client-visible text.
-    await adminClient.from('interaction_events').insert({ actor_id: authUserId, event_type: 'recommendations_generated', engine_version: REFLECTION_RANKING_VERSION,
-      payload: { count: rankedMatches.length, reflections_enabled: Boolean(learningPreference?.use_reflections) } });
-    return NextResponse.json(rankedMatches, { status: 200 });
+    const timing = {...metrics,scoring_ms:scoringMs,total_ms:performance.now()-requestStarted};
+    const {error:auditError} = await adminClient.from('interaction_events').insert({
+      actor_id: authUserId, event_type: 'recommendations_generated', engine_version: REFLECTION_RANKING_VERSION,
+      payload: { count: returnedMatches.length, profiles_fetched:dbProfiles.length,non_demo:nonDemoProfiles.length,
+        after_self_exclusion:candidates.length,eligible:rankedMatches.length,limit:resultLimit,
+        reflections_enabled: Boolean(learningPreference?.use_reflections),timing } });
+    if(auditError) {
+      console.error('[SoulTribe] matching timing audit failed',{code:auditError.code,message:auditError.message});
+      throw new Error(auditError.message);
+    }
+    const totalMs=performance.now()-requestStarted;
+    return NextResponse.json(returnedMatches, { status: 200,headers:{
+      'Cache-Control':'no-store',
+      'Server-Timing':`scoring;dur=${scoringMs.toFixed(2)}, explanation;dur=${metrics.explanation_ms.toFixed(2)}, cache_read;dur=${metrics.cache_read_ms.toFixed(2)}, cache_write;dur=${metrics.cache_write_ms.toFixed(2)}, total;dur=${totalMs.toFixed(2)}`,
+      'X-Match-Cache-Hits':String(metrics.cache_hits),'X-Match-Generated':String(metrics.generated),
+      'X-Match-Eligible':String(rankedMatches.length),
+    } });
   } catch (err: any) {
     console.error('[SoulTribe API] Exception during match scoring:', err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });

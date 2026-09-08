@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../lib/profileAdapter';
+import { getMatchExplanations } from '../../../lib/matchExplanationCache';
 import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import {
   score,
   softGate,
-  generateMatchExplanation,
   BASELINE_WEIGHTS,
   ProfileVector,
   getBondThreadPhrase,
@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
   // 3. Fetch profiles from database bypassing RLS
   const profileSelection = `
       id,
+      profile_version,
+      explanation_revision,
       display_name,
       avatar_url,
       home_area,
@@ -154,7 +156,13 @@ export async function POST(req: NextRequest) {
 
   const matchRes = score(viewerVec, candVec, {allowProvisionalRanking:true});
   const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
-  const explanation = generateMatchExplanation({ ...viewerVec, values: viewerVec.values?.filter(v => v.visibility === 'public') }, { ...candVec, values: candVec.values?.filter(v => v.visibility === 'public') });
+  let explanation;
+  try {
+    const cached=await getMatchExplanations(adminClient,{row:viewerRow,vector:viewerVec},[{row:candRow,vector:candVec}]);
+    explanation=cached.explanations.get(candidateId)!;
+  } catch(error) {
+    return NextResponse.json({error:error instanceof Error ? error.message : 'Unable to load explanation'}, {status:503});
+  }
   const asymmetric = calculateAsymmetricFit(viewerVec, candVec, matchRes.resonance);
 
   const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);

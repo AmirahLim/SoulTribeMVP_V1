@@ -476,4 +476,82 @@ await fails('select * from profiles',/permission denied|row-level security/);
 await db.exec('reset role');
 assert.equal((await db.query("select relrowsecurity from pg_class where oid='public.profiles'::regclass")).rows[0].relrowsecurity,true);
 console.log('Passed public username privacy, repeatable migration, anonymous boolean-only lookup, owner exclusion, invalid inputs, atomic uniqueness and unchanged RLS.');
+// Provenance uses isolated local fixtures; never inserts production member answers.
+await db.exec('reset role');
+const provenanceSql=await readFile(new URL('../supabase/migrations/20261003000000_answer_provenance.sql',import.meta.url),'utf8');
+const cacheSql=await readFile(new URL('../supabase/migrations/20261004000000_match_explanation_cache.sql',import.meta.url),'utf8');
+const beforeAnswers=(await db.query('select user_id,onboarding from profile_answers order by user_id')).rows;
+await db.exec(provenanceSql);await db.exec(cacheSql);
+assert.deepEqual((await db.query('select user_id,onboarding from profile_answers order by user_id')).rows,beforeAnswers);
+const catalog=JSON.parse(await readFile(new URL('../apps/web/lib/onboardingQuestionCatalog.json',import.meta.url),'utf8'));
+assert.deepEqual((await db.query('select onboarding_question_catalog_v1() catalog')).rows[0].catalog,catalog);
+await as(host);
+const provenanceToken='e7'.repeat(32);
+const provenanceDraft={...modern,handle:'member_0',answerContractVersion:1,submittedStep:1};
+await db.query('select save_onboarding_draft($1,$2)',[provenanceToken,provenanceDraft]);
+let saved=(await db.query('select read_onboarding_draft($1) draft',[provenanceToken])).rows[0].draft;
+const intentRecord=saved.answerRecords['friendship.intent'];
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...provenanceDraft,answerRecords:{padding:'x'.repeat(9000)}}])).rows[0].valid,true);
+assert.equal((await db.query('select validate_baseline_draft($1,true) valid',[{...provenanceDraft,answerRecords:{padding:'x'.repeat(33000)}}])).rows[0].valid,false);
+assert.equal(intentRecord.questionId,'friendship.intent');
+assert.equal(intentRecord.questionVersion,1);
+assert.equal(intentRecord.timestampSource,'database_received');
+assert.ok(Date.parse(intentRecord.submittedAt));
+assert.deepEqual(intentRecord.answer.intent,provenanceDraft.intent);
+assert.deepEqual(Object.keys(saved.answerRecords),['friendship.intent']);
+assert.equal(intentRecord.selections[0].optionId,'friendship.intent.01');
+// Client-forged records are stripped, unchanged records preserve server timestamps.
+await db.query('select save_onboarding_draft($1,$2)',[provenanceToken,{...provenanceDraft,answerRecords:{fake:{questionVersion:999}}}]);
+saved=(await db.query('select read_onboarding_draft($1) draft',[provenanceToken])).rows[0].draft;
+assert.deepEqual(saved.answerRecords,{'friendship.intent':intentRecord});
+await db.query('select save_onboarding_draft($1,$2)',[provenanceToken,{...provenanceDraft,submittedStep:2}]);
+saved=(await db.query('select read_onboarding_draft($1) draft',[provenanceToken])).rows[0].draft;
+assert.deepEqual(Object.keys(saved.answerRecords).sort(),['friendship.clicks','friendship.intent']);
+await db.query('select claim_onboarding_draft($1,$2,$3)',[provenanceToken,null,null]);
+const transferred=(await db.query('select onboarding from profile_answers where user_id=$1',[host])).rows[0].onboarding.baselineV2;
+assert.deepEqual(transferred.answerRecords,saved.answerRecords);
+const fullToken='e8'.repeat(32);
+const fullDraft={...modern,handle:'member_0',answerContractVersion:1,connectionChoice:'About once a week',connectionOther:'',planningChoice:'About a week',planningOther:'',contact:.5,planning:.75};
+for(let step=1;step<=7;step++)await db.query('select save_onboarding_draft($1,$2)',[fullToken,{...fullDraft,submittedStep:step}]);
+const fullSaved=(await db.query('select read_onboarding_draft($1) draft',[fullToken])).rows[0].draft;
+assert.equal(Object.keys(fullSaved.answerRecords).length,catalog.length);
+await db.query('select claim_onboarding_draft($1,$2,$3)',[fullToken,null,null]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[host])).rows[0].onboarding.baselineV2.answerRecords,fullSaved.answerRecords);
+await as(guest);
+assert.equal((await db.query('select read_onboarding_draft($1) draft',[provenanceToken])).rows[0].draft,null);
+await db.exec('reset role');
+// No explanation storage is exposed directly to either authenticated participant.
+await as(host);await fails('select * from match_explanations',/permission denied/);
+await db.exec('reset role');
+await db.query('delete from blocks where blocker_id in ($1,$2) or blocked_id in ($1,$2)',[host,guest]);
+await db.query('delete from reports where reporter_id in ($1,$2) or reported_id in ($1,$2)',[host,guest]);
+await db.query("update profiles set status='active' where id in ($1,$2)",[host,guest]);
+const insertCache=async(a=host,b=guest)=>db.query(`insert into match_explanations(user_a,user_b,click_text,friction_text,generated_by,version_a,version_b,revision_a,revision_b,input_hash)
+ select a.id,b.id,'local test','local test','test',a.profile_version,b.profile_version,a.explanation_revision,b.explanation_revision,'test'
+ from profiles a,profiles b where a.id=$1 and b.id=$2 on conflict(user_a,user_b) do update set revision_a=excluded.revision_a,revision_b=excluded.revision_b`,[a,b]);
+const cachedCount=async()=>Number((await db.query('select count(*) n from match_explanations where user_a=$1 or user_b=$1',[host])).rows[0].n);
+for(const mutation of [
+ "update trait_personality set answered=answered where user_id=$1",
+ "update profile_answers set onboarding=onboarding where user_id=$1",
+ "update profiles set profile_version=profile_version+1 where id=$1",
+ "update profile_answers set onboarding=jsonb_set(onboarding,'{baselineV2,lifeContextsPublic}','false') where user_id=$1",
+]) {
+ await insertCache();await insertCache(guest,host);assert.equal(await cachedCount(),2);
+ await db.query(mutation,[host]);assert.equal(await cachedCount(),0);
+}
+await insertCache();
+await db.query('insert into blocks(blocker_id,blocked_id) values($1,$2)',[guest,host]);
+assert.equal(await cachedCount(),0);
+await assert.rejects(insertCache(),/Matching inputs changed/);
+await db.query('delete from blocks where blocker_id=$1 and blocked_id=$2',[guest,host]);
+await insertCache();
+await db.query("insert into reports(reporter_id,reported_id,category) values($1,$2,'local test')",[guest,host]);
+assert.equal(await cachedCount(),0);await assert.rejects(insertCache(),/Matching inputs changed/);
+await db.query('delete from reports where reporter_id=$1 and reported_id=$2',[guest,host]);
+await insertCache();
+const stale=(await db.query('select * from match_explanations where user_a=$1 and user_b=$2',[host,guest])).rows[0];
+await db.query('update profiles set explanation_revision=explanation_revision where id=$1',[host]);
+await fails(`insert into match_explanations(user_a,user_b,click_text,friction_text,generated_by,version_a,version_b,revision_a,revision_b)
+ values($1,$2,'local test','local test','test',$3,$4,$5,$6)`,/Matching inputs changed/,[host,guest,stale.version_a,stale.version_b,stale.revision_a,stale.revision_b]);
+console.log('Passed provenance timestamps, IDs, catalog consistency, no backfill, exact atomic claim, RLS, bidirectional invalidation, safety denial and stale cache rejection.');
 await db.close();
