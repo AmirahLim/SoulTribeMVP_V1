@@ -15,7 +15,7 @@ describe('Readable outing roster and account settings',()=>{
   const page=source('../../app/you/page.tsx');
   expect(page).toContain('type="button" onClick={handleSignOut}');
   expect(page).toContain("await signOut(); window.location.assign('/')");
-  expect(page).toContain('Your unique handle.');
+  expect(page).toContain('Your username, handle and public profile name are the same.');
   expect(page).toContain('>Settings</h3>');
   expect(page).toContain('earlyReadHref="/early-read"');
   expect(page).toContain("setEditBio(profile.bio || '')");

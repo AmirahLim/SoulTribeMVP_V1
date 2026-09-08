@@ -124,7 +124,6 @@ function ProfileContent() {
   useEffect(() => {
     if (isSettingsOpen) settingsDialog.current?.showModal();
   }, [isSettingsOpen]);
-  const [editName, setEditName] = useState('');
   const [editArea, setEditArea] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editPhoto, setEditPhoto] = useState('');
@@ -175,7 +174,6 @@ function ProfileContent() {
             bio: data.profile.bio,
             handle: data.profile.handle,
           });
-          setEditName(data.profile.display_name || '');
           setEditArea(data.profile.home_area || '');
           setEditBio(data.profile.bio || '');
           setEditPhoto(data.profile.avatar_url || '');
@@ -198,7 +196,7 @@ function ProfileContent() {
     setSaveError(null);
     try {
       const identity = await saveProfileIdentity(authUser.id, {
-        display_name: editName, home_area: editArea, bio: editBio, avatar_url: editPhoto,
+        display_name: myRead!.profile.handle, home_area: editArea, bio: editBio, avatar_url: editPhoto,
       });
       setMyRead(current => current ? { ...current, profile: { ...current.profile, ...identity } } : current);
       setUserProfile({ displayName: identity.display_name, homeArea: identity.home_area, bio: identity.bio, avatarUrl: identity.avatar_url });
@@ -253,7 +251,7 @@ function ProfileContent() {
         summary={myRead.tribalRead?.summary} pages={selfSocialPages(myRead)}
         earlyReadHref="/early-read"
         onEdit={() => {
-          setEditName(profile.display_name); setEditArea(profile.home_area || '');
+          setEditArea(profile.home_area || '');
           setEditBio(profile.bio || ''); setSaveError(null); setIsSettingsOpen(true);
         }}>
         {!!localProfile.lifeContexts?.length && <p className="mb-6">Life lately · {localProfile.lifeContexts.join(' · ')}</p>}
@@ -283,22 +281,10 @@ function ProfileContent() {
 
             {saveError && <p role="alert" className="mt-3 text-sm text-red-800">{saveError}</p>}
             <form onSubmit={handleSaveSettings} className="mt-4 flex flex-col gap-4 text-sm [&_input]:text-base [&_textarea]:text-base">
-              <div>
-                <label htmlFor="profile-name" className="font-semibold text-[#536657]">Display name</label>
-                <p className="mt-1 text-sm">The name people see. It does not need to be unique.</p>
-                <input
-                  id="profile-name"
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#203B30]/15 bg-[rgba(255,255,255,0.05)] p-2.5 text-[#203B30]"
-                />
-              </div>
-
               <div className="text-sm">
                 <p className="font-semibold text-[#536657]">Username</p>
                 <p>@{profile.handle}</p>
-                <p className="mt-1">Your unique handle. Changing your display name does not change this.</p>
+                <p className="mt-1">Your username, handle and public profile name are the same. Your Google name and email stay private.</p>
               </div>
               <div>
                 <label htmlFor="profile-area" className="font-semibold text-[#536657]">Home Area</label>

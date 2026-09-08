@@ -1,6 +1,5 @@
 import { getSupabaseBrowserClient } from './supabase';
 import { validateHandle } from './userStore';
-import { SYNTHETIC_PROFILES } from '../../../supabase/seed/seed';
 
 export async function checkUserProfileExists(userId: string): Promise<boolean> {
   try {
@@ -55,39 +54,28 @@ export async function getUserProfileRecord(userId: string): Promise<{
 export async function checkHandleAvailability(
   handle: string,
   currentUserId?: string
-): Promise<{ available: boolean; message?: string }> {
+): Promise<{ available: boolean; message?: string; failed?: boolean }> {
   const formatted = (handle || '').trim().toLowerCase();
   const val = validateHandle(formatted);
   if (!val.valid) {
     return { available: false, message: val.error };
   }
 
-  // Check synthetic demo profiles first
-  const isSyntheticTaken = SYNTHETIC_PROFILES.some(
-    (p) => (p.profile?.handle || '').toLowerCase() === formatted
-  );
-  if (isSyntheticTaken) {
-    return { available: false, message: `@${formatted} is already taken.` };
-  }
-
   try {
     const client = getSupabaseBrowserClient();
-    let query = client.from('profiles').select('id').eq('handle', formatted);
-    if (currentUserId) {
-      query = query.neq('id', currentUserId);
+    // The database derives the current account from auth.uid(), never a caller-
+    // supplied id. Only a boolean is exposed, not another member's profile.
+    const { data, error } = await client.rpc('username_available', {p_username: formatted});
+    if (error || typeof data !== 'boolean') {
+      console.error('[SoulTribe] username availability failed', {code:error?.code,message:error?.message});
+      return { available: false, failed: true, message: 'Could not check username availability. Please retry.' };
     }
-    const { data, error } = await query.maybeSingle();
-
-    if (error) {
-      return { available: true };
-    }
-
-    if (data) {
+    if (!data) {
       return { available: false, message: `@${formatted} is already taken.` };
     }
 
     return { available: true };
   } catch (err) {
-    return { available: true };
+    return { available: false, failed: true, message: 'Could not check username availability. Please retry.' };
   }
 }

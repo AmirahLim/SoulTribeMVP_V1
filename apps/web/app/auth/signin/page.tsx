@@ -6,8 +6,7 @@ import { useAuth } from '../../../lib/authContext';
 import {claimOnboarding,OnboardingHandoffError} from '../../../lib/onboardingHandoff';
 import {isDraft,completeDraft} from '../../../lib/sixQuestionOnboarding';
 import { checkUserProfileExists, getUserProfileRecord, checkHandleAvailability } from '../../../lib/supabaseAuth';
-import { saveOnboardingToSupabase } from '../../../lib/supabaseOnboarding';
-import { deriveSuggestedHandle, validateHandle, setUserProfile, getUserProfile } from '../../../lib/userStore';
+import { validateHandle, setUserProfile, getUserProfile } from '../../../lib/userStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertCircle, KeyRound, CheckCircle2, Mail, Key, AtSign, Loader2, ArrowRight, UserCheck } from 'lucide-react';
 
@@ -69,7 +68,6 @@ function LumaSignInForm() {
   const [password, setPassword] = useState('');
 
   // Handle (Username) Step State
-  const [displayName, setDisplayName] = useState('');
   const [handle, setHandle] = useState('');
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const [handleStatusMsg, setHandleStatusMsg] = useState<string | null>(null);
@@ -97,16 +95,8 @@ function LumaSignInForm() {
     try {
       const response=await fetch('/api/onboarding/draft',{cache:'no-store'});
       if(!response.ok)throw new Error('Unable to load your saved answers. Please retry.');
-      const {draft,claimed}=await response.json();
+      const {draft}=await response.json();
       if(!isDraft(draft)||!completeDraft(draft))throw new Error('Return to onboarding to complete your answers in this browser.');
-      if(authTab==='signup') {
-        const name=displayName.trim();
-        if(!name||name.length>80)throw new Error('Enter the display name you want on your profile.');
-        if(!claimed&&draft.displayName!==name) {
-          const saved=await fetch('/api/onboarding/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...draft,displayName:name})});
-          if(!saved.ok)throw new Error('Unable to save your display name with your answers. Please retry.');
-        }
-      }
       return true;
     }catch(error){setErrorMessage(error instanceof Error?error.message:'Unable to prepare your saved answers.');return false;}
   }
@@ -115,7 +105,7 @@ function LumaSignInForm() {
     if(saving.current)return;
     saving.current=true;setIsSubmitting(true);setErrorMessage(null);setPendingSaveUser(userId);
     try {
-      await claimOnboarding({expectedUserId:userId,...(displayName.trim()?{displayName:displayName.trim()}:{})});
+      await claimOnboarding({expectedUserId:userId});
       // Reload the authenticated app only after commit, so its account-scoped
       // cache hydrates from the saved profile rather than the pre-claim snapshot.
       window.location.assign('/home');
@@ -129,7 +119,7 @@ function LumaSignInForm() {
     if(!onboardingHandoff)return;
     let active=true;
     fetch('/api/onboarding/draft',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Unable to load your saved answers.');return r.json();}).then(data=>{
-      if(active&&isDraft(data.draft)&&data.draft.displayName)setDisplayName(previous=>previous||data.draft.displayName);
+      if(active&&isDraft(data.draft))setHandle(data.draft.handle);
     }).catch(error=>{if(active)setErrorMessage(error.message);});
     return()=>{active=false;};
   },[onboardingHandoff]);
@@ -212,22 +202,10 @@ function LumaSignInForm() {
       if (savedProfile.handle) {
         setHandle(savedProfile.handle);
       }
-      if (savedProfile.displayName) {
-        setDisplayName(savedProfile.displayName);
-      }
     }
   }, []);
 
-  // Auto-suggest handle when email or displayName changes
-  useEffect(() => {
-    if (!handle && (displayName || email)) {
-      const source = displayName || (email.includes('@') ? email.split('@')[0] : email);
-      const suggested = deriveSuggestedHandle(source);
-      if (suggested) {
-        setHandle(suggested);
-      }
-    }
-  }, [displayName, email, handle]);
+  // Never derive a public username from private authentication details.
 
   // Debounced live handle availability check (~450ms)
   useEffect(() => {
@@ -250,8 +228,10 @@ function LumaSignInForm() {
     setHandleStatus('checking');
     setHandleStatusMsg('Checking availability...');
 
+    let active=true;
     const timer = setTimeout(async () => {
       const res = await checkHandleAvailability(trimmed, user?.id);
+      if(!active)return;
       if (res.available) {
         setHandleStatus('available');
         setHandleStatusMsg(`✓ @${trimmed} is available!`);
@@ -261,7 +241,7 @@ function LumaSignInForm() {
       }
     }, 450);
 
-    return () => clearTimeout(timer);
+    return () => {active=false;clearTimeout(timer);};
   }, [handle, isChooseUsernameStep, user?.id]);
 
   // Handle post-auth routing checks for logged-in session
@@ -289,32 +269,8 @@ function LumaSignInForm() {
         } else if (profileRec !== null) {
           // profileRec.hasProfile === false AND we got a real response (not a thrown error)
           // → This is genuinely a new user or user without a profile row
-          const currentProfile = getUserProfile();
-          if (currentProfile.hasCompletedOnboarding && currentProfile.displayName) {
-            saveOnboardingToSupabase(user.id, {
-              displayName: currentProfile.displayName,
-              handle: currentProfile.handle || deriveSuggestedHandle(currentProfile.displayName),
-              homeArea: currentProfile.homeArea || 'Singapore',
-              birthYear: currentProfile.birthYear,
-              avatarUrl: currentProfile.avatarUrl,
-              bio: currentProfile.bio,
-              q1Finding: currentProfile.q1Finding || [],
-              q2Feelings: currentProfile.q2Feelings || [],
-              q3Energy: currentProfile.q3Energy,
-              q3GroupSize: currentProfile.q3GroupSize,
-              q4Connected: currentProfile.q4Connected || [],
-              q5PlanningRhythm: currentProfile.q5PlanningRhythm,
-              q5Availability: currentProfile.q5Availability || [],
-              q6Outings: currentProfile.q6Outings || [],
-              q7EmotionalPacing: currentProfile.q7EmotionalPacing,
-              q8Qualities: currentProfile.q8Qualities || [],
-            }).then(() => {
-              router.push('/home');
-            });
-          } else {
-            // New user without profile -> prompt choose username / onboarding
-            setIsChooseUsernameStep(true);
-          }
+          // No legacy cache backfill or private-name-derived handles.
+          setIsChooseUsernameStep(true);
         }
         // If profileRec is null, the lookup failed silently — handled by .catch below
       }).catch((err: any) => {
@@ -464,15 +420,14 @@ function LumaSignInForm() {
       return;
     }
 
-    if (handleStatus === 'taken') {
+    if (handleStatus !== 'available') {
       return;
     }
 
     // Save chosen handle to userStore & localStorage
-    const derivedName = displayName.trim() || email.split('@')[0] || 'Member';
     setUserProfile({
       handle: cleanHandle,
-      displayName: derivedName,
+      displayName: cleanHandle,
     });
 
     if (typeof window !== 'undefined') {
@@ -538,22 +493,7 @@ function LumaSignInForm() {
               </div>
 
               <form onSubmit={handleSaveUsernameStep} className="mt-6 space-y-4">
-                {/* Display Name Input */}
-                <div>
-                  <label htmlFor="username-display-name" className="block text-[13.5px] font-semibold text-white mb-2">
-                    Display Name
-                  </label>
-                  <input
-                    id="username-display-name"
-                    type="text"
-                    required
-                    placeholder="e.g. Priya Sharma"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white placeholder-white/40 outline-none focus:border-white/60 focus:ring-1 focus:ring-white/60 transition-all"
-                  />
-                </div>
-
+                <p className="text-sm text-white/60">Your username is your public handle and profile name. Your Google name and email stay private.</p>
                 {/* Handle Input */}
                 <div>
                   <label htmlFor="username-handle-input" className="block text-[13.5px] font-semibold text-white mb-2">
@@ -803,12 +743,8 @@ function LumaSignInForm() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
-                {onboardingHandoff&&(authTab==='signup'||needsName)&&<div>
-                  <label htmlFor="onboarding-display-name" className="block text-[13.5px] font-semibold text-white mb-2">Display name for email signup</label>
-                  <input id="onboarding-display-name" type="text" autoComplete="nickname" maxLength={80} required value={displayName} onChange={e=>setDisplayName(e.target.value)} className="h-12 w-full rounded-[16px] border border-[#27272a] bg-black/60 px-4 text-[14px] text-white outline-none focus:border-white/60" />
-                  <p className="mt-1 text-xs text-white/60">Google supplies your name when you choose Google. Your age check and handle are already part of onboarding.</p>
-                  {needsName&&<a href="/onboarding" className="text-sm underline">Review my onboarding details</a>}
-                </div>}
+                {onboardingHandoff&&<p className="text-xs text-white/60">Your public username{handle?` is @${handle}`:""}. Your Google name and email stay private. No separate display name is needed.</p>}
+                {needsName&&<a href="/onboarding" className="text-sm underline">Review my onboarding details</a>}
                 <div>
                   <label htmlFor="auth-email-input" className="block text-[13px] font-semibold text-white mb-1.5">
                     Email Address

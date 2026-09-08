@@ -13,7 +13,7 @@ export async function saveProfileIdentity(userId: string, draft: ProfileIdentity
   if (!userId) throw new Error('Please sign in again.');
   if (!identity.display_name) throw new Error('Please enter your name.');
   const { data, error } = await getSupabaseBrowserClient().from('profiles')
-    .update(identity).eq('id', userId).select('id').single();
+    .update(identity).eq('id', userId).select('id,display_name,home_area,bio,avatar_url').single();
   if (error || !data) throw new Error('Your changes could not be saved. Please try again.');
-  return identity;
+  return {display_name:data.display_name,home_area:data.home_area,bio:data.bio,avatar_url:data.avatar_url};
 }

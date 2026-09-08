@@ -9,13 +9,11 @@ export async function claimOnboardingServer(client:SupabaseClient,user:User,toke
  const {data:pending,error:pendingError}=await client.rpc('read_onboarding_draft',{p_token:token});
  if(pendingError)throw pendingError;
  if(!pending)return {status:410,body:{error:'Your draft is unavailable or expired. Return to onboarding in the browser where you started.'}};
- const {data:profile,error:profileError}=await client.from('profiles').select('display_name,birth_year').eq('id',user.id).maybeSingle();
+ const {data:profile,error:profileError}=await client.from('profiles').select('handle,birth_year').eq('id',user.id).maybeSingle();
  if(profileError)throw profileError;
- // Google supplies a real display name; never derive a name from an email or
- // fabricate one. Existing member identity always takes precedence.
- const googleIdentity=user.identities?.find(identity=>identity.provider==='google');
- const googleName=googleIdentity?.identity_data?.full_name ?? googleIdentity?.identity_data?.name;
- const displayName=profile?.display_name || body.displayName || pending.displayName || googleName;
+ // Public identity is exclusively the member-chosen username. Google account
+ // metadata, email and legacy display names must never become public defaults.
+ const displayName=profile?.handle || pending.handle;
  const birthYear=profile?.birth_year ?? readProof(token,proof) ?? (pending.setupRevision===2?null:body.birthYear);
  if(typeof displayName!=='string'||!displayName.trim()||displayName.trim().length>80||!birthYear)return {status:400,body:{error:'Complete your profile details and private 18+ check in onboarding.',requiresDetails:true}};
  const {data,error}=await client.rpc('claim_onboarding_draft',{p_token:token,p_display_name:displayName.trim(),p_birth_year:birthYear});

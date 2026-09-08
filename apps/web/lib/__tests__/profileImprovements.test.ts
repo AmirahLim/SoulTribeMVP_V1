@@ -21,8 +21,9 @@ describe('Profile editing acknowledgement', () => {
     await expect(saveProfileIdentity('user-id', identity)).rejects.toThrow('could not be saved');
   });
   it('returns normalized identity only after an acknowledged save', async () => {
-    db.single.mockResolvedValue({ data: { id: 'user-id' }, error: null });
-    expect(await saveProfileIdentity('user-id', identity)).toEqual({ ...identity, display_name: 'Alex', home_area: 'East', bio: 'Hello' });
+    const saved={display_name:'chosen_handle',home_area:'East',bio:'Hello',avatar_url:''};
+    db.single.mockResolvedValue({ data: { id: 'user-id',...saved }, error: null });
+    expect(await saveProfileIdentity('user-id', identity)).toEqual(saved);
     expect(db.eq).toHaveBeenCalledWith('id', 'user-id');
   });
   it('does not write a blank name', async () => {

@@ -22,26 +22,26 @@ beforeEach(()=>{
 });
 describe('authenticated draft handoff API',()=>{
  it('automatically uses the existing authenticated profile identity, not submitted replacements',async()=>{
-  state.profile={display_name:'Original name',birth_year:1991};
+  state.profile={handle:'original_handle',birth_year:1991};
   const response=await POST(request({displayName:'Do not overwrite',birthYear:2000}));
   expect(response.status).toBe(200);expect((await response.json()).saved).toBe(true);
-  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',{p_token:token,p_display_name:state.profile.display_name,p_birth_year:state.profile.birth_year});
+  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',{p_token:token,p_display_name:state.profile.handle,p_birth_year:state.profile.birth_year});
  });
- it('uses the actual signup name and checked age for a new account',async()=>{
+ it('uses the chosen username and checked age, ignoring legacy display names',async()=>{
   const response=await POST(request({},true));
   expect(response.status).toBe(200);
-  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',expect.objectContaining({p_display_name:draft.displayName,p_birth_year:1995}));
+  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',expect.objectContaining({p_display_name:draft.handle,p_birth_year:1995}));
  });
  it('does not accept an unchecked birth year for the modern signup',async()=>{
   const response=await POST(request({birthYear:1995}));
   expect(response.status).toBe(400);expect((await response.json()).requiresDetails).toBe(true);
   expect(state.rpc.mock.calls.some(([name])=>name==='claim_onboarding_draft')).toBe(false);
  });
- it('uses the actual Google identity name without a separate display-name form',async()=>{
+ it('never publishes Google identity names; uses the chosen username',async()=>{
   state.draft={...draft,displayName:undefined};
   state.user!.identities=[{provider:'google',identity_data:{full_name:'Actual Google name'}}];
   expect((await POST(request({},true))).status).toBe(200);
-  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',expect.objectContaining({p_display_name:'Actual Google name',p_birth_year:1995}));
+  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',expect.objectContaining({p_display_name:draft.handle,p_birth_year:1995}));
  });
  it('Google identity never substitutes for an adult eligibility receipt',async()=>{
   state.user!.identities=[{provider:'google',identity_data:{full_name:'Actual Google name'}}];
@@ -49,7 +49,7 @@ describe('authenticated draft handoff API',()=>{
   expect(state.rpc.mock.calls.some(([name])=>name==='claim_onboarding_draft')).toBe(false);
  });
  it('returns a failed transaction as an error, not a saved draft',async()=>{
-  state.profile={display_name:'Original name',birth_year:1991};state.error={code:'23514',message:'Injected trait failure'};
+  state.profile={handle:'original_handle',birth_year:1991};state.error={code:'23514',message:'Injected trait failure'};
   const response=await POST(request());
   expect(response.status).toBe(409);expect(await response.json()).toEqual({code:state.error.code,error:state.error.message});
  });

@@ -16,7 +16,7 @@ export default function EarlyRead() {
  const {user,loading}=useAuth();
  const router=useRouter();
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
- const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
+ const [year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
  const [retry,setRetry]=useState(0),[needsDetails,setNeedsDetails]=useState(false);
  useEffect(()=>{
@@ -87,7 +87,7 @@ export default function EarlyRead() {
  async function save(e:React.FormEvent) {
   e.preventDefault();if(!user)return;setBusy(true);setError('');
   try {
-   const committed=await claimOnboarding({displayName:name.trim(),birthYear:Number(year),expectedUserId:user.id});
+   const committed=await claimOnboarding({birthYear:Number(year),expectedUserId:user.id});
    await hydrateProfile(user.id);setDraft(committed);setSaved(true);setNeedsDetails(false);
   }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
  }
@@ -105,7 +105,7 @@ export default function EarlyRead() {
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
  {draft&&<><EarlyReadAlbum draft={draft}/>
- {!saved&&!needsDetails?<><p>Your Early Read is ready. Save it to your profile, then meet people. Choose how to sign up or log in on the next page.</p><button className="ob-primary" disabled={busy} onClick={()=>void openSignInChoices()}>{busy?'Opening sign-in…':'Save Early Read'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!saved&&!needsDetails?<><p>Your Early Read is ready. Save it to your profile, then meet people. Choose how to sign up or log in on the next page.</p><button className="ob-primary" disabled={busy} onClick={()=>void openSignInChoices()}>{busy?'Opening sign-in…':'Save Early Read'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><p>Your public name is your chosen username. Google account details stay private.</p>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/onboarding">Complete your private age check in onboarding →</Link>}
  <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><Link className="ob-primary" href="/home">Continue to home →</Link>{user&&<ProfilePhoto userId={user.id}/>}<Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}

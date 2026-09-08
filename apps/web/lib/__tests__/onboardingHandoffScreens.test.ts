@@ -4,10 +4,11 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {emptyDraft,INTENTS,CLICKS,GROUPS,FRIEND_QUALITIES,OUTINGS,canonicalRhythm} from '../sixQuestionOnboarding';
 import {LIFE_CONTEXTS} from '../lifeContext';
 
-const mocks=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string}|null,hydrate:vi.fn(),push:vi.fn(),replace:vi.fn(),google:vi.fn()}));
+const mocks=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string}|null,hydrate:vi.fn(),push:vi.fn(),replace:vi.fn(),google:vi.fn(),availability:vi.fn()}));
 vi.mock('../authContext',()=>({useAuth:()=>({user:mocks.user,loading:false,signInWithGoogle:mocks.google})}));
 vi.mock('../profileHydration',()=>({hydrateProfile:mocks.hydrate}));
-vi.mock('../userStore',()=>({getUserProfile:()=>({handle:'existing_member',homeArea:'Bedok'})}));
+vi.mock('../userStore',()=>({getUserProfile:()=>({handle:'existing_member',homeArea:'Bedok'}),validateHandle:()=>({valid:true})}));
+vi.mock('../supabaseAuth',()=>({checkHandleAvailability:mocks.availability}));
 vi.mock('../supabase',()=>({getSupabaseBrowserClient:()=>{throw new Error('Unexpected saved-profile lookup');}}));
 vi.mock('next/navigation',()=>({useRouter:()=>({push:mocks.push,replace:mocks.replace})}));
 vi.mock('next/link',()=>({default:({children,...props}:any)=>React.createElement('a',props,children)}));
@@ -22,6 +23,7 @@ let tree:ReactTestRenderer|undefined;
 beforeEach(()=>{
  mocks.user={id:'10000000-0000-4000-8000-000000000001'};vi.clearAllMocks();
  mocks.google.mockResolvedValue({error:null});
+ mocks.availability.mockResolvedValue({available:true});
  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('window',{location:{search:''}});
 });
 afterEach(async()=>{if(tree)await act(async()=>tree!.unmount());tree=undefined;vi.unstubAllGlobals();});
@@ -91,6 +93,13 @@ it('signed-in onboarding saves only the draft before opening the Early Read prev
  expect(calls.at(-1)).toBe('POST /api/onboarding/draft');
  expect(calls).not.toContain('POST /api/onboarding/claim');
  expect(mocks.hydrate).not.toHaveBeenCalled();expect(mocks.push).toHaveBeenCalledWith('/early-read');
+});
+it('a failed username check blocks final submission and displays the failure',async()=>{
+ const calls=requests();mocks.availability.mockResolvedValue({available:false,failed:true,message:'Could not check username availability. Please retry.'});
+ await act(async()=>{tree=create(React.createElement(Onboarding));});
+ await act(async()=>{await tree!.root.findAllByType('button').find(b=>b.props.className==='ob-primary')!.props.onClick();});
+ expect(mocks.push).not.toHaveBeenCalled();expect(calls).not.toContain('POST /api/onboarding/draft');
+ expect(JSON.stringify(tree!.toJSON())).toContain('Could not check username availability');
 });
 it('a signed-in failed final submission stays editable and never navigates',async()=>{
  requests();const base=fetch;

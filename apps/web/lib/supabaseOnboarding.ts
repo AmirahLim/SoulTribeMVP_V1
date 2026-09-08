@@ -78,7 +78,7 @@ export async function saveOnboardingToSupabase(
     userId,
     {
       handle: data.handle.trim().toLowerCase(),
-      display_name: data.displayName.trim(),
+      display_name: data.handle.trim().toLowerCase(),
       home_area: data.homeArea.trim(),
       birth_year: data.birthYear,
       avatar_url: data.avatarUrl || null,

@@ -331,7 +331,7 @@ await db.exec(handoffMigration); await db.exec(handoffMigration);
 const handoffUser='10000000-0000-4000-8000-000000000006';
 await db.query('insert into auth.users values($1)',[handoffUser]);
 await as(handoffUser);
-const existingIdentity={handle:'handoff_member',display_name:'Existing member',home_area:'Bedok',birth_year:1995,avatar_url:'avatars/member-photo.webp',bio:'Existing introduction'};
+const existingIdentity={handle:'handoff_member',display_name:'handoff_member',home_area:'Bedok',birth_year:1995,avatar_url:'avatars/member-photo.webp',bio:'Existing introduction'};
 await db.query('select save_profile_bundle($1,$2,$3,null)',[existingIdentity,{deep_profile:{selfDescriptionOpen:'Existing exact words'},completed_categories:[5]},{trait_emotional:{er_opening_pace:.75},trait_personality:{extraversion:.25}}]);
 const modern={...lifeContextDraft,handle:existingIdentity.handle,lifeContextsPublic:true};
 const handoffToken='d'.repeat(64);
@@ -453,4 +453,27 @@ await db.query('select claim_onboarding_draft($1,$2,$3)',['d1'.repeat(32),null,n
 assert.equal((await db.query('select handle from profiles where id=$1',[returningUser])).rows[0].handle,'returning_member');
 assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[returningUser])).rows[0].onboarding.baselineV2,differentHandle);
 console.log('Passed anonymous-draft Google-return shape for an existing account with no baseline and a different typed handle.');
+
+
+// Isolated fixtures only: username privacy, availability, uniqueness, and RLS.
+await db.exec('reset role');
+const usernameMigration=await readFile(new URL('../supabase/migrations/20261002000000_public_username.sql',import.meta.url),'utf8');
+await db.exec(usernameMigration);
+await as(host);
+assert.equal((await db.query('select display_name=handle as aligned from profiles where id=$1',[host])).rows[0].aligned,true);
+await db.query("update profiles set display_name='Private OAuth Name' where id=$1",[host]);
+assert.equal((await db.query('select display_name from profiles where id=$1',[host])).rows[0].display_name,'member_0');
+assert.equal((await db.query("select username_available(' MEMBER_0 ') as available")).rows[0].available,true);
+await as(guest);
+assert.equal((await db.query("select username_available('MEMBER_0') as available")).rows[0].available,false);
+await fails("update profiles set handle='member_0' where id=$1",/unique|duplicate/,[guest]);
+await fails("update profiles set handle='Member_0' where id=$1",/check constraint/,[guest]);
+await db.exec("reset role; set request.jwt.claim.sub=''; set role anon");
+for(const [value,wanted] of [['member_0',false],['never_reserved_test',true],['ab',false],['mail@example.com',false],['%',false],[null,false]]) {
+ assert.equal((await db.query('select username_available($1) as available',[value])).rows[0].available,wanted);
+}
+await fails('select * from profiles',/permission denied|row-level security/);
+await db.exec('reset role');
+assert.equal((await db.query("select relrowsecurity from pg_class where oid='public.profiles'::regclass")).rows[0].relrowsecurity,true);
+console.log('Passed public username privacy, repeatable migration, anonymous boolean-only lookup, owner exclusion, invalid inputs, atomic uniqueness and unchanged RLS.');
 await db.close();

@@ -6,6 +6,8 @@ import {LIFE_CONTEXTS,LIFE_CONTEXT_DETAILS} from "../../lib/lifeContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
 import { getUserProfile } from "../../lib/userStore";
+import {checkHandleAvailability} from '../../lib/supabaseAuth';
+import {useUsernameAvailability} from '../../lib/useUsernameAvailability';
 import {
   AREAS,
   CLICKS,
@@ -62,6 +64,7 @@ export default function OnboardingPage() {
   const [busy, setBusy] = useState(false);
   const [birthDate,setBirthDate]=useState('');
   const [ageChecked,setAgeChecked]=useState(false);
+  const usernameCheck=useUsernameAvailability(draft.handle,ready&&draft.step===7&&!designPreview,user?.id);
   const title = useRef<HTMLHeadingElement>(null);
   const newDraft = useRef(false);
   const lastPersisted = useRef<string | null>(null);
@@ -139,6 +142,10 @@ export default function OnboardingPage() {
       step: back ? Math.max(1, draft.step - 1) : Math.min(7, draft.step + 1),
     };
     try {
+      if(!back&&draft.step===7) {
+        const check=await checkHandleAvailability(draft.handle,user?.id);
+        if(!check.available)throw new Error(check.message||'Choose an available username.');
+      }
       const payload=JSON.stringify(canonicalRhythm(next));
       // Retrying a failed claim must use its original draft receipt. Do not
       // create a second draft when the database committed but the reply was lost.
@@ -164,7 +171,7 @@ export default function OnboardingPage() {
           if(!checked.ok)throw new Error(result.error||'Please complete your private 18+ check.');
           setAgeChecked(true);
         }
-        // Preview first. Save Early Read starts Google; its callback claims the
+        // Preview first. Save Early Read opens auth choices; authentication claims the
         // draft using the authenticated account before opening home.
         router.push("/early-read");
       } else setDraft(next);
@@ -303,10 +310,11 @@ export default function OnboardingPage() {
           {draft.step === 6 && <div className="ob-outing-cloud">{chips("outings", [...OUTINGS,'Other'], 5)}{otherField('outingOther',draft.outings.includes('Other'),'Something else you would enjoy')}</div>}
           {draft.step === 7 && (
             <div className="ob-fields">
-              <label htmlFor="handle">Your unique handle</label>
+              <label htmlFor="handle">Your public username (handle)</label>
               <input
                 id="handle"
                 autoComplete="username"
+                aria-describedby="username-help username-availability"
                 maxLength={20}
                 value={draft.handle}
                 onChange={(e) =>
@@ -317,10 +325,8 @@ export default function OnboardingPage() {
                 }
                 placeholder="e.g. curious_mira"
               />
-              <p>
-                3–20 letters, numbers or underscores. Availability is confirmed
-                when you save your account.
-              </p>
+              <p id="username-help">Username and handle are the same thing: the public name people see. Choose 3–20 lowercase letters, numbers or underscores. Your Google name and email stay private.</p>
+              <p id="username-availability" role="status" aria-live="polite">{designPreview?'Availability is checked outside design preview.':usernameCheck.message}</p>
               <PhotoPicker previewOnly={designPreview} />
               {!ageChecked&&<><label htmlFor="onboarding-birth-date">Date of birth · private 18+ check</label><input id="onboarding-birth-date" type="date" autoComplete="bday" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/><p>Soul Tribe is for adults 18+. This is self-reported. Your full date of birth is not retained or shown on your profile.</p></>}
               <div id="life-phase-label" className="ob-field-label">Life phase</div>

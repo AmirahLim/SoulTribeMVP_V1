@@ -39,17 +39,17 @@ it('Google retains the answer-saving home callback without requiring an email di
  await click('Continue with Google');expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
  expect(calls).not.toContain('POST /api/onboarding/claim');
 });
-it('password signup saves the typed name and commits answers before home',async()=>{
- await fill('onboarding-display-name','Chosen name');await fill('auth-email-input','test@example.com');await fill('auth-password-input','local-test-password');await submit();
+it('password signup uses the existing username and commits answers before home',async()=>{
+ await fill('auth-email-input','test@example.com');await fill('auth-password-input','local-test-password');await submit();
  expect(mocks.signup).toHaveBeenCalledWith('test@example.com','local-test-password','/home?onboarding=complete');
- expect(calls.slice(-2)).toEqual(['POST /api/onboarding/draft','POST /api/onboarding/claim']);
+ expect(calls).toContain('POST /api/onboarding/claim');
+ expect(calls).not.toContain('POST /api/onboarding/draft');
  expect(mocks.assign).toHaveBeenCalledWith('/home');expect(mocks.legacy).not.toHaveBeenCalled();
- const write=(fetch as any).mock.calls.find(([url,init]:any[])=>url==='/api/onboarding/draft'&&init?.method==='POST');
- expect(JSON.parse(write[1].body).displayName).toBe('Chosen name');
+ expect(tree.root.findAllByProps({id:'onboarding-display-name'})).toHaveLength(0);
 });
 it('unconfirmed password signup waits for email instead of treating a user record as a session',async()=>{
  mocks.signup.mockResolvedValue({error:null,user:{id:'unconfirmed'},requiresEmailConfirmation:true});
- await fill('onboarding-display-name','Chosen name');await fill('auth-email-input','test@example.com');await fill('auth-password-input','local-test-password');await submit();
+ await fill('auth-email-input','test@example.com');await fill('auth-password-input','local-test-password');await submit();
  expect(calls).not.toContain('POST /api/onboarding/claim');expect(mocks.assign).not.toHaveBeenCalled();expect(JSON.stringify(tree.toJSON())).toContain('Check your email to confirm');
 });
 it('password login commits against the authenticated user before home',async()=>{
