@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
         age_pref_max,
         status,
         trait_intent (*),
+        trait_repair (*),
         trait_communication (*),
         trait_personality (*),
         trait_social_rhythm (*),

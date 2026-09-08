@@ -11,6 +11,7 @@ import { getActiveNextBestPrompts } from '../../../lib/threadPrompts';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { saveDeeperPassToSupabase } from '../../../lib/supabaseOnboarding';
 import { checkIsSupabaseConfigured, getSupabaseBrowserClient } from '../../../lib/supabase';
+import {REPAIR_QUESTIONS,INITIATIVE_QUESTION,NO_POSITION,PUBLIC_ANSWER_NOTICE,SHARED_DETAIL_NOTICE} from '../../../lib/readEngine/deeperQuestions';
 
 export default function DeeperTribalPassPage() {
   return (
@@ -50,7 +51,7 @@ function DeeperTribalPassContent() {
   useEffect(() => {
     if (catParam) {
       const num = parseInt(catParam, 10);
-      if (!isNaN(num) && num >= 1 && num <= 10) {
+      if (!isNaN(num) && num >= 1 && num <= 11) {
         setActiveCategoryNum(num);
       }
     }
@@ -134,7 +135,8 @@ function DeeperTribalPassContent() {
     { num: 7, name: "I'm Into", subtitle: 'Interest graph + curiosity, not flat tags' },
     { num: 8, name: 'Outing DNA', subtitle: 'Connected to Soul Tribe flagship outings' },
     { num: 9, name: 'You Should Know', subtitle: 'Human prompts that create conversation hooks' },
-    { num: 10, name: 'Boundaries & Matching', subtitle: 'Mostly private signals for matching algorithm' },
+    { num: 10, name: 'Boundaries & Matching', subtitle: 'What helps a plan work for you' },
+    { num: 11, name: 'Conflict & Repair', subtitle: 'Finding your way back after something feels off' },
   ];
 
   const currentCat = categories.find((c) => c.num === activeCategoryNum) || categories[0];
@@ -214,7 +216,7 @@ function DeeperTribalPassContent() {
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
               <div>
                 <span className="text-[11px] font-bold tracking-widest text-white/80 uppercase">
-                  Section {currentCat.num} of 10
+                  Section {currentCat.num} of {categories.length}
                 </span>
                 <h2 className="text-[22px] font-extrabold text-white flex items-center gap-2">
                   {currentCat.name}
@@ -229,9 +231,9 @@ function DeeperTribalPassContent() {
                 </p>
               </div>
 
-              {currentCat.num === 10 ? (
+              {currentCat.num === 11 ? (
                 <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-3 py-1 text-[11px] font-bold text-white">
-                  <Lock className="h-3 w-3" /> Private
+                  <Lock className="h-3 w-3" /> Shared-outing detail
                 </span>
               ) : (
                 <span className="flex items-center gap-1 rounded-full border border-white/30 bg-black/60 px-3 py-1 text-[11px] font-bold text-white">
@@ -239,6 +241,17 @@ function DeeperTribalPassContent() {
                 </span>
               )}
             </div>
+
+            <p className="mt-4 text-sm">{currentCat.num===11?SHARED_DETAIL_NOTICE:PUBLIC_ANSWER_NOTICE}</p>
+            {activeCategoryNum===2&&<fieldset className="mt-5"><legend>{INITIATIVE_QUESTION.prompt}</legend><div className="mt-2 flex flex-wrap gap-2">{[...INITIATIVE_QUESTION.options,...NO_POSITION].map(opt=><Chip key={opt} label={opt} selected={formState.initiationChoice===opt} onClick={()=>updateField('initiationChoice',formState.initiationChoice===opt?'':opt)}/>)}</div></fieldset>}
+            {activeCategoryNum===11&&<div className="mt-5 flex flex-col gap-5">{REPAIR_QUESTIONS.map(q=><fieldset key={q.id}><legend>{q.prompt}</legend><div className="mt-2 flex flex-wrap gap-2">{[...q.options,...NO_POSITION].map(opt=>{
+              const selected=(formState[q.key]??'').split(' · ').filter(Boolean);
+              return <Chip key={opt} label={opt} selected={selected.includes(opt)} onClick={()=>{
+                if(q.max===1||NO_POSITION.includes(opt))updateField(q.key,selected.includes(opt)?'':opt);
+                else if(selected.includes(opt))updateField(q.key,selected.filter(x=>x!==opt).join(' · '));
+                else {const positions=selected.filter(x=>!NO_POSITION.includes(x));if(positions.length<q.max)updateField(q.key,[...positions,opt].join(' · '));}
+              }}/>;
+            })}</div></fieldset>)}</div>}
 
             {/* CATEGORY 1: SOCIAL ENERGY */}
             {activeCategoryNum === 1 && (
@@ -668,7 +681,7 @@ function DeeperTribalPassContent() {
                 </button>
               </div>
 
-              {activeCategoryNum < 10 ? (
+              {activeCategoryNum < categories.length ? (
                 <button
                   type="button"
                   onClick={() => {

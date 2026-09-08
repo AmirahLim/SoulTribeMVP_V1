@@ -12,6 +12,7 @@ import { fetchUserPitches, OutingItem } from '../../lib/outingsStore';
 import Link from 'next/link';
 
 import {SocialScrapbook} from '../../components/profile/SocialScrapbook';
+import {PeerReadPanel} from '../../components/profile/PeerReadPanel';
 import {selfSocialPages} from '../../lib/socialScrapbook';
 import type {TribalReadData} from '../../components/profile/TribalRead';
 import type {ValueNode} from '../../components/profile/ValuesConstellationCanvas';
@@ -67,6 +68,7 @@ interface MyRead {
   signalsCount?: number;
   tribalRead?: TribalReadData;
   savedAnswerRead?: {notes: Record<string, string[]>};
+  composedRead?: import('../../lib/readEngine/compose').ComposedRead;
   tension?: {
     headline: string;
     explanation: string;
@@ -270,6 +272,7 @@ function ProfileContent() {
             {authUser?.id && <ReflectionPreferences userId={authUser.id}/>}
           </div>
         </details>
+        {authUser?.id&&<PeerReadPanel subjectId={authUser.id} own/>}
       </SocialScrapbook>
 
       {/* Settings Modal */}

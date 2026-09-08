@@ -7,6 +7,7 @@ import {AuthGuard} from '../../../../components/AuthGuard';
 import {EarlyReadAlbum} from '../../../../components/profile/EarlyReadAlbum';
 import {emptyDraft, type BaselineDraft} from '../../../../lib/sixQuestionOnboarding';
 import {getSupabaseBrowserClient} from '../../../../lib/supabase';
+import catalog from '../../../../lib/onboardingQuestionCatalog.json';
 import styles from './PublicEarlyRead.module.css';
 
 type SharedProfile = {
@@ -35,20 +36,30 @@ function PublicEarlyReadContent() {
       setStatus('Early Read unavailable.');
       return;
     }
-    // Read only the member's consent-gated public snapshot. Private answers stay private.
-    getSupabaseBrowserClient().from('profiles')
-      .select('id,display_name,handle,public_onboarding')
-      .eq('id', id).maybeSingle()
-      .then(({data, error}) => {
+    const client=getSupabaseBrowserClient();
+    Promise.all([
+      client.from('profiles').select('id,display_name,handle').eq('id',id).maybeSingle(),
+      client.from('read_answer_sources').select('question_id,question_version,dimension,selections').eq('user_id',id).eq('access','public'),
+    ]).then(([{data,error},sources])=>{
         if (!active) return;
-        if (error || !data) setStatus('Early Read unavailable.');
-        else { setProfile(data as SharedProfile); setStatus(''); }
-      });
+        if(error||sources.error){setStatus('The Early Read could not be loaded. Please refresh to retry.');return;}
+        if(!data){setStatus('Early Read unavailable.');return;}
+        const answers:Record<string,unknown>={},records:Record<string,unknown>={};
+        for(const source of sources.data??[]){
+          const question=catalog.find(q=>q.questionId===source.question_id&&q.fields[0]===source.dimension);
+          if(!question)continue;
+          const value=['connectionChoice','planningChoice','punctualityChoice'].includes(source.dimension)?source.selections[0]:source.selections;
+          answers[source.dimension]=value;
+          if(source.question_version===question.questionVersion)records[question.questionId]={questionId:question.questionId,questionVersion:source.question_version,answer:{[source.dimension]:value}};
+        }
+        answers.answerRecords=records;
+        setProfile({...data,public_onboarding:answers} as SharedProfile);setStatus('');
+      }).catch(()=>{if(active)setStatus('The Early Read could not be loaded. Please refresh to retry.');});
     return () => { active = false; };
   }, [id]);
 
   const answers = profile?.public_onboarding ?? {};
-  const hasSharedAnswers = Object.keys(answers).length > 0;
+  const hasSharedAnswers = Object.keys(answers).some(key=>key!=='answerRecords');
   return <main className={styles.page}>
     <div className={styles.shell}>
       <Link className={styles.back} href={profile ? `/people/${profile.id}` : '/people'}>← Back to profile</Link>
@@ -63,8 +74,8 @@ function PublicEarlyReadContent() {
           ? <EarlyReadAlbum draft={sharedDraft(answers)} />
           : <section className={styles.unshared}>
               <p>EARLY READ</p>
-              <h2>This page is still private.</h2>
-              <p>{profile.display_name} has not chosen to share their onboarding answers.</p>
+              <h2>No supported Early Read yet.</h2>
+              <p>There are no saved, visible baseline selections to read from yet.</p>
             </section>}
       </>}
     </div>

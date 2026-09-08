@@ -63,6 +63,7 @@ export function SocialScrapbook({name, handle, area, avatar, bio, headline, summ
     <dialog ref={dialog} aria-labelledby={headingId} className={styles.sheet} onClose={() => setOpened(null)}>
       {opened && <><button className={styles.close} onClick={() => dialog.current?.close()} aria-label="Close this page">✕</button><p className={styles.eyebrow}>{opened.caption}</p><h2 id={headingId}>{opened.title}</h2>
         {opened.notes.length ? opened.notes.map((note, i) => <p key={i} className={styles.note}>{note}</p>) : <p className={styles.note}>{empty}</p>}
+        {!!opened.evidence?.length && <details className={styles.summaryMore}><summary>What this reading draws on</summary>{opened.evidence.map(source=><p key={source.subject+source.questionId}>{source.selections.join(' · ')}<br/><small>{source.questionId} · {source.questionVersion===null?'Original question version not recorded':`Question version ${source.questionVersion}`}</small></p>)}</details>}
         <p className={styles.disclaimer}>{own ? 'A read on what you’ve shared, not a fixed definition of you.' : 'Shared preferences are a starting point, not a complete picture of a person.'}</p>
         {opened.href && <Link className={styles.sheetLink} href={opened.href}>{opened.action}</Link>}
       </>}

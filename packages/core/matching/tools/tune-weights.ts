@@ -47,7 +47,8 @@ function runTuningTool() {
       const vecB = pool[j];
 
       // Simulated thread scores
-      const dims: Record<ThreadKey, number> = {
+      const dims: Record<ThreadKey, number|null> = {
+        repair:null,
         personality: Math.abs(vecA.personality.openness - vecB.personality.openness),
         communication: Math.abs(vecA.communication.contact_frequency_self - vecB.communication.contact_frequency_self),
         social_rhythm: Math.abs(vecA.social_rhythm.planning_horizon - vecB.social_rhythm.planning_horizon),

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../lib/profileAdapter';
-import { getMatchExplanations } from '../../../lib/matchExplanationCache';
 import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
+import {loadPairEvidence,cachedRead,evidenceHash} from '../../../lib/readEngine/server';
+import {THREAD_NAMES,type EvidenceBundle} from '../../../lib/readEngine/evidence';
 import {
   score,
   softGate,
@@ -101,6 +102,7 @@ export async function POST(req: NextRequest) {
       status,
       is_demo,
       trait_intent (*),
+      trait_repair (*),
       trait_communication (*),
       trait_personality (*),
       trait_social_rhythm (*),
@@ -156,14 +158,15 @@ export async function POST(req: NextRequest) {
 
   const matchRes = score(viewerVec, candVec, {allowProvisionalRanking:true});
   const softRes = softGate(matchRes, { provisionalFloor: 0.0 });
-  let explanation;
-  try {
-    const cached=await getMatchExplanations(adminClient,{row:viewerRow,vector:viewerVec},[{row:candRow,vector:candVec}]);
-    explanation=cached.explanations.get(candidateId)!;
-  } catch(error) {
-    return NextResponse.json({error:error instanceof Error ? error.message : 'Unable to load explanation'}, {status:503});
-  }
   const asymmetric = calculateAsymmetricFit(viewerVec, candVec, matchRes.resonance);
+  const evidenceClient=createClient(supabaseUrl,publishableKey,{auth:{persistSession:false},global:{headers:{Authorization:`Bearer ${token}`}}});
+  let composed;let visibleBundle:EvidenceBundle;
+  try{
+    const bundle=await loadPairEvidence(evidenceClient,authUserId,candidateId);
+    visibleBundle=bundle;
+    composed=await cachedRead(adminClient,authUserId,candidateId,bundle);
+    if(evidenceHash(await loadPairEvidence(evidenceClient,authUserId,candidateId))!==composed.hash)throw new Error('Reading access or evidence changed. Please retry.');
+  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to compose this reading'},{status:503});}
 
   const minConfidence = Math.min(viewerVec.profile.confidence, candVec.profile.confidence);
 
@@ -184,7 +187,8 @@ export async function POST(req: NextRequest) {
     const isAnsweredA = isThreadAnswered(viewerVec, key);
     const isAnsweredB = isThreadAnswered(candVec, key);
     const isKnown = isAnsweredA && isAnsweredB && (key !== 'values' || (viewerVec.values?.every(v => v.visibility === 'public') && candVec.values?.every(v => v.visibility === 'public')));
-    const weight = BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 10;
+    const weight = (BASELINE_WEIGHTS[key as keyof typeof BASELINE_WEIGHTS] ?? 0)
+      +(typeof matchRes.contributions.repair!=='number'&&['personality','communication','intent'].includes(key)?2:0);
 
     const contrib = matchRes.contributions[key];
     if (!isKnown || typeof contrib !== 'number') {
@@ -198,13 +202,13 @@ export async function POST(req: NextRequest) {
     const alignment = contrib;
     const mech = evaluateMechanism(key as ThreadKey, alignment, viewerVec, candVec);
     const headline = mech.outputState;
-    const phrase = getBondThreadPhrase(key, viewerVec, candVec, alignment);
+    const phrase = key==='emotional' ? 'This comparison does not disclose individual emotional answers.' : getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,
       status: 'known' as const,
       headline,
-      alignment,
+      ...(key==='emotional'?{}:{alignment}),
       weight,
       phrase,
       mechanism: mech.mechanism.toLowerCase() as 'alignment' | 'complementarity' | 'friction' | 'context',
@@ -225,6 +229,19 @@ export async function POST(req: NextRequest) {
     experience: 'outing preferences',
     geography: 'preferred neighbourhoods',
   };
+
+  const repairState=typeof matchRes.contributions.repair==='number'?evaluateMechanism('repair',matchRes.contributions.repair,viewerVec,candVec):null;
+  threads.push(repairState
+    ? {key:'repair',status:'known',weight:6,headline:repairState.outputState,
+      phrase:'This thread compares your separately answered repair preferences. Individual detail requires confirmed shared attendance.',mechanism:repairState.mechanism.toLowerCase() as 'alignment'|'friction'|'context'|'complementarity',frictionClass:undefined,outputState:repairState.outputState}
+    : {key:'repair',status:'unknown',weight:6});
+  const invitationA=visibleBundle.sources.find(s=>s.subject==='self'&&s.thread==='initiative');
+  const invitationB=visibleBundle.sources.find(s=>s.subject==='other'&&s.thread==='initiative');
+  const aInit=viewerVec.communication?.initiation_self,bInit=candVec.communication?.initiation_self;
+  const hasInitiative=!!(invitationA&&invitationB)||(typeof aInit==='number'&&typeof bInit==='number');
+  threads.push(hasInitiative?{key:'initiative',status:'known',weight:0,
+    phrase:invitationA&&invitationB?`Your invitation pattern: ${invitationA.selections.join(' · ')}. Their invitation pattern: ${invitationB.selections.join(' · ')}.`:'Both of you have separately answered the invitation question. This facet carries no extra ranking weight.',
+    mechanism:'context',headline:'Moderate',frictionClass:undefined,outputState:'Moderate'}:{key:'initiative',status:'unknown',weight:0});
 
   const viewerGaps: { questionId: string; prompt: string; href: string }[] = [];
   const candidateGaps: { questionId: string; prompt: string; href: string }[] = [];
@@ -256,7 +273,10 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     candidate: { id: candRow.id, displayName: candRow.display_name, bio: candRow.bio, homeArea: candRow.home_area },
-    clickText: explanation.click_text,
+    clickText: composed.read.sections[0]?.text??'',
+    composedRead:composed.read,
+    readHash:composed.hash,
+    writerVersion:composed.writerVersion,
     overall: {
       rankScore: softRes.adjustedScore,
       resonance: matchRes.resonance,
@@ -267,8 +287,9 @@ export async function POST(req: NextRequest) {
       fitBtoA: asymmetric.fitBtoA,
       imbalance: asymmetric.imbalance,
     },
-    threads,
-    rubText: explanation.friction_text,
+    threads:threads.map(t=>({...t,name:THREAD_NAMES[t.key as keyof typeof THREAD_NAMES],
+      evidence:visibleBundle.sources.filter(s=>s.thread===t.key).map(s=>({questionId:s.questionId,questionVersion:s.questionVersion,selections:s.selections,subject:s.subject}))})),
+    rubText: composed.read.sections.find(s=>s.claims.some(c=>c.priority>=5))?.text??'',
     sharpen,
-  });
+  },{headers:{'Cache-Control':'private, no-store'}});
 }

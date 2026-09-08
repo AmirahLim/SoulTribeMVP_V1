@@ -1,4 +1,5 @@
 'use client';
+import {PeerObservationPanel} from '../../../../components/outings/PeerObservationPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -642,6 +643,7 @@ function OutingRecordContent() {
           </Button>
         </div>
       )}
+      <PeerObservationPanel key={`${outingId}:${submitted}`} outingId={outingId}/>
     </IllustratedGround>
   );
 }

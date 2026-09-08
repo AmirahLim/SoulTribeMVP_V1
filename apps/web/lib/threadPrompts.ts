@@ -11,6 +11,7 @@ export interface ThreadPromptInfo {
 }
 
 export const THREAD_PROMPT_MAP: Record<ThreadKey, Omit<ThreadPromptInfo, 'thread'>> = {
+  repair:{label:'Conflict & Repair',copy:'Share what helps you return to a friendship after something feels off.',categoryNum:11,href:'/you/deeper?cat=11'},
   communication: {
     label: 'Communication Style',
     copy: 'Answering a few questions about how you communicate would sharpen your matches most.',

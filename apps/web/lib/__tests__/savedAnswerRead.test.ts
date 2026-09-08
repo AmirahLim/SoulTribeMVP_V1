@@ -33,7 +33,7 @@ describe('saved categorical answers feed owner pages without invented traits', (
   });
   it('does not reconstruct question versions or inflate independent sources', () => {
     const result = buildSavedAnswerRead({deep_profile: {coreValues: 'Family · Family · Stability'}});
-    expect(result.facts).toEqual([{source:'deep_profile.coreValues', selections:['Family','Stability'], note:'Your life priorities: Family · Stability.'}]);
+    expect(result.facts).toEqual([{source:'deep_profile.coreValues', selections:['Family','Stability'], note:'Your life priorities: Family · Stability.',thread:'values'}]);
   });
   it('omits absent numeric fields, retains explicit withdrawals and zero', () => {
     expect(suppliedTraitFields({trait_personality:{novelty_seeking:undefined, serious_playful:null},

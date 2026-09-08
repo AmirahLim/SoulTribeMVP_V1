@@ -21,6 +21,7 @@ export function adaptRowToUserData(row: any): any {
     agePrefMin: row.age_pref_min,
     agePrefMax: row.age_pref_max,
     trait_intent: Array.isArray(row.trait_intent) ? row.trait_intent[0] : row.trait_intent,
+    trait_repair: Array.isArray(row.trait_repair) ? row.trait_repair[0] : row.trait_repair,
     trait_communication: Array.isArray(row.trait_communication) ? row.trait_communication[0] : row.trait_communication,
     trait_personality: Array.isArray(row.trait_personality) ? row.trait_personality[0] : row.trait_personality,
     trait_social_rhythm: Array.isArray(row.trait_social_rhythm) ? row.trait_social_rhythm[0] : row.trait_social_rhythm,

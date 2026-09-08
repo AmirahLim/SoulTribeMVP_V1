@@ -167,6 +167,7 @@ export interface OnboardingAnswers {
 }
 
 export interface ProfileVector {
+  repair?: {user_id:string;answers:Record<string,string[]>;answered:number};
   profile: Profile;
   personality?: TraitPersonality;
   communication?: TraitCommunication;

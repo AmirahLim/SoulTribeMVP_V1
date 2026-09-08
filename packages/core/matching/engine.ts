@@ -17,6 +17,7 @@ import { calculateAsymmetricFit } from './asymmetric.ts';
 import {lifeContextBoost} from './lifeContext.ts';
 import {publicPreferenceBoost} from './publicPreferences.ts';
 import {sameReportedTown,SAME_REPORTED_TOWN_BOOST} from '../geo/selfReportedTown.ts';
+import {scoreRepair} from './repair.ts';
 
 export function score(
   vecA: ProfileVector,
@@ -33,7 +34,16 @@ export function score(
     );
   }
 
-  const weights = getOutingContextualWeights(context?.activity_category, hasInterestMatch);
+  const weights = {...getOutingContextualWeights(context?.activity_category, hasInterestMatch)};
+  const sRepair=scoreRepair(vecA,vecB);
+  let repairWeight=0;
+  if(sRepair!==null){
+    // Baseline transfer: 2 points each from personality, communication and intent.
+    // Respect outing contextual multipliers; unmeasured repair leaves old weights intact.
+    for(const key of ['personality','communication','intent'] as const){
+      const transfer=weights[key]*2/15;weights[key]-=transfer;repairWeight+=transfer;
+    }
+  }
 
   const sPersonality = scorePersonality(vecA, vecB);
   const sCommunication = scoreCommunication(vecA, vecB);
@@ -47,6 +57,7 @@ export function score(
   const sGeography = scoreGeography(vecA, vecB);
 
   const resThreads: [number | null, number][] = [
+    [sRepair,repairWeight],
     [sPersonality, weights.personality],
     [sCommunication, weights.communication],
     [sIntent, weights.intent],
@@ -101,6 +112,7 @@ export function score(
   const rank_score = gateCheck.passed || provisionalOnly ? Math.min(1,baseRank+contextBoost) : 0;
 
   const contributions: Record<string, number> = {};
+  if(sRepair!==null)contributions.repair=sRepair;
   if (typeof sPersonality === 'number') contributions.personality = sPersonality;
   if (typeof sCommunication === 'number') contributions.communication = sCommunication;
   if (typeof sSocialRhythm === 'number') contributions.social_rhythm = sSocialRhythm;

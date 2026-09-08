@@ -325,6 +325,7 @@ export function toProfileVector(user: UserProfileData, id?: string): ProfileVect
   const agePrefMax = user.agePrefMax ?? (user as any).age_pref_max;
 
   const rawVec: ProfileVector = {
+    repair:(user as any).trait_repair ?? undefined,
     profile: {
       id: userId,
       handle: (user.displayName || (user as any).display_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_'),

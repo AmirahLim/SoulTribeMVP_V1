@@ -1,0 +1,11 @@
+export const REPAIR_QUESTIONS = [
+  {key:'repairFirst',id:'repair.first',version:1,prompt:'Something feels off with a friend. What do you usually do first?',max:1,options:['Name what feels off','Ask how they saw it','Wait a little before saying anything','Step back from the conversation']},
+  {key:'repairReturn',id:'repair.return',version:1,prompt:'After a difficult conversation, when do you usually feel ready to talk normally again?',max:1,options:['In the same conversation','Later that day','After a day or two','After several days','Only after we return to what happened']},
+  {key:'repairDiscuss',id:'repair.discuss',version:1,prompt:'Before you move on, what do you want to happen?',max:1,options:['Talk through what went wrong','Acknowledge it without a long discussion','Agree what will be different next time','Let it go and reconnect through something ordinary']},
+  {key:'repairNeed',id:'repair.need',version:1,prompt:'What helps you feel things are mended? Choose up to two.',max:2,options:['They understand what bothered me','A clear apology','We agree on a practical change','We spend some ordinary time together again','I see the change in what happens afterwards']},
+  {key:'repairSpace',id:'repair.space',version:1,prompt:'If your friend needs space before talking, what helps you?',max:1,options:['A short message saying we will come back to it','Agreeing when we will talk','Knowing I can check in without starting the discussion','Leaving the next message to them']},
+] as const;
+export const INITIATIVE_QUESTION = {key:'initiationChoice',id:'communication.invitation',version:1,prompt:'When you want to see a friend, who usually sends the invitation?',max:1,options:['I usually wait for theirs','It goes both ways','I usually send mine']} as const;
+export const NO_POSITION = ['It depends','Prefer not to say'];
+export const PUBLIC_ANSWER_NOTICE='Your fixed-choice answers inform matching and readings and are visible on your profile. Free text is kept out of the writer.';
+export const SHARED_DETAIL_NOTICE='These answers inform matching and your own reading. Other members can see the thread state, but your individual Emotional Openness and Conflict & Repair answers are visible only after confirmed shared attendance. You can change or remove an answer.';

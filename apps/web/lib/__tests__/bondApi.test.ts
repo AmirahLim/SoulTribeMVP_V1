@@ -91,6 +91,7 @@ const mockDbProfiles = [
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
+    rpc:vi.fn(async(name:string)=>({error:null,data:name==='has_verified_outing_with'?false:name==='claim_composed_read'?{state:'claimed',lease:'test-lease'}:true})),
     auth: {
       getUser: vi.fn(async (token: string) => {
         if (token === 'valid_token') return { data: { user: { id: '11111111-1111-4111-8111-000000000001' } }, error: null };
@@ -98,11 +99,12 @@ vi.mock('@supabase/supabase-js', () => ({
         return { data: { user: null }, error: new Error('Invalid token') };
       }),
     },
-    from: vi.fn((table:string) => table==='match_explanations' ? {
+    from: vi.fn((table:string) => table==='read_answer_sources'?{select:()=>({in:async()=>({data:[],error:null})})}:table==='match_explanations' ? {
       select:()=>({eq:()=>({in:async()=>({data:[],error:null})})}),
       upsert:async()=>({error:null}),
     } : ({
       select: vi.fn((selection:string) => ({
+        eq:vi.fn(()=>({in:vi.fn(()=>({neq:vi.fn(async()=>({data:[],error:null}))}))})),
         or: vi.fn(async () => ({ data: [], error: null })),
         in: vi.fn(async (_col: string, ids: string[]) => {
           schemaState.selections.push(selection);

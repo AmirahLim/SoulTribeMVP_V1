@@ -1,13 +1,16 @@
 import catalog from './onboardingQuestionCatalog.json';
+import {REPAIR_QUESTIONS,INITIATIVE_QUESTION} from './readEngine/deeperQuestions';
 
 type Answers = Record<string, unknown>;
 const object = (value: unknown): Answers => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Answers : {};
-export type SavedAnswerFact = {source: string; selections: string[]; note: string};
+export type SavedAnswerFact = {source: string; selections: string[]; note: string; thread?: string};
 export type SavedAnswerRead = {notes: Record<string, string[]>; facts: SavedAnswerFact[]; hasDeeperAnswers: boolean};
 
 // Literal fixed choices for the owner's read only. Never pass this output through
 // the legacy trait inference adapter or expose it via another member's profile.
-const deepChoices: [string, string, string, string[]][] = [
+export const deepChoices: [string, string, string, string[]][] = [
+  ...REPAIR_QUESTIONS.map(q=>[q.key,'repair',q.prompt,[...q.options]] as [string,string,string,string[]]),
+  [INITIATIVE_QUESTION.key,'initiative',INITIATIVE_QUESTION.prompt,[...INITIATIVE_QUESTION.options]],
   ['groupSize', 'personality', 'Your current group-size preference', ['One-on-one','3–4 people','5–8 people','Big group','Depends']],
   ['socialVibe', 'personality', 'The social atmosphere you chose', ['Intimate','Playful-chaotic','Intellectual','Adventurous','Calm','High-energy','Creative']],
   ['messagingStyle', 'communication', 'How you like to message', ['Random thoughts','Memes','Check-ins','Voice notes','Calls','Making plans','Mostly IRL']],
@@ -39,7 +42,7 @@ export function buildSavedAnswerRead(row: unknown): SavedAnswerRead {
     if (!selections.length) return;
     const note = `${label}: ${selections.join(' · ')}.`;
     (result.notes[thread] ??= []).push(note);
-    result.facts.push({source, selections, note});
+    result.facts.push({source, selections, note, thread});
   };
   // Prefer deeper selections in presentation, but retain baseline as a separately
   // labelled source. Unknown legacy question versions are not reconstructed.

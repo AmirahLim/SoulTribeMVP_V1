@@ -21,14 +21,17 @@ describe('Readable outing roster and account settings',()=>{
   expect(page).toContain("setEditBio(profile.bio || '')");
   expect(page).toContain('max-h-[85dvh] overflow-y-auto');
  });
- it('links member profiles to a consent-gated public Early Read',()=>{
+ it('links member profiles to RLS-filtered public fixed-choice Early Read sources',()=>{
   const profile=source('../../app/people/[id]/page.tsx');
   const read=source('../../app/people/[id]/early-read/page.tsx');
   expect(profile).toContain('earlyReadHref={`/people/${profile.id}/early-read`}');
-  expect(read).toContain(".select('id,display_name,handle,public_onboarding')");
+  expect(read).toContain(".select('id,display_name,handle')");
+  expect(read).toContain("from('read_answer_sources')");
+  expect(read).toContain(".eq('access','public')");
   expect(read).not.toContain("from('profile_answers')");
   expect(read).toContain('<EarlyReadAlbum draft={sharedDraft(answers)} />');
-  expect(read).toContain('has not chosen to share their onboarding answers.');
+  expect(read).toContain('There are no saved, visible baseline selections to read from yet.');
+  expect(read).toContain('The Early Read could not be loaded.');
  });
  it('does not clear client authentication when the provider reports a sign-out error',()=>{
   const auth=source('../authContext.tsx').split('const signOut = async')[1].split('return (')[0];

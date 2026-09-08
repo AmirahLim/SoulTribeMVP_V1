@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PhotoPicker from "./PhotoPicker";
+import {PUBLIC_ANSWER_NOTICE} from '../../lib/readEngine/deeperQuestions';
 import {LIFE_CONTEXTS,LIFE_CONTEXT_DETAILS} from "../../lib/lifeContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
@@ -363,6 +364,7 @@ export default function OnboardingPage() {
               {error.includes('profile changed')&&<Link href="/onboarding?restart=1">Start a fresh set of answers</Link>}
             </p>
           )}
+          <p className="ob-small">{PUBLIC_ANSWER_NOTICE}</p>
           <nav className="ob-nav" aria-label="Onboarding">
             <button
               type="button"
@@ -386,7 +388,6 @@ export default function OnboardingPage() {
                   : designPreview && draft.step === 6 ? "Preview profile details →" : "Continue →"}
             </button>
           </nav>
-          {draft.step === 7 && <p className="ob-small">Your answers help us suggest people you might click with. Manage answer sharing from your profile.</p>}
           {designPreview && <p className="ob-small">Design preview only. Answers are not saved.</p>}
         </section>
       </div>

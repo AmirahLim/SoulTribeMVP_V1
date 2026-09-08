@@ -1,4 +1,5 @@
 import type { ProfileVector, MatchContext } from '../domain/types.ts';
+import {scoreRepair} from './repair.ts';
 import {
   scorePersonality,
   scoreCommunication,
@@ -22,7 +23,8 @@ export type ThreadKey =
   | 'values'
   | 'lifestyle'
   | 'experience'
-  | 'geography';
+  | 'geography'
+  | 'repair';
 
 export type WeightVector = Record<ThreadKey, number>;
 
@@ -33,6 +35,7 @@ export const RESONANCE_THREADS: ThreadKey[] = [
   'emotional',
   'interests',
   'values',
+  'repair',
 ];
 
 export const LOGISTICS_THREADS: ThreadKey[] = [
@@ -43,9 +46,10 @@ export const LOGISTICS_THREADS: ThreadKey[] = [
 ];
 
 export const BASELINE_WEIGHTS: WeightVector = {
-  personality: 15,
-  communication: 15,
-  intent: 15,
+  personality: 13,
+  communication: 13,
+  intent: 13,
+  repair: 6,
   emotional: 10,
   interests: 10,
   values: 8,
@@ -61,6 +65,7 @@ export function threadVector(
   _context?: MatchContext
 ): Record<ThreadKey, number | null> {
   return {
+    repair: scoreRepair(vecA,vecB),
     personality: scorePersonality(vecA, vecB),
     communication: scoreCommunication(vecA, vecB),
     social_rhythm: scoreSocialRhythm(vecA, vecB),
@@ -78,6 +83,11 @@ export function recombine(
   dims: Record<ThreadKey, number | null>,
   weights: WeightVector
 ): { resonance: number; logistics: number; rank: number } {
+  // Legacy/missing repair leaves the pre-repair weighting unchanged.
+  if(typeof dims.repair!=='number'){
+    const transfer=(weights.repair??0)/3;
+    weights={...weights,repair:0,personality:weights.personality+transfer,communication:weights.communication+transfer,intent:weights.intent+transfer};
+  }
   let resSum = 0;
   let resWeightTotal = 0;
   for (const d of RESONANCE_THREADS) {

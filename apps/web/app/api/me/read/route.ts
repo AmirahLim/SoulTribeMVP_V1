@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../../lib/profileAdapter';
 import { adaptRowToUserData } from '../../../../lib/profileRowAdapter';
 import { buildSavedAnswerRead } from '../../../../lib/savedAnswerRead';
+import {buildEvidence, THREAD_NAMES} from '../../../../lib/readEngine/evidence';
+import {composeRead,availableClaims} from '../../../../lib/readEngine/compose';
+import {cachedRead,loadOwnEvidence,evidenceHash} from '../../../../lib/readEngine/server';
 import {
   extractMarkers,
   composeWithinPerson,
@@ -326,6 +329,21 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({error: answersError.message}, {status: 500});
   }
   const savedAnswerRead = buildSavedAnswerRead(savedAnswers);
+  let evidenceBundle;
+  try{evidenceBundle=await loadOwnEvidence(client,authUserId,savedAnswers);}
+  catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to load answer versions'},{status:500});}
+  let composedRead = composeRead(evidenceBundle);
+  const cacheSecret=process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(cacheSecret){
+    try{composedRead=(await cachedRead(createClient(supabaseUrl,cacheSecret,{auth:{persistSession:false}}),authUserId,authUserId,evidenceBundle)).read;}
+    catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to prepare your reading'},{status:503});}
+  }
+  // Detect an answer withdrawal or edit while the cache was being prepared.
+  const freshAnswers=await client.from('profile_answers').select('onboarding,deep_profile,completed_categories').eq('user_id',authUserId).maybeSingle();
+  if(freshAnswers.error)return NextResponse.json({error:freshAnswers.error.message},{status:500});
+  try{if(evidenceHash(await loadOwnEvidence(client,authUserId,freshAnswers.data))!==evidenceHash(evidenceBundle))
+    return NextResponse.json({error:'Your answers changed while the read was loading. Please retry.'},{status:409});}
+  catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to verify your answers'},{status:500});}
 
   // Build vector
   const userData = adaptRowToUserData(row);
@@ -342,7 +360,7 @@ export async function GET(req: NextRequest) {
 
   for (const key of THREAD_ORDER) {
     const answered = getAnswered(vec, key);
-    const name = THREAD_DISPLAY_NAMES[key];
+    const name = THREAD_NAMES[key];
 
     if (answered === 0) {
       const q = QUESTION_MAP[key];
@@ -395,6 +413,16 @@ export async function GET(req: NextRequest) {
     threads.push(thread);
   }
 
+  for(const key of ['repair','initiative'] as const){
+    const sources=evidenceBundle.sources.filter(s=>s.thread===key);
+    const claims=availableClaims(evidenceBundle).filter(c=>c.threads.includes(key));
+    const legacyInitiative=key==='initiative'&&typeof vec.communication?.initiation_self==='number';
+    const known=sources.length>0||legacyInitiative;
+    threads.push({key,name:THREAD_NAMES[key],status:known?'known':'unknown',
+      ...(known?{note:claims[0]?.text??`You ${PHRASES_YOU.initiation(vec.communication!.initiation_self!)}.`,evidence:sources}
+        :{nextPrompt:key==='repair'?'Share what helps after something feels off.':'Share how invitations usually begin.',nextHref:key==='repair'?'/you/deeper?cat=11':'/you/deeper?cat=2'})});
+    if(key==='repair'&&known)threadsExplored++;
+  }
   // Top-level confidence
   const topConfidence = typeof confidenceFromCompleteness === 'function'
     ? confidenceFromCompleteness(vec)
@@ -404,11 +432,11 @@ export async function GET(req: NextRequest) {
   const selfProfile = generateSelfProfile(vec);
   // A missing composite rule is not missing member data. Show supported direct
   // evidence until the separately approved composition/voice work is released.
-  if (savedAnswerRead.facts.length && (savedAnswerRead.hasDeeperAnswers || !selfProfile.tribalRead.sections.length)) {
+  if (savedAnswerRead.facts.length) {
     selfProfile.tribalRead = {
       ...selfProfile.tribalRead,
-      headline: 'From the answers you shared',
-      summary: savedAnswerRead.facts.slice(0, 2).map(fact => fact.note).join(' '),
+      headline: composedRead.sections[0]?.title ?? 'Your reading is taking shape',
+      summary: composedRead.sections[0]?.text ?? '',
       sections: [],
     };
   }
@@ -507,14 +535,15 @@ export async function GET(req: NextRequest) {
       bio: row.bio || undefined,
     },
     confidence: topConfidence,
-    passCompletionPct: Math.round((threadsExplored / 10) * 100),
+    passCompletionPct: Math.round((threadsExplored / 11) * 100),
     threadsExplored,
-    threadsTotal: 10,
+    threadsTotal: 11,
     threads,
     markers: markerKeys,
     signalsCount: markers.length,
     tribalRead: selfProfile.tribalRead,
     savedAnswerRead,
+    composedRead,
     outingPreferences: selfProfile.outingPreferences,
     interests,
     values,

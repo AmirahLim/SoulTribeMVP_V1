@@ -10,6 +10,7 @@ export interface ColdStartOptions {
 }
 
 export const THREAD_QUESTION_COUNTS: Record<ThreadKey, number> = {
+  repair:5,
   personality: 4,
   communication: 5,
   social_rhythm: 4,
@@ -23,6 +24,7 @@ export const THREAD_QUESTION_COUNTS: Record<ThreadKey, number> = {
 };
 
 export const THREAD_TARGET_SIGNAL_COUNTS: Record<ThreadKey, number> = {
+  repair:5,
   personality: 10,
   communication: 10,
   social_rhythm: 6,
@@ -66,6 +68,7 @@ export function confidenceFromCompleteness(vec: ProfileVector): number {
   const filledGeography = countFilledObjSignals(vec.geography);
 
   const ratios: Record<ThreadKey, number> = {
+    repair:Math.min(1,(vec.repair?.answered??0)/5),
     personality: Math.min(1, filledPersonality / THREAD_TARGET_SIGNAL_COUNTS.personality),
     communication: Math.min(1, filledCommunication / THREAD_TARGET_SIGNAL_COUNTS.communication),
     social_rhythm: Math.min(1, filledSocialRhythm / THREAD_TARGET_SIGNAL_COUNTS.social_rhythm),
@@ -82,7 +85,8 @@ export function confidenceFromCompleteness(vec: ProfileVector): number {
   let totalWeight = 0;
 
   for (const k of Object.keys(BASELINE_WEIGHTS) as ThreadKey[]) {
-    const w = BASELINE_WEIGHTS[k];
+    const hasRepair=(vec.repair?.answered??0)>0;
+    const w = !hasRepair?(k==='repair'?0:['personality','communication','intent'].includes(k)?BASELINE_WEIGHTS[k]+2:BASELINE_WEIGHTS[k]):BASELINE_WEIGHTS[k];
     weightedSum += ratios[k] * w;
     totalWeight += w;
   }
@@ -230,6 +234,7 @@ export function nextBestQuestions(vec: ProfileVector, limit: number = 3): Thread
 
   const ratios: Record<ThreadKey, number> = {
     personality: personalityRatio,
+    repair:Math.min(1,(vec.repair?.answered??0)/5),
     communication: communicationRatio,
     social_rhythm: socialRhythmRatio,
     intent: intentRatio,

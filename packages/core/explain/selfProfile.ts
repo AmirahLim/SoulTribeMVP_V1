@@ -98,18 +98,8 @@ export interface SelfProfileData {
 
 // ─── Thread metadata ─────────────────────────────────────────────────
 
-const THREAD_LABELS: Record<ThreadKey, string> = {
-  personality: 'Social Energy',
-  communication: 'Communication',
-  social_rhythm: 'Social Rhythm',
-  intent: 'Friendship Style',
-  emotional: 'Emotional Connection',
-  interests: 'Interests',
-  values: 'Values',
-  lifestyle: 'Play & Humour',
-  experience: 'Conversation',
-  geography: 'Availability',
-};
+import {THREAD_NAMES} from '../matching/threadRegistry.ts';
+const THREAD_LABELS: Record<ThreadKey, string> = THREAD_NAMES;
 
 const ALL_THREADS: ThreadKey[] = [
   'personality', 'communication', 'social_rhythm', 'intent', 'emotional',
@@ -327,6 +317,7 @@ function generateThreadSentence(thread: ThreadKey, vec: ProfileVector, markers: 
   const keys = new Set(threadMarkers.map((m) => m.key));
 
   switch (thread) {
+    case 'repair': return ''; // Dedicated categorical compositor owns repair prose.
     case 'personality': {
       const ext = vec.personality?.extraversion;
       if (typeof ext === 'number') {

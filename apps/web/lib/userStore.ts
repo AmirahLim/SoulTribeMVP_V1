@@ -2,6 +2,12 @@
 import { getGenderAvatarForName } from '@soul-tribe/core';
 
 export interface DeepProfileAnswers {
+  initiationChoice?: string;
+  repairFirst?: string;
+  repairReturn?: string;
+  repairDiscuss?: string;
+  repairNeed?: string;
+  repairSpace?: string;
   // 1. Social Energy
   groupSize?: string;
   socialVibe?: string;

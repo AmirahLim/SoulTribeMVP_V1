@@ -87,6 +87,7 @@ vi.mock('@supabase/supabase-js', () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
         eq: vi.fn((_col: string, id: string) => ({
+          then: (resolve: (value:unknown)=>unknown)=>Promise.resolve({data:[],error:null}).then(resolve),
           maybeSingle: vi.fn(async () => {
             if(table === 'profile_answers') {
               answerState.owners.push(id);
@@ -119,7 +120,7 @@ describe('6t — /api/me/read and You page wiring', () => {
     answerState.row={deep_profile:{messagingStyle:'Random thoughts',coreValues:'Family · Stability'}, completed_categories:[1,2,3,4,5,6,7,8,9,10]};
     const {status,body}=await callRoute('empty_token');
     expect(status).toBe(200);
-    expect(answerState.owners).toEqual(['empty-1']);
+    expect(answerState.owners).toEqual(['empty-1','empty-1']);
     expect(body.savedAnswerRead.notes.communication.join(' ')).toContain('Random thoughts');
     expect(body.savedAnswerRead.notes.values.join(' ')).toContain('Family · Stability');
     expect(body.tribalRead.summary).not.toContain('not yet enough');
@@ -181,11 +182,11 @@ describe('6t — /api/me/read and You page wiring', () => {
     expect(empty.status).toBe(200);
 
     const threads = empty.body.threads;
-    expect(threads).toHaveLength(10);
+    expect(threads).toHaveLength(12); // Eleven scored threads and an unweighted initiative facet.
 
     // All threads should be unknown
     const unknownThreads = threads.filter((t: any) => t.status === 'unknown');
-    expect(unknownThreads).toHaveLength(10);
+    expect(unknownThreads).toHaveLength(12);
 
     // Top-level confidence should be low
     expect(empty.body.confidence).toBeLessThan(0.3);

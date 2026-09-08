@@ -16,8 +16,14 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = 4194304,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp'];
 
--- 2. Enable Row Level Security on Storage Objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- 2. Preserve Row Level Security on Storage Objects.
+-- Hosted Supabase already enables RLS and owns this managed table; a redundant
+-- ALTER is rejected there. Only enable it for an unprotected local installation.
+DO $$ BEGIN
+  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'storage.objects'::regclass) THEN
+    ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- Policy 1: Authenticated members may READ avatars
 CREATE POLICY "Authenticated members can view avatars"

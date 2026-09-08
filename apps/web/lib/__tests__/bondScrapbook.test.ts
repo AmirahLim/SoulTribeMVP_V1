@@ -1,7 +1,9 @@
 import {describe,it,expect,vi} from 'vitest';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {BondScrapbook,bondTone,bondSynthesis,bondObjects,type BondNotes} from '../../components/BondScrapbook';
+import {BondScrapbook,bondTone,bondObjects,type BondNotes} from '../../components/BondScrapbook';
+import {composeRead} from '../readEngine/compose';
+import {pairEvidence} from '../readEngine/evidence';
 import {readFileSync} from 'fs';
 import {resolve} from 'path';
 vi.mock('next/font/google',()=>({Caveat:()=>({className:'handwriting'})}));
@@ -17,23 +19,26 @@ describe('Bond scrapbook',()=>{
   expect(html).toContain('Show less');
   expect(html).toContain('View Connection');
   expect(html).not.toContain('The space between you');
-  expect(html).toContain('Turning intention into time');
+  expect(html).not.toContain('Turning intention into time'); // Removed generic synthesis.
   expect(html).not.toContain('/images/connection-thread.png');
   expect(html).not.toContain('/images/brown-thread-photo.jpg');
   expect(html).not.toContain('<img');
   expect(html).toContain('viewBox="0 0 32 300"');
   expect(html).toContain('viewBox="0 0 700 64"');
   expect(html).not.toContain('<details open');
-  expect(html.indexOf('How the threads')).toBeLessThan(html.indexOf('Thread by thread'));
+  expect(html).toContain('There is not enough shared evidence for a composed reading yet.');
  });
- it('synthesizes only available thread evidence and prioritizes practical friction',()=>{
-  const summary=bondSynthesis(notes.threads);
-  expect(summary[0].observation).toContain('Full social-energy explanation');
-  expect(summary[0].unknown).toContain('emotional');
-  expect(summary[1].text).toContain('coordination');
-  expect(summary[1].observation).toContain('Full planning difference');
-  expect(summary[2].text).toContain('not enough shared');
-  expect(bondSynthesis([{key:'values',status:'unknown',phrase:'MUST NOT LEAK',mechanism:'alignment'}]).map(g=>g.observation).join()).not.toContain('MUST NOT LEAK');
+ it('renders source-composed sections rather than generic thread synthesis',()=>{
+  // Isolated display contract, not member data.
+  const self={onboarding:{baselineV2:{planningChoice:'A few days',intent:['Close circle']}}};
+  const other={onboarding:{baselineV2:{planningChoice:'Same day is fine',intent:['Close circle']}}};
+  const composedRead=composeRead(pairEvidence(self,other));
+  expect(composedRead.sections.length).toBeGreaterThan(0);
+  const html=renderToStaticMarkup(React.createElement(BondScrapbook,{notes:{...notes,composedRead}}));
+  expect(html).toContain(composedRead.sections[0].title);
+  expect(html).toContain('What this reading draws on');
+  expect(html).not.toContain('There is not enough shared evidence');
+  expect(composeRead(pairEvidence({},{})).sections).toEqual([]);
  });
  it('gives every thread a distinct object, material and opening instruction',()=>{
   const objects=Object.values(bondObjects);

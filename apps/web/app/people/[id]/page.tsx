@@ -1,6 +1,8 @@
 'use client';
 import {SocialScrapbook} from '../../../components/profile/SocialScrapbook';
-import {publicSocialPages, sharedChoices} from '../../../lib/socialScrapbook';
+import {PeerReadPanel} from '../../../components/profile/PeerReadPanel';
+import {selfSocialPages, sharedChoices} from '../../../lib/socialScrapbook';
+import type {ComposedRead} from '../../../lib/readEngine/compose';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -29,10 +31,19 @@ export default function PersonDetailPage() {
 }
 function PersonDetailContent() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user,session } = useAuth();
+  const [read,setRead]=useState<ComposedRead|null>(null),[readError,setReadError]=useState('');
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [status, setStatus] = useState('Loading profile…');
   const [attempt, setAttempt] = useState(0);
+  useEffect(()=>{
+    const controller=new AbortController();setRead(null);setReadError('');
+    if(!session?.access_token)return;
+    fetch(`/api/profile/read?id=${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${session.access_token}`},signal:controller.signal})
+      .then(async r=>{const body=await r.json();if(!r.ok)throw new Error(body.error||'Unable to load this reading');return body;})
+      .then(body=>setRead(body.composedRead)).catch(e=>{if(e.name!=='AbortError')setReadError('The profile reading could not be loaded. Please try again.');});
+    return()=>controller.abort();
+  },[id,attempt,session?.access_token]);
   const [pitches, setPitches] = useState<
     { id: string; title: string; area: string }[]
   >([]);
@@ -93,9 +104,12 @@ function PersonDetailContent() {
         <div role="status" className="mt-8"><p>{status}</p><button className="py-3 underline" onClick={() => setAttempt(n => n + 1)}>Try again</button></div>
       </div>}
       {profile && <SocialScrapbook name={profile.display_name} handle={profile.handle} area={profile.home_area}
-        avatar={profile.avatar_url} bio={profile.bio} summary={sharedSummary}
+        avatar={profile.avatar_url} bio={profile.bio} headline={read?.sections[0]?.title} summary={read?.sections[0]?.text}
         earlyReadHref={`/people/${profile.id}/early-read`}
-        pages={publicSocialPages(profile.public_onboarding, (profile.user_values ?? []).map(v => v.value_key.replaceAll('_', ' ')), profile.id)}>
+        pages={read?selfSocialPages({composedRead:read,threads:[],values:[],interests:[]}).map(page=>({...page,href:`/people/${profile.id}/bond`,action:'Explore your connection →'})):[]}>
+        {readError&&<p role="alert">{readError}<button className="underline p-2" onClick={()=>setAttempt(n=>n+1)}>Try again</button></p>}
+        {!read&&!readError&&<p role="status">Reading what they shared…</p>}
+        {read&&!read.sections.length&&<p>No supported profile pages are available from the answers shared so far.</p>}
         <div className="flex flex-wrap gap-5 mb-8">
           <Link href={`/people/${profile.id}/bond`} className="inline-flex items-center justify-center rounded-sm bg-[#eee5d2] text-[#303c2b] border border-[#d4c7aa] px-5 py-3 min-h-[46px] hover:bg-[#e0d3b8]">View Connection →</Link>
           <Link href={`/outings/pitch?inviteId=${profile.id}`} className="underline py-3">Invite them to an outing →</Link>
@@ -106,6 +120,7 @@ function PersonDetailContent() {
         </section>}
         <Link href="/people" className="inline-block underline py-3 mb-5">Back to people</Link>
         {user && <SafetyActions userId={user.id} targetId={profile.id}/>}
+        <PeerReadPanel subjectId={profile.id}/>
       </SocialScrapbook>}
     </div>
   );

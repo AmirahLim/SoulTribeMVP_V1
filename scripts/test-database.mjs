@@ -554,4 +554,95 @@ await db.query('update profiles set explanation_revision=explanation_revision wh
 await fails(`insert into match_explanations(user_a,user_b,click_text,friction_text,generated_by,version_a,version_b,revision_a,revision_b)
  values($1,$2,'local test','local test','test',$3,$4,$5,$6)`,/Matching inputs changed/,[host,guest,stale.version_a,stale.version_b,stale.revision_a,stale.revision_b]);
 console.log('Passed provenance timestamps, IDs, catalog consistency, no backfill, exact atomic claim, RLS, bidirectional invalidation, safety denial and stale cache rejection.');
+// 8a: isolated database fixtures, never run against production.
+await as(host);
+await db.query("update profile_answers set deep_profile=deep_profile||$1::jsonb where user_id=$2",[{repairFirst:'Ask how they saw it',repairNeed:'A clear apology',initiationChoice:'It goes both ways'},host]);
+assert.equal((await db.query("select question_version from read_answer_sources where user_id=$1 and question_id='repair.first'",[host])).rows[0].question_version,1);
+assert.deepEqual((await db.query('select answers from trait_repair where user_id=$1',[host])).rows[0].answers,{'repair.first':['Ask how they saw it'],'repair.need':['A clear apology']});
+await assert.rejects(db.query("update profile_answers set deep_profile=deep_profile||$1::jsonb where user_id=$2",[{repairFirst:'invented option'},host]),/Unknown selection/);
+await assert.rejects(db.query("update profile_answers set deep_profile=deep_profile||$1::jsonb where user_id=$2",[{repairNeed:'A clear apology · We agree on a practical change · They understand what bothered me'},host]),/Too many selections/);
+await as(guest);
+assert.equal((await db.query("select * from read_answer_sources where user_id=$1 and thread='repair'",[host])).rows.length,0);
+assert.equal((await db.query('select * from trait_repair where user_id=$1',[host])).rows.length,0);
+assert.equal((await db.query("select * from read_answer_sources where user_id=$1 and thread='initiative'",[host])).rows.length,1);
+await assert.rejects(db.query('select * from peer_observations'),/permission denied/);
+await assert.rejects(db.query('select * from peer_read_checks'),/permission denied/);
+await assert.rejects(db.query('select * from composed_read_cache'),/permission denied/);
+await assert.rejects(db.query('select claim_composed_read($1,$2,\'profile\',\'h\',\'e\',\'w\',\'d\')',[guest,guest]),/permission denied/);
+assert.deepEqual((await db.query('select read_peer_signals($1) result',[host])).rows[0].result,[]);
+await assert.rejects(db.query('select submit_peer_observation($1,$2,$3,$4)',[outing,host,'peer.joining','started']),/Confirmed shared attendance/);
+await assert.rejects(db.query('select submit_peer_observation($1,$2,$3,$4)',[outing,guest,'peer.joining','started']),/Observation unavailable/);
+await db.exec('reset role');
+await db.query('delete from composed_read_cache where viewer_id=$1',[host]);
+const claimArgs=[host,host,'profile','evidence1','engine1','writer1','disclosure1'];
+const lease=(await db.query('select claim_composed_read($1,$2,$3,$4,$5,$6,$7) result',claimArgs)).rows[0].result;
+assert.equal(lease.state,'claimed');
+assert.equal((await db.query('select claim_composed_read($1,$2,$3,$4,$5,$6,$7) result',claimArgs)).rows[0].result.state,'busy');
+assert.equal((await db.query('select finish_composed_read($1,$2,$3,$4,$5,$6) result',[host,host,'profile','evidence1',lease.lease,{sections:[]}])).rows[0].result,true);
+assert.equal((await db.query('select claim_composed_read($1,$2,$3,$4,$5,$6,$7) result',claimArgs)).rows[0].result.state,'hit');
+const nextLease=(await db.query('select claim_composed_read($1,$2,$3,$4,$5,$6,$7) result',[...claimArgs.slice(0,3),'evidence2',...claimArgs.slice(4)])).rows[0].result;
+assert.equal(nextLease.state,'claimed');
+assert.equal((await db.query('select finish_composed_read($1,$2,$3,$4,$5,$6) result',[host,host,'profile','evidence1',lease.lease,{sections:[]}])).rows[0].result,false);
+for(const name of ['20261005000000_read_engine.sql','20261006000000_peer_observations.sql','20261007000000_repair_scoring.sql'])await db.exec(await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8'));
+await as(host);
+await db.query("update profile_answers set deep_profile=deep_profile||$1::jsonb where user_id=$2",[{repairFirst:'Prefer not to say',repairNeed:'Prefer not to say'},host]);
+assert.equal((await db.query('select * from trait_repair where user_id=$1',[host])).rows.length,0);
+// Fresh, isolated test-only members and outings. Never used in a live database.
+await db.exec("reset role; set request.jwt.claim.role='service_role'");
+const observers=Array.from({length:5},(_,i)=>`30000000-0000-4000-8000-00000000000${i+1}`);
+const peerOutings=Array.from({length:3},(_,i)=>`40000000-0000-4000-8000-00000000000${i+1}`);
+for(const [i,id] of observers.entries()){
+ await db.query('insert into auth.users values($1)',[id]);
+ await db.query("insert into profiles(id,handle,display_name,home_area,birth_year) values($1,$2,'Isolated test member','Singapore',1990)",[id,'peer_fixture_'+i]);
+}
+for(const id of peerOutings){
+ await db.query("insert into outings(id,host_id,title,pitch,activity_category,area,starts_at,duration_minutes,budget_band,orientation,setting,max_participants,state) values($1,$2,'Local test outing','An isolated local database fixture','coffee','Singapore',now()-interval '20 days',60,1,'either','quiet',6,'open')",[id,host]);
+ for(const actor of observers){
+  await as(host);await db.query("insert into outing_members(outing_id,user_id,role,state) values($1,$2,'guest','invited')",[id,actor]);
+  await as(actor);await db.query("update outing_members set state='accepted' where outing_id=$1 and user_id=$2",[id,actor]);
+ }
+ await as(host);
+ await db.query('insert into outing_records(outing_id,attended) values($1,$2)',[id,[host,...observers]]);
+ await db.exec('reset role');
+ for(const actor of [host,...observers])await db.query('insert into outing_presence_confirmations(outing_id,user_id) values($1,$2)',[id,actor]);
+ await db.query("update outings set state='completed' where id=$1",[id]);
+}
+for(const [i,actor] of observers.entries())await db.query("insert into peer_observations(outing_id,observer_id,subject_id,question_id,option_id,created_at) values($1,$2,$3,'peer.joining','started',now()-interval '14 days')",[peerOutings[i%3],actor,host]);
+await db.query("update peer_signal_releases set period_start=date_trunc('week',now())-interval '1 week',invalidated_at=null where subject_id=$1",[host]);
+await as(host);
+const released=(await db.query('select read_peer_signals($1) result',[host])).rows[0].result;
+assert.equal(released.length,1);assert.equal(released[0].evidenceLevel,'PEER OBSERVATION');
+assert.equal(JSON.stringify(released).includes('observer_id'),false);
+await as(observers[0]);
+await db.query('select submit_peer_observation($1,$2,$3,$4)',[peerOutings[0],host,'peer.joining',null]);
+await as(host);
+assert.deepEqual((await db.query('select read_peer_signals($1) result',[host])).rows[0].result,[]);
+await db.exec('reset role');
+await db.query("update peer_signal_releases set period_start=date_trunc('week',now())-interval '1 week' where subject_id=$1",[host]);
+await as(host);
+assert.deepEqual((await db.query('select read_peer_signals($1) result',[host])).rows[0].result,[]);
+await assert.rejects(db.query('select * from read_phrase_history'),/permission denied/);
+await db.exec('reset role');
+// The latest abstention replaces, rather than revives, an older positive response.
+await db.query("insert into peer_observations(outing_id,observer_id,subject_id,question_id,option_id,created_at) values($1,$2,$3,'peer.joining','started',now()-interval '14 days')",[peerOutings[0],observers[0],host]);
+await db.query("insert into peer_observations(outing_id,observer_id,subject_id,question_id,option_id,created_at) values($1,$2,$3,'peer.joining','cannot_tell',date_trunc('week',now())-interval '1 day')",[peerOutings[1],observers[0],host]);
+await db.query("update peer_signal_releases set period_start=date_trunc('week',now())-interval '1 week' where subject_id=$1",[host]);
+await as(host);assert.deepEqual((await db.query('select read_peer_signals($1) result',[host])).rows[0].result,[]);
+await db.exec('reset role');
+const peerLease=(await db.query("select claim_composed_read($1,$2,'bond','peer-check','engine','writer','disclosure') result",[observers[0],host])).rows[0].result;
+await db.query("select finish_composed_read($1,$2,'bond','peer-check',$3,$4)",[observers[0],host,peerLease.lease,{sections:[]}]);
+await as(observers[0]);
+assert.equal((await db.query("select can_submit_peer_read_check($1,'peer-check','writer') ok",[host])).rows[0].ok,true);
+await db.query("select submit_peer_read_check($1,'peer-check','writer','mostly')",[host]);
+await db.query('insert into blocks(blocker_id,blocked_id) values($1,$2)',[observers[0],host]);
+assert.equal((await db.query("select can_submit_peer_read_check($1,'peer-check','writer') ok",[host])).rows[0].ok,false);
+await assert.rejects(db.query("select submit_peer_read_check($1,'peer-check','writer','mostly')",[host]),/unavailable/);
+await db.query("select submit_peer_read_check($1,'peer-check','writer',null)",[host]);
+// Account deletion must not resurrect a repair projection during cascading deletes.
+await db.exec('reset role');
+await db.query("insert into profile_answers(user_id,onboarding,deep_profile) values($1,'{}',$2)",[observers[4],{repairFirst:'Ask how they saw it',repairNeed:'A clear apology'}]);
+assert.equal((await db.query('select * from trait_repair where user_id=$1',[observers[4]])).rows.length,1);
+await db.query('delete from profiles where id=$1',[observers[4]]);
+assert.equal((await db.query('select * from trait_repair where user_id=$1',[observers[4]])).rows.length,0);
+console.log('Passed 8a question validation, source withdrawal, RLS, peer threshold release, immediate withdrawal suppression, private storage, atomic cache leases and migration repeatability.');
 await db.close();
