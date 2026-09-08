@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateMatchExplanation, type ProfileVector } from '@soul-tribe/core';
+import type {EvidenceBundle} from './readEngine/evidence';
+import {rosterReadings} from './readEngine/roster';
 
 // Bump whenever explanation composition, vocabulary or disclosed inputs change.
-export const EXPLANATION_ENGINE_VERSION = 'match-explanation/2026-09-08.1';
+export const EXPLANATION_ENGINE_VERSION = 'match-explanation/8a.2';
 export type ExplanationProfile = { id: string; profile_version: number; explanation_revision: number };
 export type ExplanationText = { click_text: string; friction_text: string };
 type Input = { row: ExplanationProfile; vector: ProfileVector };
@@ -24,7 +26,7 @@ function failure(operation: string, error: { code?: string; message: string }): 
   throw new Error(error.message);
 }
 /** Called only after authentication and fresh safety/eligibility checks. Never import into client code. */
-export async function getMatchExplanations(client: SupabaseClient, viewer: Input, candidates: Input[]) {
+export async function getMatchExplanations(client: SupabaseClient, viewer: Input, candidates: Input[], bundles?:Map<string,EvidenceBundle>) {
   const metrics = { cache_hits:0, generated:0, cache_read_ms:0, explanation_ms:0, cache_write_ms:0 };
   const explanations = new Map<string,ExplanationText>();
   if (!candidates.length) return { explanations, metrics };
@@ -41,8 +43,12 @@ export async function getMatchExplanations(client: SupabaseClient, viewer: Input
   const cache = new Map((data??[]).map(row=>[row.user_b,row]));
   const writes = [];
   const generationStart = performance.now();
+  const composed=bundles?rosterReadings(bundles):undefined;
+  // Shortlist/order is part of composition identity: cached wording must not defeat
+  // roster-wide emphasis selection when a different set of matches is returned.
+  const rosterHash=bundles?createHash('sha256').update(stable([...bundles])).digest('hex'):'';
   for (const candidate of candidates) {
-    const input_hash = explanationInputHash(viewer.vector,candidate.vector);
+    const input_hash = createHash('sha256').update(explanationInputHash(viewer.vector,candidate.vector)+rosterHash).digest('hex');
     const hit = cache.get(candidate.row.id);
     if (hit && hit.version_a===viewer.row.profile_version && hit.version_b===candidate.row.profile_version
       && hit.revision_a===viewer.row.explanation_revision && hit.revision_b===candidate.row.explanation_revision
@@ -50,7 +56,7 @@ export async function getMatchExplanations(client: SupabaseClient, viewer: Input
       explanations.set(candidate.row.id,hit);
       metrics.cache_hits++;
     } else {
-      const generated = generateMatchExplanation(publicVector(viewer.vector),publicVector(candidate.vector));
+      const generated = composed?.get(candidate.row.id)??generateMatchExplanation(publicVector(viewer.vector),publicVector(candidate.vector));
       const text = {click_text:generated.click_text,friction_text:generated.friction_text};
       explanations.set(candidate.row.id,text);
       writes.push({...text,user_a:viewer.row.id,user_b:candidate.row.id,

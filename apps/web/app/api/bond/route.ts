@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../lib/profileAdapter';
 import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import {loadPairEvidence,cachedRead,evidenceHash} from '../../../lib/readEngine/server';
+import {connectionThread} from '../../../lib/readEngine/compose';
+import {pairClaims} from '../../../lib/readEngine/relational';
 import {THREAD_NAMES,type EvidenceBundle} from '../../../lib/readEngine/evidence';
 import {
   score,
@@ -191,7 +193,11 @@ export async function POST(req: NextRequest) {
       +(typeof matchRes.contributions.repair!=='number'&&['personality','communication','intent'].includes(key)?2:0);
 
     const contrib = matchRes.contributions[key];
+    const interpretation=connectionThread(visibleBundle,key);
     if (!isKnown || typeof contrib !== 'number') {
+      if(interpretation)return {key,status:'known' as const,weight,headline:interpretation.title,
+        phrase:interpretation.text,mechanism:'context' as const,outputState:'Worth exploring',
+        evidence:visibleBundle.sources.filter(s=>interpretation.sourceIds.includes(s.id))};
       return {
         key,
         status: 'unknown' as const,
@@ -202,7 +208,7 @@ export async function POST(req: NextRequest) {
     const alignment = contrib;
     const mech = evaluateMechanism(key as ThreadKey, alignment, viewerVec, candVec);
     const headline = mech.outputState;
-    const phrase = key==='emotional' ? 'This comparison does not disclose individual emotional answers.' : getBondThreadPhrase(key, viewerVec, candVec, alignment);
+    const phrase = key==='emotional' ? 'This comparison does not disclose individual emotional answers.' : interpretation?.text??getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,
@@ -211,6 +217,7 @@ export async function POST(req: NextRequest) {
       ...(key==='emotional'?{}:{alignment}),
       weight,
       phrase,
+      ...(interpretation?{evidence:visibleBundle.sources.filter(s=>interpretation.sourceIds.includes(s.id))}:{}),
       mechanism: mech.mechanism.toLowerCase() as 'alignment' | 'complementarity' | 'friction' | 'context',
       frictionClass: mech.severity || mech.frictionType,
       outputState: mech.outputState,
@@ -289,7 +296,7 @@ export async function POST(req: NextRequest) {
     },
     threads:threads.map(t=>({...t,name:THREAD_NAMES[t.key as keyof typeof THREAD_NAMES],
       evidence:visibleBundle.sources.filter(s=>s.thread===t.key).map(s=>({questionId:s.questionId,questionVersion:s.questionVersion,selections:s.selections,subject:s.subject}))})),
-    rubText: composed.read.sections.find(s=>s.claims.some(c=>c.priority>=5))?.text??'',
+    rubText: pairClaims(visibleBundle).find(c=>c.tone==='friction')?.text??'',
     sharpen,
   },{headers:{'Cache-Control':'private, no-store'}});
 }

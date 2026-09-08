@@ -19,10 +19,10 @@ describe('8a shared evidence and composition',()=>{
   });
   it('composes distinct supported pages with no repeated answer paragraphs',()=>{
     const b=buildEvidence(row(),'profile'),read=composeRead(b);
-    expect(read.sections).toHaveLength(4);
+    expect(read.sections.map(s=>s.key)).toEqual(['social','connect','bring','friction','doing']);
     expect(read.sections.flatMap(s=>s.claims).every(c=>validateClaim(c,b))).toBe(true);
     expect(new Set(read.sections.flatMap(s=>s.claims.map(c=>c.text))).size).toBe(read.sections.flatMap(s=>s.claims).length);
-    expect(read.sections.find(s=>s.key==='connect')?.text).toMatch(/stray thought/);
+    expect(read.sections.find(s=>s.key==='connect')?.text).toMatch(/passing thought/);
     expect(read.sections.map(s=>s.text).join(' ')).not.toMatch(/Your current|you chose|not enough|MBTI/);
   });
   it('changes interpretation when contact evidence changes and does not repeat levels',()=>{

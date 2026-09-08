@@ -26,11 +26,14 @@ export const brief = (text: string, limit = 130) => {
 const clean = (items: (string | undefined)[]) => items.filter((v): v is string => !!v?.trim());
 export function selfSocialPages(read: Read): SocialPage[] {
   if(read.composedRead){
-    const captions:Record<string,string>={social:'A little portrait of me',connect:'How I naturally connect',bring:'The things I hold close',best:'People, places & a little ease'};
-    const kinds:Record<string,SocialPage['kind']>={social:'photo',connect:'notebook',bring:'letter',best:'photo'};
-    return read.composedRead.sections.map(section=>({key:section.key,title:section.title,
-      caption:captions[section.key]??section.key,kind:kinds[section.key]??'paper',notes:section.claims.map(c=>c.text),
-      evidence:section.evidence,href:'/you/deeper',action:'Correct or deepen this reading →'}));
+    const captions:Record<string,string>={social:'A little portrait of me',connect:'How I naturally connect',bring:'The things I hold close',best:'People, places & a little ease',friction:'Handle with care',doing:'Count me in for…'};
+    const kinds:Record<string,SocialPage['kind']>={social:'photo',connect:'notebook',bring:'letter',best:'photo',friction:'paper',doing:'notebook'};
+    return Object.keys(captions).map(key=>{
+      const section=read.composedRead!.sections.find(s=>s.key===key);
+      return {key,title:section?.title??captions[key],caption:captions[key],kind:kinds[key],
+        notes:section?.claims.map(c=>c.text)??[],evidence:section?.evidence,
+        href:'/you/deeper',action:section?'Correct or deepen this reading →':'Add your perspective →'};
+    });
   }
   const notes = (...keys: string[]) => keys.flatMap(key => {
     const saved = read.savedAnswerRead?.notes[key];

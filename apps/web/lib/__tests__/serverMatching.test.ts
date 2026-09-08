@@ -35,6 +35,7 @@ vi.mock('@supabase/supabase-js', () => {
           })),
         },
         from: (table: string) => {
+          if(table==='read_answer_sources')return {select:()=>({in:async()=>({data:[],error:null})})};
           if (table === 'match_explanations') return {
             select:()=>({eq:()=>({in:async()=>({data:[],error:null})})}),
             upsert:async(rows:any[])=>{cacheTestState.writes.push(...rows);return {error:null};},
@@ -123,6 +124,7 @@ vi.mock('@supabase/supabase-js', () => {
                     ];
             rows.push(...Array.from({length:cacheTestState.extra},(_,i)=>({...rows[1],id:'extra-candidate-'+i})));
             const q: any = {
+              in: async (_key:string,ids:string[])=>({data:rows.filter(r=>ids.includes(r.id)),error:null}),
               eq: (key: string, value: any) => { rows = rows.filter(r => r[key] === value).map(r=>({...r,profile_version:1,explanation_revision:0})); return q; },
               limit: async () => ({ data: rows, error: null }),
               maybeSingle: async () => ({ data: rows[0] || null, error: null }),

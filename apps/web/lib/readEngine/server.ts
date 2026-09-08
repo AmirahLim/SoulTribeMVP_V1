@@ -4,6 +4,7 @@ import {buildEvidence, pairEvidence, type EvidenceBundle} from './evidence';
 import {composeRead,writeRead,type ComposedRead,type Writer} from './compose';
 import catalog from '../onboardingQuestionCatalog.json';
 import {deepChoices} from '../savedAnswerRead';
+import {includeMeasurements,MEASUREMENT_SELECT} from './legacy';
 
 export function stable(value:unknown):string{
   if(Array.isArray(value))return '['+value.map(stable).join(',')+']';
@@ -15,7 +16,10 @@ function fail(operation:string,error:{code?:string;message:string}):never{
   console.error('[SoulTribe] read engine '+operation,{code:error.code,message:error.message});throw new Error(error.message);
 }
 export async function loadOwnEvidence(client:SupabaseClient,owner:string,saved:unknown){
-  const bundle=buildEvidence(saved,'profile');
+  let bundle=buildEvidence(saved,'profile');
+  const measurements=await client.from('profiles').select(MEASUREMENT_SELECT).eq('id',owner).maybeSingle();
+  if(measurements.error)fail('saved measurements',measurements.error);
+  bundle=includeMeasurements(bundle,measurements.data);
   const {data,error}=await client.from('read_answer_sources').select('question_id,question_version,selections').eq('user_id',owner);
   if(error)fail('own source versions',error);
   for(const source of bundle.sources){
@@ -40,15 +44,48 @@ export async function loadPairEvidence(client:SupabaseClient,viewer:string,subje
   };
   const shared=await client.rpc('has_verified_outing_with',{b:subject});
   if(shared.error)fail('shared attendance query',shared.error);
-  const bundle=pairEvidence(unpack(viewer),unpack(subject),shared.data===true);
+  let bundle=pairEvidence(unpack(viewer),unpack(subject),shared.data===true);
+  const measurements=await client.from('profiles').select(MEASUREMENT_SELECT).in('id',[viewer,subject]);
+  if(measurements.error)fail('visible saved measurements',measurements.error);
+  bundle=includeMeasurements(bundle,measurements.data?.find(r=>r.id===viewer),'self');
+  bundle=includeMeasurements(bundle,measurements.data?.find(r=>r.id===subject),'other');
   for(const source of bundle.sources){
     const row=rows.find(r=>r.user_id===(source.subject==='self'?viewer:subject)&&r.question_id===source.questionId);
     if(row?.question_version===1){source.questionVersion=1;source.provenance='recorded';}
   }
   return bundle;
 }
+
+/** One RLS batch for the shortlist; match cards never request shared-only detail. */
+export async function loadRosterEvidence(client:SupabaseClient,viewer:string,ids:string[]){
+  const subjects=[viewer,...ids];
+  const [answers,profiles]=await Promise.all([
+    client.from('read_answer_sources').select('user_id,question_id,dimension,selections,access').in('user_id',subjects),
+    client.from('profiles').select(MEASUREMENT_SELECT).in('id',subjects),
+  ]);
+  if(answers.error)fail('match evidence',answers.error);
+  if(profiles.error)fail('match visible measurements',profiles.error);
+  const unpack=(id:string)=>{
+    const baseline:Record<string,unknown>={},deep:Record<string,unknown>={};
+    for(const row of answers.data??[]){
+      if(row.user_id!==id||row.access!=='public')continue;
+      if(catalog.some(q=>q.questionId===row.question_id&&q.fields[0]===row.dimension))baseline[row.dimension]=row.selections;
+      else if(deepChoices.some(([key])=>key===row.dimension))deep[row.dimension]=row.selections;
+    }
+    return {onboarding:{baselineV2:baseline},deep_profile:deep};
+  };
+  const result=new Map<string,EvidenceBundle>();
+  for(const id of ids){
+    if(!profiles.data?.some(p=>p.id===id))throw new Error('A matching profile is no longer available. Please retry.');
+    let bundle=pairEvidence(unpack(viewer),unpack(id),false);
+    bundle=includeMeasurements(bundle,profiles.data.find(p=>p.id===viewer),'self');
+    bundle=includeMeasurements(bundle,profiles.data.find(p=>p.id===id),'other');
+    result.set(id,bundle);
+  }
+  return result;
+}
 /** Fresh authorisation/evidence must precede every call, including cache hits. */
-export async function cachedRead(client:SupabaseClient,viewer:string,subject:string,bundle:EvidenceBundle,writer?:Writer,writerVersion='deterministic/8a.1'){
+export async function cachedRead(client:SupabaseClient,viewer:string,subject:string,bundle:EvidenceBundle,writer?:Writer,writerVersion='deterministic/8a.2'){
   // Remember wording across views without ever feeding another read to a writer.
   // Early wording is derived from the same visible baseline evidence, not a new fact.
   const early=composeRead({...bundle,level:'early',sources:bundle.sources.filter(s=>s.subject==='self'&&!s.path.startsWith('deep_profile.'))});

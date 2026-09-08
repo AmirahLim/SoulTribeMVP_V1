@@ -12,6 +12,7 @@ import { reflectionBoost, REFLECTION_RANKING_VERSION } from '../../../lib/reflec
 import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import { toProfileVector } from '../../../lib/profileAdapter';
 import { getMatchExplanations } from '../../../lib/matchExplanationCache';
+import {loadRosterEvidence,evidenceHash} from '../../../lib/readEngine/server';
 
 export const runtime = 'nodejs';
 
@@ -231,9 +232,14 @@ export async function POST(req: NextRequest) {
     const scoringMs = performance.now()-scoringStarted;
     const shortlisted = rankedMatches.slice(0,resultLimit);
     const candidateRows = new Map(candidates.map(row=>[row.id,row]));
+    const evidenceClient=createClient(supabaseUrl,publishableKey,{auth:{persistSession:false},global:{headers:{Authorization:`Bearer ${token}`}}});
+    const bundles=await loadRosterEvidence(evidenceClient,authUserId,shortlisted.map(item=>item.id));
     const {explanations,metrics} = await getMatchExplanations(adminClient,
       {row:viewerRow,vector:viewerVec},
-      shortlisted.map(item=>({row:candidateRows.get(item.id)!,vector:candidateVecMap.get(item.id)!})));
+      shortlisted.map(item=>({row:candidateRows.get(item.id)!,vector:candidateVecMap.get(item.id)!})),bundles);
+    const fresh=await loadRosterEvidence(evidenceClient,authUserId,shortlisted.map(item=>item.id));
+    if([...bundles].some(([id,b])=>!fresh.has(id)||evidenceHash(b)!==evidenceHash(fresh.get(id)!)))
+      throw new Error('Matching evidence changed while the reading was prepared. Please retry.');
     const returnedMatches = shortlisted.map(item=>({
       ...item,clickText:explanations.get(item.id)!.click_text,rubText:explanations.get(item.id)!.friction_text,
     }));

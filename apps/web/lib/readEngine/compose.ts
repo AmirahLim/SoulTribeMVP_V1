@@ -1,9 +1,11 @@
 import {canonicalSourceIds, type EvidenceBundle, type EvidenceLevel, type ReadThread, type Source} from './evidence';
 import {VOCABULARY} from './vocabulary';
-import {pairVoice} from './pairVoice';
+import {contextualClaims} from './patterns';
+import {pairClaims} from './relational';
+import {measuredPosition} from './legacy';
 
 export type ReadClaim={id:string; sourceIds:string[]; threads:ReadThread[]; dimensions:string[];
-  evidenceLevel:EvidenceLevel; text:string; shape:string; title:string; priority:number};
+  evidenceLevel:EvidenceLevel; text:string; shape:string; title:string; priority:number; slot?:string; tone?:'click'|'friction'|'context'};
 export type ReadSection={key:string; title:string; text:string; claims:ReadClaim[];
   evidence:{questionId:string;questionVersion:number|null;selections:string[];subject:string}[]};
 export type ComposedRead={version:string;level:EvidenceBundle['level'];sections:ReadSection[];omitted:string[];writer:'deterministic'|'external'};
@@ -12,12 +14,6 @@ const grams=(text:string,n:number)=>{const w=words(text);return new Set(w.slice(
 export function proseSimilarity(a:string,b:string){const x=grams(a,3),y=grams(b,3);return new Set([...x,...y]).size?[...x].filter(t=>y.has(t)).length/new Set([...x,...y]).size:0;}
 export function repeatedSpan(a:string,b:string,n=8){const x=grams(a,n);return [...grams(b,n)].some(g=>x.has(g));}
 export const readPhraseSpans=(text:string)=>[...grams(text,8)];
-const pairPositions:Record<string,Record<string,string>>={
- planningChoice:{'Same day':'same-day invitation','1–2 days':'short notice','A few days':'few days of notice','About a week':'week-ahead planning','1–2 weeks ahead':'longer planning horizon'},
- connectionChoice:{'A few times a week':'frequent contact','About once a week':'weekly return','Every couple of weeks':'space between conversations','Weeks/Months can pass, we’re still good':'comfort with long gaps'},
- groupChoices:{'1:1':'undivided attention','Small circle':'small table','Social mix':'changing conversations','Big energy':'lively room'},
- initiationChoice:{'I usually wait for theirs':'receiving the invitation','It goes both ways':'taking turns with the invitation','I usually send mine':'sending the invitation'},
-};
 
 function makeClaim(id:string,sources:Source[],text:string,title:string,priority=1,shape='observation'):ReadClaim {
   return {id,sourceIds:canonicalSourceIds(sources.map(s=>s.id)),threads:[...new Set(sources.map(s=>s.thread))],
@@ -30,15 +26,21 @@ function disclosure(claims:ReadClaim[],bundle:EvidenceBundle){
 }
 /** Step 2: derive available claims from literal positions, not a profile template. */
 export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
-  const claims:ReadClaim[]=[];
+  const claims:ReadClaim[]=[...contextualClaims(bundle)];
   for(const source of bundle.sources){
     if(source.subject!=='self')continue;
+    const measured=measuredPosition(source);
+    if(measured&&bundle.level!=='early')claims.push({...makeClaim(source.id,[source],
+      `Your earlier saved measurement suggests you tend to ${measured.position}. Treat this as a starting point to check against how friendship feels now, not a fixed description.`,
+      measured.title,2,'measurement'),slot:measured.slot});
     for(const option of source.selections){
       const voice=VOCABULARY[source.dimension]?.[option];
       if(!voice)continue;
       claims.push(makeClaim(`${source.id}:${option}:${bundle.level}`,[source],
         bundle.level==='early'?voice.early:voice.profile,voice.title,source.path.startsWith('deep_profile.')?3:1,
         source.dimension));
+      if(bundle.level==='profile'&&['planningChoice','punctualityPref','cancellationStance'].includes(source.dimension))
+        claims.push({...makeClaim(`care:${source.id}:${option}`,[source],voice.consequence,'What an invitation needs to respect',4,'care'),slot:'friction'});
     }
   }
   const clicks=bundle.sources.find(s=>s.subject==='self'&&s.dimension==='clicks');
@@ -76,8 +78,10 @@ export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
 const profileSlots=[
   {key:'social',dimensions:['groupSize','socialVibe','groupChoices','friendshipPillars'],extra:['close-without-constant','room-with-range']},
   {key:'connect',dimensions:['messagingStyle','supportStyle','connectionChoice','clicks','initiationChoice'],extra:['thought-as-catchup','clicks-together:profile']},
-  {key:'bring',dimensions:['coreValues','intent','desiredQualities','repairFirst','repairReturn','repairNeed','repairDiscuss','repairSpace'],extra:['base-and-window']},
-  {key:'best',dimensions:['idealSaturday','spontaneousTrip','planningChoice','outings','budgetPref'],extra:['adventure-with-outline']},
+  {key:'bring',dimensions:['coreValues','intent','desiredQualities'],extra:['base-and-window']},
+  {key:'best',dimensions:['idealSaturday','socialVibe','groupSize','spontaneousTrip'],extra:['adventure-with-outline']},
+  {key:'friction',dimensions:['repairFirst','repairReturn','repairNeed','repairDiscuss','repairSpace','punctualityPref','cancellationStance'],extra:[]},
+  {key:'doing',dimensions:['outings','budgetPref'],extra:[]},
 ];
 const earlySlots=[
   {key:'intent',dimensions:['intent'],extra:[]}, {key:'setting',dimensions:['groupChoices'],extra:[]},
@@ -92,15 +96,17 @@ export function composeRead(bundle:EvidenceBundle,priorPhrases:string[]=[]):Comp
   const slots=bundle.level==='early'?earlySlots:profileSlots;
   const sections:ReadSection[]=[],used=new Set<string>(),usedText=[...priorPhrases];
   for(const slot of slots){
-    const pool=candidates.filter(c=>slot.extra.includes(c.id)||(c.sourceIds.length===1&&c.dimensions.some(d=>slot.dimensions.includes(d))))
+    const earlyPlacement:Record<string,string>={social:'intent',connect:'click',bring:'qualities',best:'setting',friction:'rhythm',doing:'outings'};
+    const pool=candidates.filter(c=>c.slot?(bundle.level==='early'?earlyPlacement[c.slot]:c.slot)===slot.key:slot.extra.includes(c.id)||(c.sourceIds.length===1&&c.dimensions.some(d=>slot.dimensions.includes(d))))
       .sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id));
     const selected:ReadClaim[]=[];const shapeCount=new Map<string,number>();
     for(const claim of pool){
-      if(claim.sourceIds.some(id=>used.has(id))||usedText.some(text=>repeatedSpan(text,claim.text)))continue;
+      if(used.has(claim.id)||usedText.some(text=>repeatedSpan(text,claim.text)))continue;
+      if(selected.some(c=>c.sourceIds.some(id=>claim.sourceIds.includes(id))))continue;
       if((shapeCount.get(claim.shape)??0)>=2)continue;
-      selected.push(claim);claim.sourceIds.forEach(id=>used.add(id));usedText.push(claim.text);
+      selected.push(claim);used.add(claim.id);usedText.push(claim.text);
       shapeCount.set(claim.shape,(shapeCount.get(claim.shape)??0)+1);
-      if(selected.length===(bundle.level==='early'?2:3))break;
+      if(selected.length===(bundle.level==='early'&&slot.key!=='rhythm'?1:2))break;
     }
     if(selected.length)sections.push({key:slot.key,title:selected[0].title,text:selected.map(c=>c.text).join(' '),claims:selected,evidence:disclosure(selected,bundle)});
   }
@@ -108,41 +114,17 @@ export function composeRead(bundle:EvidenceBundle,priorPhrases:string[]=[]):Comp
 }
 
 export function composeBond(bundle:EvidenceBundle,priorPhrases:string[]=[]):ComposedRead {
-  const claims:ReadClaim[]=[];
-  for(const a of bundle.sources.filter(s=>s.subject==='self')){
-    const b=bundle.sources.find(s=>s.subject==='other'&&s.questionId===a.questionId);
-    if(!b)continue;
-    const common=a.selections.filter(x=>b.selections.includes(x));
-    const different=a.selections.join('|')!==b.selections.join('|');
-    const available=VOCABULARY[a.dimension]; if(!available)continue;
-    let text='',title='',priority=1;
-    if(different){
-      const av=a.selections.find(x=>available[x]&&!b.selections.includes(x));
-      const bv=b.selections.find(x=>available[x]&&!a.selections.includes(x));
-      if(!av||!bv)continue;
-      // The labels are exact fixed-choice facts, not free text or invented positions.
-      title=a.dimension==='planningChoice'?'The invitation crosses a timing gap':a.dimension==='connectionChoice'?'The pause has different lengths':`${available[av].title}, with a difference`;
-      const positions=pairPositions[a.dimension];
-      text=pairVoice(a.dimension,av,bv)??(positions?.[av]&&positions[bv]
-        ? `Your ${positions[av]} meets their ${positions[bv]}. Keep ${positions[av]} beside ${positions[bv]}, not underneath it.`
-        : `Your “${av}” meets their “${bv}”. ${available[av].consequence}`);
-      priority=5+(1-common.length/new Set([...a.selections,...b.selections]).size)
-        +(['planningChoice','connectionChoice'].includes(a.dimension)?1:a.dimension==='groupChoices'?.5:0);
-    }else if(common.length){
-      const option=common.find(x=>available[x]); if(!option)continue;
-      title=a.dimension==='outings'?`A beginning around ${option.toLowerCase()}`:`A shared starting point: ${available[option].title.toLowerCase()}`;
-      text=`There is common ground around “${option}”. ${available[option].consequence}`;
-    }
-    if(!text)continue;
-    const c=makeClaim(`pair:${a.questionId}`,[a,b],text,title,priority,a.dimension);
-    c.evidenceLevel='DYADIC INFERENCE';claims.push(c);
-  }
+  const claims=pairClaims(bundle);
   const selected:ReadClaim[]=[];
   for(const c of claims.sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id))){
     if(!validateClaim(c,bundle)||priorPhrases.some(t=>repeatedSpan(t,c.text)))continue;
     selected.push(c);if(selected.length===3)break;
   }
   return {version:bundle.engineVersion,level:'bond',sections:selected.map(c=>({key:c.id,title:c.title,text:c.text,claims:[c],evidence:disclosure([c],bundle)})),omitted:[],writer:'deterministic'};
+}
+
+export function connectionThread(bundle:EvidenceBundle,thread:string) {
+  return pairClaims(bundle).filter(c=>c.threads.includes(thread as ReadThread)&&validateClaim(c,bundle)).sort((a,b)=>b.priority-a.priority)[0];
 }
 
 /** Step 5: structural claim/source validation. Not a proof of arbitrary prose. */

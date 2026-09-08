@@ -134,7 +134,7 @@ describe('POST /api/bond Endpoint Tests', () => {
   it('supports a legacy schema missing only the optional is_demo column',async()=>{
     schemaState.error={code:'42703',message:'column profiles.is_demo does not exist'};
     const res=await POST(request());expect(res.status).toBe(200);
-    expect(schemaState.selections).toHaveLength(2);
+    expect(schemaState.selections).toHaveLength(4); // two safety selects, then two fresh RLS measurement reads
     expect(schemaState.selections[0]).toContain('is_demo,');
     expect(schemaState.selections[1]).not.toContain('is_demo,');
     expect((await res.json()).threads.length).toBeGreaterThan(0);
@@ -266,7 +266,8 @@ describe('POST /api/bond Endpoint Tests', () => {
 
     const persDim = threads.find((d: any) => d.key === 'personality');
     expect(persDim.status).toBe('known');
-    expect(persDim.phrase).toContain('social energy');
+    expect(persDim.phrase).toContain('earlier saved measurement');
+    expect(persDim.evidence.every((s:any)=>s.questionId.startsWith('measurement.'))).toBe(true);
 
     // For missing candidate personality trait, status becomes unknown and phrase is omitted
     const req2 = new NextRequest('http://localhost/api/bond', {
