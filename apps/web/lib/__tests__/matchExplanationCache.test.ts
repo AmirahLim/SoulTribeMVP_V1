@@ -1,5 +1,5 @@
 import {describe,it,expect,vi} from 'vitest';
-import {getMatchExplanations,explanationInputHash,EXPLANATION_ENGINE_VERSION} from '../matchExplanationCache';
+import {getMatchExplanations,explanationInputHash,EXPLANATION_ENGINE_VERSION,varyLegacySummary} from '../matchExplanationCache';
 import {toProfileVector} from '../profileAdapter';
 import {generateMatchExplanation} from '@soul-tribe/core';
 import catalog from '../onboardingQuestionCatalog.json';
@@ -33,6 +33,18 @@ function database() {
  return {client:client as any,rows,state};
 }
 describe('Persistent directed explanation cache',()=>{
+ it('keeps legacy server explanations when the browser-visible original evidence is empty',async()=>{
+  const {pairEvidence}=await import('../readEngine/evidence');
+  const db=database();
+  await getMatchExplanations(db.client,input('a'),[input('b')],new Map([['b',pairEvidence({},{})]]));
+  expect(db.rows[0].click_text).not.toContain('shared, visible evidence');
+ });
+ it('varies only among actually supported legacy statements, never fabricates friction',()=>{
+  const first='A sufficiently long shared observation that has already appeared above.';
+  const alternative='Another supported angle.';
+  expect(varyLegacySummary({click_text:first,dyadic_statements:[{id:'a',section:'click',level:2,sources:['A.q','B.q'],text:alternative}]},[first])).toBe(alternative);
+  expect(varyLegacySummary({click_text:first},[first])).toBe(first);
+ });
  it('generates only requested candidates and reuses the exact result on a warm read',async()=>{
   vi.mocked(generateMatchExplanation).mockClear();
   const db=database(),viewer=input('a'),candidate=input('b');

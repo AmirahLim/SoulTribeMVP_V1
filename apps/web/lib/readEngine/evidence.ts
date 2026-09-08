@@ -2,7 +2,7 @@ import catalog from '../onboardingQuestionCatalog.json';
 import {buildSavedAnswerRead} from '../savedAnswerRead';
 import {REPAIR_QUESTIONS,INITIATIVE_QUESTION} from './deeperQuestions';
 
-export const READ_ENGINE_VERSION = 'read-spine/8a.2';
+export const READ_ENGINE_VERSION = 'read-spine/8a.3';
 export const DISCLOSURE_VERSION = 'public-fixed-choice/shared-detail.1';
 import {THREAD_NAMES} from '@soul-tribe/core';
 export {THREAD_NAMES};

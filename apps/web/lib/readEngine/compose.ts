@@ -41,6 +41,8 @@ export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
         source.dimension));
       if(bundle.level==='profile'&&['planningChoice','punctualityPref','cancellationStance'].includes(source.dimension))
         claims.push({...makeClaim(`care:${source.id}:${option}`,[source],voice.consequence,'What an invitation needs to respect',4,'care'),slot:'friction'});
+      if(bundle.level==='profile'&&source.dimension==='groupChoices')
+        claims.push({...makeClaim(`setting:${source.id}:${option}`,[source],voice.consequence,'A setting that leaves room for you',2,'setting'),slot:'best'});
     }
   }
   const clicks=bundle.sources.find(s=>s.subject==='self'&&s.dimension==='clicks');
@@ -79,7 +81,7 @@ const profileSlots=[
   {key:'social',dimensions:['groupSize','socialVibe','groupChoices','friendshipPillars'],extra:['close-without-constant','room-with-range']},
   {key:'connect',dimensions:['messagingStyle','supportStyle','connectionChoice','clicks','initiationChoice'],extra:['thought-as-catchup','clicks-together:profile']},
   {key:'bring',dimensions:['coreValues','intent','desiredQualities'],extra:['base-and-window']},
-  {key:'best',dimensions:['idealSaturday','socialVibe','groupSize','spontaneousTrip'],extra:['adventure-with-outline']},
+  {key:'best',dimensions:['idealSaturday','socialVibe','groupSize','groupChoices','spontaneousTrip'],extra:['adventure-with-outline']},
   {key:'friction',dimensions:['repairFirst','repairReturn','repairNeed','repairDiscuss','repairSpace','punctualityPref','cancellationStance'],extra:[]},
   {key:'doing',dimensions:['outings','budgetPref'],extra:[]},
 ];

@@ -3,14 +3,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateMatchExplanation, type ProfileVector } from '@soul-tribe/core';
 import type {EvidenceBundle} from './readEngine/evidence';
 import {rosterReadings} from './readEngine/roster';
+import {repeatedSpan,proseSimilarity} from './readEngine/compose';
 
 // Bump whenever explanation composition, vocabulary or disclosed inputs change.
-export const EXPLANATION_ENGINE_VERSION = 'match-explanation/8a.2';
+export const EXPLANATION_ENGINE_VERSION = 'match-explanation/8a.3';
 export type ExplanationProfile = { id: string; profile_version: number; explanation_revision: number };
 export type ExplanationText = { click_text: string; friction_text: string };
 type Input = { row: ExplanationProfile; vector: ProfileVector };
 function publicVector(vector: ProfileVector): ProfileVector {
-  return { ...vector, values: vector.values?.filter(value => value.visibility === 'public') };
+  return { ...vector, emotional:undefined, repair:undefined, answers:undefined,
+    values: vector.values?.filter(value => value.visibility === 'public') };
 }
 function stable(value: unknown): string {
   if (Array.isArray(value)) return '[' + value.map(stable).join(',') + ']';
@@ -24,6 +26,16 @@ export function explanationInputHash(viewer: ProfileVector, candidate: ProfileVe
 function failure(operation: string, error: { code?: string; message: string }): never {
   console.error('[SoulTribe] explanation cache '+operation, {code:error.code,message:error.message});
   throw new Error(error.message);
+}
+/** Select another supported legacy angle when a roster already used the headline.
+ * No word-spinner, identity-based trait assignment, or invented comparison.
+ */
+export function varyLegacySummary(generated:Pick<ReturnType<typeof generateMatchExplanation>,'click_text'|'dyadic_statements'>,seen:string[]):string {
+  const options=[...new Set([generated.click_text,...(generated.dyadic_statements??[])
+    .filter(s=>s.section!=='friction').map(s=>s.text)].filter(Boolean))];
+  const repeats=(text:string)=>seen.reduce((n,prior)=>n+(repeatedSpan(text,prior)||proseSimilarity(text,prior)>=.45?1:0),0);
+  options.sort((a,b)=>repeats(a)-repeats(b));
+  return options[0]??generated.click_text;
 }
 /** Called only after authentication and fresh safety/eligibility checks. Never import into client code. */
 export async function getMatchExplanations(client: SupabaseClient, viewer: Input, candidates: Input[], bundles?:Map<string,EvidenceBundle>) {
@@ -47,6 +59,7 @@ export async function getMatchExplanations(client: SupabaseClient, viewer: Input
   // Shortlist/order is part of composition identity: cached wording must not defeat
   // roster-wide emphasis selection when a different set of matches is returned.
   const rosterHash=bundles?createHash('sha256').update(stable([...bundles])).digest('hex'):'';
+  const seen:string[]=[];
   for (const candidate of candidates) {
     const input_hash = createHash('sha256').update(explanationInputHash(viewer.vector,candidate.vector)+rosterHash).digest('hex');
     const hit = cache.get(candidate.row.id);
@@ -54,10 +67,16 @@ export async function getMatchExplanations(client: SupabaseClient, viewer: Input
       && hit.revision_a===viewer.row.explanation_revision && hit.revision_b===candidate.row.explanation_revision
       && hit.generated_by===EXPLANATION_ENGINE_VERSION && hit.input_hash===input_hash) {
       explanations.set(candidate.row.id,hit);
+      seen.push(hit.click_text);
       metrics.cache_hits++;
     } else {
-      const generated = composed?.get(candidate.row.id)??generateMatchExplanation(publicVector(viewer.vector),publicVector(candidate.vector));
-      const text = {click_text:generated.click_text,friction_text:generated.friction_text};
+      const fixed=composed?.get(candidate.row.id);
+      // Keep the existing authorised server explanation path for legacy members.
+      // An empty browser-visible source table is not proof that their measurements
+      // vanished. No extra privileged query or RLS policy change is introduced.
+      const generated = fixed?.hasEvidence?fixed:generateMatchExplanation(publicVector(viewer.vector),publicVector(candidate.vector));
+      const text = {click_text:fixed?.hasEvidence?generated.click_text:varyLegacySummary(generated,seen),friction_text:generated.friction_text};
+      seen.push(text.click_text);
       explanations.set(candidate.row.id,text);
       writes.push({...text,user_a:viewer.row.id,user_b:candidate.row.id,
         version_a:viewer.row.profile_version,version_b:candidate.row.profile_version,

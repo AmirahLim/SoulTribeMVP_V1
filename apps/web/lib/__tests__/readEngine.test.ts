@@ -19,7 +19,7 @@ describe('8a shared evidence and composition',()=>{
   });
   it('composes distinct supported pages with no repeated answer paragraphs',()=>{
     const b=buildEvidence(row(),'profile'),read=composeRead(b);
-    expect(read.sections.map(s=>s.key)).toEqual(['social','connect','bring','friction','doing']);
+    expect(read.sections.map(s=>s.key)).toEqual(['social','connect','bring','best','friction','doing']);
     expect(read.sections.flatMap(s=>s.claims).every(c=>validateClaim(c,b))).toBe(true);
     expect(new Set(read.sections.flatMap(s=>s.claims.map(c=>c.text))).size).toBe(read.sections.flatMap(s=>s.claims).length);
     expect(read.sections.find(s=>s.key==='connect')?.text).toMatch(/passing thought/);
