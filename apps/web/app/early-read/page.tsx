@@ -34,13 +34,15 @@ export default function EarlyRead() {
     if(!active)return;
     if(isDraft(pending.draft)&&completeDraft(pending.draft)&&!pending.claimed) {
      if(active)setDraft(pending.draft);
-     if(user) {
+     // Ordinary preview is read-only, even when a session already exists.
+     // Only recover an explicit OAuth-return failure here.
+     if(user&&new URLSearchParams(window.location.search).get('finish')==='1') {
       if(active)setBusy(true);
       try {
        const committed=await claimOnboarding({expectedUserId:user.id});
        if(!active)return;
        await hydrateProfile(user.id);
-       if(active){setDraft(committed);setSaved(true);}
+       if(active){setDraft(committed);setSaved(true);router.replace('/home');}
       }catch(e){
        if(e instanceof OnboardingHandoffError&&e.requiresDetails) {if(active)setNeedsDetails(true);}
        else throw e;
@@ -104,10 +106,10 @@ export default function EarlyRead() {
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
  {draft&&<><EarlyReadAlbum draft={draft}/>
- {!user?<><p>Your Early Read is ready. Continue with Google to save it to your profile and meet people. We’ll use your Google display name; you can edit it later.</p><button className="ob-primary" disabled={busy} onClick={()=>void continueWithGoogle()}>{busy?'Opening Google…':'Continue with Google →'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!saved&&!needsDetails?<><p>Your Early Read is ready. Continue with Google to save it to your profile and meet people. We’ll use your Google display name; you can edit it later.</p><button className="ob-primary" disabled={busy} onClick={()=>void continueWithGoogle()}>{busy?'Opening Google…':'Save Early Read'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/onboarding">Complete your private age check in onboarding →</Link>}
- <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><Link className="ob-primary" href="/home">Continue to home →</Link><ProfilePhoto userId={user.id}/><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
+ <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><Link className="ob-primary" href="/home">Continue to home →</Link>{user&&<ProfilePhoto userId={user.id}/>}<Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
  </>}
  {error&&<><p role="alert" className="ob-error">{error}</p><button className="ob-primary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>Retry loading and saving</button><Link href="/onboarding">Return to my answers</Link></>}
  {ready&&!draft&&<Link href="/onboarding">Return to onboarding</Link>}

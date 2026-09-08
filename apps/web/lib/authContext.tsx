@@ -125,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: 'google',
         options: {
           redirectTo,
+          ...(redirectToPath==='/home?onboarding=complete'?{queryParams:{prompt:'select_account'}}:{}),
         },
       });
 

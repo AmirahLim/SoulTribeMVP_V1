@@ -35,13 +35,16 @@ function requests(fail=false) {
   throw new Error('Unexpected request');
  }));return calls;
 }
-it('claims the completed draft after sign-in without a second save button',async()=>{
+it('recovers an explicit OAuth-return save and opens home without another save step',async()=>{
+ window.location.search='?finish=1';
  const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
  expect(calls).toContain('POST /api/onboarding/claim');
  expect(mocks.hydrate).toHaveBeenCalledWith(mocks.user!.id);
  expect(JSON.stringify(tree!.toJSON())).toContain('Your answers are saved to your profile.');
+ expect(mocks.replace).toHaveBeenCalledWith('/home');
 });
 it('shows failed handoff and retry, never a saved profile or matches link',async()=>{
+ window.location.search='?finish=1';
  requests(true);await act(async()=>{tree=create(React.createElement(EarlyRead));});
  const rendered=JSON.stringify(tree!.toJSON());
  expect(rendered).toContain('Injected save failure');expect(rendered).toContain('Retry loading and saving');
@@ -53,7 +56,7 @@ it('keeps anonymous answers as drafts and starts Google directly with home hando
  expect(calls).not.toContain('POST /api/onboarding/claim');
  expect(tree!.root.findAllByType('a').some(a=>a.props.href==='/join')).toBe(false);
  expect(tree!.root.findAllByType('input')).toHaveLength(0);
- const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Continue with Google →')!;
+ const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!;
  await act(async()=>{await button.props.onClick();});
  expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
 });
@@ -62,7 +65,7 @@ it('returns a guest without the age receipt to onboarding before Google',async()
  const base=fetch;
  vi.stubGlobal('fetch',vi.fn((url:string,init?:RequestInit)=>url==='/api/onboarding/eligibility'?Promise.resolve(Response.json({birthYear:null})):base(url,init)));
  await act(async()=>{tree=create(React.createElement(EarlyRead));});
- const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Continue with Google →')!;
+ const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!;
  await act(async()=>{await button.props.onClick();});
  expect(mocks.google).not.toHaveBeenCalled();expect(mocks.push).toHaveBeenCalledWith('/onboarding');
 });
@@ -80,16 +83,34 @@ it('rejects underage onboarding before Early Read without putting DOB in the dra
  expect(sent.find(r=>r.url==='/api/onboarding/draft')!.body.birthDate).toBeUndefined();
  expect(sent.find(r=>r.url==='/api/onboarding/eligibility')!.body).toEqual({birthDate:'2020-01-01'});
 });
-it('signed-in final submission commits draft, then profile, before navigation',async()=>{
+it('signed-in onboarding saves only the draft before opening the Early Read preview',async()=>{
  const calls=requests();await act(async()=>{tree=create(React.createElement(Onboarding));});
  const button=tree!.root.findAllByType('button').find(b=>b.props.className==='ob-primary')!;
  await act(async()=>{await button.props.onClick();});
- expect(calls.slice(-2)).toEqual(['POST /api/onboarding/draft','POST /api/onboarding/claim']);
- expect(mocks.hydrate).toHaveBeenCalled();expect(mocks.push).toHaveBeenCalledWith('/early-read');
+ expect(calls.at(-1)).toBe('POST /api/onboarding/draft');
+ expect(calls).not.toContain('POST /api/onboarding/claim');
+ expect(mocks.hydrate).not.toHaveBeenCalled();expect(mocks.push).toHaveBeenCalledWith('/early-read');
 });
 it('a signed-in failed final submission stays editable and never navigates',async()=>{
- requests(true);await act(async()=>{tree=create(React.createElement(Onboarding));});
+ requests();const base=fetch;
+ vi.stubGlobal('fetch',vi.fn((url:string,init?:RequestInit)=>url==='/api/onboarding/draft'&&init?.method==='POST'?Promise.resolve(Response.json({error:'Save failed'},{status:500})):base(url,init)));
+ await act(async()=>{tree=create(React.createElement(Onboarding));});
  const button=tree!.root.findAllByType('button').find(b=>b.props.className==='ob-primary')!;
  await act(async()=>{await button.props.onClick();});
- expect(mocks.push).not.toHaveBeenCalled();expect(JSON.stringify(tree!.toJSON())).toContain('Injected save failure');
+ expect(mocks.push).not.toHaveBeenCalled();expect(JSON.stringify(tree!.toJSON())).toContain('We could not save your answers');
+});
+it('signed-in preview also waits for Save Early Read and opens Google rather than auto-saving',async()=>{
+ const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
+ expect(calls).not.toContain('POST /api/onboarding/claim');expect(mocks.hydrate).not.toHaveBeenCalled();
+ const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!;
+ await act(async()=>{await button.props.onClick();});
+ expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
+ expect(calls).not.toContain('POST /api/onboarding/claim');
+});
+it('Google launch failure remains visible and never claims the draft or opens home',async()=>{
+ mocks.google.mockResolvedValue({error:new Error('Google sign-in could not start')});
+ const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
+ await act(async()=>{await tree!.root.findAllByType('button').find(b=>b.props.children==='Save Early Read')!.props.onClick();});
+ expect(JSON.stringify(tree!.toJSON())).toContain('Google sign-in could not start');
+ expect(calls).not.toContain('POST /api/onboarding/claim');expect(mocks.replace).not.toHaveBeenCalled();
 });

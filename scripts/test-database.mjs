@@ -411,4 +411,46 @@ await fails("update profiles set tier='host_plus' where id=$1",/Protected/,[hand
 await fails("update profiles set status='banned' where id=$1",/Protected/,[handoffUser]);
 assert.equal((await db.query("select count(*)::int n from profile_answers where user_id=$1",[other])).rows[0].n,0);
 console.log('Passed production missing-is_demo reproduction, additive repair, member handoff, unchanged account guard/RLS and repeatability without rewriting flags.');
+// A different draft handle is not ownership evidence, nor a request to rename
+// the authenticated account. Preserve literal answers and all account identities.
+const differentHandle={...modern,handle:'member_1'};
+const mismatchToken='c1'.repeat(32);
+await db.query('select save_onboarding_draft($1,$2)',[mismatchToken,differentHandle]);
+await fails('select claim_onboarding_draft($1,$2,$3)',/Use your existing profile handle/,[mismatchToken,null,null]);
+await db.exec('reset role');
+const identityRepair=await readFile(new URL('../supabase/migrations/20261001000000_preserve_onboarding_account_identity.sql',import.meta.url),'utf8');
+await db.exec(identityRepair);await db.exec(identityRepair);
+await as(guest);
+await fails('select claim_onboarding_draft($1,$2,$3)',/another account/,[mismatchToken,null,null]);
+await as(handoffUser);
+const claimed=(await db.query('select claim_onboarding_draft($1,$2,$3) payload',[mismatchToken,null,null])).rows[0].payload;
+assert.deepEqual(claimed,differentHandle);
+const identityAnswers=(await db.query('select onboarding from profile_answers where user_id=$1',[handoffUser])).rows[0].onboarding;
+assert.deepEqual(identityAnswers.baselineV2,differentHandle);
+assert.equal(identityAnswers.handle,existingIdentity.handle);
+assert.equal((await db.query('select handle from profiles where id=$1',[handoffUser])).rows[0].handle,existingIdentity.handle);
+assert.equal((await db.query('select handle from profiles where id=$1',[guest])).rows[0].handle,'member_1');
+assert.equal((await db.query('select read_onboarding_handoff($1) h',[mismatchToken])).rows[0].h.claimed,true);
+const versionAfterIdentityRepair=(await db.query('select profile_version from profiles where id=$1',[handoffUser])).rows[0].profile_version;
+await db.query('select claim_onboarding_draft($1,$2,$3)',[mismatchToken,null,null]);
+assert.equal((await db.query('select profile_version from profiles where id=$1',[handoffUser])).rows[0].profile_version,versionAfterIdentityRepair);
+// Stale-write and anonymous access protections survive the identity repair.
+await fails('select claim_onboarding_draft($1,$2,$3)',/profile changed/,['f'.repeat(64),null,null]);
+await db.exec("reset role; set request.jwt.claim.sub=''; set request.jwt.claim.role='anon'; set role anon;");
+await fails('select claim_onboarding_draft($1,$2,$3)',/permission denied/,[mismatchToken,null,null]);
+console.log('Passed mismatched-handle reproduction and repair, exact literal payload, unchanged account handles, owner isolation, idempotent retry and unchanged stale-write/authentication checks.');
+// The production-shaped case: a pre-auth draft and an existing account with no
+// baseline yet. It must attach by authenticated id, not its typed handle.
+await db.exec("reset role; set request.jwt.claim.role='';");
+const returningUser='10000000-0000-4000-8000-000000000008';
+await db.query('insert into auth.users values($1)',[returningUser]);
+await as(returningUser);
+await db.query('select save_profile_bundle($1,$2,$3,null)',[{handle:'returning_member',display_name:'Returning member',birth_year:1995,home_area:'Bedok'},{},{}]);
+await db.exec("reset role; set request.jwt.claim.sub=''; set request.jwt.claim.role='anon'; set role anon;");
+await db.query('select save_onboarding_draft($1,$2)',['d1'.repeat(32),differentHandle]);
+await as(returningUser);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['d1'.repeat(32),null,null]);
+assert.equal((await db.query('select handle from profiles where id=$1',[returningUser])).rows[0].handle,'returning_member');
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[returningUser])).rows[0].onboarding.baselineV2,differentHandle);
+console.log('Passed anonymous-draft Google-return shape for an existing account with no baseline and a different typed handle.');
 await db.close();

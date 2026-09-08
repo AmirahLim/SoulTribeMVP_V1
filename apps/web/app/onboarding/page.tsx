@@ -6,8 +6,6 @@ import {LIFE_CONTEXTS,LIFE_CONTEXT_DETAILS} from "../../lib/lifeContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
 import { getUserProfile } from "../../lib/userStore";
-import { claimOnboarding, OnboardingHandoffError } from '../../lib/onboardingHandoff';
-import { hydrateProfile } from '../../lib/profileHydration';
 import {
   AREAS,
   CLICKS,
@@ -166,13 +164,8 @@ export default function OnboardingPage() {
           if(!checked.ok)throw new Error(result.error||'Please complete your private 18+ check.');
           setAgeChecked(true);
         }
-        if(user) {
-          try { await claimOnboarding({expectedUserId:user.id}); await hydrateProfile(user.id); }
-          catch(error) {
-            if(error instanceof OnboardingHandoffError&&error.requiresDetails) { router.push('/early-read'); return; }
-            throw error;
-          }
-        }
+        // Preview first. Save Early Read starts Google; its callback claims the
+        // draft using the authenticated account before opening home.
         router.push("/early-read");
       } else setDraft(next);
     } catch (e) {
