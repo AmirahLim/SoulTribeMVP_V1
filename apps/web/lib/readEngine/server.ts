@@ -1,10 +1,11 @@
 import {createHash} from 'node:crypto';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {buildEvidence, pairEvidence, type EvidenceBundle} from './evidence';
-import {composeRead,writeRead,type ComposedRead,type Writer} from './compose';
+import {composeRead,writeRead,priorReadPhrases,type ComposedRead,type Writer} from './compose';
 import catalog from '../onboardingQuestionCatalog.json';
 import {deepChoices} from '../savedAnswerRead';
 import {includeMeasurements,MEASUREMENT_SELECT} from './legacy';
+import {OPENING_QUESTION} from './emotionalQuestion';
 
 export function stable(value:unknown):string{
   if(Array.isArray(value))return '['+value.map(stable).join(',')+']';
@@ -40,7 +41,8 @@ export async function loadPairEvidence(client:SupabaseClient,viewer:string,subje
       if(q)baseline[row.dimension]=row.selections;
       else if(deepChoices.some(([key])=>key===row.dimension))deep[row.dimension]=row.selections;
     }
-    return {onboarding:{baselineV2:baseline},deep_profile:deep};
+    const opening=rows.find(r=>r.user_id===id&&r.question_id===OPENING_QUESTION.id);
+    return {onboarding:{baselineV2:baseline,q7EmotionalPacing:opening?.selections},deep_profile:deep};
   };
   const shared=await client.rpc('has_verified_outing_with',{b:subject});
   if(shared.error)fail('shared attendance query',shared.error);
@@ -72,7 +74,8 @@ export async function loadRosterEvidence(client:SupabaseClient,viewer:string,ids
       if(catalog.some(q=>q.questionId===row.question_id&&q.fields[0]===row.dimension))baseline[row.dimension]=row.selections;
       else if(deepChoices.some(([key])=>key===row.dimension))deep[row.dimension]=row.selections;
     }
-    return {onboarding:{baselineV2:baseline},deep_profile:deep};
+    const opening=answers.data?.find(r=>r.user_id===id&&r.question_id===OPENING_QUESTION.id&&r.access==='public');
+    return {onboarding:{baselineV2:baseline,q7EmotionalPacing:opening?.selections},deep_profile:deep};
   };
   const result=new Map<string,EvidenceBundle>();
   for(const id of ids){
@@ -88,10 +91,9 @@ export async function loadRosterEvidence(client:SupabaseClient,viewer:string,ids
 export async function cachedRead(client:SupabaseClient,viewer:string,subject:string,bundle:EvidenceBundle,writer?:Writer,writerVersion='deterministic/8a.2'){
   // Remember wording across views without ever feeding another read to a writer.
   // Early wording is derived from the same visible baseline evidence, not a new fact.
-  const early=composeRead({...bundle,level:'early',sources:bundle.sources.filter(s=>s.subject==='self'&&!s.path.startsWith('deep_profile.'))});
   const {data:history,error:historyError}=await client.from('read_phrase_history').select('phrase').eq('viewer_id',viewer).in('subject_id',[viewer,subject]).neq('level',bundle.level);
   if(historyError)fail('phrase history',historyError);
-  const priorPhrases=[...early.sections.map(s=>s.text),...(history??[]).map(r=>r.phrase)];
+  const priorPhrases=[...priorReadPhrases(bundle),...(history??[]).map(r=>r.phrase)];
   const phraseVersion=createHash('sha256').update(stable([...new Set(priorPhrases)].sort())).digest('hex');
   writerVersion=writerVersion+':'+phraseVersion.slice(0,12);
   const hash=evidenceHash(bundle),started=performance.now();

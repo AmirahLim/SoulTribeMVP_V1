@@ -1,7 +1,7 @@
 // Literal, categorical positions. No scale is finer than the question supports.
 // Angles are alternatives for a composition, never paragraphs printed together.
-export type Voice = {title:string; early:string; profile:string; consequence:string};
-const v=(title:string,early:string,profile:string,consequence:string):Voice=>({title,early,profile,consequence});
+export type Voice = {title:string; profileTitle:string; early:string; profile:string; consequence:string};
+const v=(title:string,early:string,profile:string,consequence:string):Voice=>({title,profileTitle:'',early,profile,consequence});
 export const VOCABULARY:Record<string,Record<string,Voice>> = {
   punctualityPref:{
     Low:v('Time with a little give','The clock may not decide the quality of the meeting for you.','You leave room for timing to bend. Someone whose day depends on the agreed start may need you to distinguish flexibility from an open-ended wait.','An easy relationship with timing works best when the other person knows what to expect.'),
@@ -208,3 +208,44 @@ const repair:Record<string,Record<string,[string,string]>>={
  },
 };
 for(const [dimension,options] of Object.entries(repair))VOCABULARY[dimension]=Object.fromEntries(Object.entries(options).map(([key,[title,text]])=>[key,v(title,text,text,'These are preferences for repair, not a verdict about who handles disagreement correctly.')]));
+
+// Independently authored profile headlines, in each entry's declared option order.
+// Deliberately not a prefix/suffix or mechanical rewrite of the Early Read title.
+VOCABULARY.q7EmotionalPacing={
+ 'Open book - I share openly right away':v('An open beginning','Sharing early may be part of how you welcome someone in.','You may give a new connection something personal to meet quite early. Leave room for someone else to respond at a different pace.','Early openness is an invitation, not a requirement that someone match it.'),
+ 'Let it unfold - I open up naturally over time':v('The story can arrive gradually','Opening up may follow the time you spend together.','You leave room for familiarity to develop before every part of the story is told. Small returns can matter alongside a more revealing conversation.','A slower disclosure need not mean the connection is standing still.'),
+ 'Observant first - I take time to build trust':v('Notice before revealing','You may want time to observe a connection before sharing more.','You want to learn something about the company before offering more of yourself. That makes the room to choose when to share part of the invitation.','A personal question can arrive before you are ready to answer it.'),
+ 'Depends on the person and environment':v('The setting gets a say','Opening up may depend on who is there and how the moment feels.','You have not chosen a single opening pace. The company and setting matter, so one conversation should not become a rule about how readily you share.','Ask what feels comfortable here rather than assuming a usual pace.'),
+};
+const profileTitles:Record<string,string[]>={
+ q7EmotionalPacing:['Offering a little of yourself early','Familiarity before the whole story','A choice about when to let someone closer','Openness in this particular moment'],
+ punctualityPref:['An arrival can bend','Agree the edges of a plan','Settling in starts with knowing','A beginning you can count on'],
+ cancellationStance:['Another day remains possible','Circumstances before conclusions','The space you set aside','What keeping an agreement means'],
+ intent:['Familiarity beyond the introduction','Company through doing','A conversation worth staying in','Leave a chair for someone new','Difference can be an invitation','A familiar place among people'],
+ groupChoices:['One person in focus','A conversation you can stay with','Permission to move around','Company with momentum'],
+ groupSize:['An exchange without an audience','Everyone has room to arrive','Several ways into the gathering','The room joins the conversation','Let the occasion have a say'],
+ connectionChoice:['Ordinary contact matters','A recurring place in the week','Enough time to gather a story','Returning without starting again'],
+ planningChoice:['An unclaimed afternoon','A little warning goes a long way','Making space before the meeting','A date before the week fills','Anticipation has a place'],
+ clicks:['Ease before explanation','When the exchange finds substance','A fascination you can follow together','Curiosity without consensus','Company without a running conversation','An invitation that reaches the calendar'],
+ messagingStyle:['The everyday is worth sharing','A small dispatch of delight','Care without a special occasion','The sound behind the words','Room for an immediate reply','Turning contact into company','Where the screen leaves off'],
+ spontaneousTrip:['Possibility before preparation','Give the departure a reason','Space to rearrange the day','An outline makes discovery possible'],
+ idealSaturday:['An afternoon without a countdown','Keeping some time close','Absorption has its own reward','Room beyond the walls','The unfamiliar inside a free day','Company across the hours','An evening with somewhere to settle','A day that can still surprise you'],
+ outings:['A meeting with time around it','Choose the next stop together','A subject that opens another door','Let the scene change with you','Something to discuss on the walk out','The conversation beside the making','Attention in the listening','Side by side along the way','Company around a shared sound','A turn before an introduction','Distance from the usual week','A street seen through two lenses','A night with room to move','A shared task on the water','A beginning in motion'],
+ desiredQualities:['Someone who keeps wondering','Follow-through in ordinary life','Feelings welcome at the table','A little mischief in the company','Care in the small details','Separate lives with room to meet','A companion for unfamiliar ground','Disagreement with room to breathe','Someone who also asks','An idea need not arrive fully planned','Company for a life in progress','An exchange with something underneath','Meaning has a place in conversation'],
+ coreValues:['The ties around the friendship','A life with room to choose','Discovery among your priorities','Belonging beyond an invitation','Room for what you are building','Ideas deserve a place to land','Permission to become different','Steadiness around what changes','Questions worth keeping open'],
+ initiationChoice:['Where another person can begin','Shared ownership of the invitation','Giving possibility its first push'],
+ socialVibe:['An atmosphere with room for closeness','Enjoyment beyond a tidy plan','An idea at the centre of the gathering','Company outside familiar places','Time that does not hurry you','Movement around the meeting','The spark of making together'],
+ supportStyle:['Being heard before being helped','Steadiness without taking over','Understanding before the next step','An offer rather than an instruction','Care with something practical in it','Let this moment decide the help'],
+ friendshipPillars:['A life with room to be told','References that grow between you','An opening in an ordinary day','Silence need not be distance','A place through the difficult days'],
+ budgetPref:['Time together without a price','An invitation within reach','The cost belongs in the conversation','An occasion with a known cost','Room for a more expensive plan'],
+ repairFirst:['Words before the gap grows','Curiosity at the difficult moment','A pause before naming it','Distance at the start of disagreement'],
+ repairReturn:['An ordinary exchange before parting','A return within the day','Room for the conversation to settle','A slower return to ordinary contact','Resolution before resuming'],
+ repairDiscuss:['Understanding what happened','Acknowledgement without staying in the argument','An agreement for what follows','Everyday company as a way back'],
+ repairNeed:['Recognition of what hurt','An apology you can hear clearly','Repair reaching the next interaction','Company after the difficult moment','What follows carries the promise'],
+ repairSpace:['A pause with a promise of return','Knowing when the silence will end','Contact without reopening the argument','A return they can choose'],
+};
+for(const [dimension,options] of Object.entries(VOCABULARY)){
+ const titles=profileTitles[dimension];
+ if(!titles||titles.length!==Object.keys(options).length)throw new Error(`Missing authored profile titles for ${dimension}`);
+ Object.values(options).forEach((voice,i)=>{voice.profileTitle=titles[i];});
+}

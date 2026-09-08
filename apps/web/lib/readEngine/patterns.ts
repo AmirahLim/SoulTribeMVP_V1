@@ -4,13 +4,26 @@ import type {ReadClaim} from './compose';
 // Conditions, not member names or random seeds, choose the interpretation.
 // Each clause carries all its operands. A preference is never a personality diagnosis.
 export function contextualClaims(bundle:EvidenceBundle):ReadClaim[] {
+  const profileHeadlines:Record<string,string>={
+    'depth-with-air':'A return that does not need an apology','outward-and-lively':'When introductions become familiar faces',
+    'action-while-alive':'Give the promising exchange a next step','playful-discovery':'Room for the day to change its mind',
+    'depth-with-continuity':'Familiarity grows between the big conversations','small-and-curious':'Enough attention for the next question',
+    'humour-and-depth':'Two registers in the same friendship','thought-return':'Keeping someone inside an ordinary day',
+    'listen-and-make-sense':'The handover between listening and helping','values-room':'Inclusion without proving you belong',
+    'growth-in-company':'A thought need not arrive finished','quiet-with-adventure':'Notice the unfamiliar together',
+    'novelty-with-outline':'Let discovery happen inside the day','home-and-belonging':'Familiar company without an occasion',
+    'notice-and-spontaneity':'Interest still needs room in the week','quality-not-duty':'Being asked without being kept on call',
+    'repeatable-ritual':'Let a small plan become familiar','activity-as-door':'The experience beside the conversation',
+    'lively-beginning':'Notice who you want to return to','dependable-with-room':'Freedom with follow-through',
+    'playful-and-thoughtful':'A joke with room for another thought','space-and-small-ritual':'A pause that can remain comfortable',
+  };
   const out:ReadClaim[]=[];
   const find=(dimension:string,options:string[],subject:Source['subject']='self')=>bundle.sources.find(s=>s.subject===subject&&s.dimension===dimension&&s.selections.some(x=>options.includes(x)));
   const rule=(id:string,slot:string,conditions:[string,string[]][],title:string,early:string,profile:string)=>{
     const found=conditions.map(([d,o])=>find(d,o));
     if(found.some(s=>!s))return;
     const sources=[...new Map((found as Source[]).map(s=>[s.id,s])).values()];
-    out.push({id,slot,sourceIds:sources.map(s=>s.id),threads:[...new Set(sources.map(s=>s.thread))],dimensions:[...new Set(sources.map(s=>s.dimension))],evidenceLevel:sources.length>1?'CROSS-THREAD PATTERN':'SUPPORTED INFERENCE',text:bundle.level==='early'?early:profile,title,priority:20+sources.length,shape:'contextual'});
+    out.push({id,slot,sourceIds:sources.map(s=>s.id),threads:[...new Set(sources.map(s=>s.thread))],dimensions:[...new Set(sources.map(s=>s.dimension))],evidenceLevel:sources.length>1?'CROSS-THREAD PATTERN':'SUPPORTED INFERENCE',text:bundle.level==='early'?early:profile,title:bundle.level==='early'?title:profileHeadlines[id],priority:20+sources.length,shape:'contextual'});
   };
   rule('depth-with-air','social',[['intent',['Close circle','Real conversations']],['connectionChoice',['Every couple of weeks','Weeks/Months can pass, we’re still good']]],'Close, without keeping count',
     'You may want a friendship that stays meaningful without staying constantly in touch. The test is what happens when you return, not how often the phone lights up.',

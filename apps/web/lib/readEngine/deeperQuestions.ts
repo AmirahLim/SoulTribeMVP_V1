@@ -8,4 +8,4 @@ export const REPAIR_QUESTIONS = [
 export const INITIATIVE_QUESTION = {key:'initiationChoice',id:'communication.invitation',version:1,prompt:'When you want to see a friend, who usually sends the invitation?',max:1,options:['I usually wait for theirs','It goes both ways','I usually send mine']} as const;
 export const NO_POSITION = ['It depends','Prefer not to say'];
 export const PUBLIC_ANSWER_NOTICE='Your fixed-choice answers inform matching and readings and are visible on your profile. Free text is kept out of the writer.';
-export const SHARED_DETAIL_NOTICE='These answers inform matching and your own reading. Other members can see the thread state, but your individual Emotional Openness and Conflict & Repair answers are visible only after confirmed shared attendance. You can change or remove an answer.';
+export const SHARED_DETAIL_NOTICE='These answers inform matching and your own reading. Individual Conflict & Repair details require confirmed shared attendance. Emotional Openness answers are public. You can change or remove an answer.';

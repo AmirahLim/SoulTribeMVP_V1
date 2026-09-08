@@ -5,6 +5,8 @@ export type SocialPage = {
   kind: 'paper' | 'notebook' | 'photo' | 'letter';
   href?: string; action?: string;
   evidence?: ReadSection['evidence'];
+  /** Andy's renderer should place this below the stable category title. */
+  subheading?: string;
 };
 type Thread = {key: string; status: string; note?: string; descriptor?: string[]};
 type Read = {
@@ -25,23 +27,13 @@ export const brief = (text: string, limit = 130) => {
 };
 const clean = (items: (string | undefined)[]) => items.filter((v): v is string => !!v?.trim());
 export function selfSocialPages(read: Read): SocialPage[] {
-  if(read.composedRead){
-    const captions:Record<string,string>={social:'A little portrait of me',connect:'How I naturally connect',bring:'The things I hold close',best:'People, places & a little ease',friction:'Handle with care',doing:'Count me in for…'};
-    const kinds:Record<string,SocialPage['kind']>={social:'photo',connect:'notebook',bring:'letter',best:'photo',friction:'paper',doing:'notebook'};
-    return Object.keys(captions).map(key=>{
-      const section=read.composedRead!.sections.find(s=>s.key===key);
-      return {key,title:section?.title??captions[key],caption:captions[key],kind:kinds[key],
-        notes:section?.claims.map(c=>c.text)??[],evidence:section?.evidence,
-        href:'/you/deeper',action:section?'Correct or deepen this reading →':'Add your perspective →'};
-    });
-  }
   const notes = (...keys: string[]) => keys.flatMap(key => {
     const saved = read.savedAnswerRead?.notes[key];
-    return saved?.length ? saved : read.threads.filter(t => t.status === 'known' && t.key === key).flatMap(t => clean([t.note]));
+    return [...new Set([...(saved??[]), ...read.threads.filter(t => t.status === 'known' && t.key === key).flatMap(t => clean([t.note]))])];
   });
   const supported = read.tribalRead?.sections.filter(s => s.markerCount >= 2) ?? [];
   const page = (key: string, title: string, caption: string, kind: SocialPage['kind'], content: string[]): SocialPage => ({key, title, caption, kind, notes: content, href: '/you/deeper', action: 'Explore this a little deeper →'});
-  return [
+  const pages: SocialPage[] = [
     page('social', 'Who I am socially', 'A little portrait of me', 'photo', clean([read.tribalRead?.summary, ...notes('personality', 'intent')])),
     page('connect', 'My kind of closeness', 'How I naturally connect', 'notebook', notes('communication', 'social_rhythm', 'emotional')),
     page('bring', 'What I bring', 'The things I hold close', 'letter', [
@@ -50,7 +42,10 @@ export function selfSocialPages(read: Read): SocialPage[] {
       ...clean([read.values.length ? `Qualities I value in friendship: ${read.values.map(v => v.label).join(' · ')}` : undefined]),
     ]),
     page('best', 'Where I come alive', 'People, places & a little ease', 'photo', [...supported.filter(s => /best with/i.test(s.title)).map(s => s.content), ...notes('experience', 'lifestyle', 'geography')]),
-    page('friction', 'Handle with care', 'What can feel a little harder', 'paper', read.savedAnswerRead?.notes.boundaries?.length ? notes('boundaries') : clean([read.tension?.headline, read.tension?.explanation, ...Object.values(read.boundaries ?? {})])),
+    page('friction', 'Handle with care', 'What can feel a little harder', 'paper', clean([
+      ...notes('boundaries'), ...Object.values(read.boundaries ?? {}),
+      ...(!read.savedAnswerRead?.notes.boundaries?.length?[read.tension?.headline,read.tension?.explanation]:[]),
+    ])),
     page('doing', 'Count me in for…', 'Less scrolling, more doing', 'notebook', clean([
       ...notes('interests', 'experience'),
       read.interests.length ? `I'm into ${read.interests.map(i => i.name).join(' · ')}` : undefined,
@@ -61,6 +56,13 @@ export function selfSocialPages(read: Read): SocialPage[] {
     {key: 'between', title: 'Me, in good company', caption: 'When two ways of being meet', kind: 'letter',
       notes: read.connectionNotes?.flatMap(n => [n.statement, n.explanation]) ?? [], href: '/people', action: 'Find someone & view your Bond →'},
   ];
+  return pages.map(page => {
+    const section = read.composedRead?.sections.find(s => s.key === page.key);
+    if (!section) return page;
+    return {...page, subheading: section.title, evidence: section.evidence,
+      notes: [...new Set([...section.claims.map(c => c.text), ...page.notes.filter(n=>n!==section.text)])],
+      action: 'Correct or deepen this reading →'};
+  });
 }
 export function sharedChoices(answers: Record<string, unknown> | undefined, key: string, other = ''): string[] {
   const raw = answers?.[key] ?? (key === 'groupChoices' ? answers?.group : undefined);

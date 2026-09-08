@@ -5,6 +5,7 @@ import { adaptRowToUserData } from '../../../lib/profileRowAdapter';
 import {loadPairEvidence,cachedRead,evidenceHash} from '../../../lib/readEngine/server';
 import {connectionThread} from '../../../lib/readEngine/compose';
 import {pairClaims} from '../../../lib/readEngine/relational';
+import {evidenceThreadReading} from '../../../lib/readEngine/threadReading';
 import {THREAD_NAMES,type EvidenceBundle} from '../../../lib/readEngine/evidence';
 import {
   score,
@@ -194,10 +195,9 @@ export async function POST(req: NextRequest) {
 
     const contrib = matchRes.contributions[key];
     const interpretation=connectionThread(visibleBundle,key);
+    if(interpretation)return {...evidenceThreadReading(visibleBundle,key as keyof typeof THREAD_NAMES),weight,
+      ...(isKnown&&typeof contrib==='number'&&key!=='emotional'?{alignment:contrib}:{})};
     if (!isKnown || typeof contrib !== 'number') {
-      if(interpretation)return {key,status:'known' as const,weight,headline:interpretation.title,
-        phrase:interpretation.text,mechanism:'context' as const,outputState:'Worth exploring',
-        evidence:visibleBundle.sources.filter(s=>interpretation.sourceIds.includes(s.id))};
       return {
         key,
         status: 'unknown' as const,
@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
     const alignment = contrib;
     const mech = evaluateMechanism(key as ThreadKey, alignment, viewerVec, candVec);
     const headline = mech.outputState;
-    const phrase = key==='emotional' ? 'This comparison does not disclose individual emotional answers.' : interpretation?.text??getBondThreadPhrase(key, viewerVec, candVec, alignment);
+    const phrase = key==='emotional' ? 'Original emotional answers are not available for an evidence-backed interpretation yet.' : getBondThreadPhrase(key, viewerVec, candVec, alignment);
 
     return {
       key,
@@ -217,7 +217,6 @@ export async function POST(req: NextRequest) {
       ...(key==='emotional'?{}:{alignment}),
       weight,
       phrase,
-      ...(interpretation?{evidence:visibleBundle.sources.filter(s=>interpretation.sourceIds.includes(s.id))}:{}),
       mechanism: mech.mechanism.toLowerCase() as 'alignment' | 'complementarity' | 'friction' | 'context',
       frictionClass: mech.severity || mech.frictionType,
       outputState: mech.outputState,
@@ -237,16 +236,15 @@ export async function POST(req: NextRequest) {
     geography: 'preferred neighbourhoods',
   };
 
-  const repairState=typeof matchRes.contributions.repair==='number'?evaluateMechanism('repair',matchRes.contributions.repair,viewerVec,candVec):null;
-  threads.push(repairState
-    ? {key:'repair',status:'known',weight:6,headline:repairState.outputState,
-      phrase:'This thread compares your separately answered repair preferences. Individual detail requires confirmed shared attendance.',mechanism:repairState.mechanism.toLowerCase() as 'alignment'|'friction'|'context'|'complementarity',frictionClass:undefined,outputState:repairState.outputState}
-    : {key:'repair',status:'unknown',weight:6});
+  // Same/different is an answer oracle when the viewer knows their own operand.
+  // Do not release it (or a numeric direction) before verified shared attendance.
+  threads.push({...evidenceThreadReading(visibleBundle,'repair'),weight:6});
   const invitationA=visibleBundle.sources.find(s=>s.subject==='self'&&s.thread==='initiative');
   const invitationB=visibleBundle.sources.find(s=>s.subject==='other'&&s.thread==='initiative');
   const aInit=viewerVec.communication?.initiation_self,bInit=candVec.communication?.initiation_self;
   const hasInitiative=!!(invitationA&&invitationB)||(typeof aInit==='number'&&typeof bInit==='number');
-  threads.push(hasInitiative?{key:'initiative',status:'known',weight:0,
+  const initiativeRead=evidenceThreadReading(visibleBundle,'initiative');
+  threads.push(initiativeRead.status==='known'?{...initiativeRead,weight:0}:hasInitiative?{key:'initiative',status:'known',weight:0,
     phrase:invitationA&&invitationB?`Your invitation pattern: ${invitationA.selections.join(' · ')}. Their invitation pattern: ${invitationB.selections.join(' · ')}.`:'Both of you have separately answered the invitation question. This facet carries no extra ranking weight.',
     mechanism:'context',headline:'Moderate',frictionClass:undefined,outputState:'Moderate'}:{key:'initiative',status:'unknown',weight:0});
 
@@ -295,6 +293,7 @@ export async function POST(req: NextRequest) {
       imbalance: asymmetric.imbalance,
     },
     threads:threads.map(t=>({...t,name:THREAD_NAMES[t.key as keyof typeof THREAD_NAMES],
+      readingState:'readingState' in t?t.readingState:t.status!=='known'?'not yet measured':t.mechanism==='friction'?'needs a little care':t.mechanism==='alignment'?'common ground':'still taking shape',
       evidence:visibleBundle.sources.filter(s=>s.thread===t.key).map(s=>({questionId:s.questionId,questionVersion:s.questionVersion,selections:s.selections,subject:s.subject}))})),
     rubText: pairClaims(visibleBundle).find(c=>c.tone==='friction')?.text??'',
     sharpen,

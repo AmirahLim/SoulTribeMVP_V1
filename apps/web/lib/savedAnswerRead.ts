@@ -1,5 +1,6 @@
 import catalog from './onboardingQuestionCatalog.json';
 import {REPAIR_QUESTIONS,INITIATIVE_QUESTION} from './readEngine/deeperQuestions';
+import {OPENING_QUESTION} from './readEngine/emotionalQuestion';
 
 type Answers = Record<string, unknown>;
 const object = (value: unknown): Answers => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Answers : {};
@@ -50,6 +51,8 @@ export function buildSavedAnswerRead(row: unknown): SavedAnswerRead {
     add(`deep_profile.${key}`, thread, label, deep[key], choices, true);
   }
   result.hasDeeperAnswers = result.facts.length > 0;
+  add(`onboarding.${OPENING_QUESTION.key}`, 'emotional', 'How you approach opening up',
+    object(saved.onboarding)[OPENING_QUESTION.key], [...OPENING_QUESTION.options]);
   for (const question of catalog) {
     const mapping = baselineThreads[question.questionId];
     if (!mapping) continue;

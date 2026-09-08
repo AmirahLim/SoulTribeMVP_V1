@@ -2,9 +2,11 @@ import type {EvidenceBundle,Source} from './evidence';
 import type {ReadClaim} from './compose';
 import {pairVoice} from './pairVoice';
 import {measuredPosition} from './legacy';
+import {VOCABULARY} from './vocabulary';
 
 // These are categorical meanings, not inferred scores or renamed original answers.
 const positions:Record<string,Record<string,string>>={
+ q7EmotionalPacing:{'Open book - I share openly right away':'share something personal early','Let it unfold - I open up naturally over time':'let personal sharing grow with familiarity','Observant first - I take time to build trust':'observe the connection before sharing more','Depends on the person and environment':'let this person and setting shape how much you share'},
  groupChoices:{'1:1':'give one person your undivided attention','Small circle':'let a small circle carry the conversation','Social mix':'move between different conversations','Big energy':'find momentum in a lively gathering'},
  groupSize:{'One-on-one':'give one person your undivided attention','3–4 people':'stay with a conversation in a small circle','5–8 people':'have several people in the conversation','Big group':'be part of a larger gathering','Depends':'let the people and occasion decide the size of the gathering'},
  connectionChoice:{'A few times a week':'keep contact woven through the week','About once a week':'give the friendship a regular weekly return','Every couple of weeks':'leave breathing room between catch-ups','Weeks/Months can pass, we’re still good':'let long gaps pass without treating the friendship as over'},
@@ -18,6 +20,7 @@ const positions:Record<string,Record<string,string>>={
  spontaneousTrip:{'Already packing':'say yes before every detail is settled','Convince me':'hear what makes the idea worth rearranging things for','24 hours notice needed':'have time to make room before leaving','Not without itinerary':'know the shape of the trip before committing'},
 };
 const axes:Record<string,{title:string;consequence:string;difference:string}>={
+ q7EmotionalPacing:{title:'How a personal conversation becomes possible',consequence:'A similar opening preference may make the pace easier to discuss. It does not establish trust or oblige either person to reveal more.',difference:'Sharing first and responding more slowly can both leave room for a connection. Ask whether a personal question is welcome, and let the answer set the pace rather than treating disclosure as a test of interest.'},
  groupChoices:{title:'Room to notice each other',consequence:'There may be less work negotiating the setting, leaving more attention for the person inside it.',difference:'The place could set the tone before either of you says much. Choose a setting where the conversation can change size without either person losing their place.'},
  groupSize:{title:'The company around the conversation',consequence:'The gathering you both want could give the exchange room to continue, rather than make either person keep finding a way back in.',difference:'An introduction and a proper catch-up need not have the same headcount. Starting smaller can leave room to find out how the company feels.'},
  connectionChoice:{title:'What the quiet between meetings means',consequence:'A similar rhythm could save you from mistaking a normal pause for a message about the friendship.',difference:'The same quiet stretch may feel ordinary on one side and unfinished on the other. Naming what a pause means could matter more than trying to match every message.'},
@@ -96,5 +99,20 @@ export function pairClaims(bundle:EvidenceBundle):ReadClaim[] {
  if(ao&&bo)for(const value of ao.selections.filter(v=>bo.selections.includes(v)))
    add(`outing:${value}`,[ao,bo],`A beginning around ${value.toLowerCase()}`,
      `An outing around ${value.toLowerCase()} gives you a real starting point. Let the activity carry the introduction, then leave a little room afterwards to find out whether you want another conversation.`,'click',5);
+ // One-sided evidence stays one-sided. Never classify it as agreement or friction.
+ for(const source of bundle.sources){
+   if(source.access!=='public'||bundle.sources.some(s=>s.subject!==source.subject&&s.questionId===source.questionId))continue;
+   if(result.some(c=>c.sourceIds.includes(source.id)))continue;
+   const meaning=positions[source.dimension]?.[source.selections[0]];
+   const voice=VOCABULARY[source.dimension]?.[source.selections[0]];
+   if(!meaning&&!voice)continue;
+   const self=source.subject==='self';
+   const text=meaning
+     ? `${self?'You describe':'They describe'} wanting to ${meaning}. ${self?'Their':'Your'} answer to this question is not available here. This is a starting point for asking what would work together, not evidence of a shared preference.`
+     : `Only ${self?'your':'their'} perspective is available here: ${source.selections.join(' · ')}. This may offer a starting point for a conversation; it does not tell us what ${self?'they':'you'} would choose.`;
+   result.push({id:`one-sided:${source.id}`,sourceIds:[source.id],threads:[source.thread],dimensions:[source.dimension],
+     evidenceLevel:'SUPPORTED INFERENCE',tone:'context',shape:'one-sided',priority:2,
+     title:`${self?'Your perspective':'Their perspective'}: ${voice?.profileTitle??axes[source.dimension].title}`,text});
+ }
  return result;
 }

@@ -1,9 +1,10 @@
 import catalog from '../onboardingQuestionCatalog.json';
 import {buildSavedAnswerRead} from '../savedAnswerRead';
 import {REPAIR_QUESTIONS,INITIATIVE_QUESTION} from './deeperQuestions';
+import {OPENING_QUESTION} from './emotionalQuestion';
 
-export const READ_ENGINE_VERSION = 'read-spine/8a.3';
-export const DISCLOSURE_VERSION = 'public-fixed-choice/shared-detail.1';
+export const READ_ENGINE_VERSION = 'read-spine/8a.4';
+export const DISCLOSURE_VERSION = 'public-fixed-choice/repair-detail.2';
 import {THREAD_NAMES} from '@soul-tribe/core';
 export {THREAD_NAMES};
 export type ReadThread = keyof typeof THREAD_NAMES;
@@ -32,12 +33,12 @@ export function buildEvidence(row:unknown, level:ReadLevel, subject:'self'|'othe
     const q=catalog.find(q=>q.fields[0]===field);
     const record=object(records[q?.questionId??'']);
     const deepQuestion=[...REPAIR_QUESTIONS,INITIATIVE_QUESTION].find(q=>q.key===field);
-    const questionId=q?.questionId??deepQuestion?.id??`tribal.${field}`;
+    const questionId=q?.questionId??deepQuestion?.id??(field===OPENING_QUESTION.key?OPENING_QUESTION.id:`tribal.${field}`);
     // A desired quality is a preference dimension, not a measured self-trait.
     const thread=(fact.thread==='desiredQualities'?'values':fact.thread==='boundaries'?'lifestyle':fact.thread) as ReadThread;
     if(!(thread in THREAD_NAMES))return [];
     if(level==='early'&&fact.source.startsWith('deep_profile.'))return [];
-    const access=thread==='emotional'||thread==='repair'?'shared-detail':'public';
+    const access=thread==='repair'?'shared-detail':'public';
     if(subject==='other'&&access==='shared-detail'&&!sharedDetail)return [];
     const answer=object(record.answer);
     const recorded=q&&record.questionId===q.questionId&&record.questionVersion===q.questionVersion

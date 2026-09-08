@@ -4,7 +4,7 @@ import { toProfileVector } from '../../../../lib/profileAdapter';
 import { adaptRowToUserData } from '../../../../lib/profileRowAdapter';
 import { buildSavedAnswerRead } from '../../../../lib/savedAnswerRead';
 import {buildEvidence, THREAD_NAMES} from '../../../../lib/readEngine/evidence';
-import {composeRead,availableClaims} from '../../../../lib/readEngine/compose';
+import {composeRead,availableClaims,priorReadPhrases} from '../../../../lib/readEngine/compose';
 import {cachedRead,loadOwnEvidence,evidenceHash} from '../../../../lib/readEngine/server';
 import {
   extractMarkers,
@@ -332,7 +332,7 @@ export async function GET(req: NextRequest) {
   let evidenceBundle;
   try{evidenceBundle=await loadOwnEvidence(client,authUserId,savedAnswers);}
   catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to load answer versions'},{status:500});}
-  let composedRead = composeRead(evidenceBundle);
+  let composedRead = composeRead(evidenceBundle, priorReadPhrases(evidenceBundle));
   const cacheSecret=process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(cacheSecret){
     try{composedRead=(await cachedRead(createClient(supabaseUrl,cacheSecret,{auth:{persistSession:false}}),authUserId,authUserId,evidenceBundle)).read;}

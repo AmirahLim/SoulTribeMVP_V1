@@ -9,10 +9,10 @@ import {selfSocialPages} from '../socialScrapbook';
 // Isolated contracts, never member records or production seed data.
 const fixed=(contact:string,intent='Close circle')=>({onboarding:{baselineV2:{intent:[intent],connectionChoice:contact,planningChoice:'About a week',groupChoices:['Small circle'],clicks:['We actually make plans happen'],desiredQualities:['Reliable'],outings:['Nature & Hiking']}},deep_profile:{idealSaturday:'Exploring',spontaneousTrip:'Not without itinerary'}});
 describe('evidence-grounded reading depth',()=>{
- it('restores six presentation positions with honest empty notes, never padded claims',()=>{
+ it('restores seven presentation positions with honest empty notes, never padded claims',()=>{
   const composedRead=composeRead(buildEvidence({},'profile'));
   const pages=selfSocialPages({composedRead,threads:[],values:[],interests:[]});
-  expect(pages.map(p=>p.key)).toEqual(['social','connect','bring','best','friction','doing']);
+  expect(pages.map(p=>p.key)).toEqual(['social','connect','bring','best','friction','doing','between']);
   expect(pages.every(p=>p.notes.length===0)).toBe(true);
  });
  it('changes the behavioural interpretation when a second relevant answer changes',()=>{

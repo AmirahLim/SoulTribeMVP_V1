@@ -14,6 +14,13 @@ const grams=(text:string,n:number)=>{const w=words(text);return new Set(w.slice(
 export function proseSimilarity(a:string,b:string){const x=grams(a,3),y=grams(b,3);return new Set([...x,...y]).size?[...x].filter(t=>y.has(t)).length/new Set([...x,...y]).size:0;}
 export function repeatedSpan(a:string,b:string,n=8){const x=grams(a,n);return [...grams(b,n)].some(g=>x.has(g));}
 export const readPhraseSpans=(text:string)=>[...grams(text,8)];
+const sentences=(text:string)=>text.split(/(?<=[.!?])\s+/).map(s=>words(s).join(' ')).filter(Boolean);
+export function repeatsReadText(a:string,b:string){return repeatedSpan(a,b)||sentences(a).some(s=>sentences(b).includes(s));}
+export const readingPhrases=(read:ComposedRead)=>read.sections.flatMap(s=>[s.title,s.text,...s.claims.map(c=>c.title)]);
+export function priorReadPhrases(bundle:EvidenceBundle):string[]{
+  if(bundle.level==='early')return [];
+  return readingPhrases(composeRead({...bundle,level:'early',sources:bundle.sources.filter(s=>s.subject==='self'&&s.path.startsWith('onboarding.'))}));
+}
 
 function makeClaim(id:string,sources:Source[],text:string,title:string,priority=1,shape='observation'):ReadClaim {
   return {id,sourceIds:canonicalSourceIds(sources.map(s=>s.id)),threads:[...new Set(sources.map(s=>s.thread))],
@@ -37,7 +44,7 @@ export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
       const voice=VOCABULARY[source.dimension]?.[option];
       if(!voice)continue;
       claims.push(makeClaim(`${source.id}:${option}:${bundle.level}`,[source],
-        bundle.level==='early'?voice.early:voice.profile,voice.title,source.path.startsWith('deep_profile.')?3:1,
+        bundle.level==='early'?voice.early:voice.profile,bundle.level==='early'?voice.title:voice.profileTitle,source.path.startsWith('deep_profile.')?3:1,
         source.dimension));
       if(bundle.level==='profile'&&['planningChoice','punctualityPref','cancellationStance'].includes(source.dimension))
         claims.push({...makeClaim(`care:${source.id}:${option}`,[source],voice.consequence,'What an invitation needs to respect',4,'care'),slot:'friction'});
@@ -51,7 +58,7 @@ export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
     claims.push(makeClaim(`clicks-together:${bundle.level}`,[clicks],bundle.level==='early'
       ?deep?'A joke opens the door. You want conversation beyond introductions and a plan that actually happens.':'Humour carries the beginning; a real plan gives it somewhere to go.'
       :deep?'There is laughter at the start, but you do not want to live in the opening exchange. Let the conversation go somewhere, then find a time to continue it.':'The joke is not the whole connection. Following it with an invitation gives the laughter another afternoon to return to.',
-      deep?'A joke, then somewhere further':'Let the laugh become a plan',12,'click-combination'));
+      bundle.level==='early'?(deep?'A joke, then somewhere further':'Let the laugh become a plan'):(deep?'Lightness need not keep you at the surface':'An invitation after the laughter'),12,'click-combination'));
   }
   if(bundle.level==='early')return claims;
   const src=(dim:string,option?:string)=>bundle.sources.find(s=>s.subject==='self'&&s.dimension===dim&&(!option||s.selections.includes(option)));
@@ -79,7 +86,7 @@ export function availableClaims(bundle:EvidenceBundle):ReadClaim[] {
 
 const profileSlots=[
   {key:'social',dimensions:['groupSize','socialVibe','groupChoices','friendshipPillars'],extra:['close-without-constant','room-with-range']},
-  {key:'connect',dimensions:['messagingStyle','supportStyle','connectionChoice','clicks','initiationChoice'],extra:['thought-as-catchup','clicks-together:profile']},
+  {key:'connect',dimensions:['messagingStyle','supportStyle','connectionChoice','clicks','initiationChoice','q7EmotionalPacing'],extra:['thought-as-catchup','clicks-together:profile']},
   {key:'bring',dimensions:['coreValues','intent','desiredQualities'],extra:['base-and-window']},
   {key:'best',dimensions:['idealSaturday','socialVibe','groupSize','groupChoices','spontaneousTrip'],extra:['adventure-with-outline']},
   {key:'friction',dimensions:['repairFirst','repairReturn','repairNeed','repairDiscuss','repairSpace','punctualityPref','cancellationStance'],extra:[]},
@@ -96,17 +103,17 @@ export function composeRead(bundle:EvidenceBundle,priorPhrases:string[]=[]):Comp
   if(bundle.level==='bond')return composeBond(bundle,priorPhrases);
   const candidates=availableClaims(bundle).filter(c=>validateClaim(c,bundle));
   const slots=bundle.level==='early'?earlySlots:profileSlots;
-  const sections:ReadSection[]=[],used=new Set<string>(),usedText=[...priorPhrases];
+  const sections:ReadSection[]=[],used=new Set<string>(),usedText=[...priorReadPhrases(bundle),...priorPhrases];
   for(const slot of slots){
     const earlyPlacement:Record<string,string>={social:'intent',connect:'click',bring:'qualities',best:'setting',friction:'rhythm',doing:'outings'};
     const pool=candidates.filter(c=>c.slot?(bundle.level==='early'?earlyPlacement[c.slot]:c.slot)===slot.key:slot.extra.includes(c.id)||(c.sourceIds.length===1&&c.dimensions.some(d=>slot.dimensions.includes(d))))
       .sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id));
     const selected:ReadClaim[]=[];const shapeCount=new Map<string,number>();
     for(const claim of pool){
-      if(used.has(claim.id)||usedText.some(text=>repeatedSpan(text,claim.text)))continue;
+      if(used.has(claim.id)||usedText.some(text=>repeatsReadText(text,claim.text)||words(text).join(' ')===words(claim.title).join(' ')))continue;
       if(selected.some(c=>c.sourceIds.some(id=>claim.sourceIds.includes(id))))continue;
       if((shapeCount.get(claim.shape)??0)>=2)continue;
-      selected.push(claim);used.add(claim.id);usedText.push(claim.text);
+      selected.push(claim);used.add(claim.id);usedText.push(claim.text,claim.title);
       shapeCount.set(claim.shape,(shapeCount.get(claim.shape)??0)+1);
       if(selected.length===(bundle.level==='early'&&slot.key!=='rhythm'?1:2))break;
     }
@@ -119,14 +126,16 @@ export function composeBond(bundle:EvidenceBundle,priorPhrases:string[]=[]):Comp
   const claims=pairClaims(bundle);
   const selected:ReadClaim[]=[];
   for(const c of claims.sort((a,b)=>b.priority-a.priority||a.id.localeCompare(b.id))){
-    if(!validateClaim(c,bundle)||priorPhrases.some(t=>repeatedSpan(t,c.text)))continue;
-    selected.push(c);if(selected.length===3)break;
+    if(!validateClaim(c,bundle)||priorPhrases.some(t=>repeatsReadText(t,c.text)))continue;
+    if(selected.some(s=>s.text===c.text))continue;
+    selected.push(c);
   }
   return {version:bundle.engineVersion,level:'bond',sections:selected.map(c=>({key:c.id,title:c.title,text:c.text,claims:[c],evidence:disclosure([c],bundle)})),omitted:[],writer:'deterministic'};
 }
 
 export function connectionThread(bundle:EvidenceBundle,thread:string) {
-  return pairClaims(bundle).filter(c=>c.threads.includes(thread as ReadThread)&&validateClaim(c,bundle)).sort((a,b)=>b.priority-a.priority)[0];
+  return pairClaims(bundle).filter(c=>c.threads.includes(thread as ReadThread)&&validateClaim(c,bundle))
+    .sort((a,b)=>Number(b.tone==='friction')-Number(a.tone==='friction')||b.priority-a.priority)[0];
 }
 
 /** Step 5: structural claim/source validation. Not a proof of arbitrary prose. */
@@ -152,7 +161,7 @@ export async function writeRead(bundle:EvidenceBundle,writer?:Writer,priorPhrase
     const output=await writer({bundle,plan:fallback}) as ComposedRead;
     if(!output||!Array.isArray(output.sections)||output.sections.length!==fallback.sections.length)return fallback;
     const known=new Map(fallback.sections.flatMap(s=>s.claims).map(c=>[c.id,c]));
-    const seenSections=new Set<string>(),seenClaims=new Set<string>(),prose:string[]=[...priorPhrases];
+    const seenSections=new Set<string>(),seenClaims=new Set<string>(),prose:string[]=[...priorReadPhrases(bundle),...priorPhrases];
     const accepted=output.sections.every(s=>{
       const section=fallback.sections.find(original=>original.key===s.key);
       if(!section||seenSections.has(s.key)||!Array.isArray(s.claims)||s.claims.length!==section.claims.length)return false;
@@ -160,7 +169,7 @@ export async function writeRead(bundle:EvidenceBundle,writer?:Writer,priorPhrase
       return s.claims.every(c=>{
       const original=known.get(c.id);
       if(seenClaims.has(c.id)||!section.claims.some(claim=>claim.id===c.id)||typeof c.text!=='string'
-        ||c.text.length>1200||prose.some(text=>repeatedSpan(text,c.text)))return false;
+        ||c.text.length>1200||prose.some(text=>repeatsReadText(text,c.text)))return false;
       seenClaims.add(c.id);prose.push(c.text);
       return original&&JSON.stringify(c.sourceIds)===JSON.stringify(original.sourceIds)
         &&JSON.stringify(c.dimensions)===JSON.stringify(original.dimensions)&&JSON.stringify(c.threads)===JSON.stringify(original.threads)
