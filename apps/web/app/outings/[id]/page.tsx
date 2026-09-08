@@ -19,6 +19,7 @@ import { getOutingCategoryImage } from '../../../lib/outingsStore';
 import { getGenderAvatarForName } from '@soul-tribe/core';
 import { AuthGuard } from '../../../components/AuthGuard';
 import { OutingCoverHeader } from '../../../components/OutingCoverHeader';
+import { subscribeOutingChanges } from '../../../lib/realtime';
 
 export default function OutingDetailPage() {
   return (
@@ -322,8 +323,10 @@ function OutingDetailContent() {
   };
 
   useEffect(() => {
+    let active = true;
+    let version = 0;
     async function loadOutingDetails() {
-      setLoading(true);
+      const current = ++version;
       setErrorMessage('');
 
       if (checkIsSupabaseConfigured() && outingId) {
@@ -331,19 +334,23 @@ function OutingDetailContent() {
           const client = getSupabaseBrowserClient();
 
           // 1. Load real outing by ID from outings table
-          const { data: dbOuting } = await client
+          const { data: dbOuting, error: outingError } = await client
             .from('outings')
             .select('*')
             .eq('id', outingId)
             .single();
+          if (outingError) throw outingError;
+          if (!active || current !== version) return;
 
           if (dbOuting) {
             // 2. Load host profile from profiles table
-            const { data: hostProfile } = await client
+            const { data: hostProfile, error: hostError } = await client
               .from('profiles')
               .select('display_name, avatar_url, home_area')
               .eq('id', dbOuting.host_id)
               .single();
+            if (hostError) throw hostError;
+            if (!active || current !== version) return;
 
             const isHostDemo = Boolean(
               (dbOuting as any).is_demo ||
@@ -361,10 +368,12 @@ function OutingDetailContent() {
             setOuting(loadedOuting);
 
             // 3. Load real members joined with profiles from outing_members table
-            const { data: dbMembers } = await client
+            const { data: dbMembers, error: membersError } = await client
               .from('outing_members')
               .select('user_id, role, state, profiles(id, display_name, avatar_url, home_area)')
               .eq('outing_id', outingId);
+            if (membersError) throw membersError;
+            if (!active || current !== version) return;
 
             const formattedMembers: OutingMember[] = (dbMembers || []).map((m: any) => {
               const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
@@ -385,8 +394,14 @@ function OutingDetailContent() {
             setLoading(false);
             return;
           }
-        } catch {
-          // Fallthrough
+        } catch (error) {
+          if (!active || current !== version) return;
+          console.error('[SoulTribe] Outing refresh failed', error);
+          setErrorMessage('Unable to load outing details. Please refresh and try again.');
+          // Fail closed: do not retain meeting details when membership cannot be checked.
+          setMembers([]);
+          setLoading(false);
+          return;
         }
       }
 
@@ -454,7 +469,10 @@ function OutingDetailContent() {
     }
 
     loadOutingDetails();
-  }, [outingId]);
+    const roster = authUser?.id ? subscribeOutingChanges({ table: 'outing_members', outingId }, loadOutingDetails) : () => {};
+    const details = authUser?.id ? subscribeOutingChanges({ table: 'outings', outingId }, loadOutingDetails) : () => {};
+    return () => { active = false; ++version; roster(); details(); };
+  }, [outingId, authUser?.id]);
 
   useEffect(() => {
     if (shouldOpenEdit && outing && !loading) {
@@ -486,9 +504,9 @@ function OutingDetailContent() {
 
         <div className="mt-8 flex flex-col items-center justify-center rounded-[28px] border border-white/15 bg-[#15261C] p-8 text-center shadow-xl space-y-4">
           <AlertTriangle className="h-12 w-12 text-amber-400" />
-          <h2 className="text-[22px] font-bold text-[#F3F0E9]">Outing Not Found</h2>
+          <h2 className="text-[22px] font-bold text-[#F3F0E9]">{errorMessage ? 'Outing could not be loaded' : 'Outing Not Found'}</h2>
           <p className="text-[13.5px] text-[#A6AAA4] max-w-[300px]">
-            The outing record you are looking for does not exist or has been removed.
+            {errorMessage || 'The outing record you are looking for does not exist or has been removed.'}
           </p>
           <Link href="/home">
             <Button variant="primary" size="md">Return to Home Feed</Button>

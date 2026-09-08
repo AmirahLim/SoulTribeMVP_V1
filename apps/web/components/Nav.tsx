@@ -7,33 +7,39 @@ import { Compass, Users, Calendar, User } from 'lucide-react';
 import { fetchInvitedOutings } from '../lib/outingsStore';
 import { useAuth } from '../lib/authContext';
 import { showAppNavigation } from '../lib/navigationVisibility';
+import { subscribeOutingChanges } from '../lib/realtime';
 
 export function Nav() {
   const pathname = usePathname();
   const { user: authUser } = useAuth();
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [inviteError, setInviteError] = useState(false);
 
   const visible = showAppNavigation(pathname,Boolean(authUser));
   const userId = authUser?.id;
 
   useEffect(() => {
+    let active = true;
     if (!visible) { setPendingCount(0); return; }
     async function updateCount() {
       try {
         if (userId) {
           const invited = await fetchInvitedOutings(userId);
+          if (!active) return;
           setPendingCount(invited.length);
+          setInviteError(false);
         } else {
           setPendingCount(0);
         }
       } catch {
-        setPendingCount(0);
+        if (active) setInviteError(true);
       }
     }
     updateCount();
+    const unsubscribe = userId ? subscribeOutingChanges({ table: 'outing_members', userId }, updateCount) : () => {};
 
     window.addEventListener('soul-tribe-invites-changed', updateCount);
-    return () => window.removeEventListener('soul-tribe-invites-changed', updateCount);
+    return () => { active = false; unsubscribe(); window.removeEventListener('soul-tribe-invites-changed', updateCount); };
   }, [pathname, userId, visible]);
 
   // App navigation belongs only to signed-in app routes, not acquisition/setup.
@@ -72,6 +78,7 @@ export function Nav() {
                 )}
               </div>
               <span>{item.label}</span>
+              {item.href === '/outings' && inviteError && <span role="status" className="text-xs">Invitations unavailable</span>}
             </Link>
           );
         })}

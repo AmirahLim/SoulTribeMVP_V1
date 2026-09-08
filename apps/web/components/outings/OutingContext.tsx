@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { getSupabaseBrowserClient } from '../../lib/supabase';
+import { subscribeOutingChanges, uniqueMessages } from '../../lib/realtime';
 
 type Message = {
   id: number;
@@ -25,7 +26,14 @@ export function OutingContext({
   const [busy, setBusy] = useState(false);
   const [logisticsLoaded, setLogisticsLoaded] = useState(false);
   const hasLoadedLogistics = useRef(false);
+  const logisticsDirty = useRef(false);
+  const mounted = useRef(false);
+  const request = useRef(0);
+  const [loadError, setLoadError] = useState(false);
+  const [chatLoaded, setChatLoaded] = useState(false);
   const load = async () => {
+    const version = ++request.current;
+    try {
     const client = getSupabaseBrowserClient();
     const [chat, logistics] = await Promise.all([
       client
@@ -35,27 +43,39 @@ export function OutingContext({
         .order('created_at', { ascending: false })
         .limit(50),
       // Hosts keep their draft while refreshing the conversation or sending.
-      isHost && logisticsLoaded ? Promise.resolve(null) : client
+      client
         .from('outing_logistics')
         .select('venue_name,meeting_details')
         .eq('outing_id', outingId)
         .maybeSingle(),
     ]);
+    if (!mounted.current || version !== request.current) return;
     if (chat.error || logistics?.error) {
+      setLoadError(true);
+      setMessages([]); setVenue(''); setDetails('');
       setNotice('Unable to load outing details. Please try again.');
       return;
     }
-    setMessages((chat.data || []).reverse());
-    if (logistics && (!isHost || !hasLoadedLogistics.current)) {
+    setLoadError(false);
+    setChatLoaded(true);
+    setMessages(uniqueMessages((chat.data || []).reverse()));
+    if (logistics && (!isHost || !logisticsDirty.current || !hasLoadedLogistics.current)) {
       setVenue(logistics.data?.venue_name || '');
       setDetails(logistics.data?.meeting_details || '');
       setLogisticsLoaded(true);
       hasLoadedLogistics.current = true;
     }
+    } catch {
+      if (mounted.current && version === request.current) { setLoadError(true); setMessages([]); setVenue(''); setDetails(''); setNotice('Unable to load outing details. Please try again.'); }
+    }
   };
   useEffect(() => {
+    mounted.current = true;
     void load();
-  }, [outingId]);
+    const chat = subscribeOutingChanges({ table: 'outing_messages', outingId }, load);
+    const logistics = subscribeOutingChanges({ table: 'outing_logistics', outingId }, load);
+    return () => { mounted.current = false; ++request.current; chat(); logistics(); };
+  }, [outingId, userId, isHost]);
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!body.trim() || busy) return;
@@ -88,6 +108,7 @@ export function OutingContext({
         ? 'Unable to save meeting details.'
         : 'Meeting details saved for confirmed participants.',
     );
+    if (!error) logisticsDirty.current = false;
     setBusy(false);
   };
   return (
@@ -104,7 +125,7 @@ export function OutingContext({
             <input
               disabled={busy || !logisticsLoaded}
               value={venue}
-              onChange={(e) => setVenue(e.target.value)}
+              onChange={(e) => { logisticsDirty.current = true; setVenue(e.target.value); }}
               maxLength={200}
               className="block w-full border rounded-lg p-3 bg-transparent"
             />
@@ -114,7 +135,7 @@ export function OutingContext({
             <textarea
               disabled={busy || !logisticsLoaded}
               value={details}
-              onChange={(e) => setDetails(e.target.value)}
+              onChange={(e) => { logisticsDirty.current = true; setDetails(e.target.value); }}
               maxLength={2000}
               className="block w-full border rounded-lg p-3 bg-transparent"
             />
@@ -130,7 +151,7 @@ export function OutingContext({
       ) : (
         <div>
           <h3 className="font-semibold">
-            {venue || 'Venue details coming soon'}
+            {loadError ? 'Meeting details could not be loaded' : !logisticsLoaded ? 'Loading meeting details…' : venue || 'Venue details coming soon'}
           </h3>
           <p className="whitespace-pre-wrap">{details}</p>
         </div>
@@ -142,7 +163,7 @@ export function OutingContext({
         </button>
       </div>
       <div className="space-y-3 max-h-80 overflow-auto">
-        {messages.length ? (
+        {loadError ? <p role="alert">Conversation could not be loaded. Please refresh.</p> : !chatLoaded ? <p>Loading conversation…</p> : messages.length ? (
           messages.map((m) => (
             <article key={m.id} className="border-b pb-3">
               <span className="text-xs">

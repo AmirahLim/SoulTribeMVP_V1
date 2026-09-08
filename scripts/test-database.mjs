@@ -32,6 +32,11 @@ for (const file of (
   }
 }
 console.log('All committed migrations apply.');
+const realtimeMigration = await readFile(new URL('../supabase/migrations/20260928000000_outing_realtime.sql', import.meta.url), 'utf8');
+await db.exec(realtimeMigration);
+assert.deepEqual((await db.query("select tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename")).rows.map(r=>r.tablename), ['outing_logistics','outing_members','outing_messages','outings']);
+assert.deepEqual((await db.query("select pubinsert,pubupdate,pubdelete,pubtruncate from pg_publication where pubname='supabase_realtime'")).rows[0], {pubinsert:true,pubupdate:true,pubdelete:false,pubtruncate:false});
+console.log('Passed repeatable four-table Realtime publication with delete/truncate disabled.');
 const host = '10000000-0000-4000-8000-000000000001',
   guest = '10000000-0000-4000-8000-000000000002',
   other = '10000000-0000-4000-8000-000000000003';
