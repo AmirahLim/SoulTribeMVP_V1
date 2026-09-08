@@ -10,6 +10,14 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Public layout-only preview. Never enables anonymous access to member APIs.
+  env: {
+    NEXT_PUBLIC_STAGING_HOME_PREVIEW: String(
+      process.env.VERCEL_ENV === 'preview' &&
+      process.env.VERCEL_GIT_COMMIT_REF === 'codex/8a-staging' &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://imiblxqkfxijccndqytm.supabase.co'
+    ),
+  },
   transpilePackages: ['@soul-tribe/ui', '@soul-tribe/tokens', '@soul-tribe/core'],
 
   // TypeScript build error checking re-enabled

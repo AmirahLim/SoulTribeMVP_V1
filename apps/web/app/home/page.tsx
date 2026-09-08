@@ -17,10 +17,13 @@ import { getSupabaseBrowserClient, checkIsSupabaseConfigured } from '../../lib/s
 import { AuthGuard } from '../../components/AuthGuard';
 import {MatchKeepsake} from '../../components/MatchKeepsake';
 import { OutingCoverHeader } from '../../components/OutingCoverHeader';
+import { StagingHomePreview } from '../../components/StagingHomePreview';
 
 import { useSearchParams } from 'next/navigation';
 
 export default function HomeDashboardPage() {
+  // This component never mounts HomeContent or its member-data effects.
+  if (process.env.NEXT_PUBLIC_STAGING_HOME_PREVIEW === 'true') return <StagingHomePreview />;
   return (
     <AuthGuard>
       <HomeContent />
