@@ -54,12 +54,22 @@ describe('Transactional answer saving', () => {
     expect((await saveOnboardingToSupabase('someone-else', sampleData)).success).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
   });
-  it('deeper edits clear withdrawn answers without overwriting baseline energy from MBTI', async () => {
+  it('deeper partial edits preserve omitted traits without inferring energy from MBTI', async () => {
     await saveDeeperPassToSupabase(sampleUserId, { mbti: 'ESTJ', seriousPlayful: 0 }, [1, 1]);
     const args = rpc.mock.calls[0][1];
     expect(args.p_traits.trait_personality.extraversion).toBeUndefined();
     expect(args.p_traits.trait_personality.serious_playful).toBe(0);
-    expect(args.p_traits.trait_emotional.reliability_self).toBeNull();
+    expect(args.p_traits.trait_emotional).toBeUndefined();
     expect(args.p_answers.completed_categories).toEqual([1]);
+  });
+  it('an explicitly withdrawn numeric answer still clears only that field', async () => {
+    await saveDeeperPassToSupabase(sampleUserId, {reliabilitySelf: null} as any, [1]);
+    expect(rpc.mock.calls[0][1].p_traits).toEqual({trait_emotional:{reliability_self:null}});
+  });
+  it('the categorical form saves its literal answers without clearing any numeric traits', async () => {
+    await saveDeeperPassToSupabase(sampleUserId, {groupSize:'Depends', coreValues:'Family', messagingStyle:'Random thoughts'}, [1,2,6]);
+    const args = rpc.mock.calls[0][1];
+    expect(args.p_traits).toEqual({});
+    expect(args.p_answers.deep_profile.coreValues).toBe('Family');
   });
 });

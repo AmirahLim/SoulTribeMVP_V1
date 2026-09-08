@@ -137,7 +137,7 @@ function PeopleListContent() {
             </div>
             <h3 className="mt-4 text-[20px] font-extrabold text-white">No matches yet</h3>
             <p className="mt-2 text-[14px] leading-relaxed text-white/80 max-w-[300px]">
-              Complete more of your Social DNA pass so the engine can calculate intentional compatibility.
+              No eligible connections were returned this time. Your saved answers are still here; you can review your preferences or check back later.
             </p>
             <Link href="/you/deeper" className="mt-6">
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-bold text-black shadow-lg transition-transform hover:scale-105">

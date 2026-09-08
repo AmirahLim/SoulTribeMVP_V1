@@ -66,6 +66,7 @@ interface MyRead {
   markers: string[];
   signalsCount?: number;
   tribalRead?: TribalReadData;
+  savedAnswerRead?: {notes: Record<string, string[]>};
   tension?: {
     headline: string;
     explanation: string;

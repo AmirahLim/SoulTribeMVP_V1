@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { toProfileVector } from '../../../../lib/profileAdapter';
 import { adaptRowToUserData } from '../../../../lib/profileRowAdapter';
+import { buildSavedAnswerRead } from '../../../../lib/savedAnswerRead';
 import {
   extractMarkers,
   composeWithinPerson,
@@ -308,9 +309,23 @@ export async function GET(req: NextRequest) {
     .eq('id', authUserId)
     .maybeSingle();
 
-  if (fetchErr || !row) {
+  if (fetchErr) {
+    console.error('[SoulTribe] own profile query failed', {code: fetchErr.code, message: fetchErr.message});
+    return NextResponse.json({error: fetchErr.message}, {status: 500});
+  }
+  if (!row) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
+
+  // Owner-scoped original answers, through the caller's JWT and existing RLS.
+  // Keep categorical evidence out of the legacy numeric inference adapter.
+  const {data: savedAnswers, error: answersError} = await client.from('profile_answers')
+    .select('onboarding,deep_profile,completed_categories').eq('user_id', authUserId).maybeSingle();
+  if (answersError) {
+    console.error('[SoulTribe] own answers query failed', {code: answersError.code, message: answersError.message});
+    return NextResponse.json({error: answersError.message}, {status: 500});
+  }
+  const savedAnswerRead = buildSavedAnswerRead(savedAnswers);
 
   // Build vector
   const userData = adaptRowToUserData(row);
@@ -387,6 +402,16 @@ export async function GET(req: NextRequest) {
 
   // Self-profile synthesis from core engine
   const selfProfile = generateSelfProfile(vec);
+  // A missing composite rule is not missing member data. Show supported direct
+  // evidence until the separately approved composition/voice work is released.
+  if (savedAnswerRead.facts.length && (savedAnswerRead.hasDeeperAnswers || !selfProfile.tribalRead.sections.length)) {
+    selfProfile.tribalRead = {
+      ...selfProfile.tribalRead,
+      headline: 'From the answers you shared',
+      summary: savedAnswerRead.facts.slice(0, 2).map(fact => fact.note).join(' '),
+      sections: [],
+    };
+  }
 
   const DEFAULT_VALUE_POSITIONS = [
     { x: 0.50, y: 0.46, weight: 1.0 },
@@ -489,6 +514,7 @@ export async function GET(req: NextRequest) {
     markers: markerKeys,
     signalsCount: markers.length,
     tribalRead: selfProfile.tribalRead,
+    savedAnswerRead,
     outingPreferences: selfProfile.outingPreferences,
     interests,
     values,
@@ -499,5 +525,5 @@ export async function GET(req: NextRequest) {
   if (connectionNotes) response.connectionNotes = connectionNotes;
   if (socialInstinct) response.socialInstinct = socialInstinct;
 
-  return NextResponse.json(response);
+  return NextResponse.json(response, {headers: {'Cache-Control': 'private, no-store'}});
 }

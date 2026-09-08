@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from './supabase';
 import type { DeepProfileAnswers } from './userStore';
 import { ONBOARDING_INTEREST_NODES } from '@soul-tribe/core';
+import { suppliedTraitFields } from './savedAnswerRead';
 
 export interface OnboardingDataToSave {
   displayName: string;
@@ -150,31 +151,31 @@ export async function saveDeeperPassToSupabase(
     userId,
     null,
     { deep_profile: d, completed_categories: [...new Set(categories)] },
-    {
+    suppliedTraitFields({
       trait_personality: {
-        serious_playful: d.seriousPlayful ?? null,
-        intensity_easygoing: d.intensityEasygoing ?? null,
-        novelty_seeking: d.noveltySeeking ?? null,
+        serious_playful: d.seriousPlayful,
+        intensity_easygoing: d.intensityEasygoing,
+        novelty_seeking: d.noveltySeeking,
       },
       trait_communication: {
-        initiation_self: d.initiationSelf ?? null,
-        initiation_expect: d.initiationExpect ?? null,
-        response_speed_self: d.responseSpeedSelf ?? null,
-        contact_frequency_expect: d.contactFreqExpect ?? null,
+        initiation_self: d.initiationSelf,
+        initiation_expect: d.initiationExpect,
+        response_speed_self: d.responseSpeedSelf,
+        contact_frequency_expect: d.contactFreqExpect,
       },
       trait_social_rhythm: {
-        social_freq_self: d.socialFreqSelf ?? null,
-        preferred_duration: d.preferredDuration ?? null,
+        social_freq_self: d.socialFreqSelf,
+        preferred_duration: d.preferredDuration,
       },
       trait_emotional: {
-        reliability_self: d.reliabilitySelf ?? null,
-        reliability_expect: d.reliabilityExpect ?? null,
-        er_conflict_approach: d.conflictApproach ?? null,
-        er_recovery_time: d.recoveryTime ?? null,
-        vulnerability_comfort: d.vulnerabilityComfort ?? null,
-        expressiveness: d.expressiveness ?? null,
+        reliability_self: d.reliabilitySelf,
+        reliability_expect: d.reliabilityExpect,
+        er_conflict_approach: d.conflictApproach,
+        er_recovery_time: d.recoveryTime,
+        vulnerability_comfort: d.vulnerabilityComfort,
+        expressiveness: d.expressiveness,
       },
-      trait_experience: { novelty: d.experienceNovelty ?? null },
-    },
+      trait_experience: { novelty: d.experienceNovelty },
+    }),
   );
 }

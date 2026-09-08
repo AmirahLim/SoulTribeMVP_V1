@@ -203,7 +203,7 @@ export function getTribalPassStatusCopy(
   matchCount: number,
   isProvisional: boolean = true
 ): { headline: string; subtitle: string } {
-  let headline = "You've completed your 8 baseline onboarding questions.";
+  let headline = "Your onboarding answers are saved.";
   if (completionPct > 20 && completionPct < 80) {
     headline = "You've answered baseline onboarding and initial Tribal Pass questions.";
   } else if (completionPct >= 80) {
@@ -546,7 +546,7 @@ export async function getRankedMatches(
 
   // SELF-EXCLUSION GUARANTEE: If in real mode and real viewer ID is unavailable in browser, return [] rather than risking showing the user themselves
   if (currentMode === 'real' && !viewerId && checkIsSupabaseConfigured() && typeof window !== 'undefined') {
-    return [];
+    throw new Error('Your session is not ready. Please sign in again.');
   }
 
   const effectiveId = viewerId || '00000000-0000-0000-0000-000000000099';
@@ -558,7 +558,10 @@ export async function getRankedMatches(
   };
 
   // Fetch candidates from source
-  const source = getActiveCandidateSource();
+  // A real signed-in member must never enter mixed/demo fallback. Preserve the
+  // actual error so the page can distinguish a failure from an empty result.
+  const source = isAuthenticatedRealMember && checkIsSupabaseConfigured()
+    ? realCandidateSource : getActiveCandidateSource();
   let candidateMatches: RankedMatch[] = [];
 
   if ('getScoredMatches' in source) {

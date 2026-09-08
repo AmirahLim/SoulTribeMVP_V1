@@ -7,6 +7,7 @@ export type SocialPage = {
 type Thread = {key: string; status: string; note?: string; descriptor?: string[]};
 type Read = {
   threads: Thread[];
+  savedAnswerRead?: {notes: Record<string, string[]>};
   tribalRead?: {headline: string; summary: string; sections: {title: string; content: string; markerCount: number}[]};
   values: {label: string}[]; interests: {name: string}[];
   tension?: {headline: string; explanation: string};
@@ -21,19 +22,24 @@ export const brief = (text: string, limit = 130) => {
 };
 const clean = (items: (string | undefined)[]) => items.filter((v): v is string => !!v?.trim());
 export function selfSocialPages(read: Read): SocialPage[] {
-  const notes = (...keys: string[]) => read.threads.filter(t => t.status === 'known' && keys.includes(t.key)).flatMap(t => clean([t.note]));
+  const notes = (...keys: string[]) => keys.flatMap(key => {
+    const saved = read.savedAnswerRead?.notes[key];
+    return saved?.length ? saved : read.threads.filter(t => t.status === 'known' && t.key === key).flatMap(t => clean([t.note]));
+  });
   const supported = read.tribalRead?.sections.filter(s => s.markerCount >= 2) ?? [];
   const page = (key: string, title: string, caption: string, kind: SocialPage['kind'], content: string[]): SocialPage => ({key, title, caption, kind, notes: content, href: '/you/deeper', action: 'Explore this a little deeper →'});
   return [
     page('social', 'Who I am socially', 'A little portrait of me', 'photo', clean([read.tribalRead?.summary, ...notes('personality', 'intent')])),
     page('connect', 'My kind of closeness', 'How I naturally connect', 'notebook', notes('communication', 'social_rhythm', 'emotional')),
     page('bring', 'What I bring', 'The things I hold close', 'letter', [
+      ...notes('values', 'intent', 'desiredQualities'),
       ...supported.filter(s => /bring|strength|offer/i.test(s.title)).map(s => s.content),
       ...clean([read.values.length ? `Qualities I value in friendship: ${read.values.map(v => v.label).join(' · ')}` : undefined]),
     ]),
     page('best', 'Where I come alive', 'People, places & a little ease', 'photo', [...supported.filter(s => /best with/i.test(s.title)).map(s => s.content), ...notes('experience', 'lifestyle', 'geography')]),
-    page('friction', 'Handle with care', 'What can feel a little harder', 'paper', clean([read.tension?.headline, read.tension?.explanation, ...Object.values(read.boundaries ?? {})])),
+    page('friction', 'Handle with care', 'What can feel a little harder', 'paper', read.savedAnswerRead?.notes.boundaries?.length ? notes('boundaries') : clean([read.tension?.headline, read.tension?.explanation, ...Object.values(read.boundaries ?? {})])),
     page('doing', 'Count me in for…', 'Less scrolling, more doing', 'notebook', clean([
+      ...notes('interests', 'experience'),
       read.interests.length ? `I'm into ${read.interests.map(i => i.name).join(' · ')}` : undefined,
       read.outingPreferences?.instantYes && `An easy yes: ${read.outingPreferences.instantYes}`,
       read.outingPreferences?.usuallyYes?.length ? `Usually yes: ${read.outingPreferences.usuallyYes.join(' · ')}` : undefined,

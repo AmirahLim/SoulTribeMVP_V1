@@ -70,6 +70,7 @@ const emptyMember = {
 };
 
 const allMembers = [quietMember, livelyMember, emptyMember];
+const answerState = vi.hoisted(() => ({row:null as any,error:null as any,owners:[] as string[]}));
 
 // ─── Supabase mock ──────────────────────────────────────────────────
 
@@ -83,10 +84,14 @@ vi.mock('@supabase/supabase-js', () => ({
         return { data: { user: null }, error: new Error('Invalid token') };
       }),
     },
-    from: vi.fn(() => ({
+    from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
         eq: vi.fn((_col: string, id: string) => ({
           maybeSingle: vi.fn(async () => {
+            if(table === 'profile_answers') {
+              answerState.owners.push(id);
+              return {data:answerState.row,error:answerState.error};
+            }
             const found = allMembers.find((m) => m.id === id);
             return { data: found || null, error: null };
           }),
@@ -109,6 +114,25 @@ async function callRoute(token: string) {
 // ─── Tests ───────────────────────────────────────────────────────────
 
 describe('6t — /api/me/read and You page wiring', () => {
+  beforeEach(() => {answerState.row=null;answerState.error=null;answerState.owners=[];});
+  it('reloads saved categorical answers for the authenticated owner despite empty scalar traits', async () => {
+    answerState.row={deep_profile:{messagingStyle:'Random thoughts',coreValues:'Family · Stability'}, completed_categories:[1,2,3,4,5,6,7,8,9,10]};
+    const {status,body}=await callRoute('empty_token');
+    expect(status).toBe(200);
+    expect(answerState.owners).toEqual(['empty-1']);
+    expect(body.savedAnswerRead.notes.communication.join(' ')).toContain('Random thoughts');
+    expect(body.savedAnswerRead.notes.values.join(' ')).toContain('Family · Stability');
+    expect(body.tribalRead.summary).not.toContain('not yet enough');
+    expect(body.threads.every((t:any)=>t.status==='unknown')).toBe(true);
+  });
+  it('reports a failed answers query with its database message, not an empty read', async () => {
+    answerState.error={code:'42501',message:'Owner answer access denied'};
+    expect(await callRoute('empty_token')).toEqual({status:500,body:{error:'Owner answer access denied'}});
+  });
+  it('does not query original answers without authentication', async () => {
+    expect((await callRoute('invalid_token')).status).toBe(401);
+    expect(answerState.owners).toEqual([]);
+  });
   it('1. Two different members produce two different reads', async () => {
     const quiet = await callRoute('quiet_token');
     const lively = await callRoute('lively_token');

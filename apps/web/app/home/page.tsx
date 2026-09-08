@@ -432,7 +432,7 @@ function HomeContent() {
                 </div>
                 <h4 className="mt-4 text-[18px] font-extrabold text-white">No Matches Yet</h4>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-white/75 max-w-[300px]">
-                  Complete more of your Social DNA pass so the matching engine can surface intentional compatibility.
+                  No eligible connections were returned this time. Your saved answers are still here; you can review your preferences or check back later.
                 </p>
                 <Link href="/you/deeper" className="mt-6">
                   <Button variant="primary" size="sm">
