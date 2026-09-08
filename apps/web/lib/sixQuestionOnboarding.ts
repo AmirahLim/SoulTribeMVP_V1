@@ -18,6 +18,7 @@ const multi=(a:unknown,options:string[],other:unknown,max:number,required=false)
 export function isDraft(value:unknown):value is BaselineDraft {
  if(!value||typeof value!=='object')return false;
  const d=value as BaselineDraft;
+ if(d.displayName!==undefined&&(typeof d.displayName!=='string'||!d.displayName.trim()||d.displayName.length>80))return false;
  if(d.flowVersion===undefined)return legacyIsDraft(d);
  if(d.flowVersion!==3||!Number.isInteger(d.step)||d.step<1||d.step>7)return false;
  if(!validIdentity(d))return false;

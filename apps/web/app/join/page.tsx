@@ -10,6 +10,7 @@ export default function JoinPage() {
   const { user, loading, signInWithOtp, verifyOtp, signInWithGoogle } =
     useAuth();
   const [birthDate,setBirthDate]=useState("");
+  const [displayName,setDisplayName]=useState('');
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
@@ -18,18 +19,22 @@ export default function JoinPage() {
   const [error, setError] = useState("");
   useEffect(() => {
     fetch("/api/onboarding/draft")
-      .then((r) => r.json())
+      .then((r) => { if(!r.ok)throw new Error('Draft unavailable'); return r.json(); })
       .then((data) => {
         if (!isDraft(data.draft) || !completeDraft(data.draft))
           router.replace("/onboarding");
-        else setReady(true);
+        else {setDisplayName(typeof data.draft.displayName==='string'?data.draft.displayName:'');setReady(true);}
       })
       .catch(() => setError("Unable to load your answers. Please reload."));
   }, [router]);
-  useEffect(() => {
-    if (user && !loading && ready) void fetch('/api/onboarding/eligibility').then(r=>r.json()).then(d=>{if(d.birthYear)router.replace('/early-read');}).catch(()=>{});
-  }, [user, loading, ready, router]);
   async function checkAge() {
+    if(!displayName.trim()||displayName.trim().length>80){setError('Enter your display name.');return false;}
+    const current=await fetch('/api/onboarding/draft',{cache:'no-store'});
+    if(!current.ok)throw new Error('Draft unavailable');
+    const {draft}=await current.json();
+    if(!isDraft(draft)||!completeDraft(draft))throw new Error('Complete your answers first');
+    const saved=await fetch('/api/onboarding/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...draft,displayName:displayName.trim()})});
+    if(!saved.ok)throw new Error('Unable to keep your profile details');
     const r=await fetch('/api/onboarding/eligibility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({birthDate})});
     const data=await r.json();
     if(!r.ok){setError(data.error);return false;}return true;
@@ -59,9 +64,11 @@ export default function JoinPage() {
         </p>
         <div className="ob-fields"><label htmlFor="signup-birth-date">Date of birth</label><input id="signup-birth-date" type="date" autoComplete="bday" required value={birthDate} disabled={sent} onChange={e=>setBirthDate(e.target.value)} /><p>For the 18+ eligibility check. We do not retain your full date of birth or display it on your profile. This is a self-reported check.</p></div>
         <form className="ob-fields" onSubmit={submit}>
+          <label htmlFor="signup-display-name">Display name</label>
+          <input id="signup-display-name" required maxLength={80} autoComplete="nickname" value={displayName} disabled={sent} onChange={e=>setDisplayName(e.target.value)} />
           <label htmlFor="email">Email address</label>
           <input
-            required
+            required={!user}
             id="email"
             type="email"
             autoComplete="email"
@@ -90,7 +97,7 @@ export default function JoinPage() {
           <button className="ob-primary" disabled={!ready || busy}>
             {busy
               ? "One moment…"
-              : sent
+              : user ? 'Save my profile and continue' : sent
                 ? "Continue to my Early Read"
                 : "Send my sign-in code"}
           </button>

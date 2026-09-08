@@ -323,4 +323,69 @@ await db.query('update profile_answers set onboarding=$1 where user_id=$2',[{bas
 assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[sixUser])).rows[0].onboarding.baselineV2.earlyReadFeedback,corrected.earlyReadFeedback);
 assert.equal((await db.query('select public_onboarding from profiles where id=$1',[sixUser])).rows[0].public_onboarding.earlyReadFeedback,undefined);
 console.log('Passed exact private Early Read correction persistence with no public projection.');
+
+// Real handoff shape (setupRevision=2), using isolated local fixtures only.
+await db.exec('reset role');
+const handoffMigration=await readFile(new URL('../supabase/migrations/20260929000000_complete_onboarding_handoff.sql',import.meta.url),'utf8');
+await db.exec(handoffMigration); await db.exec(handoffMigration);
+const handoffUser='10000000-0000-4000-8000-000000000006';
+await db.query('insert into auth.users values($1)',[handoffUser]);
+await as(handoffUser);
+const existingIdentity={handle:'handoff_member',display_name:'Existing member',home_area:'Bedok',birth_year:1995,avatar_url:'avatars/member-photo.webp',bio:'Existing introduction'};
+await db.query('select save_profile_bundle($1,$2,$3,null)',[existingIdentity,{deep_profile:{selfDescriptionOpen:'Existing exact words'},completed_categories:[5]},{trait_emotional:{er_opening_pace:.75},trait_personality:{extraversion:.25}}]);
+const modern={...lifeContextDraft,handle:existingIdentity.handle,lifeContextsPublic:true};
+const handoffToken='d'.repeat(64);
+await db.query('select save_onboarding_draft($1,$2)',[handoffToken,modern]);
+assert.equal((await db.query('select read_onboarding_handoff($1) h',[handoffToken])).rows[0].h.claimed,false);
+await as(guest);
+assert.equal((await db.query('select read_onboarding_handoff($1) h',[handoffToken])).rows[0].h,null);
+await fails('select save_onboarding_draft($1,$2)',/unavailable/,[handoffToken,modern]);
+await fails('select claim_onboarding_draft($1,$2,$3)',/another account/,[handoffToken,'Wrong account',1995]);
+await as(handoffUser);
+await db.query('select claim_onboarding_draft($1,$2,$3)',[handoffToken,'Must not overwrite identity',1990]);
+const committed=(await db.query('select onboarding,deep_profile,completed_categories from profile_answers where user_id=$1',[handoffUser])).rows[0];
+assert.deepEqual(committed.onboarding.baselineV2,modern);
+assert.equal(committed.deep_profile.selfDescriptionOpen,'Existing exact words');
+assert.deepEqual(committed.completed_categories,[5]);
+const keptIdentity=(await db.query('select handle,display_name,birth_year,avatar_url,bio,home_area,profile_version from profiles where id=$1',[handoffUser])).rows[0];
+for(const key of ['handle','display_name','birth_year','avatar_url','bio'])assert.equal(keptIdentity[key],existingIdentity[key]);
+assert.equal(keptIdentity.home_area,modern.area);
+assert.equal(Number((await db.query('select er_opening_pace from trait_emotional where user_id=$1',[handoffUser])).rows[0].er_opening_pace),.75);
+assert.equal(Number((await db.query('select extraversion from trait_personality where user_id=$1',[handoffUser])).rows[0].extraversion),.25);
+assert.equal((await db.query('select read_onboarding_handoff($1) h',[handoffToken])).rows[0].h.claimed,true);
+await db.query('select claim_onboarding_draft($1,$2,$3)',[handoffToken,null,null]);
+assert.equal((await db.query('select profile_version from profiles where id=$1',[handoffUser])).rows[0].profile_version,keptIdentity.profile_version);
+
+// Mid-transaction failure must retain the complete draft and previous profile.
+const edited={...modern,planningChoice:'About a week',planningOther:'',planning:.75};
+await db.query('select save_onboarding_draft($1,$2)',['e'.repeat(64),edited]);
+await db.exec(`reset role;
+ create function fail_handoff_test() returns trigger language plpgsql as $$begin raise exception 'Injected trait failure'; end$$;
+ create trigger fail_handoff_test before update on trait_social_rhythm for each row execute function fail_handoff_test();`);
+await as(handoffUser);
+await fails('select claim_onboarding_draft($1,$2,$3)',/Injected trait failure/,['e'.repeat(64),null,null]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[handoffUser])).rows[0].onboarding,committed.onboarding);
+assert.equal((await db.query('select profile_version from profiles where id=$1',[handoffUser])).rows[0].profile_version,keptIdentity.profile_version);
+assert.equal((await db.query('select read_onboarding_handoff($1) h',['e'.repeat(64)])).rows[0].h.claimed,false);
+await db.exec('reset role; drop trigger fail_handoff_test on trait_social_rhythm; drop function fail_handoff_test();');
+await as(handoffUser);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['e'.repeat(64),null,null]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[handoffUser])).rows[0].onboarding.baselineV2,edited);
+await db.query('select save_onboarding_draft($1,$2)',['f'.repeat(64),modern]);
+await db.query('update profiles set profile_version=profile_version+1 where id=$1',[handoffUser]);
+await fails('select claim_onboarding_draft($1,$2,$3)',/profile changed/,['f'.repeat(64),null,null]);
+
+// A pre-auth modern draft creates a profile exactly once after verified sign-in.
+const newHandoffUser='10000000-0000-4000-8000-000000000007';
+await db.exec('reset role'); await db.query('insert into auth.users values($1)',[newHandoffUser]);
+const newAnswers={...modern,handle:'new_handoff',displayName:'New handoff member'};
+await db.exec("set role anon; set request.jwt.claim.sub='';");
+await db.query('select save_onboarding_draft($1,$2)',['a1'.repeat(32),newAnswers]);
+await fails('select claim_onboarding_draft($1,$2,$3)',/permission denied/,['a1'.repeat(32),newAnswers.displayName,1995]);
+await as(newHandoffUser);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['a1'.repeat(32),newAnswers.displayName,1995]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[newHandoffUser])).rows[0].onboarding.baselineV2,newAnswers);
+assert.equal((await db.query('select read_onboarding_handoff($1) h',['a1'.repeat(32)])).rows[0].h.claimed,true);
+await fails('select claim_onboarding_draft_before_handoff($1,$2,$3)',/permission denied/,['a1'.repeat(32),newAnswers.displayName,1995]);
+console.log('Passed modern new/existing-member handoff, literal transfer, identity and unasked-trait preservation, owner isolation, rollback, retry, stale-edit protection and migration repeatability.');
 await db.close();

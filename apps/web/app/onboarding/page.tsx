@@ -6,6 +6,8 @@ import {LIFE_CONTEXTS,LIFE_CONTEXT_DETAILS} from "../../lib/lifeContext";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/authContext";
 import { getUserProfile } from "../../lib/userStore";
+import { claimOnboarding, OnboardingHandoffError } from '../../lib/onboardingHandoff';
+import { hydrateProfile } from '../../lib/profileHydration';
 import {
   AREAS,
   CLICKS,
@@ -61,16 +63,24 @@ export default function OnboardingPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
+  const newDraft = useRef(false);
+  const lastPersisted = useRef<string | null>(null);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') === 'design') return;
-    if (!loading && user && getUserProfile().hasCompletedOnboarding)
-      router.replace("/you");
-  }, [user, loading, router]);
+    if (!loading && user) {
+      const profile=getUserProfile();
+      // Identity only, from this account. Never prefill missing questionnaire answers.
+      setDraft(d=>({...d,handle:d.handle||profile.handle||'',area:d.area||profile.homeArea||''}));
+    }
+  }, [user, loading]);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') === 'design') {
       setDesignPreview(true);
       setReady(true);
       return;
+    }
+    if(new URLSearchParams(window.location.search).get('restart')==='1') {
+      newDraft.current=true;setReady(true);return;
     }
     let live = true;
     fetch("/api/onboarding/draft")
@@ -123,18 +133,32 @@ export default function OnboardingPage() {
       step: back ? Math.max(1, draft.step - 1) : Math.min(7, draft.step + 1),
     };
     try {
+      const payload=JSON.stringify(canonicalRhythm(next));
+      // Retrying a failed claim must use its original draft receipt. Do not
+      // create a second draft when the database committed but the reply was lost.
+      if(lastPersisted.current!==payload) {
       const r = await fetch("/api/onboarding/draft", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(canonicalRhythm(next)),
+        headers: { "Content-Type": "application/json", ...(newDraft.current?{'x-onboarding-new-draft':'1'}:{}) },
+        body: payload,
       });
       if (!r.ok)
         throw new Error(
           "We could not save your answers. They are still here; please retry.",
         );
-      if (!back && draft.step === 7)
+      lastPersisted.current=payload;
+      }
+      newDraft.current=false;
+      if (!back && draft.step === 7) {
+        if(user) {
+          try { await claimOnboarding({expectedUserId:user.id}); await hydrateProfile(user.id); }
+          catch(error) {
+            if(error instanceof OnboardingHandoffError&&error.requiresDetails) { router.push('/join'); return; }
+            throw error;
+          }
+        }
         router.push("/early-read");
-      else setDraft(next);
+      } else setDraft(next);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -320,6 +344,7 @@ export default function OnboardingPage() {
           {error && (
             <p className="ob-error" role="alert">
               {error}
+              {error.includes('profile changed')&&<Link href="/onboarding?restart=1">Start a fresh set of answers</Link>}
             </p>
           )}
           <nav className="ob-nav" aria-label="Onboarding">

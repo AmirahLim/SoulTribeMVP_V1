@@ -108,6 +108,7 @@ export const FLOW = [
   },
 ] as const;
 export interface BaselineDraft {
+  displayName?: string;
   version: 2;
   q4Revision?: 2;
   desiredQualities?: string[];

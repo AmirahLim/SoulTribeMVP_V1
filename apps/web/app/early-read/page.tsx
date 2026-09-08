@@ -8,6 +8,7 @@ import {getSupabaseBrowserClient} from '../../lib/supabase';
 import {completeDraft,isDraft} from '../../lib/sixQuestionOnboarding';
 import {buildEarlyRead,type ReadDraft,type ReadFeedback} from '../../lib/earlyRead';
 import {EarlyReadAlbum} from '../../components/profile/EarlyReadAlbum';
+import {claimOnboarding,OnboardingHandoffError} from '../../lib/onboardingHandoff';
 import '../onboarding/onboarding.css';
 import './early-read.css';
 export default function EarlyRead() {
@@ -15,15 +16,36 @@ export default function EarlyRead() {
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
  const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
+ const [retry,setRetry]=useState(0),[needsDetails,setNeedsDetails]=useState(false);
  useEffect(()=>{
   let active=true;
   fetch('/api/onboarding/eligibility').then(r=>r.ok?r.json():null).then(d=>{if(active&&d?.birthYear){setYear(String(d.birthYear));setAgeChecked(true);}}).catch(()=>{});
   return()=>{active=false;};
  },[]);
  useEffect(()=>{
-  if(loading)return;let active=true;setReady(false);setDraft(null);setSaved(false);setError('');
+  if(loading)return;let active=true;setReady(false);setDraft(null);setSaved(false);setError('');setNeedsDetails(false);
   async function load() {
    try {
+    const response=await fetch('/api/onboarding/draft',{cache:'no-store'});
+    if(!response.ok)throw new Error('Unable to load your answers. Please reload.');
+    const pending=await response.json();
+    if(!active)return;
+    if(isDraft(pending.draft)&&completeDraft(pending.draft)&&!pending.claimed) {
+     if(active)setDraft(pending.draft);
+     if(user) {
+      if(active)setBusy(true);
+      try {
+       const committed=await claimOnboarding({expectedUserId:user.id});
+       if(!active)return;
+       await hydrateProfile(user.id);
+       if(active){setDraft(committed);setSaved(true);}
+      }catch(e){
+       if(e instanceof OnboardingHandoffError&&e.requiresDetails) {if(active)setNeedsDetails(true);}
+       else throw e;
+      }
+     }
+     return;
+    }
     if(user) {
      const {data,error}=await getSupabaseBrowserClient().from('profile_answers').select('onboarding').eq('user_id',user.id).maybeSingle();
      if(error)throw error;
@@ -31,16 +53,12 @@ export default function EarlyRead() {
       if(active){setDraft(data.onboarding.baselineV2);setSaved(true);}return;
      }
     }
-    const response=await fetch('/api/onboarding/draft',{cache:'no-store'});
-    if(!response.ok)throw new Error('Unable to load your answers. Please reload.');
-    const data=await response.json();
-    if(!isDraft(data.draft)||!completeDraft(data.draft))throw new Error('Complete your onboarding answers in this browser to reveal your Early Read.');
-    if(active)setDraft(data.draft);
+    throw new Error('Complete your onboarding answers in this browser to reveal your Early Read.');
    }catch(e){if(active)setError(e instanceof Error?e.message:'Unable to load your answers. Please reload.');}
-   finally{if(active)setReady(true);}
+   finally{if(active){setReady(true);setBusy(false);}}
   }
   void load();return()=>{active=false;};
- },[loading,user]);
+ },[loading,user?.id,retry]);
  async function feedback(id:string,value:ReadFeedback) {
   if(!draft)throw new Error('No answers');
   if(saved&&user) {
@@ -65,20 +83,19 @@ export default function EarlyRead() {
  async function save(e:React.FormEvent) {
   e.preventDefault();if(!user)return;setBusy(true);setError('');
   try {
-   const r=await fetch('/api/onboarding/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({displayName:name.trim(),birthYear:Number(year)})});
-   const data=await r.json();if(!r.ok)throw new Error(data.error);
-   await hydrateProfile(user.id);setDraft(data.draft);setSaved(true);
+   const committed=await claimOnboarding({displayName:name.trim(),birthYear:Number(year),expectedUserId:user.id});
+   await hydrateProfile(user.id);setDraft(committed);setSaved(true);setNeedsDetails(false);
   }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
  }
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
  {draft&&<><EarlyReadAlbum draft={draft}/>
- {!user?<><Link className="ob-primary" href="/auth/signin?next=%2Fearly-read">Keep my Early Read and meet people →</Link></>:!saved?<><h2>Keep this reading as your starting point.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!user?<><p>Your answers are saved as a draft. Create or sign in to your account to attach them to your profile.</p><Link className="ob-primary" href="/join">Keep my Early Read and meet people →</Link></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
  {!ageChecked&&draft.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
- <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<><ProfilePhoto userId={user.id}/><Link className="ob-primary" href="/people">See who I might click with →</Link><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
+ <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><ProfilePhoto userId={user.id}/><Link className="ob-primary" href="/people">See who I might click with →</Link><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
  </>}
- {error&&<p role="alert" className="ob-error">{error}</p>}
+ {error&&<><p role="alert" className="ob-error">{error}</p><button className="ob-primary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>Retry loading and saving</button><Link href="/onboarding">Return to my answers</Link></>}
  {ready&&!draft&&<Link href="/onboarding">Return to onboarding</Link>}
  </section></main>;
 }
