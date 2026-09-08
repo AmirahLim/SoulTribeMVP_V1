@@ -1,8 +1,12 @@
 import {it,expect} from 'vitest';
-import {PGlite} from '@electric-sql/pglite';
+import {createRequire} from 'node:module';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {OPENING_QUESTION} from '../readEngine/emotionalQuestion';
+
+// Database tooling belongs to the root test harness, not Vercel's web workspace.
+// Resolve it at test runtime; a missing installation still fails this test.
+const {PGlite}=createRequire(import.meta.url)('@electric-sql/pglite');
 
 it('projects only original emotional choices, is repeatable, and preserves answers and repair classification',async()=>{
  const db=new PGlite();
