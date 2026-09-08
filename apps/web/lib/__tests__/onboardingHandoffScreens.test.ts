@@ -4,8 +4,8 @@ import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {emptyDraft,INTENTS,CLICKS,GROUPS,FRIEND_QUALITIES,OUTINGS,canonicalRhythm} from '../sixQuestionOnboarding';
 import {LIFE_CONTEXTS} from '../lifeContext';
 
-const mocks=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string}|null,hydrate:vi.fn(),push:vi.fn(),replace:vi.fn()}));
-vi.mock('../authContext',()=>({useAuth:()=>({user:mocks.user,loading:false})}));
+const mocks=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string}|null,hydrate:vi.fn(),push:vi.fn(),replace:vi.fn(),google:vi.fn()}));
+vi.mock('../authContext',()=>({useAuth:()=>({user:mocks.user,loading:false,signInWithGoogle:mocks.google})}));
 vi.mock('../profileHydration',()=>({hydrateProfile:mocks.hydrate}));
 vi.mock('../userStore',()=>({getUserProfile:()=>({handle:'existing_member',homeArea:'Bedok'})}));
 vi.mock('../supabase',()=>({getSupabaseBrowserClient:()=>{throw new Error('Unexpected saved-profile lookup');}}));
@@ -21,6 +21,7 @@ const draft=canonicalRhythm({...emptyDraft(),step:7,intent:[INTENTS[0]],clicks:[
 let tree:ReactTestRenderer|undefined;
 beforeEach(()=>{
  mocks.user={id:'10000000-0000-4000-8000-000000000001'};vi.clearAllMocks();
+ mocks.google.mockResolvedValue({error:null});
  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('window',{location:{search:''}});
 });
 afterEach(async()=>{if(tree)await act(async()=>tree!.unmount());tree=undefined;vi.unstubAllGlobals();});
@@ -47,10 +48,37 @@ it('shows failed handoff and retry, never a saved profile or matches link',async
  expect(rendered).not.toContain('Your answers are saved to your profile.');expect(rendered).not.toContain('See who I might click with');
  expect(mocks.hydrate).not.toHaveBeenCalled();
 });
-it('keeps anonymous answers as drafts and routes signup through name/age collection',async()=>{
+it('keeps anonymous answers as drafts and starts Google directly with home handoff',async()=>{
  mocks.user=null;const calls=requests();await act(async()=>{tree=create(React.createElement(EarlyRead));});
  expect(calls).not.toContain('POST /api/onboarding/claim');
- expect(tree!.root.findAllByType('a').some(a=>a.props.href==='/join')).toBe(true);
+ expect(tree!.root.findAllByType('a').some(a=>a.props.href==='/join')).toBe(false);
+ expect(tree!.root.findAllByType('input')).toHaveLength(0);
+ const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Continue with Google →')!;
+ await act(async()=>{await button.props.onClick();});
+ expect(mocks.google).toHaveBeenCalledWith('/home?onboarding=complete');
+});
+it('returns a guest without the age receipt to onboarding before Google',async()=>{
+ mocks.user=null;requests();
+ const base=fetch;
+ vi.stubGlobal('fetch',vi.fn((url:string,init?:RequestInit)=>url==='/api/onboarding/eligibility'?Promise.resolve(Response.json({birthYear:null})):base(url,init)));
+ await act(async()=>{tree=create(React.createElement(EarlyRead));});
+ const button=tree!.root.findAllByType('button').find(b=>b.props.children==='Continue with Google →')!;
+ await act(async()=>{await button.props.onClick();});
+ expect(mocks.google).not.toHaveBeenCalled();expect(mocks.push).toHaveBeenCalledWith('/onboarding');
+});
+it('rejects underage onboarding before Early Read without putting DOB in the draft',async()=>{
+ mocks.user=null;requests();const base=fetch;const sent:Array<{url:string;body:any}>=[];
+ vi.stubGlobal('fetch',vi.fn(async(url:string,init?:RequestInit)=>{
+  if(init?.body)sent.push({url,body:JSON.parse(String(init.body))});
+  if(url==='/api/onboarding/eligibility')return init?.method==='POST'?Response.json({error:'Soul Tribe is for people aged 18 and above.'},{status:400}):Response.json({birthYear:null});
+  return base(url,init);
+ }));
+ await act(async()=>{tree=create(React.createElement(Onboarding));});
+ await act(async()=>{tree!.root.findByProps({id:'onboarding-birth-date'}).props.onChange({target:{value:'2020-01-01'}});});
+ await act(async()=>{await tree!.root.findAllByType('button').find(b=>b.props.className==='ob-primary')!.props.onClick();});
+ expect(mocks.push).not.toHaveBeenCalled();expect(JSON.stringify(tree!.toJSON())).toContain('aged 18 and above');
+ expect(sent.find(r=>r.url==='/api/onboarding/draft')!.body.birthDate).toBeUndefined();
+ expect(sent.find(r=>r.url==='/api/onboarding/eligibility')!.body).toEqual({birthDate:'2020-01-01'});
 });
 it('signed-in final submission commits draft, then profile, before navigation',async()=>{
  const calls=requests();await act(async()=>{tree=create(React.createElement(Onboarding));});

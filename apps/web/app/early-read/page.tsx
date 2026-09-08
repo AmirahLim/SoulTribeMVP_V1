@@ -2,6 +2,7 @@
 import ProfilePhoto from './ProfilePhoto';
 import Link from 'next/link';
 import {useEffect,useState} from 'react';
+import {useRouter} from 'next/navigation';
 import {useAuth} from '../../lib/authContext';
 import {hydrateProfile} from '../../lib/profileHydration';
 import {getSupabaseBrowserClient} from '../../lib/supabase';
@@ -12,7 +13,8 @@ import {claimOnboarding,OnboardingHandoffError} from '../../lib/onboardingHandof
 import '../onboarding/onboarding.css';
 import './early-read.css';
 export default function EarlyRead() {
- const {user,loading}=useAuth();
+ const {user,loading,signInWithGoogle}=useAuth();
+ const router=useRouter();
  const [draft,setDraft]=useState<ReadDraft|null>(null),[saved,setSaved]=useState(false);
  const [name,setName]=useState(''),[year,setYear]=useState(''),[ageChecked,setAgeChecked]=useState(false);
  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[ready,setReady]=useState(false);
@@ -87,13 +89,25 @@ export default function EarlyRead() {
    await hydrateProfile(user.id);setDraft(committed);setSaved(true);setNeedsDetails(false);
   }catch(e){setError(e instanceof Error?e.message:'Unable to save profile.');}finally{setBusy(false);}
  }
+ async function continueWithGoogle() {
+  setBusy(true);setError('');
+  try {
+   const response=await fetch('/api/onboarding/eligibility',{cache:'no-store'});
+   const eligibility=await response.json();
+   if(!response.ok)throw new Error(eligibility.error||'Unable to load your age check. Please retry.');
+   if(!eligibility.birthYear){router.push('/onboarding');return;}
+   const result=await signInWithGoogle('/home?onboarding=complete');
+   if(result.error)throw result.error;
+  }catch(e){setError(e instanceof Error?e.message:'Google sign-in could not start. Please retry.');}
+  finally{setBusy(false);}
+ }
  return <main className="er-shell"><Link href="/" className="er-brand">SOUL TRIBE</Link><section className="er-content">
  {!ready&&<p role="status">Reading your answers…</p>}
  {draft&&<><EarlyReadAlbum draft={draft}/>
- {!user?<><p>Your answers are saved as a draft. Create or sign in to your account to attach them to your profile.</p><Link className="ob-primary" href="/join">Keep my Early Read and meet people →</Link></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
+ {!user?<><p>Your Early Read is ready. Continue with Google to save it to your profile and meet people. We’ll use your Google display name; you can edit it later.</p><button className="ob-primary" disabled={busy} onClick={()=>void continueWithGoogle()}>{busy?'Opening Google…':'Continue with Google →'}</button></>:!saved?needsDetails?<><h2>Finish saving your profile.</h2><form className="ob-fields" onSubmit={save}><label htmlFor="name">Display name</label><input id="name" required maxLength={80} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)}/>
  {!ageChecked&&draft.setupRevision!==2&&<><label htmlFor="year">Birth year</label><input id="year" required type="number" min={1930} max={new Date().getFullYear()-18} value={year} onChange={e=>setYear(e.target.value)}/></>}
- {!ageChecked&&draft.setupRevision===2&&<Link href="/join">Complete your private age check →</Link>}
- <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><ProfilePhoto userId={user.id}/><Link className="ob-primary" href="/people">See who I might click with →</Link><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
+ {!ageChecked&&draft.setupRevision===2&&<Link href="/onboarding">Complete your private age check in onboarding →</Link>}
+ <button className="ob-primary" disabled={busy||(draft.setupRevision===2&&!ageChecked)}>{busy?'Saving…':'Save my profile →'}</button></form></>:<p role="status">{busy?'Saving your answers to your profile…':'Your profile save has not completed.'}</p>:<><p role="status">Your answers are saved to your profile.</p><Link className="ob-primary" href="/home">Continue to home →</Link><ProfilePhoto userId={user.id}/><Link href="/you">My Social Signature</Link><Link href="/you/deeper">Deepen my Tribal Pass</Link></>}
  </>}
  {error&&<><p role="alert" className="ob-error">{error}</p><button className="ob-primary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>Retry loading and saving</button><Link href="/onboarding">Return to my answers</Link></>}
  {ready&&!draft&&<Link href="/onboarding">Return to onboarding</Link>}

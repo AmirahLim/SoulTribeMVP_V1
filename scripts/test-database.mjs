@@ -388,4 +388,27 @@ assert.deepEqual((await db.query('select onboarding from profile_answers where u
 assert.equal((await db.query('select read_onboarding_handoff($1) h',['a1'.repeat(32)])).rows[0].h.claimed,true);
 await fails('select claim_onboarding_draft_before_handoff($1,$2,$3)',/permission denied/,['a1'.repeat(32),newAnswers.displayName,1995]);
 console.log('Passed modern new/existing-member handoff, literal transfer, identity and unasked-trait preservation, owner isolation, rollback, retry, stale-edit protection and migration repeatability.');
+// Reproduce the actual production drift: the trigger exists but its prerequisite
+// columns do not. These are disposable local fixtures, never production DDL.
+await db.exec('reset role; alter table profiles drop column is_demo; alter table outings drop column is_demo; alter table outing_members drop column is_demo;');
+await as(handoffUser);
+await fails('update profiles set home_area=home_area where id=$1',/record "new" has no field "is_demo"/,[handoffUser]);
+await db.exec('reset role');
+const guardBefore=(await db.query("select pg_get_functiondef('protect_account_fields()'::regprocedure) body")).rows[0].body;
+const schemaRepair=await readFile(new URL('../supabase/migrations/20260930000000_restore_demo_flag_schema.sql',import.meta.url),'utf8');
+await db.exec(schemaRepair);
+await db.exec("set request.jwt.claim.role='';");
+await db.query('update profiles set is_demo=true where id=$1',[other]);
+await db.exec(schemaRepair);
+assert.equal((await db.query('select is_demo from profiles where id=$1',[other])).rows[0].is_demo,true);
+assert.equal((await db.query("select pg_get_functiondef('protect_account_fields()'::regprocedure) body")).rows[0].body,guardBefore);
+await as(handoffUser);
+await db.query('select save_onboarding_draft($1,$2)',['b1'.repeat(32),modern]);
+await db.query('select claim_onboarding_draft($1,$2,$3)',['b1'.repeat(32),null,null]);
+assert.deepEqual((await db.query('select onboarding from profile_answers where user_id=$1',[handoffUser])).rows[0].onboarding.baselineV2,modern);
+await fails('update profiles set is_demo=true where id=$1',/Protected/,[handoffUser]);
+await fails("update profiles set tier='host_plus' where id=$1",/Protected/,[handoffUser]);
+await fails("update profiles set status='banned' where id=$1",/Protected/,[handoffUser]);
+assert.equal((await db.query("select count(*)::int n from profile_answers where user_id=$1",[other])).rows[0].n,0);
+console.log('Passed production missing-is_demo reproduction, additive repair, member handoff, unchanged account guard/RLS and repeatability without rewriting flags.');
 await db.close();

@@ -62,9 +62,17 @@ export default function OnboardingPage() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [birthDate,setBirthDate]=useState('');
+  const [ageChecked,setAgeChecked]=useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   const newDraft = useRef(false);
   const lastPersisted = useRef<string | null>(null);
+  useEffect(()=>{
+    let active=true;
+    setAgeChecked(false);
+    fetch('/api/onboarding/eligibility',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>{if(active)setAgeChecked(!!data?.birthYear);}).catch(()=>{});
+    return()=>{active=false;};
+  },[user?.id]);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('preview') === 'design') return;
     if (!loading && user) {
@@ -150,10 +158,18 @@ export default function OnboardingPage() {
       }
       newDraft.current=false;
       if (!back && draft.step === 7) {
+        // Full DOB stays in this component only. The server returns a signed
+        // eligibility receipt tied to the saved draft, retaining only the year.
+        if(!ageChecked||birthDate) {
+          const checked=await fetch('/api/onboarding/eligibility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({birthDate})});
+          const result=await checked.json();
+          if(!checked.ok)throw new Error(result.error||'Please complete your private 18+ check.');
+          setAgeChecked(true);
+        }
         if(user) {
           try { await claimOnboarding({expectedUserId:user.id}); await hydrateProfile(user.id); }
           catch(error) {
-            if(error instanceof OnboardingHandoffError&&error.requiresDetails) { router.push('/join'); return; }
+            if(error instanceof OnboardingHandoffError&&error.requiresDetails) { router.push('/early-read'); return; }
             throw error;
           }
         }
@@ -313,6 +329,7 @@ export default function OnboardingPage() {
                 when you save your account.
               </p>
               <PhotoPicker previewOnly={designPreview} />
+              {!ageChecked&&<><label htmlFor="onboarding-birth-date">Date of birth · private 18+ check</label><input id="onboarding-birth-date" type="date" autoComplete="bday" value={birthDate} onChange={e=>setBirthDate(e.target.value)}/><p>Soul Tribe is for adults 18+. This is self-reported. Your full date of birth is not retained or shown on your profile.</p></>}
               <div id="life-phase-label" className="ob-field-label">Life phase</div>
               <details className="ob-life-context">
                 <summary id="life-phase-toggle" aria-labelledby="life-phase-label life-phase-value"><span id="life-phase-value">{(draft.lifeContexts??[]).length ? `${(draft.lifeContexts??[]).length} selected · ${(draft.lifeContexts??[]).join(', ')}` : 'Choose up to 3'}</span></summary>

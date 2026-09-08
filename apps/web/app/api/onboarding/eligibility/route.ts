@@ -1,9 +1,24 @@
 import {NextRequest,NextResponse} from 'next/server';
 import {adultBirthYear} from '../../../../lib/adultEligibility';
 import {ELIGIBILITY_COOKIE,makeProof,readProof} from '../../../../lib/eligibilityProof';
+import {getSupabaseServerClient} from '../../../../lib/supabaseServer';
 export async function GET(request:NextRequest) {
  const token=request.cookies.get('st_onboarding_v2')?.value;
- return NextResponse.json({birthYear:token?readProof(token,request.cookies.get(ELIGIBILITY_COOKIE)?.value):null},{headers:{'Cache-Control':'no-store'}});
+ try {
+  const client=await getSupabaseServerClient();
+  const {data:{user}}=await client.auth.getUser();
+  let birthYear=token?readProof(token,request.cookies.get(ELIGIBILITY_COOKIE)?.value):null;
+  if(user){
+   const {data,error}=await client.from('profiles').select('birth_year').eq('id',user.id).maybeSingle();
+   if(error)throw error;
+   birthYear=data?.birth_year??birthYear;
+  }
+  return NextResponse.json({birthYear},{headers:{'Cache-Control':'no-store'}});
+ }catch(error){
+  const failure=error as {code?:string;message?:string};
+  console.error('[SoulTribe] age eligibility lookup failed',{code:failure.code,message:failure.message});
+  return NextResponse.json({error:'Unable to load your age check. Please retry.'},{status:503});
+ }
 }
 export async function POST(request:NextRequest) {
  if(request.headers.get('origin')!==request.nextUrl.origin)return NextResponse.json({error:'Invalid origin'},{status:403});

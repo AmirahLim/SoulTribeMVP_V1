@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import {claimOnboardingServer} from '../../../lib/claimOnboardingServer';
+import {ELIGIBILITY_COOKIE} from '../../../lib/eligibilityProof';
 
 /**
  * GET /auth/callback
@@ -51,9 +53,26 @@ export async function GET(request: NextRequest) {
   }
 
   // Check if the user has a profile with a handle
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user },error:userError } = await supabase.auth.getUser();
+  if(userError||!user){
+    response.headers.set('location',new URL('/auth/signin?error=exchange_failed',origin).toString());
+    return response;
+  }
 
   if (user) {
+    if(next==='/home?onboarding=complete') {
+      // Claim with the exchanged user's session, never a service-role client.
+      // Keep response cookies on both success and failure so retry stays signed in.
+      try {
+        const result=await claimOnboardingServer(supabase,user,request.cookies.get('st_onboarding_v2')?.value,request.cookies.get(ELIGIBILITY_COOKIE)?.value);
+        response.headers.set('location',new URL(result.status===200?'/home':'/early-read?finish=1',origin).toString());
+      } catch(error) {
+        const failure=error as {code?:string;message?:string};
+        console.error('[SoulTribe] OAuth onboarding handoff failed',{code:failure.code,message:failure.message});
+        response.headers.set('location',new URL('/early-read?finish=1',origin).toString());
+      }
+      return response;
+    }
     // A verified onboarding member must claim the private draft before profile creation.
     // Return the existing response so all exchanged session cookies reach the browser.
     if (next === '/early-read') return response;

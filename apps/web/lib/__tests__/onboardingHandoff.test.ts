@@ -6,7 +6,7 @@ import {LIFE_CONTEXTS} from '../lifeContext';
 import {claimOnboarding} from '../onboardingHandoff';
 import {makeProof,ELIGIBILITY_COOKIE} from '../eligibilityProof';
 
-const state=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string}|null,profile:null as any,draft:null as any,error:null as any,rpc:vi.fn()}));
+const state=vi.hoisted(()=>({user:{id:'10000000-0000-4000-8000-000000000001'} as {id:string;identities?:any[]}|null,profile:null as any,draft:null as any,error:null as any,rpc:vi.fn()}));
 vi.mock('../supabaseServer',()=>({getSupabaseServerClient:async()=>({
  auth:{getUser:async()=>({data:{user:state.user},error:null})},rpc:state.rpc,
  from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:state.profile,error:null})})})}),
@@ -35,6 +35,17 @@ describe('authenticated draft handoff API',()=>{
  it('does not accept an unchecked birth year for the modern signup',async()=>{
   const response=await POST(request({birthYear:1995}));
   expect(response.status).toBe(400);expect((await response.json()).requiresDetails).toBe(true);
+  expect(state.rpc.mock.calls.some(([name])=>name==='claim_onboarding_draft')).toBe(false);
+ });
+ it('uses the actual Google identity name without a separate display-name form',async()=>{
+  state.draft={...draft,displayName:undefined};
+  state.user!.identities=[{provider:'google',identity_data:{full_name:'Actual Google name'}}];
+  expect((await POST(request({},true))).status).toBe(200);
+  expect(state.rpc).toHaveBeenCalledWith('claim_onboarding_draft',expect.objectContaining({p_display_name:'Actual Google name',p_birth_year:1995}));
+ });
+ it('Google identity never substitutes for an adult eligibility receipt',async()=>{
+  state.user!.identities=[{provider:'google',identity_data:{full_name:'Actual Google name'}}];
+  expect((await POST(request())).status).toBe(400);
   expect(state.rpc.mock.calls.some(([name])=>name==='claim_onboarding_draft')).toBe(false);
  });
  it('returns a failed transaction as an error, not a saved draft',async()=>{
