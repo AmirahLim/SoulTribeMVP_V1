@@ -68,10 +68,18 @@ export async function POST(request: NextRequest) {
       maxAge: 7 * 86400,
     });
     return response;
-  } catch {
+  } catch (error) {
+    const failure = error as { code?: string; message?: string; details?: string; hint?: string };
+    // Log safe database error metadata only; never log the token or submitted answers.
+    console.error("[SoulTribe] onboarding draft save failed", {
+      code: failure.code,
+      message: failure.message,
+      details: failure.details,
+      hint: failure.hint,
+    });
     return NextResponse.json(
-      { error: "Unable to save draft" },
-      { status: 503 },
+      { error: "Your answers are still on this screen. The save service is temporarily unavailable; please retry." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
 }
